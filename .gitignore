@@ -1,0 +1,10 @@
+__pycache__/
+.ipynb_checkpoints/
+*.sqlite
+memory_demo/
+matter_workspace/
+traces.jsonl
+regression.jsonl
+sft_train.jsonl
+renewal_terms_gepa.json
+.venv/

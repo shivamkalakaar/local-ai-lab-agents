@@ -1,0 +1,17 @@
+{
+ "msa_02": [],
+ "msa_09": [
+  "governing_law"
+ ],
+ "msa_12": [
+  "auto_renewal"
+ ],
+ "msa_16": [
+  "liability_cap",
+  "termination_notice"
+ ],
+ "msa_20": [
+  "auto_renewal",
+  "liability_cap"
+ ]
+}

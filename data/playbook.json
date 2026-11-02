@@ -1,0 +1,16 @@
+{
+  "name": "Sample firm playbook for vendor service agreements",
+  "rules": {
+    "liability_cap": "The cap must be stated and must not exceed fees paid in the prior 12 months.",
+    "governing_law": "Governing law must be California or Delaware.",
+    "auto_renewal": "Automatic renewal terms must be one year or shorter.",
+    "termination_notice": "Notice to terminate or not renew must be at least 30 days."
+  },
+  "allowed_law": [
+    "California",
+    "Delaware"
+  ],
+  "max_cap_months": 12,
+  "max_renewal_years": 1,
+  "min_notice_days": 30
+}

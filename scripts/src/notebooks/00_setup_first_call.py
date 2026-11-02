@@ -1,0 +1,70 @@
+# %% [markdown]
+# # 00 · Setup and your first local model call
+# **Local AI Lab · Build and run agents on your own computer**
+#
+# This course runs every agent on a model that lives on this machine. No API keys, no cloud AI, no data leaving the box.
+#
+# **Before you start (Colab):** `Runtime → Change runtime type → T4 GPU`. Then run the setup cell below. It installs [Ollama](https://ollama.com), starts it, and downloads Meta's Llama 3.1 8B (about 5 GB). It takes 2–3 minutes the first time.
+#
+# Companion reading: [Agent Engineering School, Module 00](https://claude.ai/artifact/41sHaxGwFWf7SjJWDdtK5w#m0)
+
+# %% [markdown]
+# ## 1. Talk to the model
+# The model speaks the same API as OpenAI's, so any OpenAI-compatible code works. We only change the address to `localhost`.
+
+# %%
+from lal.llm import chat, ask, client
+import time
+
+t0 = time.time()
+reply = ask("In one sentence: why would a law firm want AI that runs on its own computers?")
+print(reply)
+print(f"\n{time.time() - t0:.1f} seconds, model = {MODEL}")
+
+# %% [markdown]
+# ## 2. Measure speed and token use
+# On your own hardware there is no per-token bill, but speed still matters.
+
+# %%
+t0 = time.time()
+resp = client.chat.completions.create(model=MODEL, temperature=0,
+    messages=[{"role": "user", "content": "List five common clauses in a services contract, one line each."}])
+secs = time.time() - t0
+u = resp.usage
+print(resp.choices[0].message.content)
+print(f"\nprompt tokens: {u.prompt_tokens}, output tokens: {u.completion_tokens}, "
+      f"speed: {u.completion_tokens / secs:.0f} tokens/second")
+
+# %% [markdown]
+# ## 3. Temperature: same question, different settings
+# Low temperature gives the same answer every time (good for extraction). Higher temperature gives variety (good for brainstorming, or for sampling several candidates to check).
+
+# %%
+for temp in (0, 1.0):
+    answers = {ask("Name one risky clause in a vendor contract. Answer in 3 words or fewer.", temperature=temp).strip()
+               for _ in range(3)}
+    print(f"temperature {temp}: {answers}")
+
+# %% [markdown]
+# ## 4. Our practice data
+# We use 20 made-up service agreements. Some have problems planted on purpose: an uncapped or oversized liability cap, the wrong governing law, a long auto-renewal, or a short notice period. Because we planted them, we know the right answers, so we can grade our agents. (See `data/gen.py`.)
+
+# %%
+from lal.data import contract, labels, playbook, ids
+print(contract("msa_07")[:900], "...")
+print("\nTrue answer for msa_07:", labels()["msa_07"])
+print("\nPlaybook rules:")
+for k, v in playbook()["rules"].items():
+    print(f"  - {k}: {v}")
+
+# %%
+from lal.checks import check
+check("model answers", len(reply) > 10)
+check("20 practice contracts loaded", len(ids()) == 20)
+
+# %% [markdown]
+# ## Your turn
+# 1. Ask the model to summarize `msa_07` in three bullet points. Time it.
+# 2. Change `temperature` and see how the summary changes.
+#
+# **Next:** 01 · Build an agent loop from scratch

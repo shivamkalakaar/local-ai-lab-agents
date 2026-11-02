@@ -1,0 +1,20 @@
+{"id": "msa_01", "terms": {"governing_law": "Delaware", "liability_cap_months": 12, "renewal_years": 1, "notice_days": 30, "monthly_fee": 12500}, "issues": []}
+{"id": "msa_02", "terms": {"governing_law": "Delaware", "liability_cap_months": 12, "renewal_years": 1, "notice_days": 60, "monthly_fee": 20000}, "issues": []}
+{"id": "msa_03", "terms": {"governing_law": "California", "liability_cap_months": 12, "renewal_years": 1, "notice_days": 60, "monthly_fee": 4500}, "issues": []}
+{"id": "msa_04", "terms": {"governing_law": "California", "liability_cap_months": 12, "renewal_years": 1, "notice_days": 60, "monthly_fee": 12500}, "issues": []}
+{"id": "msa_05", "terms": {"governing_law": "Delaware", "liability_cap_months": 12, "renewal_years": 1, "notice_days": 90, "monthly_fee": 4500}, "issues": []}
+{"id": "msa_06", "terms": {"governing_law": "California", "liability_cap_months": 12, "renewal_years": 1, "notice_days": 90, "monthly_fee": 20000}, "issues": []}
+{"id": "msa_07", "terms": {"governing_law": "Delaware", "liability_cap_months": 24, "renewal_years": 1, "notice_days": 90, "monthly_fee": 4500}, "issues": [{"rule": "liability_cap", "clause": "7.1"}]}
+{"id": "msa_08", "terms": {"governing_law": "Delaware", "liability_cap_months": 36, "renewal_years": 1, "notice_days": 90, "monthly_fee": 8000}, "issues": [{"rule": "liability_cap", "clause": "7.1"}]}
+{"id": "msa_09", "terms": {"governing_law": "Texas", "liability_cap_months": 12, "renewal_years": 1, "notice_days": 90, "monthly_fee": 20000}, "issues": [{"rule": "governing_law", "clause": "10.1"}]}
+{"id": "msa_10", "terms": {"governing_law": "Florida", "liability_cap_months": 12, "renewal_years": 1, "notice_days": 30, "monthly_fee": 12500}, "issues": [{"rule": "governing_law", "clause": "10.1"}]}
+{"id": "msa_11", "terms": {"governing_law": "Delaware", "liability_cap_months": 12, "renewal_years": 3, "notice_days": 90, "monthly_fee": 12500}, "issues": [{"rule": "auto_renewal", "clause": "4.1"}]}
+{"id": "msa_12", "terms": {"governing_law": "California", "liability_cap_months": 12, "renewal_years": 3, "notice_days": 60, "monthly_fee": 4500}, "issues": [{"rule": "auto_renewal", "clause": "4.1"}]}
+{"id": "msa_13", "terms": {"governing_law": "California", "liability_cap_months": 12, "renewal_years": 1, "notice_days": 15, "monthly_fee": 8000}, "issues": [{"rule": "termination_notice", "clause": "4.1"}]}
+{"id": "msa_14", "terms": {"governing_law": "Delaware", "liability_cap_months": 12, "renewal_years": 1, "notice_days": 5, "monthly_fee": 12500}, "issues": [{"rule": "termination_notice", "clause": "4.1"}]}
+{"id": "msa_15", "terms": {"governing_law": "New York", "liability_cap_months": 36, "renewal_years": 1, "notice_days": 90, "monthly_fee": 4500}, "issues": [{"rule": "liability_cap", "clause": "7.1"}, {"rule": "governing_law", "clause": "10.1"}]}
+{"id": "msa_16", "terms": {"governing_law": "Delaware", "liability_cap_months": null, "renewal_years": 1, "notice_days": 5, "monthly_fee": 4500}, "issues": [{"rule": "liability_cap", "clause": "7.1"}, {"rule": "termination_notice", "clause": "4.1"}]}
+{"id": "msa_17", "terms": {"governing_law": "California", "liability_cap_months": 12, "renewal_years": 5, "notice_days": 15, "monthly_fee": 8000}, "issues": [{"rule": "auto_renewal", "clause": "4.1"}, {"rule": "termination_notice", "clause": "4.1"}]}
+{"id": "msa_18", "terms": {"governing_law": "Delaware", "liability_cap_months": 12, "renewal_years": 5, "notice_days": 10, "monthly_fee": 20000}, "issues": [{"rule": "auto_renewal", "clause": "4.1"}, {"rule": "termination_notice", "clause": "4.1"}]}
+{"id": "msa_19", "terms": {"governing_law": "Delaware", "liability_cap_months": null, "renewal_years": 1, "notice_days": 5, "monthly_fee": 8000}, "issues": [{"rule": "liability_cap", "clause": "7.1"}, {"rule": "termination_notice", "clause": "4.1"}]}
+{"id": "msa_20", "terms": {"governing_law": "Delaware", "liability_cap_months": 36, "renewal_years": 3, "notice_days": 60, "monthly_fee": 4500}, "issues": [{"rule": "liability_cap", "clause": "7.1"}, {"rule": "auto_renewal", "clause": "4.1"}]}
