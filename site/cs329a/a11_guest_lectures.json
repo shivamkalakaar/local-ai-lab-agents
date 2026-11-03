@@ -1,0 +1,199 @@
+{
+ "id": "a11",
+ "title": "Guest lectures and reasoning frontiers",
+ "lecture": "CS329A guest lectures: Lecture 9 (Oct 20) Melvin Johnson, 15 (Nov 10) Denny Zhou, 16 (Nov 14) Thang Luong, 18 (Nov 21) Misha Laskin, 19 (Dec 1) Danny Driess; Lecture 20 (Dec 5) Future research areas",
+ "big_idea": "The guest talks trace one arc: models that reason step by step, sample and vote, learn from checkable rewards, and act in software and the physical world. The course assigned no papers for these talks, so every reading here is our pick of the speaker's best-known public work on the talk's topic, not the course's reading list.",
+ "papers": [
+  {
+   "title": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models (our pick for Denny Zhou's talk)",
+   "authors": "Wei, Wang, Schuurmans, Bosma, Ichter, Xia, Chi, Le, Zhou",
+   "year": 2022,
+   "url": "https://arxiv.org/abs/2201.11903",
+   "what": "Prompting with a few worked examples that show intermediate reasoning steps, tested on three large models across arithmetic, commonsense and symbolic reasoning.",
+   "result": "A 540B model with eight chain-of-thought examples reached state-of-the-art accuracy on GSM8K, beating a fine-tuned GPT-3 with a verifier.",
+   "takeaway": "Let the model show its work before the answer on multi-step tasks; then grade only the final answer with code."
+  },
+  {
+   "title": "Self-Consistency Improves Chain of Thought Reasoning in Language Models (our pick for Denny Zhou's talk)",
+   "authors": "Wang, Wei, Schuurmans, Le, Chi, Narang, Chowdhery, Zhou",
+   "year": 2022,
+   "url": "https://arxiv.org/abs/2203.11171",
+   "what": "Sample several diverse reasoning paths instead of one greedy path and take the most consistent final answer.",
+   "result": "Over chain-of-thought: GSM8K +17.9%, SVAMP +11.0%, AQuA +12.2%, StrategyQA +6.4%, ARC-challenge +3.9%.",
+   "takeaway": "Majority voting is a cheap accuracy boost, and the agreement rate is a free confidence score you can use to route low-agreement answers to a person."
+  },
+  {
+   "title": "Least-to-Most Prompting Enables Complex Reasoning in Large Language Models (our pick for Denny Zhou's talk)",
+   "authors": "Zhou, Schärli, Hou, Wei, Scales, Wang, Schuurmans, Cui, Bousquet, Le, Chi",
+   "year": 2022,
+   "url": "https://arxiv.org/abs/2205.10625",
+   "what": "Two stages: decompose a problem into simpler sub-problems, then solve them in order, feeding each answer into the next. Aimed at problems harder than the prompt examples.",
+   "result": "On SCAN with code-davinci-002 and 14 examples: at least 99% accuracy on every split, including the length split, vs 16% for chain-of-thought.",
+   "takeaway": "When tasks are longer than your examples, have the agent write a plan of sub-tasks first and execute them one by one."
+  },
+  {
+   "title": "Chain-of-Thought Reasoning Without Prompting (our pick for Denny Zhou's talk)",
+   "authors": "Wang, Zhou",
+   "year": 2024,
+   "url": "https://arxiv.org/abs/2402.10200",
+   "what": "Instead of greedy decoding, branch on the top-k alternatives for the first token (k = 10 by default), continue each greedily, and rank paths by answer confidence: the average gap between top-1 and top-2 token probabilities over the answer tokens.",
+   "result": "Mistral-7B (pre-trained) on GSM8K: greedy 9.9%, self-consistency without a CoT prompt 12.9%, CoT-decoding 25.1%. PaLM-2 Large: 34.8% greedy to 63.2%. Instruction-tuned Mistral-7B also improved (31.2% to 38.2%).",
+   "takeaway": "Reasoning paths often exist inside a model even when greedy decoding misses them; answer-token confidence is a useful signal for picking among candidates."
+  },
+  {
+   "title": "Solving olympiad geometry without human demonstrations (AlphaGeometry; our pick for Thang Luong's talk)",
+   "authors": "Trinh, Wu, Le, He, Luong",
+   "year": 2024,
+   "url": "https://www.nature.com/articles/s41586-023-06747-5",
+   "what": "A neural language model proposes auxiliary constructions and a symbolic deduction engine does rigorous proofs, trained on 100 million synthetic theorems and proofs with no human demonstrations.",
+   "result": "Solved 25 of 30 recent olympiad geometry problems (IMO-AG-30); the previous best method solved 10, and an average human gold medalist about 25.9.",
+   "takeaway": "Pair a creative model with an exact checker, and generate your own training data when human data is scarce."
+  },
+  {
+   "title": "AI achieves silver-medal standard solving International Mathematical Olympiad problems (AlphaProof + AlphaGeometry 2 blog; our pick)",
+   "authors": "Google DeepMind",
+   "year": 2024,
+   "url": "https://deepmind.google/discover/blog/ai-solves-imo-problems-at-silver-medal-level/",
+   "what": "AlphaProof couples a pre-trained language model with AlphaZero-style reinforcement learning in the Lean proof language, trained on about a million problems auto-formalized by Gemini. AlphaGeometry 2 handled geometry.",
+   "result": "28 of 42 points at IMO 2024 (4 of 6 problems), silver level; some problems took up to three days. AlphaGeometry 2 solved 83% of IMO geometry problems from the past 25 years (predecessor 53%).",
+   "takeaway": "Reinforcement learning works best when a machine can check the answer exactly; formal verifiers are such checkers."
+  },
+  {
+   "title": "Advanced version of Gemini with Deep Think officially achieves gold-medal standard at the IMO (blog; our pick)",
+   "authors": "Google DeepMind",
+   "year": 2025,
+   "url": "https://deepmind.google/discover/blog/advanced-version-of-gemini-with-deep-think-officially-achieves-gold-medal-standard-at-the-international-mathematical-olympiad/",
+   "what": "A Gemini model reasoning end to end in natural language, with 'parallel thinking' over several candidate solutions and new reinforcement-learning techniques for multi-step reasoning and proofs.",
+   "result": "35 of 42 points at IMO 2025 (5 of 6 problems), gold level, within the 4.5-hour limit, graded by IMO coordinators.",
+   "takeaway": "Parallel exploration plus RL on hard, checkable problems moved a general model past a specialized formal system in one year."
+  },
+  {
+   "title": "Google's Multilingual Neural Machine Translation System: Enabling Zero-Shot Translation (our pick for Melvin Johnson's talk)",
+   "authors": "Johnson, Schuster, Le, Krikun, Wu, Chen, Thorat, Viégas, Wattenberg, Corrado, Hughes, Dean",
+   "year": 2017,
+   "url": "https://arxiv.org/abs/1611.04558",
+   "what": "One translation model for many languages, with only a target-language token added to the input and no extra parameters. Background for the speaker, who now leads Gemini post-training (per his site); for his post-training work see the Gemini report (arXiv 2312.11805), where he is an author.",
+   "result": "Matched state-of-the-art English to French and beat it for English to German on WMT'14; translated between language pairs never seen together in training (zero-shot).",
+   "takeaway": "A single general model with the right training signal can replace many special-purpose ones; post-training is where that signal is added."
+  },
+  {
+   "title": "In-context Reinforcement Learning with Algorithm Distillation (our pick for Misha Laskin's talk)",
+   "authors": "Laskin, Wang, Oh, Parisotto, Spencer, Steigerwald, Strouse, Hansen, Filos, Brooks, Gazeau, Sahni, Singh, Mnih",
+   "year": 2022,
+   "url": "https://arxiv.org/abs/2210.14215",
+   "what": "Train a causal transformer on the learning histories of an RL algorithm, so it learns to improve its policy in context, with no weight updates. Laskin later co-founded Reflection AI (March 2025), which focuses on autonomous coding agents.",
+   "result": "Improved its policy entirely in context in sparse-reward, combinatorial and pixel-based environments, and learned a more data-efficient RL algorithm than the one that generated its data.",
+   "takeaway": "An agent can learn from its own experience inside the context window if it sees its past attempts and outcomes; keep those histories."
+  },
+  {
+   "title": "PaLM-E: An Embodied Multimodal Language Model (our pick for Danny Driess's talk)",
+   "authors": "Driess, Xia, Sajjadi, Lynch, Chowdhery, Ichter, et al.",
+   "year": 2023,
+   "url": "https://arxiv.org/abs/2303.03378",
+   "what": "Feed images and robot state directly into a pre-trained language model as 'multimodal sentences', trained end to end for robot planning, visual question answering and captioning.",
+   "result": "The largest model, PaLM-E-562B, reached state-of-the-art on OK-VQA and kept its general language skills; joint training on internet-scale data helped robot tasks.",
+   "takeaway": "Reuse a big pre-trained model for a new input type rather than training a specialist from scratch."
+  },
+  {
+   "title": "π0: A Vision-Language-Action Flow Model for General Robot Control (our pick for Danny Driess's talk)",
+   "authors": "Black, Brown, Driess, Esmail, Equi, Finn, et al. (Physical Intelligence)",
+   "year": 2024,
+   "url": "https://arxiv.org/abs/2410.24164",
+   "what": "A flow-matching action model built on a pre-trained vision-language model, trained on data from many robot types (single-arm, dual-arm, mobile).",
+   "result": "Evaluated zero-shot after pre-training, on following language instructions, and on learning new skills by fine-tuning, on tasks such as laundry folding, table cleaning and box assembly. (We did not extract per-task numbers.)",
+   "takeaway": "The recipe from language agents carries over to robots: broad pre-training, then fine-tuning on high-quality task data."
+  }
+ ],
+ "terms": [
+  [
+   "Chain of thought (CoT)",
+   "The model writes its reasoning steps before the final answer.",
+   "Wei et al. 2022"
+  ],
+  [
+   "Self-consistency",
+   "Sample several reasoning paths and take the majority answer.",
+   "Wang et al. 2022"
+  ],
+  [
+   "Agreement rate",
+   "The share of samples that match the majority answer; a cheap confidence score.",
+   "Wang et al. 2022"
+  ],
+  [
+   "Least-to-most prompting",
+   "Decompose into easier sub-questions, then solve them in order using earlier answers.",
+   "Zhou et al. 2022"
+  ],
+  [
+   "Greedy decoding",
+   "Always picking the single most likely next token.",
+   "general"
+  ],
+  [
+   "CoT-decoding",
+   "Branch on the top-k first tokens, continue each greedily, and pick by answer confidence.",
+   "Wang and Zhou 2024"
+  ],
+  [
+   "Answer confidence (Δ)",
+   "Average gap between the top-1 and top-2 token probabilities over the answer's tokens.",
+   "Wang and Zhou 2024"
+  ],
+  [
+   "Post-training",
+   "Everything after pre-training (instruction tuning, preference tuning, RL) that makes a model helpful and agentic.",
+   "general"
+  ],
+  [
+   "Formal proof / Lean",
+   "A proof written in a language a computer can check exactly; Lean is one such language.",
+   "DeepMind 2024"
+  ],
+  [
+   "Parallel thinking",
+   "Exploring and combining several candidate solutions at once instead of one chain.",
+   "DeepMind 2025"
+  ],
+  [
+   "Vision-language-action (VLA) model",
+   "A model that takes images and text and outputs robot actions.",
+   "Black et al. 2024"
+  ],
+  [
+   "Algorithm distillation",
+   "Training a sequence model on an RL algorithm's learning histories so it learns to improve in context.",
+   "Laskin et al. 2022"
+  ]
+ ],
+ "traps": [
+  "Treating these readings as the course's. CS329A listed no papers for the guest lectures; we chose them.",
+  "Forcing a short answer on a multi-step problem. Asking for 'only the number' removes the reasoning the model needs.",
+  "Reading high agreement as truth. Self-consistency measures consistency; a model can be wrong the same way every time.",
+  "Running CoT-decoding through the chat endpoint. It needs raw completion and ideally token log-probs; without them our notebook approximates confidence by agreement.",
+  "Expecting a big CoT gain on tiny models. The CoT paper found the gain grows with model size; small models can write plausible but wrong steps.",
+  "Copying the IMO recipe without a checker. RL on reasoning worked because proofs and answers could be verified exactly."
+ ],
+ "check": [
+  [
+   "What is the difference between self-consistency and CoT-decoding?",
+   "Self-consistency samples whole reasoning paths from a CoT prompt and votes; CoT-decoding uses no prompt, branches only on the first token's top-k alternatives, continues greedily, and picks by answer confidence."
+  ],
+  [
+   "Why does least-to-most help on problems harder than the examples?",
+   "Breaking the problem into easier sub-problems solved in order lets the model handle each piece at the difficulty it can manage, with earlier answers feeding later ones."
+  ],
+  [
+   "What changed between the 2024 IMO silver and the 2025 IMO gold?",
+   "2024 used formal Lean proofs and took up to three days (28/42); 2025 Gemini Deep Think worked end to end in natural language within 4.5 hours (35/42)."
+  ],
+  [
+   "What made RL work in AlphaProof?",
+   "A formal checker (Lean) that verifies proofs exactly, giving a reliable reward."
+  ],
+  [
+   "Were the readings for these talks assigned by the course?",
+   "No. The course listed only titles and speakers; these are our picks of each speaker's public work."
+  ]
+ ]
+}

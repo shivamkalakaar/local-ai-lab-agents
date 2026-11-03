@@ -154,6 +154,21 @@ def render_papers(papers, heading="The papers"):
     return f"<h3>{heading}</h3><div class=\"papers\">" + "".join(cards) + "</div>"
 
 
+LESSONS = """<section class="mod" id="part2-lessons">
+  <div class="mod-head"><div><div class="mod-num">Part 2 · Start here</div><h2>What this means for building agents</h2></div></div>
+  <p class="big"><b>The big idea of CS329A:</b> an agent gets better only as fast as you can check its work automatically. Almost every paper below is a way to use a checker: to pick the best answer, to give feedback, to search, or to train.</p>
+  <ol>
+    <li><b>More tries plus a good checker can beat a bigger model.</b> The chance that at least one of many samples is right keeps rising as you sample more, roughly following a power law. The hard part is picking the right answer: with a checker you capture the gain, while majority vote flattens early (Brown et al., <i>Large Language Monkeys</i>; module A01).</li>
+    <li><b>Weak checkers, combined, make a strong one.</b> Several imperfect checks, such as a model judge, answer agreement and simple rules, can be weighted into one reliable verifier (<i>Weaver</i>; module A02). Contract review needs exactly this: quote checks + rule checks + a judge.</li>
+    <li><b>Feedback from running code is the best teacher.</b> Train or loop on real test results, and pick among many attempts by running tests (<i>RLEF</i>, <i>CodeMonkeys</i>; modules A03 and A08).</li>
+    <li><b>Searching for better designs beats hand-designing them, but only with an automatic score.</b> AlphaEvolve, ADAS and the AI Scientist all propose, score automatically, keep the best and repeat. If the score has a loophole, the search will find it (module A06 shows a cheat winning once a validity check is removed).</li>
+    <li><b>Reinforcement learning on checkable rewards is now cheap enough to use.</b> GRPO and DAPO's fixes make it practical on small models; module A05 trains a 360M model on a free Colab GPU.</li>
+    <li><b>Measure how long a task an agent can finish, not just whether it's right.</b> METR's "time horizon" is the length of task an AI can complete half the time, and it has been roughly doubling every seven months. GDPval grades AI work on real paid tasks against expert work (module A10).</li>
+  </ol>
+  <div class="thesis"><b>For Local AI Lab:</b> the moat isn't the model. It's the <b>checkers and tests we build for each customer's repeated task.</b> Once a task has an automatic score, every technique in this part (sample and select, combined verifiers, search, RL on small models) can keep improving a local model on that task, cheaply. The pitch: <i>we turn your repeated work into a scored task, and the model on your own computers keeps getting better at it.</i></div>
+</section>"""
+
+
 def render_part2():
     import json
     mods = sorted((ROOT / "site/cs329a").glob("a*.json"))
@@ -164,8 +179,10 @@ def render_part2():
            '<h2>Self-improving AI agents</h2>'
            '<p>Everything from Stanford CS329A "Self-Improving AI Agents" (Autumn 2025, Azalia Mirhoseini and Aakanksha Chowdhery): '
            'every assigned paper summarized, a runnable Colab notebook per lecture, and small rebuilds of the past student projects. '
-           'Course site: <a href="https://cs329a.stanford.edu/">cs329a.stanford.edu</a>.</p></div>']
-    nav = ['    <li class="part">Part 2 · Self-improving agents</li>']
+           'Course site: <a href="https://cs329a.stanford.edu/">cs329a.stanford.edu</a>.</p></div>',
+           LESSONS]
+    nav = ['    <li class="part">Part 2 · Self-improving agents</li>',
+           '    <li><a href="#part2-lessons"><span class="n">★</span>What this means</a></li>']
     for f in mods:
         d = json.loads(f.read_text())
         mod = d["id"]

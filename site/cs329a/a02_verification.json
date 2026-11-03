@@ -1,0 +1,103 @@
+{
+ "id": "a02",
+ "title": "Robust verification",
+ "lecture": "CS329A Lecture 3 (Sep 29)",
+ "big_idea": "More tries only help if something can tell right from wrong. Verifiers score candidate answers, either the whole answer (outcome) or each step (process), and several weak verifiers combined can come close to a perfect checker.",
+ "papers": [
+  {
+   "title": "Shrinking the Generation-Verification Gap with Weak Verifiers (Weaver)",
+   "authors": "Saad-Falcon, Buchanan, Chen, et al.",
+   "year": 2025,
+   "url": "https://arxiv.org/abs/2506.18203",
+   "what": "Combines many weak verifiers (33 open reward models and LLM judges, 7B-72B) into one score to pick among 100 samples from Llama 3.3 70B Instruct. Normalizes and binarizes scores, filters weak verifiers, and learns verifier weights with weak supervision (no ground-truth labels). Then distills the ensemble into a small cross-encoder.",
+   "result": "Average accuracy over MATH500, GPQA Diamond, MMLU College and MMLU Pro: 87.7% for Weaver vs 72.2% majority vote, 69.0% GPT-4o and 86.7% o3-mini; within 4.2% of the pass@100 oracle. Weighted ensembles with oracle labels beat naive averaging by up to 11.2 points. A 400M ModernBERT distillation kept 98.7% of the accuracy (98.2% in another section) while cutting verification compute by up to 99.97%. Struggles where correct answers are very rare.",
+   "takeaway": "Don't hunt for one perfect judge. Stack cheap checks that fail in different ways (rules, agreement, a judge model, reward models), weight them by estimated accuracy, and distill the result into a small model for production."
+  },
+  {
+   "title": "Training Verifiers to Solve Math Word Problems",
+   "authors": "Cobbe, Kosaraju, Bavarian, Chen, Jun, Kaiser, Plappert, Tworek, Hilton, Nakano, Hesse, Schulman",
+   "year": 2021,
+   "url": "https://arxiv.org/abs/2110.14168",
+   "what": "Released GSM8K (8.5K grade-school word problems: 7.5K train, 1K test). Trained a verifier to judge whether a full solution is correct, then at test time sampled 100 solutions per problem and returned the one the verifier scored highest.",
+   "result": "Verification gave about the same boost as a 30x larger model over a fine-tuning baseline, and scaled better with more data (but did not help with small training sets). A large generator with a small verifier beat a small generator with a large verifier. For the 6B verifier, accuracy rose up to 400 completions per problem, then fell as search found wrong answers that fooled the verifier. A token-level verifier eventually beat a solution-level one.",
+   "takeaway": "A trained outcome verifier plus sampling is a cheap way to lift a small model, but cap the number of samples and watch for adversarial answers that game the verifier."
+  },
+  {
+   "title": "Let's Verify Step by Step",
+   "authors": "Lightman, Kosaraju, Burda, Edwards, Baker, Lee, Leike, Schulman, Sutskever, Cobbe",
+   "year": 2023,
+   "url": "https://arxiv.org/abs/2305.20050",
+   "what": "Compared an outcome reward model (judges the final answer) with a process reward model (judges each step) for picking among GPT-4 solutions on MATH. Humans labeled steps positive, negative or neutral; a solution's PRM score is the probability that every step is correct.",
+   "result": "Best-of-1,860 on a 500-problem MATH test subset: PRM 78.2%, ORM 72.4%, majority vote 69.6%. Released PRM800K: 800K step labels across 75K solutions to 12K problems. Active learning was about 2.6x more data-efficient than uniform labeling. On out-of-distribution AP and AMC problems (best-of-100) the PRM also led: aggregate 72.9% vs 63.8% ORM and 61.3% majority vote.",
+   "takeaway": "When you can, check steps, not just the result. Step scores also tell a reviewer where a solution broke. Spend labeling budget on convincing wrong answers (active learning)."
+  },
+  {
+   "title": "Math-Shepherd: Verify and Reinforce LLMs Step-by-step without Human Annotations",
+   "authors": "Wang, Li, Shao, Xu, Dai, Li, Chen, Wu, Sui",
+   "year": 2023,
+   "url": "https://arxiv.org/abs/2312.08935",
+   "what": "Labels steps automatically: from each step, a completer model finishes the solution N times (N=8 in their data) and the step is scored by how often it reaches the right answer (soft label) or whether it ever does (hard label). Trains a process reward model on these labels and uses it for reranking and for step-by-step PPO.",
+   "result": "Step-by-step PPO lifted Mistral-7B from 77.9% to 84.1% on GSM8K and 28.6% to 33.0% on MATH; adding verification reached 89.1% and 43.5%. DeepSeek-67B with best-of-256 went from 88.2% (self-consistency) to 93.3% on GSM8K, and 48.1% on MATH500 when combined with self-consistency.",
+   "takeaway": "If you have final-answer checks, you can turn them into step labels with rollouts, offline. That gives a process verifier and an RL signal without paying people to label steps."
+  }
+ ],
+ "terms": [
+  [
+   "Verifier",
+   "Anything that scores a candidate answer: an exact checker, unit tests, a trained model, an LLM judge, or a rule.",
+   "Cobbe et al. 2021"
+  ],
+  [
+   "Generation-verification gap",
+   "The difference between coverage (some try is right) and what your verifier actually picks.",
+   "Saad-Falcon et al. 2025 (Weaver)"
+  ],
+  [
+   "Outcome reward model (ORM)",
+   "A verifier that judges only the final answer of a solution.",
+   "Lightman et al. 2023"
+  ],
+  [
+   "Process reward model (PRM)",
+   "A verifier that scores each reasoning step; the solution score multiplies the step scores.",
+   "Lightman et al. 2023"
+  ],
+  [
+   "Soft / hard step label",
+   "From a step, finish the solution N times. Soft: share that reach the right answer. Hard: 1 if any do.",
+   "Wang et al. 2023 (Math-Shepherd)"
+  ],
+  [
+   "Weak supervision",
+   "Estimating how accurate each noisy verifier is from how they agree with each other, without true labels.",
+   "Saad-Falcon et al. 2025 (Weaver)"
+  ],
+  [
+   "Reward hacking (verifier exploitation)",
+   "Search finds answers that score high but are wrong. More samples make it more likely.",
+   "Cobbe et al. 2021"
+  ]
+ ],
+ "traps": [
+  "Trusting an LLM judge that says yes to almost everything. High recall with low precision can't help you pick one answer.",
+  "Searching too hard against one verifier. Cobbe et al. saw accuracy fall past 400 samples as wrong answers started fooling the verifier.",
+  "Combining verifiers that share the same blind spot (two prompts to the same model). They agree with each other, so label-free weighting overrates them.",
+  "Reading step scores from a prompted 8B model as if they were a trained PRM. They are a weak signal; measure them against an oracle first.",
+  "Using rollout-based step labels with too few rollouts. Each rollout moves a soft label by 1/N, so small N gives noisy labels.",
+  "Fitting verifier weights on your test set and reporting the result. Use a separate set, or a label-free method."
+ ],
+ "check": [
+  [
+   "Why can majority vote fail even when the right answer was sampled?",
+   "If the right answer is rare (sampled once in many tries) and wrong answers cluster, the vote picks the cluster. Brown et al. note correct answers can have 1% or lower probability."
+  ],
+  [
+   "What does a process verifier give you that an outcome verifier doesn't?",
+   "A score per step, so you see where a solution broke. Lightman et al. found it also picked better: 78.2% vs 72.4% for outcome supervision on their MATH subset."
+  ],
+  [
+   "How does Math-Shepherd label a step without people?",
+   "It finishes the solution from that step several times and checks the final answers: the share that are right is the soft label; whether any is right is the hard label."
+  ]
+ ]
+}

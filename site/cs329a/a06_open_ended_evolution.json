@@ -1,0 +1,49 @@
+{
+  "id": "a06",
+  "title": "Open-ended evolution of self-improving agents",
+  "lecture": "CS329A Lecture 7 (Oct 13)",
+  "big_idea": "Let an LLM propose changes to code, agents or experiments, score every proposal automatically, and keep an archive of what worked to build on. Progress comes from the evaluator and the archive; the LLM supplies the guesses.",
+  "papers": [
+    {"title": "Automated Design of Agentic Systems", "authors": "Hu, Lu & Clune", "year": 2024,
+     "url": "https://arxiv.org/abs/2408.08435",
+     "what": "Agents are defined as code (a forward() function). Meta Agent Search: a meta agent reads an archive of earlier agents with their scores, writes a new agent, checks it for novelty with two self-reflection steps, evaluates it on validation data (repairing errors up to five times) and adds it to the archive. The archive is seeded with hand-designed agents like Chain-of-Thought and Self-Refine.",
+     "result": "With GPT-4 as meta agent and GPT-3.5 running the agents: +13.6 F1 (out of 100) on DROP and +14.4% accuracy on MGSM over the best hand-designed agents; agents found on MGSM gave +25.9% on GSM8K and +13.2% on GSM-Hard when transferred. Discovered agents kept their edge when moved to other models (e.g. Claude, GPT-4).",
+     "takeaway": "If you have a checkable task set, let a strong model search over agent designs written as code, with a held-out set to catch lucky winners. Start the archive with the designs you already use."},
+    {"title": "Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents", "authors": "Zhang, Hu, Lu, Lange & Clune", "year": 2025,
+     "url": "https://arxiv.org/abs/2505.22954",
+     "what": "The course page links the 'Automated design of agentic systems' reading to this paper. A coding agent rewrites its own code; each new version is tested on coding benchmarks and kept in a growing archive (a tree of agents), and new versions are branched from archive members, not only from the latest best.",
+     "result": "SWE-bench 20.0% -> 50.0% and Polyglot 14.2% -> 30.7%, beating variants without self-improvement or without open-ended exploration.",
+     "takeaway": "Keep the whole archive, not just the current best: stepping stones that look worse now often lead to the biggest later gains."},
+    {"title": "The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery", "authors": "Lu, Lu, Lange, Foerster, Clune & Ha", "year": 2024,
+     "url": "https://arxiv.org/abs/2408.06292",
+     "what": "A pipeline where LLMs generate research ideas (checked for novelty against Semantic Scholar), write and run experiment code with the Aider coding assistant, plot results, write a full LaTeX paper and review it with an automated reviewer. Applied to diffusion models, transformer language modeling and learning dynamics.",
+     "result": "Under $15 per paper. The GPT-4o reviewer reached 0.65 balanced accuracy on accept/reject for 500 ICLR 2022 papers, vs 0.66 for humans (from the NeurIPS 2021 consistency experiment). The authors report safety issues: the system edited its own code to extend timeouts and once relaunched itself repeatedly.",
+     "takeaway": "Automating the full loop is possible, but the weak points are the LLM reviewer and the sandbox. Ground every claim in the raw results with code, and run generated code in a container with timeouts, storage limits and no network."},
+    {"title": "AlphaEvolve: A coding agent for scientific and algorithmic discovery", "authors": "Novikov et al. (Google DeepMind)", "year": 2025,
+     "url": "https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/AlphaEvolve.pdf",
+     "what": "An evolutionary loop: a program database (MAP-Elites plus islands) feeds a prompt sampler; an ensemble of Gemini 2.0 Flash (many fast ideas) and Gemini 2.0 Pro (fewer, better ones) proposes code diffs in SEARCH/REPLACE format inside marked EVOLVE-BLOCKs; automatic evaluators score each child, optionally as a cascade of harder and harder tests.",
+     "result": "A 4x4 complex matrix multiplication with 48 scalar multiplications, the first improvement over Strassen in this setting in 56 years. On 50+ open math problems it matched the best known constructions in about 75% and improved them in about 20% (e.g. kissing number in 11 dimensions: 593, previous 592). At Google: a scheduling heuristic recovering on average 0.7% of fleet-wide compute, a 23% average kernel speedup giving 1% less Gemini training time, and a 32% speedup of a FlashAttention kernel.",
+     "takeaway": "Any problem with a fast, trustworthy scoring function is a candidate for LLM-driven evolution. Spend your effort on the evaluator (validity first, then quality) and let cheap models generate many candidates."}
+  ],
+  "terms": [
+    ["Archive", "The stored set of every candidate tried so far with its score. New candidates are made by changing archive members.", "Hu et al. 2024; Zhang et al. 2025"],
+    ["Open-endedness", "Searching for things that are new and interesting, not only better on one number, so the search keeps finding stepping stones instead of getting stuck.", "lecture"],
+    ["Meta agent", "An agent whose job is to write other agents (as code), as in ADAS's Meta Agent Search.", "Hu et al. 2024"],
+    ["Evaluation cascade", "Test each candidate on a tiny, fast test first, and only run the full, expensive test on candidates that pass.", "Novikov et al. 2025"],
+    ["MAP-Elites / islands", "Ways to keep diversity: keep the best candidate in each 'niche' (MAP-Elites), or evolve several separate populations (islands).", "Novikov et al. 2025"],
+    ["Sandbox", "Running untrusted code in a separate, limited process or container (timeouts, no network, limited disk) so it cannot harm the host.", "Lu et al. 2024"],
+    ["Reward hacking", "The search finds a way to score high that breaks the intent of the task, e.g. a 'packing' that overfills bins when the evaluator forgets to check.", "lecture"]
+  ],
+  "traps": [
+    "An evaluator without a validity check. The search will find the loophole (in the notebook, one overfilled bin scores 27 out of a 'perfect' 1.0).",
+    "Trusting a win on a tiny search set. With 6 questions one answer is 17 points; confirm the winner on held-out data.",
+    "Running model-written code in your own Python process. Always use a subprocess or container with a timeout; the AI Scientist raised its own timeout when it could.",
+    "Keeping only the current best. Without an archive and some diversity, the search gets stuck on one line of ideas.",
+    "Letting an LLM reviewer be the only judge. Check numbers and claims against the raw results with code."
+  ],
+  "check": [
+    ["Why does AlphaEvolve run an evaluation cascade instead of the full test on every child?", "Most children are worse or broken; a tiny fast test filters them out early, so the expensive test is spent only on promising ones."],
+    ["In ADAS, what does the meta agent output, and how is it judged?", "A new agent written as code (a forward() function); it is run on validation tasks and its score is stored with it in the archive."],
+    ["Name two safety measures for an AI Scientist-style loop.", "Run generated code in a sandbox (separate process or container) with time, memory and storage limits and no network; check the write-up's claims against the raw results with code rather than trusting the LLM reviewer."]
+  ]
+}

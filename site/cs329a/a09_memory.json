@@ -1,0 +1,135 @@
+{
+ "id": "a09",
+ "title": "Augmenting agents with memory",
+ "lecture": "CS329A Lecture 14 (Nov 7), guest lecturer Junchen Jiang (LMCache, UChicago)",
+ "big_idea": "A model only sees its context window, and long contexts are slow and costly. You can give an agent more memory at three layers: let the agent page facts in and out (MemGPT), let the server reuse work it already did on the same text (KV-cache reuse: CacheBlend, LMCache), or compress a corpus into a small trained memory ahead of time (Cartridges).",
+ "papers": [
+  {
+   "title": "Cartridges: Lightweight and general-purpose long context representations via self-study",
+   "authors": "Eyuboglu, Ehrlich, Arora, Guha, Zinsley, Liu, Tennien, Rudra, Zou, Mirhoseini, Ré",
+   "year": 2025,
+   "url": "https://arxiv.org/abs/2506.06266",
+   "what": "Train a small KV cache (a 'Cartridge') offline for each corpus and load it at question time instead of the whole corpus. Training on the raw text with next-token prediction generalized poorly, so they propose self-study: the model has synthetic conversations about chunks of the corpus (from generic seed prompts such as summarize, structure, ask a question), and the Cartridge is trained by context distillation to match the model's next-token distributions when the chunk is in context.",
+   "result": "Matched in-context learning quality on long-context benchmarks with 38.6x less memory and 26.4x higher throughput. Extended effective context on MTOB from 128k to 484k tokens. Distillation beat next-token training on MTOB (chrF 24.9 to 33.5). Initializing from the first p corpus tokens beat random vectors on LongHealth (55.3% vs 29.9%). Prefix-tuning kept MMLU near 54.7 while a memory-matched LoRA fell to 45.3. Cartridges can be composed at inference without retraining.",
+   "takeaway": "If one large corpus (a contract archive, a codebase) is queried thousands of times, paying once to train a compact memory can beat re-reading it each time. The training data must be varied synthetic Q&A, not the raw text."
+  },
+  {
+   "title": "MemGPT: Towards LLMs as Operating Systems",
+   "authors": "Packer, Wooders, Lin, Fang, Patil, Stoica, Gonzalez",
+   "year": 2023,
+   "url": "https://arxiv.org/abs/2310.08560",
+   "what": "Virtual context management modeled on an operating system's memory hierarchy. Main context = read-only system instructions, a writable working context, and a FIFO message queue headed by a recursive summary. External context = recall storage (all messages) and archival storage (vector-searched text). The model moves data with function calls; results are paginated; a memory-pressure warning fires at about 70% of the window and about half the queue is evicted at 100%.",
+   "result": "Deep memory retrieval in multi-session chat: GPT-4 accuracy 32.1% without MemGPT vs 92.5% with it (GPT-4 Turbo 35.3% vs 93.4%; GPT-3.5 Turbo 38.7% vs 66.9%). On nested key-value retrieval, GPT-4 and GPT-4 Turbo alone fell to 0% by 3 nesting levels, while MemGPT with GPT-4 was unaffected by depth. On document QA, MemGPT's accuracy stayed flat as more documents were retrieved, while fixed-context baselines were capped by the retriever.",
+   "takeaway": "Give the agent explicit memory tools (search, save a note) and a hard context budget, and keep every message in an append-only store. Check that the agent actually saves what it needs: the model decides what to remember."
+  },
+  {
+   "title": "CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion",
+   "authors": "Yao, Li, Liu, Ray, Cheng, Zhang, Du, Lu, Jiang",
+   "year": 2024,
+   "url": "https://arxiv.org/abs/2405.16444",
+   "what": "Prefix caching only helps when a request starts with exactly the same text, which RAG rarely does. CacheBlend reuses each retrieved chunk's precomputed KV cache wherever it sits, and recomputes only a small share of tokens (15% per layer by default) chosen by KV deviation, the tokens whose KV values change most from cross-attention to earlier chunks. Recompute overlaps with loading caches from slower storage.",
+   "result": "Tested on Mistral-7B, Yi-34B and Llama-70B over 2WikiMQA, Musique, SAMSum and MultiNews. Versus full KV recompute: time to first token 2.2-3.3x lower and throughput 2.8-5x higher, with quality within 0.02 F1/Rouge-L. Recomputing 5-18% of tokens lost at most 0.002 F1/Rouge-L on Yi-34B. Full KV reuse without recompute was about as fast but lost 0.1-0.2 F1 on QA.",
+   "takeaway": "For RAG on your own GPUs, the prefill of retrieved chunks is the main latency cost. Cache chunk KV and use a serving stack that can blend it (LMCache with vLLM). Even without that, put stable text first so plain prefix caching hits."
+  },
+  {
+   "title": "LMCache: An Efficient KV Cache Layer for Enterprise-Scale LLM Inference (background reading, our pick)",
+   "authors": "Cheng, Liu, et al. (with Junchen Jiang)",
+   "year": 2025,
+   "url": "https://arxiv.org/abs/2510.09665",
+   "what": "The open-source KV cache layer from the guest lecturer's group. It moves KV caches out of GPU memory into CPU, disk or network storage and shares them across vLLM/SGLang engines and queries, supporting both prefix reuse across queries and prefill-decode disaggregation. Not an assigned course paper; added because the guest lecture is about it.",
+   "result": "The authors report up to 15x higher throughput when combined with vLLM on workloads such as multi-round QA and document analysis, and observe that context truncation, common in industry, can cut prefix cache hit ratio by half.",
+   "takeaway": "If you self-host models for repeated document work, a KV cache layer is often the cheapest speed-up available, before buying more GPUs."
+  }
+ ],
+ "terms": [
+  [
+   "Context window",
+   "The text a model can see in one call. Everything else is invisible to it.",
+   "general"
+  ],
+  [
+   "Main context / external context",
+   "MemGPT's split: what is in the prompt now vs what is stored outside and must be fetched with a function call.",
+   "Packer et al. 2023"
+  ],
+  [
+   "Working context",
+   "A small, writable block of notes inside the prompt that survives when old messages are evicted.",
+   "Packer et al. 2023"
+  ],
+  [
+   "Archival storage",
+   "A searchable store of documents outside the window; the agent pages results in.",
+   "Packer et al. 2023"
+  ],
+  [
+   "KV cache",
+   "The key and value vectors a transformer computes for every prompt token at every layer. Reusing them skips re-reading that text.",
+   "general"
+  ],
+  [
+   "Prefill",
+   "The step where the model reads the whole prompt before writing; its time grows with prompt length.",
+   "general"
+  ],
+  [
+   "Time to first token (TTFT)",
+   "How long a user waits before the first word appears; dominated by prefill on long prompts.",
+   "Yao et al. 2024"
+  ],
+  [
+   "Prefix caching",
+   "Reusing the KV cache when a new prompt starts with exactly the same text as an earlier one.",
+   "general"
+  ],
+  [
+   "KV deviation",
+   "How much a token's cached KV differs from what full recompute would give; CacheBlend recomputes the tokens with the largest deviation.",
+   "Yao et al. 2024"
+  ],
+  [
+   "Cartridge",
+   "A small trained KV cache that stands in for a whole corpus at question time.",
+   "Eyuboglu et al. 2025"
+  ],
+  [
+   "Self-study",
+   "Training data for a Cartridge: the model's own synthetic conversations about chunks of the corpus.",
+   "Eyuboglu et al. 2025"
+  ],
+  [
+   "Context distillation",
+   "Training the model-with-Cartridge to match the next-token probabilities of the model-with-full-text.",
+   "Eyuboglu et al. 2025"
+  ]
+ ],
+ "traps": [
+  "Putting a timestamp, request ID or user name at the top of the prompt. It changes the first tokens, so prefix caching never hits.",
+  "Trusting the agent to save notes. In MemGPT-style paging the model decides what to remember; if it skips a note, the fact is gone from view. Log everything and test recall.",
+  "Training a compact memory on the raw text with next-token prediction. Cartridges found it memorizes but does not generalize; the varied synthetic conversations are what make it work.",
+  "Measuring TTFT with the first call after loading the model. Load time swamps everything; warm up first.",
+  "Assuming two requests share a cache. Servers with several slots or replicas may route them apart; LMCache exists partly to share caches across engines."
+ ],
+ "check": [
+  [
+   "Why does changing the first word of a long prompt make it slow again?",
+   "Prefix caching only reuses KV for an exact matching prefix; a change at the start invalidates everything after it, so the whole prompt is prefilled again."
+  ],
+  [
+   "In MemGPT, what survives when old messages are evicted from the FIFO queue?",
+   "The working context notes, a recursive summary, and the full messages in recall storage (retrievable by search)."
+  ],
+  [
+   "What does CacheBlend recompute, and why not nothing?",
+   "A small share of tokens (15% per layer by default) with the highest KV deviation; reusing caches with no recompute ignores cross-attention between chunks and loses quality."
+  ],
+  [
+   "How is a Cartridge trained?",
+   "With self-study: the model generates synthetic conversations about corpus chunks, and a small KV cache is trained by context distillation to match the model's outputs when the chunk is in context."
+  ],
+  [
+   "Our notebook's 'cartridge' is text notes. What is the real one?",
+   "A set of trainable key and value vectors (a prefix-tuning style KV cache), trained with gradients while the model weights stay frozen."
+  ]
+ ]
+}

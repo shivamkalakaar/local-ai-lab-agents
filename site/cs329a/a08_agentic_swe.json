@@ -1,0 +1,45 @@
+{
+  "id": "a08",
+  "title": "Agentic frameworks for software engineering",
+  "lecture": "CS329A Lecture 13 (Nov 3)",
+  "big_idea": "Code is the easiest place to self-improve because the computer grades the work: tests pass or fail, and code runs faster or slower. Sample many attempts, let tests (even model-written ones) pick the winner, and give the agent clear feedback from the system, such as a profiler, instead of a bare number.",
+  "papers": [
+    {"title": "CodeMonkeys: Scaling Test-Time Compute for Software Engineering", "authors": "Ehrlich, Brown, Juravsky et al.", "year": 2025, "url": "https://arxiv.org/abs/2501.14723",
+     "what": "A SWE-bench system in three steps: find relevant files (a cheap model scans every file), generate 10 parallel multi-turn attempts that each write a code edit and a test script and iterate on execution feedback, then select by running all model-written tests on all edits, keeping the top 3 by votes, and letting a model (which can write more tests) choose.",
+     "result": "57.4% of SWE-bench Verified resolved for about 2,300 USD, with 69.8% coverage (some attempt was correct). Selecting over an ensemble of edits from top leaderboard submissions reached 66.2%, above the best single member (62.8%). Different splits between serial and parallel compute often gave similar coverage. Model selection without the top-3 vote filter did worse than plain voting; with the filter it did better.",
+     "takeaway": "Treat generation and selection as separate problems and measure both (coverage vs final score). Cheap test-based voting to cut the pool, then a model judge on the short list, closes much of the gap."},
+    {"title": "KernelBench: Can LLMs Write Efficient GPU Kernels?", "authors": "Ouyang, Guo et al.", "year": 2025, "url": "https://arxiv.org/abs/2502.10517",
+     "what": "250 PyTorch workloads in three levels. The model rewrites each as faster GPU code. Outputs are compared with the reference on 5 random inputs and both are timed. The metric fast_p is the fraction of tasks that are correct and faster than the reference by more than a factor p.",
+     "result": "One-shot, frontier reasoning models matched the PyTorch baseline in fewer than 20% of cases. With execution and profiler feedback over 10 refinement turns, the paper reports fast_1 rising from 12%, 36% and 12% to 43%, 72% and 18% across the three levels (the paper's Table 1 lists 2% as the Level 3 starting value; its introduction says 12%); the headline case is DeepSeek-R1 on Level 2, from 36% to 72%. Execution feedback mostly fixed execution errors; functional correctness stayed hard.",
+     "takeaway": "Grade speed and correctness together with one number (fast_p), check on several random inputs, and feed the model real execution and profiling output each turn."},
+    {"title": "Improving Parallel Program Performance with LLM Optimizers via Agent-System Interfaces", "authors": "Wei, Nie et al.", "year": 2024, "url": "https://arxiv.org/abs/2410.15625",
+     "what": "An LLM optimizer (via the Trace framework, with GPT-4o) writes mappers that decide where tasks and data go in parallel programs. The agent-system interface has a small domain-specific language that hides low-level C++ and defines the search space, and AutoGuide, which turns raw execution output into explanations and suggested changes.",
+     "result": "Within 10 iterations it beat OpenTuner run for 1000 iterations, by 3.8x. Its mappers beat expert-written ones by up to 1.34x across nine benchmarks, cutting tuning from days to minutes. The DSL gave much higher code-generation success than raw C++.",
+     "takeaway": "Design what the agent sees and writes. A narrow action language plus feedback that explains errors and suggests fixes can matter more than a bigger model or more iterations."}
+  ],
+  "terms": [
+    ["Coverage", "Fraction of problems where at least one generated attempt is correct; the best any selector can do.", "Ehrlich et al. 2025"],
+    ["Serial vs parallel test-time compute", "Serial: more turns of fixing one attempt. Parallel: more independent attempts.", "Ehrlich et al. 2025"],
+    ["Test-based voting", "Run every model-written test on every candidate edit; the edit that passes the most tests wins.", "Ehrlich et al. 2025"],
+    ["fast_p", "Fraction of tasks where the new code is correct AND more than p times faster than the reference; fast_0 is plain correctness.", "Ouyang et al. 2025"],
+    ["Agent-system interface", "The layer between the agent and the system: what actions the agent can write and what feedback it gets back.", "Wei et al. 2024"],
+    ["AutoGuide", "A step that turns raw system output (errors, timings) into plain explanations and suggested changes for the agent.", "Wei et al. 2024"],
+    ["Profiler", "A tool that reports which functions used the most time; Python's built-in one is cProfile.", "Python standard library"]
+  ],
+  "traps": [
+    "High coverage is not a high score. More parallel samples can make selection harder.",
+    "Model-written tests can be wrong. Drop tests that already pass on the buggy code, and don't trust a single test.",
+    "A model judge on the whole pool can do worse than plain voting; filter to a short list first.",
+    "Checking speed on one input invites gaming. Check correctness on several random inputs, including edge cases like large values.",
+    "A speedup threshold of 1x is easy when the baseline is a Python loop and hard when the baseline is already tuned. Pick p for your baseline.",
+    "Timing is noisy. Take the best of several runs and keep timing in a separate process.",
+    "Never run model-written code in your own process. Use a subprocess with a timeout and a fresh folder."
+  ],
+  "check": [
+    ["What are CodeMonkeys' three subtasks?", "Context (find relevant files), generation (sample edits and tests), and selection (choose one edit)."],
+    ["How does CodeMonkeys select an edit?", "It runs model-written tests on all edits, keeps the top 3 by votes, and a model picks among them, optionally writing more tests."],
+    ["What does fast_1 measure?", "The fraction of tasks where the generated code is correct and faster than the reference."],
+    ["What did profiler and execution feedback do for DeepSeek-R1 on KernelBench Level 2?", "Raised fast_1 from 36% to 72% over 10 turns of refinement."],
+    ["What are the two parts of the agent-system interface in Wei et al.?", "A domain-specific language for mappers, and AutoGuide, which turns raw execution output into actionable feedback."]
+  ]
+}

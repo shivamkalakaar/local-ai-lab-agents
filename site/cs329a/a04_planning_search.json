@@ -1,0 +1,76 @@
+{
+  "id": "a04",
+  "title": "Multi-step reasoning and planning",
+  "lecture": "CS329A Lecture 5 (Oct 6)",
+  "big_idea": "Hard tasks need more than one straight pass. Search a tree of steps and back up from dead ends, split a task only when a direct try fails, spend budget on new ideas or on refining old ones depending on feedback, and run independent steps at the same time. Every step you log can become step-level training data.",
+  "papers": [
+    {
+      "title": "Synthetic Data Generation & Multi-Step RL for Reasoning & Tool Use (SWiRL)",
+      "authors": "Goldie et al.",
+      "year": 2025,
+      "url": "https://arxiv.org/abs/2504.04736",
+      "what": "Gemma 2 generates multi-step trajectories with tools (a search engine for QA, a calculator for math). Each trajectory with k actions is cut into k sub-trajectories (context so far, then the next action). These are filtered, and the model is trained with step-wise RL where a generative reward model (Gemini 1.5 Pro) judges each action.",
+      "result": "Relative accuracy gains over baselines: 21.5% GSM8K, 12.3% HotPotQA, 14.8% CofCA, 11.1% MuSiQue, 15.3% BeerQA. Training only on HotPotQA improved zero-shot GSM8K by 16.9% relative. Process-only filtering (keep steps judged reasonable, even if the final answer was wrong) gave the best results for RL; outcome filtering usually hurt compared with no filter. Smaller 2B and 9B models generalized less consistently than 27B.",
+      "takeaway": "Log agent runs step by step and label steps, not only final outcomes. A failed run still contains good steps worth training on."
+    },
+    {
+      "title": "Language Agent Tree Search Unifies Reasoning Acting and Planning in Language Models (LATS)",
+      "authors": "Zhou et al.",
+      "year": 2023,
+      "url": "https://arxiv.org/abs/2310.04406",
+      "what": "Monte Carlo Tree Search over agent actions. Each round: select a node by UCT, expand n sampled actions (n = 5 by default) and run them in the environment, evaluate with V = λ·(LM score) + (1-λ)·(self-consistency), simulate to the end, backpropagate, and write a verbal reflection after a failure.",
+      "result": "HumanEval pass@1 92.7% with GPT-4 (83.8% with GPT-3.5, vs 68.1% for Reflexion). HotPotQA EM 0.63 vs 0.32 for ReAct (GPT-3.5, 100-question subset). WebShop score 75.9 without gradient training. Game of 24 success 0.44 vs 0.20 for Tree-of-Thoughts. It costs more than ReAct or Reflexion and assumes you can return to earlier states.",
+      "takeaway": "When you have a checkable reward (tests, a verifier), search beats a single chain. Only use it where states can be undone, and cap the expansions."
+    },
+    {
+      "title": "SPRINT: Enabling Interleaved Planning and Parallelized Execution in Reasoning Models",
+      "authors": "Biju et al.",
+      "year": 2025,
+      "url": "https://arxiv.org/abs/2506.05745",
+      "what": "A data pipeline rewrites long sequential reasoning traces (from DeepSeek-R1 on MATH) into rounds: a plan listing independent subtasks, then parallel execution of those subtasks. GPT-4o and GPT-4o-mini split traces into steps and build a dependency graph; about 1,700 examples fine-tune a 7B distilled reasoning model to plan and run steps in parallel.",
+      "result": "Matched reasoning baselines on math (MATH-500 92.5% vs 91.0% for the same model fine-tuned on sequential traces) while cutting sequential tokens by up to 39% on problems needing more than 8,000 tokens. The gains carried over to out-of-domain tasks: up to 45% fewer sequential tokens on GPQA and 65% on Countdown.",
+      "takeaway": "Latency is set by the longest chain of dependent steps, not the total work. Have the planner mark which steps are independent and run those in parallel."
+    },
+    {
+      "title": "ADaPT: As-Needed Decomposition and Planning with Language Models",
+      "authors": "Prasad et al.",
+      "year": 2024,
+      "url": "https://arxiv.org/abs/2311.05772",
+      "what": "An executor LLM first tries the whole task. Only if it reports failure does a planner split the task into a few sub-tasks joined by AND/OR, and ADaPT recurses on each, up to a max depth (3 for ALFWorld and WebShop, 4 for TextCraft). Success is the executor's own judgment.",
+      "result": "With GPT-3.5: ALFWorld 71.6% vs 43.3% ReAct and 57.5% Reflexion; WebShop 44.0% vs 32.0% ReAct; TextCraft (a new compositional dataset) 52.0% vs 19.0% ReAct. The abstract summarizes this as up to 28.3%, 27% and 33% higher success rates than strong baselines. The executor's self-reported success overestimated real success, by more than 30 points on WebShop.",
+      "takeaway": "Don't plan everything up front. Try directly, and decompose only the parts that fail. Use a real checker for 'did it work' when you can; self-reports are optimistic."
+    },
+    {
+      "title": "Wider or Deeper? Scaling LLM Inference-Time Compute with Adaptive Branching Tree Search (AB-MCTS)",
+      "authors": "Inoue et al.",
+      "year": 2025,
+      "url": "https://arxiv.org/abs/2503.04412",
+      "what": "A tree search where each node can generate a brand-new answer (wider, via a GEN node) or refine an existing child (deeper), chosen by Thompson sampling on feedback scores. Two variants: AB-MCTS-M (a mixed model) and AB-MCTS-A (node aggregation). Tested with GPT-4o and DeepSeek-V3 on LiveCodeBench, CodeContests, ARC-AGI and MLE-Bench.",
+      "result": "At 128 calls on CodeContests with GPT-4o: AB-MCTS-M 40.6%, repeated sampling 37.9%, standard MCTS 37.5%, pure sequential refinement 30.1%. AB-MCTS-M had the best average rank across benchmarks. On ARC-AGI at 128 calls repeated sampling was still best, but with up to 512 calls AB-MCTS kept improving while repeated sampling plateaued. Many LiveCodeBench gaps look within the reported standard deviations (our reading of the tables).",
+      "takeaway": "Neither 'sample more' nor 'refine more' always wins. Let feedback scores decide where the next call goes, and expect the gains to appear at larger budgets."
+    }
+  ],
+  "terms": [
+    ["Tree search", "Exploring several possible next steps, scoring them, and going back to a better branch when one fails, instead of committing to one chain.", "Zhou et al. 2023"],
+    ["Value function", "A score for how promising a partial solution is. In LATS it mixes the LM's own rating with self-consistency (how often a state is proposed).", "Zhou et al. 2023"],
+    ["As-needed decomposition", "Split a task into sub-tasks only after a direct attempt fails, and recurse on the failing parts.", "Prasad et al. 2024"],
+    ["Wider vs deeper", "Spending the next call on a new independent answer (wider) or on refining an existing one with feedback (deeper).", "Inoue et al. 2025"],
+    ["Thompson sampling", "Pick the option whose random draw from its score distribution is highest; it balances trying new options with using proven ones.", "Inoue et al. 2025"],
+    ["Sequential tokens / critical path", "The tokens or steps that must happen one after another; parallel steps only count once per round.", "Biju et al. 2025"],
+    ["Sub-trajectory and process filtering", "Cutting a multi-step run into one example per action, and keeping steps a judge calls reasonable regardless of the final outcome.", "Goldie et al. 2025"]
+  ],
+  "traps": [
+    "Searching where you can't undo actions. LATS assumes you can return to earlier states; a sent email or a database write can't be rewound.",
+    "Trusting the model's value scores alone. Use a real verifier when one exists; LM ratings are noisy.",
+    "Planning everything up front. A long fixed plan fails when any step fails; ADaPT decomposes only where needed.",
+    "Trusting self-reported success. ADaPT's executor overestimated success by more than 30 points on WebShop.",
+    "Judging wider vs deeper at tiny budgets. AB-MCTS's gains showed up at tens to hundreds of calls, and some gaps were within noise.",
+    "Parallelizing steps that depend on each other. Map dependencies first; the longest chain sets the floor on latency.",
+    "Keeping only successful runs as training data. SWiRL found process filtering beat outcome filtering for RL."
+  ],
+  "check": [
+    ["What does ADaPT do differently from plan-and-execute?", "It tries the whole task first and only plans and splits it when the executor fails, recursing on failed parts up to a max depth, so easy tasks cost one call."],
+    ["In AB-MCTS, what is the choice made at each node, and what decides it?", "Whether to generate a new answer (wider) or refine an existing one (deeper); Thompson sampling on the feedback scores decides."],
+    ["Why might SWiRL keep a step from a trajectory whose final answer was wrong?", "Because the step itself was judged reasonable. Process-only filtering gave the best RL results, and failed runs still contain useful good steps."]
+  ]
+}

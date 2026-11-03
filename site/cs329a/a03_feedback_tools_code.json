@@ -1,0 +1,57 @@
+{
+  "id": "a03",
+  "title": "Learning from feedback with tools and code",
+  "lecture": "CS329A Lecture 4 (Oct 3)",
+  "big_idea": "A model improves when the world answers back: tool results, test results, or a written set of rules. Use outside signals you can check, not the model's own opinion of itself, and log every loop so it can become training data later.",
+  "papers": [
+    {
+      "title": "ReAct: Synergizing Reasoning and Acting in Language Models",
+      "authors": "Yao et al.",
+      "year": 2022,
+      "url": "https://arxiv.org/abs/2210.03629",
+      "what": "The model writes a Thought, then an Action (a tool call such as a Wikipedia search), then reads the Observation, and repeats. They prompt PaLM-540B with a few example trajectories and compare against reasoning-only (chain-of-thought) and acting-only prompts on HotpotQA, FEVER, ALFWorld and WebShop.",
+      "result": "FEVER accuracy 60.9 vs 56.3 for chain-of-thought; on HotpotQA ReAct alone was slightly behind (27.4 vs 29.4 EM), but combining ReAct with self-consistent CoT gave the best prompting results (35.1 EM HotpotQA, 64.6 FEVER). In a manual study of HotpotQA failures, hallucination caused 56% of CoT failures and 0% of ReAct failures, while 47% of ReAct failures were reasoning errors such as repeating steps. ALFWorld success rose by an absolute 34% and WebShop by 10% over imitation and RL baselines, with only one or two in-context examples.",
+      "takeaway": "Give agents tools for facts and let them write a short reason before each action. Watch for loops (the same action again and again) and add a fallback to plain reasoning when the agent runs out of steps."
+    },
+    {
+      "title": "RLEF: Grounding Code LLMs in Execution Feedback with Reinforcement Learning",
+      "authors": "Gehring et al.",
+      "year": 2024,
+      "url": "https://arxiv.org/abs/2410.02089",
+      "what": "Code generation becomes a multi-turn episode: the model writes code, sees results on the public tests, and tries again (up to 3 attempts). The final reward is +1 if hidden private tests pass and -1 otherwise, and the model is trained with PPO. Starting models are Llama 3.1 8B and 70B Instruct.",
+      "result": "On CodeContests (test set, 3 attempts), 8B went from 10.5% to 16.0% and 70B from 27.5% to 40.1% solve rate. Before training the models barely used feedback: 8B scored 11.8% single-turn vs 10.5% multi-turn. With random feedback from an unrelated problem, the trained models got much worse, showing they really read the feedback. The trained 70B beat AlphaCodium (GPT-4) with far fewer samples.",
+      "takeaway": "A repair loop with test feedback is not free accuracy: measure it against simply sampling again with the same budget. If the loop doesn't win, log the episodes; they are exactly the data needed to train a model that does use feedback."
+    },
+    {
+      "title": "Constitutional AI: Harmlessness from AI Feedback",
+      "authors": "Bai et al.",
+      "year": 2022,
+      "url": "https://arxiv.org/abs/2212.08073",
+      "what": "Humans write only a short list of principles (the constitution). Phase 1: the model answers red-team prompts, critiques its answer against a randomly sampled principle, and revises; a model is fine-tuned on the revisions (SL-CAI). Phase 2 (RLAIF): a model compares pairs of answers using a principle, those AI preferences train a preference model, and RL optimizes against it.",
+      "result": "They wrote 16 principles and sampled 4 critique-revision rounds per red-team prompt (182,831 red-team prompts in total, plus helpfulness data). RL-CAI models were rated by crowdworkers as significantly more harmless than RLHF and SL-CAI models, while engaging with harmful requests by explaining objections instead of being evasive. Turning the AI judge's probabilities into soft labels clamped to 40-60% worked better than hard labels when the judge used chain-of-thought. Over-training led to Goodharting: preachy boilerplate in many answers.",
+      "takeaway": "Write your quality bar down as short, checkable rules. Use them to critique and revise outputs, and keep (draft, revision) pairs as preference data. Where a rule can be checked in code (citations exist, verdict present), check it in code instead of trusting the AI judge."
+    }
+  ],
+  "terms": [
+    ["ReAct", "A loop of Thought, Action (tool call) and Observation (tool result), repeated until the agent answers.", "Yao et al. 2022"],
+    ["Execution feedback", "The results of running code (which tests failed, errors, timeouts) shown back to the model so it can fix the code.", "Gehring et al. 2024"],
+    ["Public vs private tests", "Public tests are visible and give feedback during the loop; private tests are hidden and decide the final grade, so the model cannot overfit to them.", "Gehring et al. 2024"],
+    ["Constitution", "A short list of written principles that an AI uses to critique and revise answers, replacing most human labels.", "Bai et al. 2022"],
+    ["Critique-and-revise", "The model reviews its own answer against one principle, writes a critique, then rewrites the answer to fix it.", "Bai et al. 2022"],
+    ["RLAIF", "Reinforcement learning from AI feedback: an AI, not a person, picks the better of two answers, and those picks train the reward model.", "Bai et al. 2022"],
+    ["Preference pair", "A training example with a prompt, a chosen answer and a rejected answer; the input format for reward models and DPO.", "Inferred: standard format used with RLAIF/RLHF data"]
+  ],
+  "traps": [
+    "Calling a repair loop a win without a baseline. Compare against fresh samples with the same number of calls; RLEF found untrained models barely beat it.",
+    "Showing the model the same tests you grade on. Fixes can pass the visible tests and still fail hidden ones; keep a held-out set.",
+    "Trusting the model's own 'looks good to me'. Use outside signals: tests, tool results, code checks.",
+    "Assuming every revision is better. Score drafts and revisions with the same checks, and flip or drop pairs where the revision lost.",
+    "Ignoring position bias in AI judges. Shuffle which answer is A and which is B.",
+    "Over-optimizing against an AI reward. CAI saw Goodharting: preachy boilerplate added to most answers."
+  ],
+  "check": [
+    ["In RLEF, why are the private tests kept hidden from the model?", "So the final reward measures real correctness. If the model saw the grading tests, it could pass them without solving the task (overfit to the feedback)."],
+    ["On HotpotQA, ReAct alone scored slightly below chain-of-thought. Why does the paper still favor it?", "Its answers are grounded: hallucination caused 0% of its failures vs 56% for CoT. Combining ReAct with CoT-SC gave the best scores (35.1 EM)."],
+    ["How does a Constitutional AI critique-and-revise step become training data?", "The original answer is the rejected example and the revision is the chosen one. These pairs (or AI-judged comparisons) train a preference model or a DPO update."]
+  ]
+}

@@ -1,0 +1,131 @@
+{
+ "id": "a10",
+ "title": "Agentic evaluations and long-horizon tasks",
+ "lecture": "CS329A Lecture 17 (Nov 17)",
+ "big_idea": "Benchmark percentages do not tell a customer what an agent can do. Measure agents in human terms: the length of task (in human minutes) they finish half the time, whether an expert would prefer their work product over another expert's, and, for research reports, separate scores for coverage, retrieval and citations.",
+ "papers": [
+  {
+   "title": "Measuring AI Ability to Complete Long Tasks",
+   "authors": "Kwa, West, Becker, Deng, et al. (METR)",
+   "year": 2025,
+   "url": "https://arxiv.org/abs/2503.14499",
+   "what": "Timed skilled humans (over 800 baselines, 2,529 hours) on 170 tasks: 97 from HCAST, 7 from RE-Bench and 66 new short software tasks. For each model, fit a logistic curve of success against log human time (task difficulty = geometric mean of successful human times; tasks weighted by inverse square root of family size; 8 runs per agent and task) and read off the 50% time horizon.",
+   "result": "Frontier 50% horizons doubled about every 7 months since 2019 (207 days, 95% CI 166-240), possibly faster in 2024. Claude 3.7 Sonnet was about 50 minutes; GPT-2 about 2 seconds; a later revision reports o3 at about 110 minutes. 80% horizons were roughly 4-6x shorter than 50% horizons. Gains came mainly from reliability, recovering from mistakes, logical reasoning and tool use.",
+   "takeaway": "Describe your agent to customers as 'finishes X-minute tasks Y% of the time', and quote the high-reliability horizon (80% or more), not the 50% one. Build your task set across a range of lengths and time real people."
+  },
+  {
+   "title": "GDPval: Evaluating AI Model Performance on Real-World Economically Valuable Tasks",
+   "authors": "Patwardhan, Dias, Proehl, Kim, Wang, Watkins, et al. (OpenAI)",
+   "year": 2025,
+   "url": "https://arxiv.org/abs/2510.04374",
+   "what": "1,320 tasks across 44 occupations in the 9 sectors contributing most to US GDP, built from the work of professionals with 14 years of experience on average. Each task asks for a real deliverable (documents, slides, spreadsheets). Occupation experts compare model and human deliverables blind and pairwise; a 220-task gold subset and an automated grader are public.",
+   "result": "On the gold subset, Claude Opus 4.1 was best, with 47.6% of deliverables rated as wins or ties against the expert. Strict win rates: GPT-4o 12.5%, o4-mini 29.1%, o3 35.2%, GPT-5 39.0%. Naively GPT-5 was about 90x faster and 474x cheaper than experts, but with expert review and fixing ('try once, then fix') the gain shrank to about 1.12x faster and 1.18x cheaper. The automated grader agreed with experts 65.7% of the time vs 70.8% human-human agreement. More reasoning effort, more task context and more scaffolding all helped.",
+   "takeaway": "Grade agents on the actual work product against an expert reference, pairwise and blind, and include review time when you claim savings. An LLM grader is useful for iteration but is not as reliable as an expert."
+  },
+  {
+   "title": "DeepScholar-Bench: A Live Benchmark and Automated Evaluation for Generative Research Synthesis",
+   "authors": "Patel, Arabzadeh, Gupta, Sundar, Stoica, Zaharia, Guestrin",
+   "year": 2025,
+   "url": "https://arxiv.org/abs/2508.20033",
+   "what": "A live benchmark: queries and human-written related-work sections are drawn from recent arXiv papers, so it stays fresh and hard to contaminate. Systems must research and write a cited related-work section. Automatic metrics on three axes: knowledge synthesis (organization via pairwise LLM judge; nugget coverage), retrieval quality (relevance rate; reference coverage; document importance) and verifiability (citation precision; claim coverage). Also releases DeepScholar-ref, an open reference pipeline on LOTUS.",
+   "result": "The first set has 63 papers from 18 arXiv domains. No system exceeded a geometric mean of 31% across metrics; OpenAI DeepResearch scored 0.309 but only 0.138 claim coverage and 0.187 reference coverage. A Claude-based search agent had the highest verifiability (citation precision 0.701, claim coverage 0.760). DeepScholar-ref reached 0.285 at lower cost.",
+   "takeaway": "Score research and summary agents with separate metrics for coverage, retrieval and citation support. One overall score hides which part failed, and the best system on one axis is often weak on another."
+  }
+ ],
+ "terms": [
+  [
+   "Time horizon (50%)",
+   "The human time length of tasks that a model completes with 50% success, read from a fitted logistic curve.",
+   "Kwa et al. 2025"
+  ],
+  [
+   "80% time horizon",
+   "The same, at 80% success; much shorter, and closer to what business use needs.",
+   "Kwa et al. 2025"
+  ],
+  [
+   "Logistic curve",
+   "An S-shaped curve from 0 to 1; here, chance of success against log of task length.",
+   "general"
+  ],
+  [
+   "Human baseline",
+   "A timed attempt by a skilled person; the task's difficulty is the geometric mean of successful times.",
+   "Kwa et al. 2025"
+  ],
+  [
+   "Deliverable",
+   "The actual work product (memo, spreadsheet, slides) a task asks for, graded as a whole.",
+   "Patwardhan et al. 2025"
+  ],
+  [
+   "Win-or-tie rate",
+   "Share of pairwise comparisons where the model's deliverable was judged as good as or better than the expert's.",
+   "Patwardhan et al. 2025"
+  ],
+  [
+   "Order swap",
+   "Grading each pair twice with positions swapped, and treating a flip as a tie, to cancel position bias.",
+   "general"
+  ],
+  [
+   "Nugget coverage",
+   "Share of key facts from the human-written reference that appear in the generated report.",
+   "Patel et al. 2025"
+  ],
+  [
+   "Reference coverage",
+   "Share of the reference's important citations that the system found.",
+   "Patel et al. 2025"
+  ],
+  [
+   "Citation precision",
+   "Share of citations whose source actually supports the sentence they are attached to.",
+   "Patel et al. 2025"
+  ],
+  [
+   "Claim coverage",
+   "Share of sentences whose claims are all backed by cited sources.",
+   "Patel et al. 2025"
+  ],
+  [
+   "Live benchmark",
+   "A benchmark refreshed with new items over time, so models cannot have trained on it.",
+   "Patel et al. 2025"
+  ]
+ ],
+ "traps": [
+  "Guessing human times. The time horizon is only as good as the human baselines; our toy's made-up 1.5 minutes per step is exactly what METR avoided by timing people.",
+  "Quoting the 50% horizon to a customer. Half of tasks failing is not a product; quote the 80% or 95% horizon and design review around it.",
+  "Claiming '90x faster' without review time. GDPval's speed-up nearly vanished once expert review and fixes were counted.",
+  "Trusting a single-order LLM grader. Small graders often pick the same position both times; swap and count disagreement as a tie.",
+  "Rewarding long or copied text. Word-overlap metrics can be gamed by pasting sources; keep an LLM or human judge for organization and synthesis.",
+  "Fitting a curve when every run succeeded or every run failed. There is no crossing point in your range; make longer or shorter tasks."
+ ],
+ "check": [
+  [
+   "How does METR turn success rates into a time horizon?",
+   "Fit a logistic curve of success against log human time per model, then find the task length where the curve crosses 50%."
+  ],
+  [
+   "Why is the 80% horizon shorter than the 50% horizon?",
+   "Success falls as tasks get longer, so to succeed 80% of the time the tasks must be shorter; METR found 4-6x shorter."
+  ],
+  [
+   "What does GDPval compare, and how?",
+   "The model's deliverable vs a human expert's for the same task, judged blind and pairwise by occupation experts; the score is the win-or-tie rate."
+  ],
+  [
+   "Why did GDPval's speed and cost advantage shrink?",
+   "Because an expert must review the model's output and fix or redo it when it is wrong; that review time counts."
+  ],
+  [
+   "Name the three axes DeepScholar-Bench scores.",
+   "Knowledge synthesis, retrieval quality and verifiability."
+  ],
+  [
+   "A summary cites a distractor source for a true sentence. Which of our metrics drops?",
+   "Retrieval precision (a non-relevant source was cited) and probably citation precision (the source does not support the sentence)."
+  ]
+ ]
+}

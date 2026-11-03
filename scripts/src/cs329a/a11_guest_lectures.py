@@ -1,0 +1,232 @@
+# %% [markdown]
+# # a11 · Guest lectures and reasoning frontiers
+# **Local AI Lab** · CS329A guest lectures (Lectures 9, 15, 16, 18, 19) and Lecture 20, Future research areas · the reasoning tricks behind today's models, tried on a small local one
+#
+# The course's guest lectures came with no assigned papers. So **the readings in this module are our picks**: each speaker's best-known public papers and posts that match the talk title. They are not the course's reading list. The code part tries Denny Zhou's four reasoning ideas on seeded math problems: chain of thought, self-consistency, least-to-most, and CoT-decoding. The rest of the talks are short summaries at the end.
+
+# %%
+# MODELS: llama3.2:3b
+import json, re, time
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+import httpx
+from lal.llm import ask
+from lal.tasks import math_problems, extract_int
+from lal.checks import check
+
+PROBS = math_problems(6, seed=11, difficulty="hard")      # 3-5 step word problems with exact answers
+print(PROBS[0]["question"], "->", PROBS[0]["answer"])
+
+def acc(preds):
+    return sum(p == q["answer"] for p, q in zip(preds, PROBS)) / len(PROBS)
+
+def pmap(fn, xs):
+    with ThreadPoolExecutor(2) as ex:
+        return list(ex.map(fn, xs))
+
+# %% [markdown]
+# ## 1. Direct answer vs chain of thought (Denny Zhou, Lecture 15)
+# **Chain-of-thought (CoT) prompting** (Wei et al. 2022, *Chain-of-Thought Prompting Elicits Reasoning in Large Language Models*): let the model write its steps before the answer. With eight worked examples, a 540B model reached state-of-the-art on GSM8K grade-school math, beating a fine-tuned GPT-3 with a verifier. Today's chat models are trained to reason this way, so a plain "think step by step" is usually enough. We compare that with forcing the answer right away.
+
+# %%
+DIRECT = "{q}\nReply with only the final number, no words, no working. Format: ANSWER: <number>"
+COT = "{q}\nThink step by step, showing each calculation. Then end with: ANSWER: <number>"
+
+direct = pmap(lambda q: extract_int(ask(DIRECT.format(q=q["question"]), max_tokens=15)), PROBS)        # 6 calls
+cot = pmap(lambda q: extract_int(ask(COT.format(q=q["question"]), max_tokens=500)), PROBS)             # 6 calls
+print(f"direct: {acc(direct):.0%} | chain of thought: {acc(cot):.0%}")
+for q, d, c in zip(PROBS, direct, cot):
+    print(f"  truth {q['answer']:5} | direct {d} | cot {c}")
+
+# %% [markdown]
+# ## 2. Self-consistency: sample several chains, take the majority
+# **Self-consistency** (Wang et al. 2022, *Self-Consistency Improves Chain of Thought Reasoning in Language Models*): sample several reasoning paths at a temperature above 0 and take the most common final answer. A hard problem has many paths to the right answer but the wrong answers tend to scatter. They report gains over single-chain CoT of +17.9% on GSM8K, +11.0% on SVAMP and +12.2% on AQuA. How often the samples agree is also a free **confidence** score.
+
+# %%
+K = 5
+def sample_answers(q):
+    return [extract_int(ask(COT.format(q=q["question"]), temperature=0.7, max_tokens=500)) for _ in range(K)]
+
+samples = pmap(sample_answers, PROBS)                                                                   # 30 calls
+votes = [Counter(a for a in s if a is not None).most_common(1) for s in samples]
+sc = [v[0][0] if v else None for v in votes]
+agree = [v[0][1] / K if v else 0 for v in votes]
+print(f"single CoT: {acc(cot):.0%} | self-consistency@{K}: {acc(sc):.0%}")
+for q, s, a, v in zip(PROBS, samples, agree, sc):
+    print(f"  truth {q['answer']:5} | samples {s} | vote {v} | agreement {a:.0%} | {'right' if v == q['answer'] else 'wrong'}")
+
+# %% [markdown]
+# Look at the agreement column: when most samples agree, the majority is usually right. That is how you decide, in production, which answers to send to a person for review.
+
+# %% [markdown]
+# ## 3. Least-to-most: split the problem, then solve the parts in order
+# **Least-to-most prompting** (Zhou et al. 2022, *Least-to-Most Prompting Enables Complex Reasoning in Large Language Models*): first ask the model to break the problem into simpler sub-questions, then solve them in order, each answer feeding the next. CoT struggles when test problems are harder than the examples; least-to-most reached at least 99% on every split of the SCAN benchmark with 14 examples, versus 16% for CoT.
+#
+# The paper solves each sub-question in its own call. To save calls we do it in two: one call to decompose, one to solve all sub-questions in order.
+
+# %%
+def least_to_most(q):
+    subs = ask(f"{q['question']}\n\nDo not solve it yet. List the simpler sub-questions, in order, that you need to answer to solve this. "
+               "One per line, at most 5.", max_tokens=200)
+    solved = ask(f"Problem: {q['question']}\n\nSub-questions:\n{subs}\n\nAnswer each sub-question in order, using earlier answers. "
+                 "Then end with: ANSWER: <number>", max_tokens=600)
+    return extract_int(solved), subs
+
+l2m_out = pmap(least_to_most, PROBS)                                                                   # 12 calls
+l2m = [a for a, _ in l2m_out]
+print(f"least-to-most: {acc(l2m):.0%}")
+print("example decomposition:\n" + l2m_out[0][1][:400])
+
+# %% [markdown]
+# ## 4. CoT-decoding: reasoning without a prompt
+# **CoT-decoding** (Wang and Zhou 2024, *Chain-of-Thought Reasoning Without Prompting*) shows that a model often "knows" how to reason, but greedy decoding hides it. Give the plain format `Q: ... A:` with no instructions. At the **first** answer token, branch on the top-k alternatives (k = 10 in the paper), then continue each branch greedily. Branches that contain reasoning tend to end in an answer the model is more **confident** about. They measure confidence as Δ: the average gap between the top-1 and top-2 token probabilities over the answer's tokens. On GSM8K, Mistral-7B (pre-trained) went from 9.9% with greedy decoding to 25.1% with CoT-decoding.
+#
+# We need the raw text-completion endpoint for this, so we call Ollama's own API (`/api/generate` with `raw: true`, which skips the chat template). If your Ollama returns token log-probabilities, we take the real top-k first tokens and compute Δ. If not, we **approximate**: sample several different first tokens at a high temperature, and use agreement between branches as the confidence instead of Δ.
+
+# %%
+OLLAMA = "http://localhost:11434"
+
+def generate(prompt, num_predict, temperature=0.0, seed=0, logprobs=False):
+    body = {"model": MODEL, "prompt": prompt, "raw": True, "stream": False,
+            "options": {"temperature": temperature, "num_predict": num_predict, "seed": seed, "stop": ["\nQ:"]}}
+    if logprobs:
+        body.update({"logprobs": True, "top_logprobs": 5})
+    r = httpx.post(f"{OLLAMA}/api/generate", json=body, timeout=180)
+    r.raise_for_status()
+    return r.json()
+
+def first_tokens(prompt, k=5):
+    """Top-k first tokens: from log-probs if the server gives them, else by sampling."""
+    try:
+        lp = generate(prompt, 1, logprobs=True).get("logprobs") or []
+        tops = [t.get("token", "") for t in (lp[0].get("top_logprobs") or [])] if lp else []
+        if len(tops) >= 2:
+            return tops[:k], True
+    except Exception as e:
+        print("log-probs not available:", type(e).__name__)
+    seen = []
+    for s in range(2 * k):                         # sample until we have k different first tokens (cheap 1-token calls)
+        tok = generate(prompt, 1, temperature=1.2, seed=s).get("response", "")
+        if tok not in seen:
+            seen.append(tok)
+        if len(seen) == k:
+            break
+    return seen, False
+
+def delta(lp_list, text):
+    """Average top-1 minus top-2 probability over the tokens of the last number in the text (the paper's Δ)."""
+    import math
+    nums = re.findall(r"-?\d[\d,]*", text)
+    if not nums or not lp_list:
+        return None
+    target, gaps, built = nums[-1], [], ""
+    for t in reversed(lp_list):                    # walk back from the end until we have covered the answer tokens
+        tok = t.get("token", "")
+        built = tok + built
+        tops = sorted((math.exp(x.get("logprob", -99)) for x in (t.get("top_logprobs") or [])), reverse=True) + [0, 0]
+        if any(ch.isdigit() for ch in tok):
+            gaps.append(tops[0] - tops[1])
+        if target in built and gaps:
+            break
+    return sum(gaps) / len(gaps) if gaps else None
+
+def cot_decode(q, k=5):
+    prompt = f"Q: {q['question']}\nA:"
+    toks, have_lp = first_tokens(prompt, k)
+    branches = []
+    for tok in toks:
+        out = generate(prompt + tok, 250, logprobs=have_lp)
+        text = tok + out.get("response", "")
+        branches.append({"first": tok, "answer": extract_int(text), "text": text,
+                         "delta": delta(out.get("logprobs") or [], text) if have_lp else None})
+    counts = Counter(b["answer"] for b in branches if b["answer"] is not None)
+    for b in branches:
+        b["agreement"] = counts.get(b["answer"], 0) / len(branches)
+    # Pick the answer: by summed Δ if we have it (the paper's weighted aggregation), else by agreement.
+    score = Counter()
+    for b in branches:
+        if b["answer"] is not None:
+            score[b["answer"]] += b["delta"] if b["delta"] is not None else 1
+    return branches, (score.most_common(1)[0][0] if score else None), have_lp
+
+try:
+    cd_results = []
+    for q in PROBS[:1]:                                                                                 # about 20 short calls
+        branches, pick, have_lp = cot_decode(q)
+        greedy = branches[0]["answer"] if have_lp else extract_int(generate(f"Q: {q['question']}\nA:", 250).get("response", ""))
+        cd_results.append((q["answer"], greedy, pick))
+        print(f"\ntruth {q['answer']} | greedy {greedy} | CoT-decoding pick {pick} | real log-probs: {have_lp}")
+        for b in branches:
+            d = f"{b['delta']:.2f}" if b["delta"] is not None else "n/a"
+            print(f"  first token {b['first']!r:10} -> answer {b['answer']} | Δ {d} | agreement {b['agreement']:.0%} | {b['text'][:70]!r}")
+except Exception as e:
+    cd_results = []
+    print("Skipped CoT-decoding (needs Ollama's /api/generate):", type(e).__name__, e)
+
+# %% [markdown]
+# **What to notice:** some first tokens start the answer right away ("12"), others start a sentence ("First", "The") and lead into worked steps. Our model is instruction-tuned, so it often reasons anyway; the effect is biggest on pre-trained (base) models, which is what the paper studied. The paper also found instruction-tuned Mistral-7B still gained (31.2% to 38.2% on GSM8K).
+
+# %% [markdown]
+# ## 5. The other talks, in short (readings are our picks)
+#
+# **Melvin Johnson (Google DeepMind), Lecture 9: "Evolution of Post-training from Chatbots to Agents."** His personal site describes him as leading Gemini post-training. Post-training is everything after pre-training: instruction tuning, preference tuning, and reinforcement learning, which together turn a text predictor into a helpful chat model and now into an agent that plans and calls tools. Readings we chose: the Gemini 1.0 report (Gemini Team 2023, *Gemini: A Family of Highly Capable Multimodal Models*), where he is an author and which describes the post-training stages; and his best-known earlier paper (Johnson et al. 2017, *Google's Multilingual Neural Machine Translation System*), where one model handles many languages with only a target-language token added, and can translate between pairs it never saw together ("zero-shot translation"). The lesson that carries over: one general model plus the right training signal beats many special-purpose models.
+#
+# **Thang Luong (Google DeepMind), Lecture 16: "Towards AI Superhuman Reasoning: AlphaProof, AlphaGeometry and Gemini IMO Gold."**
+# - *AlphaGeometry* (Trinh et al. 2024, *Solving olympiad geometry without human demonstrations*, Nature): a language model proposes helpful extra constructions (a new point or line) and a symbolic engine does the rigorous deduction. Trained on 100 million synthetic theorems and proofs, with no human demonstrations. It solved 25 of 30 olympiad geometry problems; the previous best method solved 10, and an average gold medalist about 25.9.
+# - *AlphaProof + AlphaGeometry 2* (DeepMind blog, July 2024): reinforcement learning in the formal proof language Lean, on about a million problems auto-translated from natural language. Together they scored 28 of 42 at IMO 2024 (4 of 6 problems), silver-medal level, but some problems took up to three days.
+# - *Gemini Deep Think* (DeepMind blog, July 2025): 35 of 42 at IMO 2025 (5 of 6 problems), gold-medal level, end to end in natural language within the 4.5-hour limit, using "parallel thinking" (exploring several solution paths at once) and new RL techniques.
+# The arc: from a verifier-backed narrow system to a general model that reasons in plain language. A **checkable reward** (a proof checker, a unit test, our contract labels) is what made the RL work.
+#
+# **Misha Laskin (Reflection AI), Lecture 18: "Building Agentic Systems for Autonomy: Lessons and Open Questions."** Laskin co-founded Reflection AI in March 2025 after DeepMind work on RL and Gemini; its stated bet is that solving autonomous coding leads toward broader superintelligence. Its first product, Asimov, reads code plus team documents and messages to answer how a codebase works (as reported in July 2025). Reading we chose: his earlier paper (Laskin et al. 2022, *In-context Reinforcement Learning with Algorithm Distillation*), which trains a transformer on the learning histories of an RL algorithm; the model then improves its policy *in context*, with no weight updates. That is a clean early version of this course's theme: an agent that gets better from its own experience.
+#
+# **Danny Driess (Physical Intelligence), Lecture 19: "Multimodal AI Agents in Robotics."** Readings we chose: *PaLM-E* (Driess et al. 2023, *PaLM-E: An Embodied Multimodal Language Model*), which feeds images and robot state straight into a language model as "multimodal sentences"; the largest version (562B parameters) did robot planning and reached state-of-the-art on the OK-VQA visual question benchmark. And *π0* (Black et al. 2024, *π0: A Vision-Language-Action Flow Model for General Robot Control*), co-authored by Driess: a vision-language model extended with a flow-matching "action expert" that outputs smooth robot motions, trained on many robot types, doing tasks like folding laundry and assembling boxes. The pattern from the rest of the course holds: start from a pre-trained model, add the new input and output types, and fine-tune for the task.
+#
+# **Lecture 20: Future research areas.** No readings were listed; this paragraph is our synthesis of open problems that run through the course, not the lecture's content: (1) rewards for work that has no unit test (most business work); (2) long-horizon reliability, since METR's 80% horizons are several times shorter than its 50% ones; (3) memory that stays correct over months; (4) cheaper inference so that search, voting and self-checking are affordable; (5) evaluations that keep up with models (live benchmarks like DeepScholar-Bench).
+
+# %%
+check("chain of thought is at least as accurate as direct answers", acc(cot) >= acc(direct))
+check("chain of thought solves at least half the problems", acc(cot) >= 0.5)
+check("self-consistency is not worse than single CoT by more than one problem", acc(sc) >= acc(cot) - 1 / len(PROBS))
+hi = [p == q["answer"] for a, p, q in zip(agree, sc, PROBS) if a >= 0.6]
+lo = [p == q["answer"] for a, p, q in zip(agree, sc, PROBS) if a < 0.6]
+check("high-agreement answers are at least as accurate as low-agreement ones",
+      not hi or not lo or sum(hi) / len(hi) >= sum(lo) / len(lo))
+check("least-to-most returns a number for most problems", sum(a is not None for a in l2m) >= len(PROBS) - 1)
+check("CoT-decoding ran and produced a pick", bool(cd_results) and all(p is not None for _, _, p in cd_results))
+
+# %% [markdown]
+# ## Your turn
+# 1. Raise self-consistency to K = 9 on the two problems with the lowest agreement. Does the majority change? Does agreement go up?
+# 2. Run the direct vs CoT comparison with `llama3.2:3b`. Is the gain from CoT bigger or smaller for the smaller model?
+# 3. Use self-consistency agreement as a gate: send any answer with agreement below 60% to "human review". What share goes to review, and what is the accuracy of the rest?
+#
+# **Next:** back to the CS329A index, or the past-project rebuilds.
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: more samples on the least certain problems (2 x 9 = 18 calls)
+low = sorted(range(len(PROBS)), key=lambda i: agree[i])[:2]
+for i in low:
+    more = [extract_int(ask(COT.format(q=PROBS[i]["question"]), temperature=0.7, max_tokens=500)) for _ in range(9)]
+    top = Counter(a for a in more if a is not None).most_common(1)
+    print(f"truth {PROBS[i]['answer']} | K=5 vote {sc[i]} ({agree[i]:.0%}) | K=9 vote {top[0][0] if top else None} ({top[0][1]/9 if top else 0:.0%})")
+# Notice: more samples make the vote more stable, but if the model is wrong in the same way each time,
+# voting cannot fix it. Agreement measures consistency, not truth.
+
+# %%
+# Solution 2: a smaller model (12 calls)
+d3 = pmap(lambda q: extract_int(ask(DIRECT.format(q=q["question"]), model_name="llama3.2:3b", max_tokens=15)), PROBS)
+c3 = pmap(lambda q: extract_int(ask(COT.format(q=q["question"]), model_name="llama3.2:3b", max_tokens=500)), PROBS)
+print(f"3B direct {acc(d3):.0%} -> CoT {acc(c3):.0%} | 8B direct {acc(direct):.0%} -> CoT {acc(cot):.0%}")
+# Notice: the CoT paper found the gain grows with model size; very small models can write steps that look
+# right but are wrong. On a tiny sample like ours, expect noise.
+
+# %%
+# Solution 3: agreement as a review gate (no new calls)
+auto = [i for i in range(len(PROBS)) if agree[i] >= 0.6]
+print(f"sent to review: {1 - len(auto)/len(PROBS):.0%} | accuracy of auto-approved: "
+      f"{(sum(sc[i] == PROBS[i]['answer'] for i in auto) / len(auto)) if auto else float('nan'):.0%}")
+# Notice: this is the business use of self-consistency. You trade some review work for much higher accuracy
+# on what you let through without a person.

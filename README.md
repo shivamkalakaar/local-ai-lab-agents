@@ -39,6 +39,34 @@ Each notebook is self-contained, so a Colab disconnect only means rerunning the 
 
 These are our own homework-style projects, inspired by the skills CS329Z practices. They are not the course's assignments.
 
+## Part 2 · Self-improving agents (Stanford CS329A)
+Every assigned paper from [CS329A](https://cs329a.stanford.edu/) (Autumn 2025) is summarized on the course site. Each lecture has a runnable notebook on the local model.
+
+| # | Topic | Papers | |
+|---|---|---|---|
+| A01 | Test-time compute scaling | 4 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a01_test_time_compute.ipynb) |
+| A02 | Robust verification | 4 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a02_verification.ipynb) |
+| A03 | Learning from feedback with tools and code | 3 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a03_feedback_tools_code.ipynb) |
+| A04 | Multi-step reasoning and planning | 5 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a04_planning_search.ipynb) |
+| A05 | Train-time scaling and RL | 3 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a05_rl_training.ipynb) |
+| A06 | Open-ended evolution of self-improving agents | 4 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a06_open_ended_evolution.ipynb) |
+| A07 | Self-improvement with search and deep research agents | 3 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a07_search_deep_research.ipynb) |
+| A08 | Agentic frameworks for software engineering | 3 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a08_agentic_swe.ipynb) |
+| A09 | Augmenting agents with memory | 4 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a09_memory.ipynb) |
+| A10 | Agentic evaluations and long-horizon tasks | 3 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a10_evals_long_horizon.ipynb) |
+| A11 | Guest lectures and reasoning frontiers | 11 papers | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a11_guest_lectures.ipynb) |
+
+### Past student projects, rebuilt small
+Small rebuilds of the CS329A Winter 2025 student projects. They credit the original authors and run on the local model.
+
+| # | Project | Original | |
+|---|---|---|---|
+| AP1 | AppBench: Benchmarking AI-Generated Web Applications | [paper](https://cs329a.stanford.edu/winter2025projects/appbench.pdf) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap1_appbench.ipynb) |
+| AP2 | PRIME: Planning with Reflective Iterative Multi-Agentic Exploration | [paper](https://cs329a.stanford.edu/winter2025projects/prime.pdf) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap2_prime.ipynb) |
+| AP3 | Enhancing Mathematical Reasoning in LLMs through Reasoning Distillation, GRPO, and Multi-agent PRM Reranking | [paper](https://cs329a.stanford.edu/winter2025projects/enhancing.pdf) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap3_math_reasoning.ipynb) |
+| AP4 | Towards Effective Meta-Agents: Designing Agents that Design Agents (paper: Inefficiencies of Meta Agents for Agent Design) | [paper](https://cs329a.stanford.edu/winter2025projects/batu.pdf) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap4_meta_agents.ipynb) |
+| AP5 | ARCHON Augmented: Planning and Web-Enhanced Components | [paper](https://cs329a.stanford.edu/winter2025projects/archon.pdf) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap5_archon_augmented.ipynb) |
+
 ## What's in the repo
 - `lal/`: small helpers (start Ollama, call the model, load data, scoring, the P1 reference harness)
 - `data/`: 20 **synthetic** service agreements with planted problems and their answers, plus a sample playbook (`data/gen.py` regenerates them). No real contracts or client data.

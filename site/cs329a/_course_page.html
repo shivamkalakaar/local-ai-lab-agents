@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+    <title>Stanford CS329A | Self-Improving AI Agents</title>
+    <!-- bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <!-- Google fonts -->
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,300' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <style>
+      .navbar {
+          margin-bottom: 0; 
+      }
+
+      .sec {
+          padding: 10px 0;  
+          margin-bottom: 0;  
+      }
+
+      #intro {
+          margin-top: 10px;  
+      }
+
+      .course-title {
+          padding: 15px 0;
+          background-color: #8C1515;  /* Stanford red */
+          color: white;
+          margin-bottom: 10px;  
+      }
+
+      .course-title h1 {
+          margin: 0;
+          font-size: 24px;
+      }
+
+      h2 {
+          margin-top: 10px;
+          margin-bottom: 10px;
+      }
+
+      .instructor {
+          display: inline-block;
+          margin: 10px 20px;
+          text-align: center;
+      }
+
+      .instructorphoto img {
+          width: 120px;
+          height: 120px;
+          border-radius: 50%;
+          object-fit: cover;
+          margin-bottom: 10px;
+      }
+
+      .instructor a {
+          text-decoration: none;
+          color: #333;
+      }
+
+      .instructor a:hover {
+          text-decoration: none;
+      }
+
+      .ca-section {
+          margin-top: 30px;
+      }
+
+      .ca-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20px;
+          justify-content: flex-start;
+          margin-top: 15px;
+      }
+
+      .ca-item {
+          text-align: center;
+          min-width: 120px;
+      }
+
+      .ca-name {
+          font-weight: 500;
+          margin-bottom: 5px;
+      }
+
+      .ca-title {
+          color: #666;
+          font-size: 14px;
+      }
+
+      .table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: 1rem;
+    vertical-align: top;
+    border: 1px solid #dee2e6;
+}
+
+.table thead th {
+    vertical-align: bottom;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+.reading-list {
+    list-style-type: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.reading-list li {
+    margin-bottom: 0.5rem;
+}
+
+.guest-lecture-cell {
+    color: #0066cc;
+}
+
+.lecture-title {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.lecture-subtitle {
+    display: block;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+.deadline {
+    color: #c75b5b;  /* Muted red */
+    font-weight: normal;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.secondary-event {
+    display: block;
+}
+      .no-class {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+.no-class td {
+    padding: 0.75rem 1rem;
+}
+      .presentation {
+    color: #198754;  /* Bootstrap green */
+}
+      .footnote {
+    font-size: 0.9em;
+    color: #666;
+    font-style: italic;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+ .lecture-link {
+    color: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.video-unicode {
+    font-size: 0.9em;
+    opacity: 0.7;
+}
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand brand" href="index.html">CS329A Self-Improving AI Agents</a>
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li><a href="#intro">Overview</a></li>
+            <li><a href="#people">Staff</a></li>
+            <li><a href="#schedule">Schedule</a></li>
+            <li><a href="#grading">Grading</a></li>
+            <li><a href="pastprojects.html">Past Projects</a></li>
+            <li><a href="#policies">Policies</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    
+
+    <div class="container sec" id="intro" style="margin-top: 60px;">
+        <h2>Course Overview</h2>
+        <p><strong>Autumn 2025</strong></p>
+        <p>
+        This course covers the latest techniques and applications of AI agents 
+        that can continuously improve themselves through interaction with themselves and the environment. 
+        The course will start with self-improvement techniques for LLMs, such as constitutional AI, 
+        using verifiers, scaling test-time compute, combining search with LLMs, and train time scaling with RL. 
+        We will then discuss the latest research in augmenting LLMs with tool use, code, and memory, 
+        and orchestrating AI capabilities with multimodal interaction. 
+        We will next discuss multi-step reasoning and planning problems for agentic workflows, 
+        and the challenges in building robust evaluation frameworks. </p>
+        <p>
+        Our goal is that the students learn from the latest research papers, 
+        discuss the suggested readings in each class, work on an original research project in this area,
+        and learn from invited academic and industry speakers about applications in building coding agents, 
+        research assistants in STEM, and autonomous systems in robotics. 
+        </p>
+      </div>
+
+      <div class="container sec" id="people">
+        <div class="col">
+          <h2>Course Staff</h2>
+          
+          <h3>Instructors</h3>
+          <div class="instructor">
+            <a href="https://www.achowdhery.com/">
+              <div class="instructorphoto">
+                <img src="images/aakanksha.jpeg">
+              </div>
+              <div>Aakanksha Chowdhery</div>
+            </a>
+            <div>Instructor</div>
+          </div>
+               <div class="instructor">
+            <a href="http://azaliamirhoseini.com/">
+              <div class="instructorphoto">
+                <img src="images/azalia.jpeg">
+              </div>
+              <div>Azalia Mirhoseini</div>
+            </a>
+            <div>Instructor</div>
+          </div>
+
+          <div class="ca-section">
+            <h3>Course Assistants</h3>
+            <div class="ca-list">
+
+              <div class="ca-item">
+                <a href="https://bosonphoton.github.io/">
+                  <div class="instructorphoto">
+                    <img src="images/chelsea.jpeg" alt="Chelsea Zou">
+                  </div>
+                  <div class="ca-name">Chelsea Zou</div>
+                  <div class="ca-title">CA</div>
+                </a>
+              </div>
+
+              <div class="ca-item">
+                <a href="https://www.linkedin.com/in/shree-reddy-7221421b2/">
+                  <div class="instructorphoto">
+                    <img src="images/shree.jpeg" alt="Shree Reddy">
+                  </div>
+                  <div class="ca-name">Shree Reddy</div>
+                  <div class="ca-title">CA</div>
+                </a>
+              </div>
+
+              <div class="ca-item">
+                <a href="https://www.linkedin.com/in/kaienyang/">
+                  <div class="instructorphoto">
+                    <img src="images/kaien.jpeg" alt="Kaien Yang">
+                  </div>
+                  <div class="ca-name">Kaien Yang</div>
+                  <div class="ca-title">CA</div>
+                </a>
+              </div>
+            <div class="ca-item">
+                <a href="https://www.linkedin.com/in/adrian-gamarra/">
+                  <div class="instructorphoto">
+                    <img src="images/adrian.jpeg" alt="Adrian Gamarra Lafuente">
+                  </div>
+                  <div class="ca-name">Adrian Gamarra Lafuente</div>
+                  <div class="ca-title">CA</div>
+                </a>
+            </div>
+
+
+              
+            </div>
+          </div>
+        </div>
+        </div>
+        <!-- Logistics -->
+        <div class="sechighlight">
+          <div class="container sec" id="logistics">
+            <h2>Logistics</h2>
+            <ul>
+              <li>
+                <b>Lectures</b> are held on Monday/Friday 4:30 PM - 5:50 PM PT in Autumn 2025 in Skilling Auditorium. In-person lectures will start with the first
+                lecture.
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="container sec" id="schedule" style="margin-top:-20px">
+          <br>
+          <h2>Schedule</h2>
+
+          <div class="table-responsive">
+              <table class="table table-bordered">
+            <thead>
+              <tr class="active">
+                <th style="width: 2%">#</th>
+                <th style="width: 10%">Date</th>
+                <th style="width: 27%">Description</th>
+                <th style="width: 38%">Paper Readings<sup>*</sup></th>
+                <th style="width: 23%">Deadlines</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td> 1 </td>
+                <td> Mon Sep 22 </td>
+                <td>Course Overview</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td> 2 </td>
+                <td>Fri Sep 26</td>
+                <td>Test-time Compute Scaling</td>
+                <td>
+                              <ul class="reading-list">
+                                  <li><a href="https://arxiv.org/abs/2407.21787">Large Language Monkeys: Scaling Inference Compute with Repeated Sampling (Brown et al. 2024)</a></li>
+                                  <li><a href="https://www.arxiv.org/abs/2409.15254">Archon: An Architecture Search Framework for Inference-Time Techniques (Saad-Falcon et al. 2024) </a></li>
+                                  <li><a href="https://arxiv.org/abs/2408.03314">Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters (Snell et al. 2024)</a></li>
+                                  <li><a href="https://arxiv.org/abs/2502.17578">How Do Large Language Monkeys Get Their Power (Laws)?</a></li>
+                              </ul>
+                          </td>
+                <td></td>
+              </tr>
+              <tr>
+    <td>3</td>
+    <td>Mon Sep 29</td>
+   <td>Robust Verification</td>
+    <td>
+        <ul class="reading-list">
+            <li><a href="https://arxiv.org/abs/2506.18203"> Shrinking the Generation-Verification Gap with Weak Verifiers</a></li>
+            <li><a href="https://arxiv.org/abs/2110.14168"> Training Verifiers to Solve Math Word Problems (Cobbe et al. 2021)</a></li>
+            <li><a href="https://arxiv.org/abs/2305.20050"> Let's Verify step by step (Lightman et al. 2023)</a></li>
+            <li><a href="https://arxiv.org/abs/2312.08935"> Math-Shepherd: Verify and Reinforce LLMs Step-by-step without Human Annotations (Wang et al. 2023)</a></li>
+                 
+        </ul>
+    </td>
+    <td></td>
+</tr>
+              <tr>
+                <td> 4 </td>
+                <td>Fri Oct 3</td>
+                <td>Learning from feedback with tools/code</td>
+                <td>
+                              <ul class="reading-list">
+                                  <li><a href="https://arxiv.org/abs/2210.03629"> ReAct: Synergizing Reasoning and Acting in Language Models (Yao et al. 2022)</a></li>
+                                  <li><a href="https://arxiv.org/abs/2410.02089"> RLEF: Grounding Code LLMs in Execution Feedback with Reinforcement Learning</a></li>
+                                  <li><a href="https://arxiv.org/abs/2212.08073"> Constitutional AI: Harmlessness from AI Feedback</a></li>
+                              </ul>
+                          </td>
+                <td>
+                    <span class="secondary-event">Homework 1 out (due Oct 13)</span>
+                </td>
+              </tr>
+              <tr>
+                <td> 5 </td>
+                <td> Mon Oct 6 </td>
+                <td>Multi-step Reasoning/Planning</td>
+                <td>
+                              <ul class="reading-list">
+                                  <li><a href="https://arxiv.org/abs/2504.04736"> SWiRL: Synthetic Data Generation & Multi-Step RL for Reasoning & Tool Use</a></li>
+                                  <li><a href="https://arxiv.org/abs/2310.04406"> Language Agent Tree Search Unifies Reasoning Acting and Planning in Language Models (Zhou et al. 2023)</a></li>
+                                  <li><a href="https://arxiv.org/abs/2506.05745"> SPRINT: Enabling Interleaved Planning and Parallelized Execution in Reasoning Models</a></li>
+                                  <li><a href="https://arxiv.org/abs/2311.05772"> ADaPT: As-Needed Decomposition and Planning with Language Models (Prasad et al. 2024)</a></li>
+                                  <li><a href="https://arxiv.org/abs/2503.04412"> Wider or Deeper? Scaling LLM Inference-Time Compute with Adaptive Branching Tree Search</a></li>
+                              </ul>
+                          </td>
+                <td></td>              
+              </tr>
+              <tr>
+                <td> 6 </td>
+                <td>Fri Oct 10</td>
+                <td>Train Time Scaling/Scaling RL</td>
+                <td>
+                    <ul class="reading-list">
+                      <li><a href="https://arxiv.org/pdf/2203.14465">STaR: Bootstrapping Reasoning With Reasoning (Zelikman et al. 2022)</a></li>
+                        <li><a href="https://arxiv.org/abs/2402.03300"> DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models</a></li>
+                        <li><a href="https://arxiv.org/abs/2503.14476"> DAPO: An Open-Source LLM Reinforcement Learning System at Scale</a></li>
+                     </ul>
+                </td>
+                <td>Project Proposal due</td>
+              </tr>
+              <tr>
+                <td> 7 </td>
+                <td>Mon Oct 13</td>
+                <td>Open-Ended Evolution of Self-Improving Agents</td>
+                <td>
+                    <ul class="reading-list">
+                        <li><a href="https://arxiv.org/pdf/2505.22954"> Automated design of agentic systems</a></li>
+                        <li><a href="https://arxiv.org/abs/2408.06292"> The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery (Lu et al. 2024)</a></li>
+                        <li><a href="https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/AlphaEvolve.pdf"> AlphaEvolve: A Gemini-powered coding agent for designing advanced algorithms</a></li>
+                    </ul>
+                </td>
+                <td>
+                    <span class="secondary-event">Homework 2 out on Oct 14 (due Oct 22)</span>
+                </td>
+              </tr>
+              <tr>
+                <td> 8 </td>
+                <td>Fri Oct 17</td>
+                <td>Self improvement with Search & Deep Research Agents</td>
+                <td>
+                    <ul class="reading-list">
+                        <li><a href="https://arxiv.org/pdf/2203.07814"> Competition-Level Code Generation with AlphaCode</a></li>
+                        <li><a href="https://storage.googleapis.com/deepmind-media/AlphaCode2/AlphaCode2_Tech_Report.pdf"> AlphaCode 2 Technical Report</a></li>
+                        <li><a href="https://arxiv.org/pdf/2501.05366"> Search-o1: Agentic Search-Enhanced Large Reasoning Models</a></li>
+                    </ul>
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td> 9 </td>
+                <td>Mon Oct 20</td>
+                <td class="guest-lecture-cell">
+                    <span class="lecture-title">Guest Lecture</span>
+                  <span class="lecture-subtitle">Melvin Johnson (Google DeepMind)</span>
+                </td>
+                <td>
+                  Evolution of Post-training from Chatbots to Agents
+                </td>
+                 <td>
+                </td>  
+                         </tr>
+                           <tr>
+    <td>10</td>
+    <td>Fri Oct 24</td>
+    <td class="presentation">Mid term presentations</td>
+      <td></td>
+    <td>                    
+      <span class="secondary-event">Homework 3 out (due Nov 7)</span>
+    </td>
+</tr>
+              <tr>
+                <td> 11 </td>
+                <td>Mon Oct 27</td>
+                <td class="presentation">Mid term presentations</td>
+                <td></td>
+                <td></td>
+              </tr>
+
+              <tr>
+                <td> 12 </td>
+                <td>Fri Oct 31</td>
+                <td class="presentation">Mid term presentations</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td> 13 </td>
+                <td>Mon Nov 3</td>
+                <td>Agentic Frameworks for Software Engineering</td>
+                   <td>
+                     <ul class="reading-list">
+                                  <li><a href="https://arxiv.org/abs/2501.14723">CodeMonkeys: Scaling Test-Time Compute for Software Engineering</a></li>
+                                  <li><a href="https://arxiv.org/pdf/2502.10517">KernelBench: Can LLMs Write Efficient GPU Kernels?</a></li>
+                                  <li><a href="https://arxiv.org/abs/2410.15625"> Improving Parallel Program Performance with LLM Optimizers via Agent-System Interfaces</a></li>
+                              </ul>
+                          </td>
+                <td>
+                </td>
+
+              </tr>
+              <tr>
+                <td> 14 </td>
+                <td>Fri Nov 7</td>
+                <td class="guest-lecture-cell">
+                    <span class="lecture-title"> Augmenting Agents with Memory</span>
+                  <span class="lecture-subtitle"> Guest Lecturer: Junchen Jiang (LMCache, UChicago)</span>
+                </td>
+                    <td>
+                              <ul class="reading-list">
+                                  <li><a href="https://arxiv.org/abs/2506.06266"> Cartridges: Lightweight and general-purpose long context representations via self-study</a></li>
+                                  <li><a href="https://arxiv.org/abs/2310.08560"> MemGPT: Towards LLMs as Operating Systems (Packer et al, 2023)</a></li>
+                                  <li><a href="http://arxiv.org/abs/2405.16444"> CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion</a></li>
+                              </ul>
+                          </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td> 15 </td>
+                <td>Mon Nov 10</td>
+                <td class="guest-lecture-cell">
+                    <span class="lecture-title">Guest Lecture</span>
+                  <span class="lecture-subtitle">Denny Zhou, Google DeepMind</span>
+                </td>
+                <td>
+                  LLM Reasoning
+                </td>
+
+                <td></td>
+              </tr>
+              <tr>
+                <td> 16 </td>
+                <td>Fri Nov 14</td>
+                <td class="guest-lecture-cell">
+    <span class="lecture-title">Guest Lecture</span>
+    <span class="lecture-subtitle">Thang Luong, Google DeepMind</span>
+</td>
+                <td> Towards AI Superhuman Reasoning: AlphaProof, AlphaGeometry & Gemini IMO Gold Medal
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td> 17 </td>
+                <td>Mon Nov 17</td>
+                <td>Agentic Evaluations & Long-Horizon Tasks</td>
+                <td>
+                  <ul class="reading-list">
+                                  <li><a href="https://arxiv.org/abs/2503.14499"> Measuring AI Ability to Complete Long Tasks</a></li>
+                                  <li><a href="https://arxiv.org/abs/2510.04374"> GDPVal: Evaluating AI Model Performance on Real-World Economically Valuable Tasks</a></li>
+                                  <li><a href="https://arxiv.org/abs/2508.20033"> DeepScholar-Bench: A Live Benchmark and Automated Evaluation for Generative Research Synthesis</a></li>
+                    </ul>
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td> 18 </td>
+                <td>Fri Nov 21</td>
+                 <td class="guest-lecture-cell">
+                    <span class="lecture-title">Guest Lecture</span>
+                   <span class="lecture-subtitle">Misha Laskin (Reflection AI)</span>
+                </td>
+                <td>
+                  Building Agentic Systems for Autonomy: Lessons & Open questions 
+                </td>
+                <td></td>
+              </tr>
+              <tr class="no-class">
+                <td> </td>
+                <td>Mon Nov 24</td>
+                <td>Holiday</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr class="no-class">
+                <td> </td>
+                <td>Fri Nov 28</td>
+                <td>Holiday</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td> 19 </td>
+                <td>Mon Dec 1</td>
+                <td class="guest-lecture-cell">
+                     <span class="lecture-title">Guest Lecture</span>
+    <span class="lecture-subtitle">Danny Driess (Physical Intelligence)</span>
+                </td>
+                <td>
+                  Multimodal AI Agents in Robotics
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td> 20 </td>
+                <td>Fri Dec 5</td>
+                <td>Future Research Areas</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td> </td>
+                <td>Wed Dec 10</td>
+                <td>Final Project Due</td>
+                <td></td>
+                <td><span class="deadline">Final project due (EoD)</span></td>
+              </tr>
+              <tr>
+                <td> </td>
+                <td>Fri Dec 12</td>
+                <td class="presentation">Final Project Poster Presentation</td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="footnote">*Paper readings may be updated closer to the class date.</div>
+
+        </div>
+      </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    
+    <div class="container sec" id="grading">
+      <h2>Grading</h2>
+      <ul>
+        </li>
+        <li><b>Homework 1 (15%)</b>
+          <ul><li>Due Oct 13</li></ul>
+        </li>
+        <li><b>Homework 2 (15%)</b>
+          <ul><li>Due Oct 23</li></ul>
+        </li>
+        <li><b>Homework 3 (20%)</b>
+          <ul><li>Due Nov 7</li></ul>
+        </li>
+        <li><b>Project Proposal (2.5%)</b>
+          <ul><li>Due Oct 10</li></ul>
+        </li>
+        <li><b>Midterm presentation + Report (10%)</b>
+          <ul>
+            <li>5-10 minute presentation on Oct 24, Oct 27, and Oct 31</li>
+          </ul>
+        </li>
+        <li><b>Final project (35%)</b>
+          <ul><li>Due Dec 10</li></ul>
+        </li>
+        <li><b>Poster (2.5%)</b>
+          <ul><li>Dec 12</li></ul>
+        </li>
+
+      </ul>
+    </div>
+    
+    
+
+    <div class="container sec" id="homework-assignments">
+      <h2>Homework Assignments</h2>
+      <p>There will be three homework assignments. Homework 1 will be released on Oct 3. Homework 2 will be released on Oct 13. Homework 3 will be released on Oct 23. The homeworks will help develop intuition for the basics of self-improvement, multi-step reasoning, and tool use techniques.</p>
+    </div>
+
+    <div class="container sec" id="research-projects">
+      <h2>Research Projects</h2>
+      <p>As a graduate seminar, research is a big part of the class. Students will work in teams of 2 to 4 to complete original 
+      research. These projects should be broadly around research areas discussed in class and benchmarks related to agent workflows. Students will receive API credits to support their 
+      development work.</p>
+    </div>
+
+    <div class="container sec" id="policies">
+      <h2>Course Policies</h2>
+      
+      <h3>Late Policy</h3>
+      <ul>
+        <li>All students have 4 free late days for the quarter.</li>
+        <li>You may use up to 2 late days per assignment with no penalty.</li>
+        <li>Late days can be used for assignments, project proposal, and project milestone.</li>
+        <li>Late days cannot be used for the final project report.</li>
+        <li>There will be a 25% penalty for each additional late day.</li>
+        <li>No exceptions to this policy.</li>
+      </ul>
+
+      <h3>Audit Policy</h3>
+      <p>Audits are not allowed for this course.</p>
+
+      <h3>Communication with Course Staff</h3>
+      <ul>
+        <li>Please read the course documentation carefully before asking general questions.</li>
+        <li>Questions should be asked during office hours or on EdStem.</li>
+      </ul>
+
+
+  </body>
+</html>

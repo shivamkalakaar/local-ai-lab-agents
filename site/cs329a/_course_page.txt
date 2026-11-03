@@ -1,0 +1,200 @@
+ 
+ Stanford CS329A | Self-Improving AI Agents 
+ CS329A Self-Improving AI Agents 
+ Overview 
+ Staff 
+ Schedule 
+ Grading 
+ Past Projects 
+ Policies 
+ Course Overview 
+ Autumn 2025 
+ This course covers the latest techniques and applications of AI agents 
+ that can continuously improve themselves through interaction with themselves and the environment. 
+ The course will start with self-improvement techniques for LLMs, such as constitutional AI, 
+ using verifiers, scaling test-time compute, combining search with LLMs, and train time scaling with RL. 
+ We will then discuss the latest research in augmenting LLMs with tool use, code, and memory, 
+ and orchestrating AI capabilities with multimodal interaction. 
+ We will next discuss multi-step reasoning and planning problems for agentic workflows, 
+ and the challenges in building robust evaluation frameworks. 
+ Our goal is that the students learn from the latest research papers, 
+ discuss the suggested readings in each class, work on an original research project in this area,
+ and learn from invited academic and industry speakers about applications in building coding agents, 
+ research assistants in STEM, and autonomous systems in robotics. 
+ Course Staff 
+ Instructors 
+ Aakanksha Chowdhery 
+ Instructor 
+ Azalia Mirhoseini 
+ Instructor 
+ Course Assistants 
+ Chelsea Zou 
+ CA 
+ Shree Reddy 
+ CA 
+ Kaien Yang 
+ CA 
+ Adrian Gamarra Lafuente 
+ CA 
+ Logistics 
+ Lectures are held on Monday/Friday 4:30 PM - 5:50 PM PT in Autumn 2025 in Skilling Auditorium. In-person lectures will start with the first
+ lecture.
+ Schedule 
+ # 
+ Date 
+ Description 
+ Paper Readings * 
+ Deadlines 
+ 1 
+ Mon Sep 22 
+ Course Overview 
+ 2 
+ Fri Sep 26 
+ Test-time Compute Scaling 
+ Large Language Monkeys: Scaling Inference Compute with Repeated Sampling (Brown et al. 2024) 
+ Archon: An Architecture Search Framework for Inference-Time Techniques (Saad-Falcon et al. 2024) 
+ Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters (Snell et al. 2024) 
+ How Do Large Language Monkeys Get Their Power (Laws)? 
+ 3 
+ Mon Sep 29 
+ Robust Verification 
+ Shrinking the Generation-Verification Gap with Weak Verifiers 
+ Training Verifiers to Solve Math Word Problems (Cobbe et al. 2021) 
+ Let's Verify step by step (Lightman et al. 2023) 
+ Math-Shepherd: Verify and Reinforce LLMs Step-by-step without Human Annotations (Wang et al. 2023) 
+ 4 
+ Fri Oct 3 
+ Learning from feedback with tools/code 
+ ReAct: Synergizing Reasoning and Acting in Language Models (Yao et al. 2022) 
+ RLEF: Grounding Code LLMs in Execution Feedback with Reinforcement Learning 
+ Constitutional AI: Harmlessness from AI Feedback 
+ Homework 1 out (due Oct 13) 
+ 5 
+ Mon Oct 6 
+ Multi-step Reasoning/Planning 
+ SWiRL: Synthetic Data Generation & Multi-Step RL for Reasoning & Tool Use 
+ Language Agent Tree Search Unifies Reasoning Acting and Planning in Language Models (Zhou et al. 2023) 
+ SPRINT: Enabling Interleaved Planning and Parallelized Execution in Reasoning Models 
+ ADaPT: As-Needed Decomposition and Planning with Language Models (Prasad et al. 2024) 
+ Wider or Deeper? Scaling LLM Inference-Time Compute with Adaptive Branching Tree Search 
+ 6 
+ Fri Oct 10 
+ Train Time Scaling/Scaling RL 
+ STaR: Bootstrapping Reasoning With Reasoning (Zelikman et al. 2022) 
+ DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models 
+ DAPO: An Open-Source LLM Reinforcement Learning System at Scale 
+ Project Proposal due 
+ 7 
+ Mon Oct 13 
+ Open-Ended Evolution of Self-Improving Agents 
+ Automated design of agentic systems 
+ The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery (Lu et al. 2024) 
+ AlphaEvolve: A Gemini-powered coding agent for designing advanced algorithms 
+ Homework 2 out on Oct 14 (due Oct 22) 
+ 8 
+ Fri Oct 17 
+ Self improvement with Search & Deep Research Agents 
+ Competition-Level Code Generation with AlphaCode 
+ AlphaCode 2 Technical Report 
+ Search-o1: Agentic Search-Enhanced Large Reasoning Models 
+ 9 
+ Mon Oct 20 
+ Guest Lecture 
+ Melvin Johnson (Google DeepMind) 
+ Evolution of Post-training from Chatbots to Agents
+ 10 
+ Fri Oct 24 
+ Mid term presentations 
+ Homework 3 out (due Nov 7) 
+ 11 
+ Mon Oct 27 
+ Mid term presentations 
+ 12 
+ Fri Oct 31 
+ Mid term presentations 
+ 13 
+ Mon Nov 3 
+ Agentic Frameworks for Software Engineering 
+ CodeMonkeys: Scaling Test-Time Compute for Software Engineering 
+ KernelBench: Can LLMs Write Efficient GPU Kernels? 
+ Improving Parallel Program Performance with LLM Optimizers via Agent-System Interfaces 
+ 14 
+ Fri Nov 7 
+ Augmenting Agents with Memory 
+ Guest Lecturer: Junchen Jiang (LMCache, UChicago) 
+ Cartridges: Lightweight and general-purpose long context representations via self-study 
+ MemGPT: Towards LLMs as Operating Systems (Packer et al, 2023) 
+ CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion 
+ 15 
+ Mon Nov 10 
+ Guest Lecture 
+ Denny Zhou, Google DeepMind 
+ LLM Reasoning
+ 16 
+ Fri Nov 14 
+ Guest Lecture 
+ Thang Luong, Google DeepMind 
+ Towards AI Superhuman Reasoning: AlphaProof, AlphaGeometry & Gemini IMO Gold Medal
+ 17 
+ Mon Nov 17 
+ Agentic Evaluations & Long-Horizon Tasks 
+ Measuring AI Ability to Complete Long Tasks 
+ GDPVal: Evaluating AI Model Performance on Real-World Economically Valuable Tasks 
+ DeepScholar-Bench: A Live Benchmark and Automated Evaluation for Generative Research Synthesis 
+ 18 
+ Fri Nov 21 
+ Guest Lecture 
+ Misha Laskin (Reflection AI) 
+ Building Agentic Systems for Autonomy: Lessons & Open questions 
+ Mon Nov 24 
+ Holiday 
+ Fri Nov 28 
+ Holiday 
+ 19 
+ Mon Dec 1 
+ Guest Lecture 
+ Danny Driess (Physical Intelligence) 
+ Multimodal AI Agents in Robotics
+ 20 
+ Fri Dec 5 
+ Future Research Areas 
+ Wed Dec 10 
+ Final Project Due 
+ Final project due (EoD) 
+ Fri Dec 12 
+ Final Project Poster Presentation 
+ *Paper readings may be updated closer to the class date. 
+ Grading 
+ Homework 1 (15%) 
+ Due Oct 13 
+ Homework 2 (15%) 
+ Due Oct 23 
+ Homework 3 (20%) 
+ Due Nov 7 
+ Project Proposal (2.5%) 
+ Due Oct 10 
+ Midterm presentation + Report (10%) 
+ 5-10 minute presentation on Oct 24, Oct 27, and Oct 31 
+ Final project (35%) 
+ Due Dec 10 
+ Poster (2.5%) 
+ Dec 12 
+ Homework Assignments 
+ There will be three homework assignments. Homework 1 will be released on Oct 3. Homework 2 will be released on Oct 13. Homework 3 will be released on Oct 23. The homeworks will help develop intuition for the basics of self-improvement, multi-step reasoning, and tool use techniques. 
+ Research Projects 
+ As a graduate seminar, research is a big part of the class. Students will work in teams of 2 to 4 to complete original 
+ research. These projects should be broadly around research areas discussed in class and benchmarks related to agent workflows. Students will receive API credits to support their 
+ development work. 
+ Course Policies 
+ Late Policy 
+ All students have 4 free late days for the quarter. 
+ You may use up to 2 late days per assignment with no penalty. 
+ Late days can be used for assignments, project proposal, and project milestone. 
+ Late days cannot be used for the final project report. 
+ There will be a 25% penalty for each additional late day. 
+ No exceptions to this policy. 
+ Audit Policy 
+ Audits are not allowed for this course. 
+ Communication with Course Staff 
+ Please read the course documentation carefully before asking general questions. 
+ Questions should be asked during office hours or on EdStem. 

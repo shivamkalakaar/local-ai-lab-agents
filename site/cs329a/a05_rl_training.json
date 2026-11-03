@@ -1,0 +1,44 @@
+{
+  "id": "a05",
+  "title": "Train-time scaling and RL",
+  "lecture": "CS329A Lecture 6 (Oct 10)",
+  "big_idea": "If a program can check the answer, the model can improve by training on its own attempts: keep or reward what the checker accepts, and push away from what it rejects. STaR does this with supervised fine-tuning; GRPO and DAPO do it with reinforcement learning.",
+  "papers": [
+    {"title": "STaR: Bootstrapping Reasoning With Reasoning", "authors": "Zelikman, Wu, Mu & Goodman", "year": 2022,
+     "url": "https://arxiv.org/abs/2203.14465",
+     "what": "A loop on GPT-J (6B): generate step-by-step rationales with a few examples, keep the ones that reach the right answer, and for wrong ones generate a rationale again with the correct answer given as a hint ('rationalization'), stored without the hint. Fine-tune the original model on everything kept, then repeat.",
+     "result": "CommonsenseQA dev accuracy 72.5% with rationalization (68.8% without), vs 60.0% for GPT-J fine-tuned to answer directly and 73.0% for a fine-tuned GPT-3 that is 30x larger. GSM8K: 10.7% vs 5.8% for direct fine-tuning.",
+     "takeaway": "Before buying labeled reasoning data, let your model write it and filter by a checker. Add the answer-as-hint step to cover the problems it cannot yet solve, and watch for right answers with wrong reasoning."},
+    {"title": "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models", "authors": "Shao et al.", "year": 2024,
+     "url": "https://arxiv.org/abs/2402.03300",
+     "what": "Continued pre-training of a 7B model on 120B math tokens, then introduces GRPO: a PPO variant with no critic (value) model. For each question it samples a group of answers (64 in the paper) and uses each answer's reward relative to the group mean, divided by the group standard deviation, as its advantage, with a KL penalty (0.04) added directly to the loss.",
+     "result": "51.7% on MATH without tools or voting (60.9% with self-consistency over 64 samples). The GRPO stage alone took DeepSeekMath-Instruct 7B from 82.9% to 88.2% on GSM8K and 46.8% to 51.7% on MATH. RL raised Maj@K but not Pass@K.",
+     "takeaway": "GRPO is the cheapest RL recipe to start with: no critic network, only a reward function and a group of samples per prompt. Expect it to make good answers more reliable more than to teach brand-new skills (the Maj@K vs Pass@K finding)."},
+    {"title": "DAPO: An Open-Source LLM Reinforcement Learning System at Scale", "authors": "Yu et al.", "year": 2025,
+     "url": "https://arxiv.org/abs/2503.14476",
+     "what": "Four fixes to GRPO for long reasoning: Clip-Higher (clip ratio at 0.2 below but 0.28 above, to avoid entropy collapse), Dynamic Sampling (drop prompts where all answers are right or all wrong), a token-level loss (average over all tokens, not per answer), and Overlong Reward Shaping (filter or softly penalize answers that hit the length limit). It also removes the KL penalty.",
+     "result": "50 points on AIME 2024 with Qwen2.5-32B base, vs 47 for DeepSeek-R1-Zero-Qwen-32B, using 50% of the training steps. Ablation: naive GRPO 30, +overlong filtering 36, +clip-higher 38, +soft overlong punishment 41, +token-level loss 42, +dynamic sampling 50.",
+     "takeaway": "When you run GRPO, turn on these fixes: in TRL, loss_type='dapo' (now the default), epsilon_high=0.28, a length penalty or mask_truncated_completions=True, and keep training prompts at the edge of what the model can solve so groups are not all-equal."}
+  ],
+  "terms": [
+    ["Rationalization", "In STaR, asking the model to explain a problem it got wrong while showing it the correct answer as a hint, then training on that explanation without the hint.", "Zelikman et al. 2022"],
+    ["Verifiable reward", "A reward computed by a program (exact answer match, unit tests), not by a human or a learned judge. It is what makes RL on reasoning cheap and hard to fool.", "lecture"],
+    ["GRPO (Group Relative Policy Optimization)", "Sample a group of answers per prompt; each answer's advantage is its reward minus the group mean, divided by the group std. No critic model needed.", "Shao et al. 2024"],
+    ["Advantage", "How much better one answer did than expected. Positive means 'do more of this', negative means 'do less'.", "RL basics"],
+    ["Clip-higher", "Use a larger upper clip bound than lower bound on the probability ratio (0.28 vs 0.2), so rare good tokens can grow and the model keeps exploring.", "Yu et al. 2025"],
+    ["Dynamic sampling", "Drop prompt groups where every answer got the same reward (zero advantage, zero gradient) and sample new prompts to fill the batch.", "Yu et al. 2025"],
+    ["LoRA", "Train small low-rank add-on matrices instead of all model weights. Cuts memory so RL fits a free GPU.", "Hu et al. 2021"]
+  ],
+  "traps": [
+    "Training on problems that are too easy or too hard: every group is all-correct or all-wrong, the advantages are all zero, and nothing is learned even though the run looks busy.",
+    "A reward that can be gamed. If the parser takes 'the last number in the text', the model may learn to print many numbers. Check the format strictly or reward it separately.",
+    "Right answer, wrong reasoning. STaR and outcome rewards both accept lucky or bent reasoning; spot-check rationales, especially rationalized ones.",
+    "bf16 on a T4. The T4 has no bfloat16 and TRL's GRPOConfig turns bf16 on by default; set bf16=False and use fp16 mixed precision or fp32.",
+    "Reading the training reward as the result. Always compare accuracy on a held-out set before and after."
+  ],
+  "check": [
+    ["A group of 4 answers gets rewards [1, 1, 1, 1]. What are the GRPO advantages, and what does DAPO do with this group?", "All zero (every reward equals the mean), so the group gives no gradient. DAPO's dynamic sampling drops it and samples another prompt."],
+    ["In STaR, why is the hint removed from the prompt before fine-tuning on a rationalized example?", "So the model learns to produce that reasoning from the question alone, as it must at test time, not to depend on being told the answer."],
+    ["What does GRPO use instead of PPO's critic (value) model?", "The mean (and std) of the rewards of the other answers sampled for the same prompt."]
+  ]
+}

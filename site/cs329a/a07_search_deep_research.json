@@ -1,0 +1,44 @@
+{
+  "id": "a07",
+  "title": "Self-improvement with search and deep research agents",
+  "lecture": "CS329A Lecture 8 (Oct 17)",
+  "big_idea": "You can make an agent better without training it by searching. Search over answers: draw many programs, keep the ones that pass the examples, group them by behavior, and submit one per group. Search for knowledge: let the model pause mid-thought, look something up, boil the results down, and keep reasoning.",
+  "papers": [
+    {"title": "Competition-Level Code Generation with AlphaCode", "authors": "Li et al.", "year": 2022, "url": "https://arxiv.org/abs/2203.07814",
+     "what": "A transformer model sampled up to millions of programs per competitive-programming problem. It filtered them with the example tests from the problem statement, then clustered the survivors by their outputs on new test inputs written by a separate model, and submitted one program per cluster, largest first, with at most 10 submissions.",
+     "result": "Average ranking in the top 54.3% in simulated Codeforces contests with more than 5,000 participants. Solved 34.2% of held-out CodeContests problems with up to a million samples and 10 submissions. Filtering on example tests removed about 99% of samples. Solve rate grew roughly log-linearly with the number of samples.",
+     "takeaway": "When a cheap exact check exists (example tests), sample a lot and filter. When many candidates survive, group them by behavior and pick from the biggest group, because correct programs tend to agree with each other."},
+    {"title": "AlphaCode 2 Technical Report", "authors": "AlphaCode Team, Google DeepMind (Leblond et al.)", "year": 2023, "url": "https://storage.googleapis.com/deepmind-media/AlphaCode2/AlphaCode2_Tech_Report.pdf",
+     "what": "The same sample, filter and cluster pipeline, built on fine-tuned Gemini Pro models. It drew up to a million C++ samples per problem with randomized temperature, kept the 10 largest clusters, and added a second fine-tuned Gemini model that scores each sample's chance of being correct to choose the best one in each cluster.",
+     "result": "Solved 43% of problems from 12 recent Codeforces contests (77 problems) within 10 attempts, vs 25% for the original AlphaCode. Estimated 85th percentile among participants (AlphaCode: about 46%). Filtering removed about 95% of samples. Needed about 100 samples to match AlphaCode with a million samples.",
+     "takeaway": "A better base model makes search far more sample-efficient, and a learned scorer helps choose inside a group. Selection, not generation, is often where the remaining gains are."},
+    {"title": "Search-o1: Agentic Search-Enhanced Large Reasoning Models", "authors": "Li et al.", "year": 2025, "url": "https://arxiv.org/abs/2501.05366",
+     "what": "A reasoning model (QwQ-32B-Preview) writes a search query between special tags whenever it is unsure. The system pauses, retrieves the top 10 web results, and a separate Reason-in-Documents step condenses them into the facts that matter, which are inserted back into the reasoning chain.",
+     "result": "On GPQA diamond, overall 63.6 vs 58.1 for the same model without retrieval and 58.6 with standard RAG. Averaged over the five reasoning datasets it beat agentic RAG without Reason-in-Documents by 4.7% and no retrieval by 3.1%. On multi-hop QA, average exact match beat standard RAG by 29.6% and agentic RAG by 5.3%.",
+     "takeaway": "For multi-step questions, let the model decide when and what to search, one fact at a time, and condense the results before they reach the reasoning. One retrieval with the whole question often misses the second hop."}
+  ],
+  "terms": [
+    ["Filtering", "Throwing away candidate programs that fail the example tests given in the problem.", "Li et al. 2022"],
+    ["Clustering by behavior", "Running candidates on extra inputs and grouping the ones that give identical outputs; the inputs need no known answers.", "Li et al. 2022"],
+    ["10@k", "Percent of problems solved when k samples are drawn but only 10 may be submitted.", "Li et al. 2022"],
+    ["Scoring model", "A model that predicts how likely a code sample is to be correct, used to rank samples.", "AlphaCode 2 report, 2023"],
+    ["Agentic RAG", "Retrieval where the model itself decides when to search and what to search for, possibly many times.", "Li et al. 2025"],
+    ["Reason-in-Documents", "A separate step that reads retrieved pages and writes back only the useful facts, so noisy text does not derail reasoning.", "Li et al. 2025"],
+    ["Coverage", "Fraction of problems where at least one sample is correct; the ceiling for any selection method.", "Brown et al. 2024"]
+  ],
+  "traps": [
+    "Passing the example tests is not being correct. Many wrong programs pass them, which is why AlphaCode needed clustering and hidden tests.",
+    "Random selection wastes your submission budget on programs that are written differently but behave the same.",
+    "Clustering inputs only need to separate programs. They do not need known answers, and even invalid inputs can help.",
+    "Naive RAG retrieves once with the whole question. For two-hop questions it often gets one hop and misses the other.",
+    "Pasting long raw search results into a reasoning chain can push it off track. Condense first.",
+    "A small model may never emit a search, or may search with vague words. Read the transcripts, not just the score."
+  ],
+  "check": [
+    ["Why does AlphaCode pick from the largest cluster first?", "There are many ways to be wrong but correct programs tend to behave the same, so they gather in larger clusters."],
+    ["What did AlphaCode 2 add on top of filtering and clustering?", "A fine-tuned Gemini scoring model that picks the best sample in each of the 10 largest clusters."],
+    ["About how much did filtering with example tests remove in AlphaCode?", "About 99% of samples."],
+    ["What does Reason-in-Documents do?", "It reads the retrieved documents with the current reasoning and query, and returns only the relevant facts to insert into the reasoning chain."],
+    ["In our notebook, why can naive RAG fail on the approver question?", "The question needs the contract's monthly fee and the procurement policy tiers; one retrieval with the whole question may bring back only one of them."]
+  ]
+}

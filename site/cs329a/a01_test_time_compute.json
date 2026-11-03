@@ -1,0 +1,103 @@
+{
+ "id": "a01",
+ "title": "Test-time compute scaling",
+ "lecture": "CS329A Lecture 2 (Sep 26)",
+ "big_idea": "You can buy accuracy at answer time instead of training time: let the model try many times, or revise its own work, and keep a good answer. The gain is only real if something can tell which try is right, and the best way to spend the compute depends on how hard the question is.",
+ "papers": [
+  {
+   "title": "Large Language Monkeys: Scaling Inference Compute with Repeated Sampling",
+   "authors": "Brown, Juravsky, Ehrlich, Clark, Le, Ré, Mirhoseini",
+   "year": 2024,
+   "url": "https://arxiv.org/abs/2407.21787",
+   "what": "Sampled the same model up to 10,000 times per problem on GSM8K, MATH, MiniF2F, CodeContests and SWE-bench Lite. Measured coverage (share of problems where any sample is right) and fit it with an exponentiated power law in the number of samples.",
+   "result": "Coverage grew with samples over four orders of magnitude. SWE-bench Lite with DeepSeek-Coder-V2-Instruct: 15.9% with one sample to 56% with 250 (single-sample state of the art was 43%). 5 DeepSeek tries solved 29.62% for $10.8 vs 24.00% for $39 with one GPT-4o try. On MATH with Llama-3-8B-Instruct, coverage went from 82.9% (100 samples) to 98.44% (10,000), but majority vote and reward models plateaued around 100 samples (best gain only 40.50% to 41.41%).",
+   "takeaway": "If your task has a cheap automatic checker (tests, a solver, a schema plus business rules), many cheap tries from a small local model can beat one expensive call. Without a checker, invest in verification before you invest in more samples."
+  },
+  {
+   "title": "Archon: An Architecture Search Framework for Inference-Time Techniques",
+   "authors": "Saad-Falcon, Gamarra Lafuente, Natarajan, Maru, Todorov, Guha, Buchanan, Chen, Guha, Ré, Mirhoseini",
+   "year": 2024,
+   "url": "https://arxiv.org/abs/2409.15254",
+   "what": "Treats inference-time techniques as modules (generator/ensemble, fuser, ranker, critic, verifier, unit-test generator and evaluator) stacked in layers, and uses Bayesian optimization to search a space of 9,576 configurations for the best stack under a compute budget.",
+   "result": "Searched stacks beat o1, GPT-4o and Claude 3.5 Sonnet by 15.1% on average across instruction-following, reasoning and coding benchmarks; open-source-only stacks were 11.2% above prior open-source approaches. Bayesian optimization found the best stack in 96.0% of searches with 88.5% fewer evaluations than greedy search. Unit tests plus more samples raised CodeContests Pass@1 from 17.9% to 29.3%. The fuser helped on every benchmark (8.9% on average); verifiers helped most on reasoning tasks.",
+   "takeaway": "Don't hand-pick one trick. Build sampling, ranking, fusing and checking as swappable steps, then let a small eval set choose the stack per task."
+  },
+  {
+   "title": "Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters",
+   "authors": "Snell, Lee, Xu, Kumar",
+   "year": 2024,
+   "url": "https://arxiv.org/abs/2408.03314",
+   "what": "On MATH with PaLM 2-S*, compared two ways to spend test-time compute: searching against a process reward model (best-of-N, beam search, lookahead) and a fine-tuned model that revises its own answer (sequential vs parallel). Questions were binned into 5 difficulty levels by the base model's own success rate over 2048 samples.",
+   "result": "The best method depends on difficulty: sequential revision did best on easy questions, a mix of sequential and parallel on harder ones; beam search beat best-of-N on medium-hard questions but over-optimized the verifier on easy ones. Choosing per difficulty matched or beat best-of-N with up to 4x less compute (abstract: more than 4x). FLOPs-matched, a small model with test-time compute beat a 14x larger model on questions where it had some success, but pretraining was better on the hardest questions or with high inference load.",
+   "takeaway": "Estimate difficulty first (for example, by how much a few samples agree), then route: easy questions get one try plus a revision, hard ones get more parallel tries, and the hardest may need a bigger model."
+  },
+  {
+   "title": "How Do Large Language Monkeys Get Their Power (Laws)?",
+   "authors": "Schaeffer, Kazdan, Hughes, Juravsky, Price, Lynch, Jones, Kirk, Mirhoseini, Koyejo",
+   "year": 2025,
+   "url": "https://arxiv.org/abs/2502.17578",
+   "what": "Explains why aggregate success with k attempts follows a power law even though each single problem's failure rate falls exponentially in k: the power law comes from a heavy left tail of very hard problems in the distribution of single-attempt success rates. Tested on Pythia models on MATH and frontier models on HarmBench jailbreaking.",
+   "result": "Proved the tail near zero (density like p^(b-1)) is necessary and sufficient for a k^(-b) power law. Cases without the heavy tail (e.g. Llama 3 8B IT, jailbroken on every prompt within budget) did not show a power law. A distributional estimator of the exponent had about an order of magnitude lower relative error than curve fitting, which the authors equate to roughly 2-4 orders of magnitude less inference compute.",
+   "takeaway": "Before buying a big sampling budget, sample a little, look at the per-problem success rates, and forecast. A task with many near-zero problems will be expensive to brute-force."
+  }
+ ],
+ "terms": [
+  [
+   "Test-time compute",
+   "Extra computation spent when answering (more samples, revisions, search) instead of when training.",
+   "Snell et al. 2024"
+  ],
+  [
+   "Coverage (pass@k)",
+   "Share of problems where at least one of k tries is right. An upper bound on what any picker can reach.",
+   "Brown et al. 2024"
+  ],
+  [
+   "Repeated sampling",
+   "Asking the same question many times at a temperature above 0 so the tries differ.",
+   "Brown et al. 2024"
+  ],
+  [
+   "Majority vote (self-consistency)",
+   "Keep the answer that the most tries agree on. Needs no checker, but plateaus.",
+   "Brown et al. 2024"
+  ],
+  [
+   "Fuser / Ranker",
+   "A model call that merges several candidates into one answer / that orders candidates and keeps the best.",
+   "Saad-Falcon et al. 2024 (Archon)"
+  ],
+  [
+   "Sequential vs parallel",
+   "Sequential: revise one answer step after step. Parallel: many independent tries, then pick.",
+   "Snell et al. 2024"
+  ],
+  [
+   "Compute-optimal strategy",
+   "Choosing how to spend test-time compute per question, based on its predicted difficulty.",
+   "Snell et al. 2024"
+  ]
+ ],
+ "traps": [
+  "Reporting coverage (pass@k) as if it were accuracy. Coverage assumes you can always spot the right try; in production you usually can't.",
+  "Adding samples without a verifier. Brown et al. saw majority vote and reward models stall near 100 samples while coverage kept rising.",
+  "Sampling at temperature 0. Every try is the same, so more tries add nothing.",
+  "Counting calls instead of tokens. A fuser or revision call reads all candidates, so its cost grows with the number of candidates.",
+  "Assuming test-time compute always replaces a bigger model. Snell et al. found pretraining wins on the hardest questions and at high inference volume.",
+  "Choosing the strategy per difficulty on the same small set you then report on. That overfits; hold out data."
+ ],
+ "check": [
+  [
+   "Coverage at k=100 is 90% but majority vote at k=100 is 45%. What is missing?",
+   "A good verifier. The model can produce the right answer, but the picker can't find it: that 45-point difference is the generation-verification gap."
+  ],
+  [
+   "Why can a per-problem failure rate fall exponentially while the average follows a power law?",
+   "Because the average mixes problems of different difficulty. A heavy tail of problems with near-zero single-try success makes the average fall slowly, like a power law (Schaeffer et al. 2025)."
+  ],
+  [
+   "For an easy question, should you spend 4 calls on 4 parallel samples or on 1 sample plus 3 revisions?",
+   "Snell et al. found sequential revision best on easy questions, and a mix of both on harder ones. Test on your own task, since they used a fine-tuned revision model."
+  ]
+ ]
+}
