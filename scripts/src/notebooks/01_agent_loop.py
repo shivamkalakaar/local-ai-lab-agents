@@ -35,7 +35,7 @@ print(list_sections("msa_07"))
 
 # %% [markdown]
 # ## 2. The agent loop
-# Three safety limits matter most: a **turn cap**, a **stuck detector** (the same call twice), and **errors returned as results** so the model can fix its own mistakes.
+# Four safety limits matter most: a **turn cap**, a **stuck detector** (the same call twice), **errors returned as results** so the model can fix its own mistakes, and a **format check**: small local models sometimes *write* a tool call as text instead of making it, so we send that back as an error.
 
 # %%
 def run_agent(task, max_turns=8, verbose=True):
@@ -46,6 +46,10 @@ def run_agent(task, max_turns=8, verbose=True):
         msg = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS, temperature=0).choices[0].message
         messages.append(msg)
         if not msg.tool_calls:
+            if '"name"' in (msg.content or "") and turn < max_turns - 1:     # limit 4: a tool call written as text
+                messages.append({"role": "user", "content": "FORMAT ERROR: you wrote a tool call as text. "
+                                 "Use the tool-calling interface, or give your final answer in plain words."})
+                continue
             return {"answer": msg.content, "turns": turn + 1, "tool_calls": calls}
         for call in msg.tool_calls:
             calls += 1
@@ -147,13 +151,15 @@ print("\nWITH stuck detector:   ", run_agent(q, verbose=False))
 
 # %%
 # Solution 2: add a search_text tool
+STOP = {"of", "the", "a", "an", "to", "in", "for", "and", "or", "is", "how", "many", "what"}
 def search_text(contract_id: str, phrase: str) -> str:
-    """Return every clause that contains the phrase."""
-    hits = [f"{num}: {text}" for num, text in clauses(contract(contract_id)).items() if phrase.lower() in text.lower()]
-    return "\n".join(hits) or "No clause contains that phrase."
+    """Return every clause containing ALL the meaningful words of the phrase ("days of notice" finds "days' prior written notice")."""
+    words = [w for w in re.findall(r"[a-z0-9]+", phrase.lower()) if w not in STOP]
+    hits = [f"{num}: {text}" for num, text in clauses(contract(contract_id)).items() if all(w in text.lower() for w in words)]
+    return "\n".join(hits) or "No clause contains those words. Try one keyword."
 
 TOOLS.append({"type": "function", "function": {"name": "search_text",
-    "description": "Find clauses in one contract that contain a phrase, e.g. 'notice' or 'State of'. Faster than reading every clause.",
+    "description": "Find clauses in one contract that contain all the given keywords, e.g. 'notice renewal' or 'governing law'. Faster than reading every clause.",
     "parameters": {"type": "object", "properties": {"contract_id": {"type": "string"}, "phrase": {"type": "string"}},
                    "required": ["contract_id", "phrase"]}}})
 IMPL["search_text"] = search_text

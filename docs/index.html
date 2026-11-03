@@ -280,7 +280,8 @@ def timed(fn, *a, **kw):
     return out
 </code></pre></div><div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/00_setup_first_call.ipynb" target="_blank" rel="noopener">00_setup_first_call.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
 <div class="nb-md"><h3>1. Talk to the model</h3>
-<p>The model speaks the same API as OpenAI's, so any OpenAI-compatible code works. We only change the address to <code>localhost</code>.</p></div>
+<p>The model speaks the same API as OpenAI's, so any OpenAI-compatible code works. We only change the address to <code>localhost</code>.</p>
+<p>The setup cell already loaded the model into GPU memory (that first load takes about a minute), so this call should take only a second or two.</p></div>
 <div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from lal.llm import chat, ask, client
 import time
 
@@ -387,7 +388,7 @@ TOOLS = [
 IMPL = {&quot;get_clause&quot;: get_clause, &quot;list_sections&quot;: list_sections}
 print(list_sections(&quot;msa_07&quot;))</code></pre></div>
 <div class="nb-md"><h3>2. The agent loop</h3>
-<p>Three safety limits matter most: a <strong>turn cap</strong>, a <strong>stuck detector</strong> (the same call twice), and <strong>errors returned as results</strong> so the model can fix its own mistakes.</p></div>
+<p>Four safety limits matter most: a <strong>turn cap</strong>, a <strong>stuck detector</strong> (the same call twice), <strong>errors returned as results</strong> so the model can fix its own mistakes, and a <strong>format check</strong>: small local models sometimes <em>write</em> a tool call as text instead of making it, so we send that back as an error.</p></div>
 <div class="code"><div class="cap"><span class="cell">01_agent_loop.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def run_agent(task, max_turns=8, verbose=True):
     messages = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;You review contracts. Use the tools to read clauses before answering. Cite clause numbers.&quot;},
                 {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: task}]
@@ -396,6 +397,10 @@ print(list_sections(&quot;msa_07&quot;))</code></pre></div>
         msg = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS, temperature=0).choices[0].message
         messages.append(msg)
         if not msg.tool_calls:
+            if &#x27;&quot;name&quot;&#x27; in (msg.content or &quot;&quot;) and turn &lt; max_turns - 1:     # limit 4: a tool call written as text
+                messages.append({&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;FORMAT ERROR: you wrote a tool call as text. &quot;
+                                 &quot;Use the tool-calling interface, or give your final answer in plain words.&quot;})
+                continue
             return {&quot;answer&quot;: msg.content, &quot;turns&quot;: turn + 1, &quot;tool_calls&quot;: calls}
         for call in msg.tool_calls:
             calls += 1
@@ -477,13 +482,15 @@ print(&quot;WITHOUT stuck detector:&quot;, run_agent_no_stuck(q))
 print(&quot;\nWITH stuck detector:   &quot;, run_agent(q, verbose=False))
 # What to notice: without the detector, small models often re-read the same clauses until the turn cap.
 # With it, the model is told to stop repeating and usually answers &quot;not in the contract&quot;. The turn cap is the last safety net.</code></pre></div><div class="code"><div class="cap"><span class="cell">01_agent_loop.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: add a search_text tool
+STOP = {&quot;of&quot;, &quot;the&quot;, &quot;a&quot;, &quot;an&quot;, &quot;to&quot;, &quot;in&quot;, &quot;for&quot;, &quot;and&quot;, &quot;or&quot;, &quot;is&quot;, &quot;how&quot;, &quot;many&quot;, &quot;what&quot;}
 def search_text(contract_id: str, phrase: str) -&gt; str:
-    &quot;&quot;&quot;Return every clause that contains the phrase.&quot;&quot;&quot;
-    hits = [f&quot;{num}: {text}&quot; for num, text in clauses(contract(contract_id)).items() if phrase.lower() in text.lower()]
-    return &quot;\n&quot;.join(hits) or &quot;No clause contains that phrase.&quot;
+    &quot;&quot;&quot;Return every clause containing ALL the meaningful words of the phrase (&quot;days of notice&quot; finds &quot;days&#x27; prior written notice&quot;).&quot;&quot;&quot;
+    words = [w for w in re.findall(r&quot;[a-z0-9]+&quot;, phrase.lower()) if w not in STOP]
+    hits = [f&quot;{num}: {text}&quot; for num, text in clauses(contract(contract_id)).items() if all(w in text.lower() for w in words)]
+    return &quot;\n&quot;.join(hits) or &quot;No clause contains those words. Try one keyword.&quot;
 
 TOOLS.append({&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {&quot;name&quot;: &quot;search_text&quot;,
-    &quot;description&quot;: &quot;Find clauses in one contract that contain a phrase, e.g. &#x27;notice&#x27; or &#x27;State of&#x27;. Faster than reading every clause.&quot;,
+    &quot;description&quot;: &quot;Find clauses in one contract that contain all the given keywords, e.g. &#x27;notice renewal&#x27; or &#x27;governing law&#x27;. Faster than reading every clause.&quot;,
     &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {&quot;contract_id&quot;: {&quot;type&quot;: &quot;string&quot;}, &quot;phrase&quot;: {&quot;type&quot;: &quot;string&quot;}},
                    &quot;required&quot;: [&quot;contract_id&quot;, &quot;phrase&quot;]}}})
 IMPL[&quot;search_text&quot;] = search_text

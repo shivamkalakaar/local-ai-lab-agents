@@ -11,6 +11,8 @@
 # %% [markdown]
 # ## 1. Talk to the model
 # The model speaks the same API as OpenAI's, so any OpenAI-compatible code works. We only change the address to `localhost`.
+#
+# The setup cell already loaded the model into GPU memory (that first load takes about a minute), so this call should take only a second or two.
 
 # %%
 from lal.llm import chat, ask, client

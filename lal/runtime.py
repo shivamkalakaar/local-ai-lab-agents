@@ -61,6 +61,17 @@ def pull(model: str):
     subprocess.run(["ollama", "pull", model], check=True)      # shows download progress
 
 
+def warm_up(model: str):
+    """Load the model into GPU memory now, so the first lesson call isn't slow (the first load can take ~1-2 minutes)."""
+    import json
+    req = urllib.request.Request(f"{OLLAMA_URL}/api/generate", data=json.dumps({"model": model, "prompt": "hi",
+                                 "stream": False, "options": {"num_predict": 1}}).encode(), headers={"Content-Type": "application/json"})
+    try:
+        urllib.request.urlopen(req, timeout=300).read()
+    except Exception as e:
+        print("warm-up skipped:", e)
+
+
 def setup(models=None) -> str:
     """Get a local model ready. Returns the name of the main model to use."""
     t0 = time.time()
@@ -80,6 +91,7 @@ def setup(models=None) -> str:
         if (m if ":" in m else m + ":latest") not in have:
             pull(m)
     os.environ["LAL_MODEL"] = main
+    warm_up(main)
     print(f"Ready in {time.time() - t0:.0f}s. Main model: {main}. GPU: {'yes' if gpu else 'no'}. "
           f"Everything runs on this machine; no data leaves it.")
     return main
