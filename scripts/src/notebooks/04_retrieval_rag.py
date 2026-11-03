@@ -11,6 +11,7 @@ import numpy as np
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
 from lal.data import contract, sections, ids, labels
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import structured
 from lal.checks import quote_is_in_doc, check
 

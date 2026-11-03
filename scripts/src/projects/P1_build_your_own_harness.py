@@ -138,6 +138,7 @@ check("token budget stops the run", a.send("read").stop_reason == "token_budget"
 # Same harness, real model. The model only needs to produce our text format, so this works on any server, even ones without native tool calling.
 
 # %%
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import chat
 local_lm = lambda messages: chat(messages).content or ""
 

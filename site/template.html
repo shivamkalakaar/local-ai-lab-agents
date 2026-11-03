@@ -126,7 +126,7 @@ html{scroll-behavior:smooth}
 <nav class="rail" aria-label="Modules">
   <p class="brand">Agent Engineering School</p>
   <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
-  <div class="progress" id="progLabel">0 of 18 modules done</div>
+  <div class="progress" id="progLabel">0 modules done</div>
   <div class="bar"><i id="progBar"></i></div>
   <ol class="list" id="toc">
     <li class="part">Basics</li>
@@ -152,6 +152,7 @@ html{scroll-behavior:smooth}
     <li class="part">Projects</li>
     <li><a href="#p1"><span class="n">P1</span>Build your own harness</a></li>
     <li><a href="#p2"><span class="n">P2</span>Build an eval task</a></li>
+<!--PART2NAV-->
     <li><a href="#glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
 </nav>
@@ -745,6 +746,8 @@ flowchart LR
   <!--NB:p2-->
 </section>
 
+<!--PART2-->
+
 <!-- ============ Glossary ============ -->
 <section class="mod" id="glossary">
   <div class="mod-head"><div><div class="mod-num">Reference</div><h2>Glossary</h2></div></div>
@@ -824,7 +827,7 @@ flowchart LR
     try { navigator.clipboard.writeText(el.textContent).then(function(){ cr.textContent = "Copied"; }, sel); } catch (e) { sel(); }
   });
 
-  var KEY = "agent-school-done", TOTAL = 18, done = {};
+  var KEY = "agent-school-done", TOTAL = document.querySelectorAll(".done-btn").length, done = {};
   try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
   function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
   function render(){

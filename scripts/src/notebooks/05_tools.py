@@ -9,6 +9,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Callable, Literal
 import jsonschema
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import client
 from lal.data import contract, clauses, sections
 from lal.checks import check

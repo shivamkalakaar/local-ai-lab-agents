@@ -20,6 +20,11 @@ from terms import TERMS  # noqa: E402
 SOURCES = {f"m{i}": p for i, p in enumerate(sorted((ROOT / "scripts/src/notebooks").glob("*.py")))}
 SOURCES["p1"] = ROOT / "scripts/src/projects/P1_build_your_own_harness.py"
 SOURCES["p2"] = ROOT / "scripts/src/projects/P2_build_an_eval_task.py"
+for _p in sorted((ROOT / "scripts/src/cs329a").glob("a*.py")):
+    SOURCES[_p.stem.split("_")[0]] = _p                 # a01, a02, ...
+for _p in sorted((ROOT / "scripts/src/cs329a_projects").glob("ap*.py")):
+    SOURCES[_p.stem.split("_")[0]] = _p                 # ap1, ap2, ...
+FOLDER = {"m": "notebooks", "p": "projects", "a": "cs329a"}
 SOLUTION_HEAD = re.compile(r"^#+\s*(Solutions?|Stretch goal solutions|Solution:)", re.I)
 
 EXTRA_CSS = """
@@ -57,7 +62,7 @@ def code_block(code: str, label: str, lang="python") -> str:
 
 
 def colab_url(mod: str) -> str:
-    folder = "projects" if mod.startswith("p") else "notebooks"
+    folder = "cs329a_projects" if mod.startswith("ap") else FOLDER[mod[0]]
     return f"https://colab.research.google.com/github/{REPO}/blob/main/{folder}/{SOURCES[mod].stem}.ipynb"
 
 
@@ -112,9 +117,98 @@ def render_setup() -> str:
             + render_notebook("m0"))
 
 
+PART2_CSS = """
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+"""
+
+
+def esc(x) -> str:
+    return html.escape(str(x if x is not None else ""))
+
+
+def section_head(mod, num_label, title, src_line):
+    return (f'<section class="mod" id="{mod}" data-mod="{mod}">\n  <div class="mod-head"><div><div class="mod-num">{esc(num_label)}</div>'
+            f'<h2>{esc(title)}</h2></div><span class="actions"><a class="colab-btn" href="{colab_url(mod)}">Open in Colab</a>'
+            f'<button class="done-btn" data-done="{mod}" aria-pressed="false">Mark done</button></span></div>\n'
+            f'  <p class="src">{esc(src_line)}</p>\n')
+
+
+def render_papers(papers, heading="The papers"):
+    cards = []
+    for pp in papers:
+        title = esc(pp.get("title"))
+        link = f'<a href="{esc(pp["url"])}">{title}</a>' if pp.get("url") else title
+        rows = "".join(f"<dt>{lab}</dt><dd>{esc(pp.get(key))}</dd>" for lab, key in
+                       (("What", "what"), ("Result", "result"), ("Takeaway", "takeaway")) if pp.get(key))
+        cards.append(f'<div class="paper"><h4>{link}</h4><p class="by">{esc(pp.get("authors"))} · {esc(pp.get("year"))}</p><dl>{rows}</dl></div>')
+    return f"<h3>{heading}</h3><div class=\"papers\">" + "".join(cards) + "</div>"
+
+
+def render_part2():
+    import json
+    mods = sorted((ROOT / "site/cs329a").glob("a*.json"))
+    projects_file = ROOT / "site/cs329a/projects.json"
+    if not mods and not projects_file.exists():
+        return "", ""
+    out = ['<div class="part-banner" id="part2"><p class="eyebrow" style="color:var(--paper)">Part 2</p>'
+           '<h2>Self-improving AI agents</h2>'
+           '<p>Everything from Stanford CS329A "Self-Improving AI Agents" (Autumn 2025, Azalia Mirhoseini and Aakanksha Chowdhery): '
+           'every assigned paper summarized, a runnable Colab notebook per lecture, and small rebuilds of the past student projects. '
+           'Course site: <a href="https://cs329a.stanford.edu/">cs329a.stanford.edu</a>.</p></div>']
+    nav = ['    <li class="part">Part 2 · Self-improving agents</li>']
+    for f in mods:
+        d = json.loads(f.read_text())
+        mod = d["id"]
+        if mod not in SOURCES:
+            continue
+        nav.append(f'    <li><a href="#{mod}"><span class="n">{mod.upper()}</span>{esc(d["title"])}</a></li>')
+        sec = [section_head(mod, f"Part 2 · {mod.upper()}", d["title"], d.get("lecture", "")),
+               f'  <p class="big">{esc(d.get("big_idea"))}</p>']
+        if d.get("terms"):
+            rows = "".join(f'<div><dt>{esc(t[0])}</dt><dd>{esc(t[1])}<span class="from">Source: {esc(t[2] if len(t) > 2 else "")}</span></dd></div>' for t in d["terms"])
+            sec.append(f'<div class="terms"><h4>Key terms</h4><dl>{rows}</dl></div>')
+        if d.get("papers"):
+            sec.append(render_papers(d["papers"]))
+        sec.append(render_notebook(mod))
+        if d.get("traps"):
+            sec.append('<div class="pit"><strong>Traps</strong><ul>' + "".join(f"<li>{esc(t)}</li>" for t in d["traps"]) + "</ul></div>")
+        if d.get("check"):
+            sec.append('<div class="check"><h4>Check yourself</h4>' + "".join(
+                f"<details><summary>{esc(q)}</summary><p>{esc(a)}</p></details>" for q, a in d["check"]) + "</div>")
+        sec.append("</section>")
+        out.append("\n".join(sec))
+    if projects_file.exists():
+        nav.append('    <li class="part">Part 2 · Past projects</li>')
+        for pr in json.loads(projects_file.read_text()):
+            mod = pr["id"]
+            if mod not in SOURCES:
+                continue
+            nav.append(f'    <li><a href="#{mod}"><span class="n">{mod.upper()}</span>{esc(pr["title"][:34])}</a></li>')
+            links = " · ".join(f'<a href="{esc(u)}">{lab}</a>' for lab, u in (("Paper", pr.get("paper_url")), ("Poster", pr.get("poster_url"))) if u)
+            sec = [section_head(mod, f"Past project · {mod.upper()}", pr["title"], f"CS329A Winter 2025 · {pr.get('authors', '')}"),
+                   f'  <p class="src">{links}</p>',
+                   '<div class="paper"><dl>' + "".join(f"<dt>{lab}</dt><dd>{esc(pr.get(k))}</dd>" for lab, k in
+                       (("Problem", "problem"), ("Method", "method"), ("Results", "results"), ("Lessons", "lessons"), ("Our rebuild", "rebuild")) if pr.get(k)) + "</dl></div>",
+                   render_notebook(mod), "</section>"]
+            out.append("\n".join(sec))
+    return "\n\n".join(out), "\n".join(nav)
+
+
 def build():
     s = (ROOT / "site/template.html").read_text()
-    s = s.replace("</style>", EXTRA_CSS + "</style>", 1)
+    s = s.replace("</style>", EXTRA_CSS + PART2_CSS + "</style>", 1)
+    part2, part2_nav = render_part2()
+    s = s.replace("<!--PART2-->", part2).replace("<!--PART2NAV-->", part2_nav)
     for mod in SOURCES:
         s = s.replace(f"<!--TERMS:{mod}-->", render_terms(mod))
         s = s.replace(f"<!--NB:{mod}-->", render_setup() if mod == "m0" else render_notebook(mod))

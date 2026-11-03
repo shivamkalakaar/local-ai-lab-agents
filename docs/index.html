@@ -142,6 +142,18 @@ html{scroll-behavior:smooth}
 details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
 details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
 .code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
 </style>
 </head>
 <body>
@@ -151,7 +163,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <nav class="rail" aria-label="Modules">
   <p class="brand">Agent Engineering School</p>
   <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
-  <div class="progress" id="progLabel">0 of 18 modules done</div>
+  <div class="progress" id="progLabel">0 modules done</div>
   <div class="bar"><i id="progBar"></i></div>
   <ol class="list" id="toc">
     <li class="part">Basics</li>
@@ -177,6 +189,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li class="part">Projects</li>
     <li><a href="#p1"><span class="n">P1</span>Build your own harness</a></li>
     <li><a href="#p2"><span class="n">P2</span>Build an eval task</a></li>
+
     <li><a href="#glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
 </nav>
@@ -214,7 +227,7 @@ if &quot;google.colab&quot; in sys.modules:
         subprocess.run([&quot;git&quot;, &quot;-C&quot;, &quot;/content/local-ai-lab-agents&quot;, &quot;pull&quot;, &quot;-q&quot;])   # get the latest fixes
     os.chdir(&quot;/content/local-ai-lab-agents&quot;)
     subprocess.run([sys.executable, &quot;-m&quot;, &quot;pip&quot;, &quot;install&quot;, &quot;-q&quot;, &quot;-r&quot;, &quot;requirements.txt&quot;, *EXTRA], check=True)
-elif os.path.basename(os.getcwd()) in (&quot;notebooks&quot;, &quot;projects&quot;):
+elif os.path.basename(os.getcwd()) in (&quot;notebooks&quot;, &quot;projects&quot;, &quot;cs329a&quot;, &quot;cs329a_projects&quot;):
     os.chdir(&quot;..&quot;)
 sys.path.insert(0, os.getcwd())
 from lal.runtime import setup
@@ -279,20 +292,34 @@ def timed(fn, *a, **kw):
     print(f&quot;[{time.time() - t0:.1f}s]&quot;)
     return out
 </code></pre></div><div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/00_setup_first_call.ipynb" target="_blank" rel="noopener">00_setup_first_call.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
-<div class="nb-md"><h3>1. Talk to the model</h3>
-<p>The model speaks the same API as OpenAI's, so any OpenAI-compatible code works. We only change the address to <code>localhost</code>.</p>
-<p>The setup cell already loaded the model into GPU memory (that first load takes about a minute), so this call should take only a second or two.</p></div>
-<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from lal.llm import chat, ask, client
-import time
+<div class="nb-md"><h3>1. Talk to the model on this machine</h3>
+<p>Ollama runs the model on this computer and serves it at <code>http://localhost:11434</code>. It speaks the same API as OpenAI, so we use the normal <code>openai</code> Python library and only change two things:
+- <code>base_url</code> points at <strong>localhost</strong>, not at OpenAI's servers;
+- the API key is a dummy value, because nothing leaves this machine.</p>
+<p>The setup cell already loaded the model into GPU memory (that first load takes about a minute), so this call should take a second or two.</p></div>
+<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import time
+from openai import OpenAI
 
+local = OpenAI(base_url=&quot;http://localhost:11434/v1&quot;, api_key=&quot;not-needed&quot;)   # the model server on THIS machine
 t0 = time.time()
-reply = ask(&quot;In one sentence: why would a law firm want AI that runs on its own computers?&quot;)
+resp = local.chat.completions.create(
+    model=MODEL,                                           # llama3.1:8b, downloaded by the setup cell
+    messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;In one sentence: why would a law firm want AI that runs on its own computers?&quot;}],
+    temperature=0,
+)
+reply = resp.choices[0].message.content
 print(reply)
-print(f&quot;\n{time.time() - t0:.1f} seconds, model = {MODEL}&quot;)</code></pre></div>
+print(f&quot;\n{time.time() - t0:.1f} seconds, model = {MODEL}, server = {local.base_url}&quot;)</code></pre></div>
+<div class="nb-md"><p>Every later notebook uses two short helpers from <code>lal/llm.py</code>, so the code stays readable. They wrap exactly the call above, pointed at the same local server:
+- <code>ask(prompt)</code>: prompt in, text out;
+- <code>structured(prompt, Schema)</code>: forced JSON that matches a Pydantic schema.</p></div>
+<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from lal.llm import ask, chat, client
+print(&quot;lal.llm talks to:&quot;, client.base_url)            # the same localhost address
+print(ask(&quot;Reply with exactly: ready&quot;))</code></pre></div>
 <div class="nb-md"><h3>2. Measure speed and token use</h3>
 <p>On your own hardware there is no per-token bill, but speed still matters.</p></div>
-<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">t0 = time.time()
-resp = client.chat.completions.create(model=MODEL, temperature=0,
+<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">t0 = time.time()
+resp = local.chat.completions.create(model=MODEL, temperature=0,
     messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;List five common clauses in a services contract, one line each.&quot;}])
 secs = time.time() - t0
 u = resp.usage
@@ -301,19 +328,19 @@ print(f&quot;\nprompt tokens: {u.prompt_tokens}, output tokens: {u.completion_to
       f&quot;speed: {u.completion_tokens / secs:.0f} tokens/second&quot;)</code></pre></div>
 <div class="nb-md"><h3>3. Temperature: same question, different settings</h3>
 <p>Low temperature gives the same answer every time (good for extraction). Higher temperature gives variety (good for brainstorming, or for sampling several candidates to check).</p></div>
-<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">for temp in (0, 1.0):
+<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">for temp in (0, 1.0):
     answers = {ask(&quot;Name one risky clause in a vendor contract. Answer in 3 words or fewer.&quot;, temperature=temp).strip()
                for _ in range(3)}
     print(f&quot;temperature {temp}: {answers}&quot;)</code></pre></div>
 <div class="nb-md"><h3>4. Our practice data</h3>
 <p>We use 20 made-up service agreements. Some have problems planted on purpose: an uncapped or oversized liability cap, the wrong governing law, a long auto-renewal, or a short notice period. Because we planted them, we know the right answers, so we can grade our agents. (See <code>data/gen.py</code>.)</p></div>
-<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from lal.data import contract, labels, playbook, ids
+<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from lal.data import contract, labels, playbook, ids
 print(contract(&quot;msa_07&quot;)[:900], &quot;...&quot;)
 print(&quot;\nTrue answer for msa_07:&quot;, labels()[&quot;msa_07&quot;])
 print(&quot;\nPlaybook rules:&quot;)
 for k, v in playbook()[&quot;rules&quot;].items():
     print(f&quot;  - {k}: {v}&quot;)</code></pre></div>
-<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from lal.checks import check
+<div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from lal.checks import check
 check(&quot;model answers&quot;, len(reply) &gt; 10)
 check(&quot;20 practice contracts loaded&quot;, len(ids()) == 20)</code></pre></div>
 <div class="nb-md"><h3>Your turn</h3>
@@ -321,11 +348,11 @@ check(&quot;20 practice contracts loaded&quot;, len(ids()) == 20)</code></pre></
 <li>Ask the model to summarize <code>msa_07</code> in three bullet points. Time it.</li>
 <li>Change <code>temperature</code> and see how the summary changes.</li>
 </ol></div>
-<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="nb-md"><p>Try the exercises yourself first, then compare.</p></div><div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: summarize msa_07 in three bullets and time it
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="nb-md"><p>Try the exercises yourself first, then compare.</p></div><div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: summarize msa_07 in three bullets and time it
 t0 = time.time()
 summary = ask(&quot;Summarize this contract in exactly three short bullet points:\n\n&quot; + contract(&quot;msa_07&quot;))
 print(summary)
-print(f&quot;\n{time.time() - t0:.1f} seconds&quot;)</code></pre></div><div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: the same summary at three temperatures
+print(f&quot;\n{time.time() - t0:.1f} seconds&quot;)</code></pre></div><div class="code"><div class="cap"><span class="cell">00_setup_first_call.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: the same summary at three temperatures
 for temp in (0, 0.7, 1.3):
     print(f&quot;--- temperature {temp} ---&quot;)
     print(ask(&quot;Summarize this contract in exactly three short bullet points:\n\n&quot; + contract(&quot;msa_07&quot;), temperature=temp))
@@ -364,6 +391,7 @@ for temp in (0, 0.7, 1.3):
 <div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/01_agent_loop.ipynb" target="_blank" rel="noopener">01_agent_loop.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
 <div class="nb-md"><h3>1. Tools the agent can use</h3></div>
 <div class="code"><div class="cap"><span class="cell">01_agent_loop.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, re, time
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import client, ask
 from lal.data import contract, clauses, sections, labels
 
@@ -532,6 +560,7 @@ print(&quot;\nANSWER:&quot;, out[&quot;answer&quot;], &quot;| truth:&quot;, labe
 <p>Note the "null if absent" option. Without it, models invent values to fill required fields.</p></div>
 <div class="code"><div class="cap"><span class="cell">02_llms_for_builders.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from typing import Literal
 from pydantic import BaseModel, Field
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import structured, ask
 from lal.data import contract, labels, ids
 from lal.checks import quote_is_in_doc, check
@@ -652,6 +681,7 @@ print(f&quot;governing law with a fixed list: {hits}/{len(sample)}  (free text w
 <div class="nb-md"><h3>1. Measure it: longer prompts are slower</h3>
 <p>We ask the same question with 1, 5 and 10 contracts in the prompt.</p></div>
 <div class="code"><div class="cap"><span class="cell">03_context_engineering.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import time
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import client, ask
 from lal.data import contract, ids, labels
 
@@ -785,6 +815,7 @@ import numpy as np
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
 from lal.data import contract, sections, ids, labels
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import structured
 from lal.checks import quote_is_in_doc, check</code></pre></div>
 <div class="nb-md"><h3>1. Chunk on structure, with context</h3>
@@ -920,6 +951,7 @@ print(f&quot;hybrid recall@3 {recall_at_k(&#x27;hybrid&#x27;):.0%} -&gt; hybrid 
 from dataclasses import dataclass
 from typing import Any, Callable, Literal
 import jsonschema
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import client
 from lal.data import contract, clauses, sections
 from lal.checks import check</code></pre></div>
@@ -1080,6 +1112,7 @@ print(run(&quot;Show me lines 16 to 30 of contract msa_07.&quot;))
 from concurrent.futures import ThreadPoolExecutor
 from pydantic import BaseModel
 from typing import Literal
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import ask, structured
 from lal.data import contract, sections, labels, playbook, ids
 from lal.checks import quote_is_in_doc, check
@@ -1406,6 +1439,7 @@ for cid in [&quot;msa_04&quot;, &quot;msa_10&quot;]:
 <div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/08_memory.ipynb" target="_blank" rel="noopener">08_memory.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
 <div class="code"><div class="cap"><span class="cell">08_memory.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, time, hashlib, shutil
 from pathlib import Path
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import ask
 from lal.data import contract, sections, labels
 from lal.checks import check
@@ -1537,6 +1571,7 @@ except PermissionError as e:
 <div class="code"><div class="cap"><span class="cell">09_multi_agent.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, time
 from concurrent.futures import ThreadPoolExecutor
 from pydantic import BaseModel
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import ask, structured
 from lal.data import contract, sections, labels, playbook, ids
 from lal.checks import prf, check
@@ -1684,6 +1719,7 @@ print(merged[:500])
   <div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/10_evaluation.ipynb" target="_blank" rel="noopener">10_evaluation.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
 <div class="code"><div class="cap"><span class="cell">10_evaluation.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, time, re
 from pydantic import BaseModel
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import structured, ask
 from lal.data import contract, labels, playbook, ids
 from lal.checks import prf, pass_at_k, pass_hat_k, bootstrap_ci, check
@@ -1949,6 +1985,7 @@ if RUN_VAGUE:
 <div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/12_data_flywheel.ipynb" target="_blank" rel="noopener">12_data_flywheel.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
 <div class="code"><div class="cap"><span class="cell">12_data_flywheel.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, random, re, time
 from pathlib import Path
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import client
 from lal.data import contract, labels, playbook
 from lal.checks import check</code></pre></div>
@@ -2083,6 +2120,7 @@ for g, xs in score_by.items():
 <div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/13_safety.ipynb" target="_blank" rel="noopener">13_safety.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
 <div class="code"><div class="cap"><span class="cell">13_safety.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json
 from pydantic import BaseModel
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import client, structured
 from lal.data import contract
 from lal.checks import check</code></pre></div>
@@ -2209,6 +2247,7 @@ print(&quot;emails actually sent:&quot;, SENT)</code></pre></div></details>
 <div class="code"><div class="cap"><span class="cell">14_long_running_agents.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, shutil, subprocess
 from pathlib import Path
 from pydantic import BaseModel
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import structured
 from lal.data import contract, sections, ids, labels, playbook
 from lal.checks import quote_is_in_doc, check
@@ -2354,6 +2393,7 @@ flowchart LR
   <div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/15_capstone_contract_review.ipynb" target="_blank" rel="noopener">15_capstone_contract_review.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
 <div class="code"><div class="cap"><span class="cell">15_capstone_contract_review.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, os, re, time
 from pydantic import BaseModel
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import structured
 from lal.data import contract, sections, labels, playbook, ids
 from lal.checks import quote_is_in_doc, prf, pass_hat_k, bootstrap_ci, check
@@ -2603,7 +2643,8 @@ a = S.Agent(ScriptedLM([&#x27;&lt;tool&gt;{&quot;name&quot;: &quot;read_doc&quot
 check(&quot;token budget stops the run&quot;, a.send(&quot;read&quot;).stop_reason == &quot;token_budget&quot;)</code></pre></div>
 <div class="nb-md"><h3>Part 4 · Plug in the local model</h3>
 <p>Same harness, real model. The model only needs to produce our text format, so this works on any server, even ones without native tool calling.</p></div>
-<div class="code"><div class="cap"><span class="cell">P1_build_your_own_harness.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from lal.llm import chat
+<div class="code"><div class="cap"><span class="cell">P1_build_your_own_harness.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
+from lal.llm import chat
 local_lm = lambda messages: chat(messages).content or &quot;&quot;
 
 agent = S.Agent(local_lm, registry)
@@ -2755,6 +2796,7 @@ check(&quot;the flag-everything shortcut scores low&quot;, scores[&quot;flag eve
 <p>The agent uses the harness from Project 1 with three tools limited to its workspace: list files, read a file, write a file. It never sees the tests.</p></div>
 <div class="code"><div class="cap"><span class="cell">P2_build_an_eval_task.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from lal import harness_solution as S
 from lal.harness_solution import ToolSpec, Config
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import chat
 
 def agent_attempt(ws: Path, instruction: str, temperature=0.3):
@@ -2859,6 +2901,8 @@ solved2 = sum(r == 1.0 for r in rewards2)
 print(f&quot;rewards {rewards2} | pass@3 {pass_at_k(3, solved2, 3):.0%} | pass^3 {pass_hat_k(3, solved2, 3):.0%}&quot;)</code></pre></div></details>
 </section>
 
+
+
 <!-- ============ Glossary ============ -->
 <section class="mod" id="glossary">
   <div class="mod-head"><div><div class="mod-num">Reference</div><h2>Glossary</h2></div></div>
@@ -2909,7 +2953,7 @@ print(f&quot;rewards {rewards2} | pass@3 {pass_at_k(3, solved2, 3):.0%} | pass^3
     });
   });
 
-  var KEY = "agent-school-done", TOTAL = 18, done = {};
+  var KEY = "agent-school-done", TOTAL = document.querySelectorAll(".done-btn").length, done = {};
   try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
   function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
   function render(){

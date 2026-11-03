@@ -9,6 +9,7 @@ import re, time
 from concurrent.futures import ThreadPoolExecutor
 from pydantic import BaseModel
 from typing import Literal
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import ask, structured
 from lal.data import contract, sections, labels, playbook, ids
 from lal.checks import quote_is_in_doc, check

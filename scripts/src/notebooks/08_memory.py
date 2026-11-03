@@ -13,6 +13,7 @@
 # %%
 import json, time, hashlib, shutil
 from pathlib import Path
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import ask
 from lal.data import contract, sections, labels
 from lal.checks import check

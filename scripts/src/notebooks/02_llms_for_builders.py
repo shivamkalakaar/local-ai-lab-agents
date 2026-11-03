@@ -11,6 +11,7 @@
 # %%
 from typing import Literal
 from pydantic import BaseModel, Field
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import structured, ask
 from lal.data import contract, labels, ids
 from lal.checks import quote_is_in_doc, check

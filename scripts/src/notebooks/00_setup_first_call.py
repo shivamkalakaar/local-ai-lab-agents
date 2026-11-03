@@ -9,19 +9,37 @@
 # Companion reading: [Agent Engineering School, Module 00](https://claude.ai/artifact/41sHaxGwFWf7SjJWDdtK5w#m0)
 
 # %% [markdown]
-# ## 1. Talk to the model
-# The model speaks the same API as OpenAI's, so any OpenAI-compatible code works. We only change the address to `localhost`.
+# ## 1. Talk to the model on this machine
+# Ollama runs the model on this computer and serves it at `http://localhost:11434`. It speaks the same API as OpenAI, so we use the normal `openai` Python library and only change two things:
+# - `base_url` points at **localhost**, not at OpenAI's servers;
+# - the API key is a dummy value, because nothing leaves this machine.
 #
-# The setup cell already loaded the model into GPU memory (that first load takes about a minute), so this call should take only a second or two.
+# The setup cell already loaded the model into GPU memory (that first load takes about a minute), so this call should take a second or two.
 
 # %%
-from lal.llm import chat, ask, client
 import time
+from openai import OpenAI
 
+local = OpenAI(base_url="http://localhost:11434/v1", api_key="not-needed")   # the model server on THIS machine
 t0 = time.time()
-reply = ask("In one sentence: why would a law firm want AI that runs on its own computers?")
+resp = local.chat.completions.create(
+    model=MODEL,                                           # llama3.1:8b, downloaded by the setup cell
+    messages=[{"role": "user", "content": "In one sentence: why would a law firm want AI that runs on its own computers?"}],
+    temperature=0,
+)
+reply = resp.choices[0].message.content
 print(reply)
-print(f"\n{time.time() - t0:.1f} seconds, model = {MODEL}")
+print(f"\n{time.time() - t0:.1f} seconds, model = {MODEL}, server = {local.base_url}")
+
+# %% [markdown]
+# Every later notebook uses two short helpers from `lal/llm.py`, so the code stays readable. They wrap exactly the call above, pointed at the same local server:
+# - `ask(prompt)`: prompt in, text out;
+# - `structured(prompt, Schema)`: forced JSON that matches a Pydantic schema.
+
+# %%
+from lal.llm import ask, chat, client
+print("lal.llm talks to:", client.base_url)            # the same localhost address
+print(ask("Reply with exactly: ready"))
 
 # %% [markdown]
 # ## 2. Measure speed and token use
@@ -29,7 +47,7 @@ print(f"\n{time.time() - t0:.1f} seconds, model = {MODEL}")
 
 # %%
 t0 = time.time()
-resp = client.chat.completions.create(model=MODEL, temperature=0,
+resp = local.chat.completions.create(model=MODEL, temperature=0,
     messages=[{"role": "user", "content": "List five common clauses in a services contract, one line each."}])
 secs = time.time() - t0
 u = resp.usage

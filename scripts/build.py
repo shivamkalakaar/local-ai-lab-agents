@@ -23,7 +23,7 @@ if "google.colab" in sys.modules:
         subprocess.run(["git", "-C", "/content/local-ai-lab-agents", "pull", "-q"])   # get the latest fixes
     os.chdir("/content/local-ai-lab-agents")
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r", "requirements.txt", *EXTRA], check=True)
-elif os.path.basename(os.getcwd()) in ("notebooks", "projects"):
+elif os.path.basename(os.getcwd()) in ("notebooks", "projects", "cs329a", "cs329a_projects"):
     os.chdir("..")
 sys.path.insert(0, os.getcwd())
 from lal.runtime import setup
@@ -89,6 +89,6 @@ def build(src_path: Path, out_dir: Path):
 
 
 if __name__ == "__main__":
-    for sub in ("notebooks", "projects"):
+    for sub in ("notebooks", "projects", "cs329a", "cs329a_projects"):
         for p in sorted((ROOT / "scripts" / "src" / sub).glob("*.py")):
             print("built", build(p, ROOT / sub))

@@ -7,6 +7,7 @@
 # %%
 import json, time, re
 from pydantic import BaseModel
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import structured, ask
 from lal.data import contract, labels, playbook, ids
 from lal.checks import prf, pass_at_k, pass_hat_k, bootstrap_ci, check

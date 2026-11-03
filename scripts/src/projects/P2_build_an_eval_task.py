@@ -99,6 +99,7 @@ check("the flag-everything shortcut scores low", scores["flag everything"] < 0.5
 # %%
 from lal import harness_solution as S
 from lal.harness_solution import ToolSpec, Config
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import chat
 
 def agent_attempt(ws: Path, instruction: str, temperature=0.3):

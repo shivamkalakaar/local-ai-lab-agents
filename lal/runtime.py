@@ -92,6 +92,6 @@ def setup(models=None) -> str:
             pull(m)
     os.environ["LAL_MODEL"] = main
     warm_up(main)
-    print(f"Ready in {time.time() - t0:.0f}s. Main model: {main}. GPU: {'yes' if gpu else 'no'}. "
-          f"Everything runs on this machine; no data leaves it.")
+    print(f"Ready in {time.time() - t0:.0f}s. Main model: {main}. GPU: {'yes' if gpu else 'no'}.\n"
+          f"Model server: {OLLAMA_URL}/v1 (on this machine). No API keys, no data leaves it.")
     return main

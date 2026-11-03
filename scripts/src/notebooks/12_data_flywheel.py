@@ -9,6 +9,7 @@
 # %%
 import json, random, re, time
 from pathlib import Path
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
 from lal.llm import client
 from lal.data import contract, labels, playbook
 from lal.checks import check
