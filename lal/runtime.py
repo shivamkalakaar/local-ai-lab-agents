@@ -36,14 +36,18 @@ def install_ollama():
     if shutil.which("ollama"):
         return
     print("Installing Ollama (about 1 minute)...")
-    subprocess.run("apt-get -qq update && apt-get -qq install -y zstd pciutils > /dev/null", shell=True, check=False)
+    subprocess.run("apt-get -qq update && apt-get -qq install -y zstd pciutils", shell=True, check=True, stdout=subprocess.DEVNULL)
     subprocess.run("curl -fsSL https://ollama.com/install.sh | sh > /tmp/ollama_install.log 2>&1", shell=True, check=True)
 
 
 def start_server():
     if server_up():
         return
-    env = {**os.environ, "OLLAMA_HOST": "127.0.0.1:11434", "OLLAMA_KEEP_ALIVE": "30m"}
+    # Ollama's defaults are a 4096-token context and 1 request at a time. The OpenAI-style API can't change
+    # the context per call, so we set it when the server starts. 8k x 2 fits a 16 GB T4 with an 8B model.
+    env = {**os.environ, "OLLAMA_HOST": "127.0.0.1:11434", "OLLAMA_KEEP_ALIVE": "30m",
+           "OLLAMA_CONTEXT_LENGTH": os.getenv("OLLAMA_CONTEXT_LENGTH", "8192"),
+           "OLLAMA_NUM_PARALLEL": os.getenv("OLLAMA_NUM_PARALLEL", "2")}
     subprocess.Popen(["ollama", "serve"], stdout=open("/tmp/ollama.log", "w"), stderr=subprocess.STDOUT, env=env)
     for _ in range(60):
         if server_up():
@@ -54,7 +58,7 @@ def start_server():
 
 def pull(model: str):
     print(f"Downloading {model} (first time only)...")
-    subprocess.run(["ollama", "pull", model], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(["ollama", "pull", model], check=True)      # shows download progress
 
 
 def setup(models=None) -> str:
@@ -65,12 +69,12 @@ def setup(models=None) -> str:
         install_ollama()
     elif not shutil.which("ollama") and not server_up():
         raise RuntimeError("Install Ollama first: https://ollama.com/download")
-    start_server()
+    start_server()   # if a server was already running, restart the runtime to apply the settings above
     main = os.getenv("LAL_MODEL") or (MAIN_MODEL if gpu or not in_colab() else SMALL_MODEL)
     if in_colab() and not gpu:
         print("WARNING: no GPU found. Using the small model; it will be slower.\n"
               "Fix: Runtime > Change runtime type > T4 GPU, then rerun this cell.")
-    wanted = models or [main]
+    wanted = list(dict.fromkeys([main, *(models or [])]))
     have = subprocess.run(["ollama", "list"], capture_output=True, text=True).stdout
     for m in wanted:
         if (m if ":" in m else m + ":latest") not in have:

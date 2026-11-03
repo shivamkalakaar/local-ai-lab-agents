@@ -67,7 +67,8 @@ for name, fn in [("oracle", oracle), ("do nothing", nothing), ("flag everything"
 N_RUNS, TEMP = 3, 0.3
 SAMPLE = ALL[::2]          # 10 contracts to keep it quick; use ALL for the full set
 t0 = time.time()
-runs = {c: [score(reviewer(c, TEMP), c)["exact"] for _ in range(N_RUNS)] for c in SAMPLE}
+preds = {c: [reviewer(c, TEMP) for _ in range(N_RUNS)] for c in SAMPLE}
+runs = {c: [score(p, c)["exact"] for p in ps] for c, ps in preds.items()}
 print(f"{len(SAMPLE)} contracts x {N_RUNS} runs in {time.time()-t0:.0f}s")
 
 per_doc_avg = [sum(r) / N_RUNS for r in runs.values()]
@@ -93,11 +94,13 @@ B: {b}
 Which rewrite better follows the rule and keeps the meaning? Longer is not better. Answer A, B, or TIE only."""
 
 def pairwise(ref, x, y):
-    first = ask(JUDGE.format(ref=ref, a=x, b=y)).strip().upper()[:3]
-    second = ask(JUDGE.format(ref=ref, a=y, b=x)).strip().upper()[:3]
-    if first.startswith("A") and second.startswith("B"): return "x wins"
-    if first.startswith("B") and second.startswith("A"): return "y wins"
-    return "tie (judge changed its mind when order swapped)" if first[:1] != second[:1] else "tie"
+    f = re.sub(r"[^A-Z]", "", ask(JUDGE.format(ref=ref, a=x, b=y)).upper())[:1]
+    s = re.sub(r"[^A-Z]", "", ask(JUDGE.format(ref=ref, a=y, b=x)).upper())[:1]
+    if f == "A" and s == "B": return "x wins"
+    if f == "B" and s == "A": return "y wins"
+    if f == s and f in ("A", "B"):
+        return "tie: the judge picked the same POSITION both times (position bias), so we can't trust either verdict"
+    return "tie"
 
 ref = "Each party's total liability shall not exceed the fees paid in the twelve (12) months preceding the claim."
 good = "Total liability of each party is capped at fees paid during the 12 months before the claim."
@@ -107,7 +110,8 @@ print(pairwise(ref, good, bad))
 # %%
 check("oracle scores 100% exact", run_eval(oracle, ALL)["exact"] == 1.0)
 check("flag-everything has low precision (< 50%)", run_eval(everything, ALL)["precision"] < 0.5)
-check("reviewer beats do-nothing on recall", sum(sum(r) for r in runs.values()) > 0)
+rec = run_eval(lambda c: preds[c][0], SAMPLE)["recall"]
+check("reviewer beats do-nothing on recall", rec > run_eval(nothing, SAMPLE)["recall"])
 
 # %% [markdown]
 # ## Your turn

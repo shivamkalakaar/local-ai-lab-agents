@@ -90,6 +90,8 @@ print("Truth:", labels()["msa_07"]["terms"]["liability_cap_months"])
 def to_months(text):
     if not text: return "?"
     if re.search(r"\b(none|unlimited|no cap|not limited)\b", text.lower()): return None
+    for word, n in {"twelve": 12, "twenty-four": 24, "thirty-six": 36}.items():
+        if word in text.lower(): return n
     m = re.search(r"\b(12|24|36)\b", text)
     return int(m.group(1)) if m else "?"
 

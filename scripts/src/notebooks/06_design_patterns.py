@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pydantic import BaseModel
 from typing import Literal
 from lal.llm import ask, structured
-from lal.data import contract, sections, labels, playbook
+from lal.data import contract, sections, labels, playbook, ids
 from lal.checks import quote_is_in_doc, check
 
 PB = playbook()
@@ -53,7 +53,7 @@ for cid in ["msa_03", "msa_09", "msa_15"]:
 
 # %% [markdown]
 # ## 3. Parallel: independent checks at the same time
-# Ollama can serve several requests at once. Separate checks don't depend on each other, so run them together.
+# Separate checks don't depend on each other, so run them together. Ollama runs them in parallel when `OLLAMA_NUM_PARALLEL` > 1 (our setup sets 2); otherwise they queue.
 
 # %%
 def check_rule(args):
@@ -86,8 +86,9 @@ def draft_redline(cid, rounds=3):
         d = structured(f"Rewrite this clause so the liability cap meets the playbook: {PB['rules']['liability_cap']}\n"
                        f"Clause: {clause}\n{feedback}\nReturn the new clause text and the cap in months.", Redline)
         problems = []
-        if d.months > PB["max_cap_months"]: problems.append(f"cap {d.months} months exceeds {PB['max_cap_months']}")
-        if str(d.months) not in d.new_text and "twelve" not in d.new_text.lower(): problems.append("new text doesn't state the cap")
+        stated = [int(n) for n in re.findall(r"(\d+)\)? months", d.new_text)]       # check the TEXT, not the model's own claim
+        if not stated: problems.append("the new text doesn't state the cap as a number of months, like 'twelve (12) months'")
+        elif max(stated) > PB["max_cap_months"]: problems.append(f"the text says {max(stated)} months; the playbook max is {PB['max_cap_months']}")
         if not problems:
             return d, r + 1
         feedback = "Fix these problems: " + "; ".join(problems)
@@ -107,10 +108,13 @@ def code_act(question):
                f"Write Python that computes the answer and stores it in a variable named result. Question: {question}\n"
                "Reply with only the code, no explanation, no backticks.")
     code = re.sub(r"^```\w*|```$", "", code.strip(), flags=re.M).strip()
-    env = {"contract": contract, "ids": __import__("lal.data", fromlist=["ids"]).ids, "sections": sections}
+    import builtins
+    safe = {k: getattr(builtins, k) for k in ("len", "range", "sorted", "any", "all", "str", "int", "list", "set", "dict",
+                                              "enumerate", "zip", "min", "max", "print", "isinstance")}
+    g = {"__builtins__": safe, "contract": contract, "ids": ids, "sections": sections, "re": re}   # one namespace, so generators and defs see the helpers
     try:
-        exec(code, {"__builtins__": {"len": len, "range": range, "sorted": sorted, "any": any, "all": all, "str": str, "int": int, "list": list, "set": set}}, env)
-        return env.get("result"), code
+        exec(code, g)
+        return g.get("result"), code
     except Exception as e:
         return f"ERROR {e}", code
 
@@ -120,7 +124,7 @@ print("truth:", [c for c, l in labels().items() if l["terms"]["governing_law"] i
 
 # %%
 check("chain flags the 24-month cap in msa_07", chain("msa_07")["status"] == "ISSUE")
-check("redline meets the playbook", d.months <= PB["max_cap_months"])
+check("redline text meets the playbook", bool(re.findall(r"(\d+)\)? months", d.new_text)) and max(int(n) for n in re.findall(r"(\d+)\)? months", d.new_text)) <= PB["max_cap_months"])
 
 # %% [markdown]
 # ## Your turn

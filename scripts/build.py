@@ -19,6 +19,8 @@ EXTRA = {extra}
 if "google.colab" in sys.modules:
     if not os.path.exists("/content/local-ai-lab-agents"):
         subprocess.run(["git", "clone", "-q", "https://github.com/{repo}", "/content/local-ai-lab-agents"], check=True)
+    else:
+        subprocess.run(["git", "-C", "/content/local-ai-lab-agents", "pull", "-q"])   # get the latest fixes
     os.chdir("/content/local-ai-lab-agents")
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r", "requirements.txt", *EXTRA], check=True)
 elif os.path.basename(os.getcwd()) in ("notebooks", "projects"):

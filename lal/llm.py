@@ -31,17 +31,25 @@ def ask(prompt, system=None, **kw) -> str:
     return chat(msgs, **kw).content or ""
 
 
-def structured(messages, schema_model, model_name=None, **kw):
-    """Force the reply to match a Pydantic model (the server enforces the JSON schema), then validate."""
+def structured(messages, schema_model, model_name=None, retries=2, **kw):
+    """Force the reply to match a Pydantic model (the server enforces the JSON schema), then validate.
+
+    Small models occasionally return a cut-off or empty reply, so we retry a couple of times
+    before giving up, and cap the length so a runaway reply can't hang the loop.
+    """
     if isinstance(messages, str):
         messages = [{"role": "user", "content": messages}]
     kw.setdefault("temperature", 0)
-    resp = client.chat.completions.create(
-        model=model_name or model(), messages=messages,
-        response_format={"type": "json_schema",
-                         "json_schema": {"name": schema_model.__name__, "schema": schema_model.model_json_schema()}},
-        **kw)
-    return schema_model.model_validate_json(resp.choices[0].message.content)
+    kw.setdefault("max_tokens", 1024)
+    fmt = {"type": "json_schema", "json_schema": {"name": schema_model.__name__, "schema": schema_model.model_json_schema()}}
+    last = None
+    for _ in range(retries + 1):
+        resp = client.chat.completions.create(model=model_name or model(), messages=messages, response_format=fmt, **kw)
+        try:
+            return schema_model.model_validate_json(resp.choices[0].message.content or "")
+        except Exception as e:      # invalid or empty JSON: try again
+            last = e
+    raise last
 
 
 def timed(fn, *a, **kw):

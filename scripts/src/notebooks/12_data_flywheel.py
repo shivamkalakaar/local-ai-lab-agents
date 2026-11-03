@@ -57,9 +57,19 @@ def traced_call(task, prompt, **kw):
 
 PB = playbook()
 def review(text):
-    out = traced_call("review", f"Rules: {json.dumps(PB['rules'])}\n\nContract:\n{text}\n\n"
-                                "List the names of broken rules, comma-separated, or 'none'.")
-    return sorted(r for r in PB["rules"] if r in out)
+    """Structured answer (a list of rule names), and the call is still traced."""
+    from lal.llm import structured
+    from pydantic import BaseModel
+    class Review(BaseModel):
+        broken_rules: list[str]
+    prompt = (f"Rules (name: rule): {json.dumps(PB['rules'])}\n\nContract:\n{text}\n\n"
+              "List the names of the rules this contract breaks. Empty list if none.")
+    t0 = time.time()
+    r = structured(prompt, Review)
+    with open(TRACES, "a") as f:
+        f.write(json.dumps({"task": "review", "model": MODEL, "input_sha": hashlib.sha256(prompt.encode()).hexdigest()[:12],
+                            "prompt": prompt, "output": r.model_dump(), "secs": round(time.time() - t0, 2)}) + "\n")
+    return sorted(x for x in set(r.broken_rules) if x in PB["rules"])
 
 results = [(c["issues"], review(c["text"])) for c in synthetic[:6]]
 for gold, pred in results: print("truth", gold, "| model", pred)
@@ -95,7 +105,7 @@ print(f"kept {len(sft)} of 10 cases for fine-tuning (only checker-approved outpu
 
 # %%
 check("30 synthetic cases built with known labels", len(synthetic) == 30)
-check("traces were logged", TRACES.exists())
+check("at least 6 traces were logged", sum(1 for _ in open(TRACES)) >= 6)
 
 # %% [markdown]
 # ## Your turn

@@ -41,10 +41,14 @@ def parse_reply(text: str) -> Parsed:
     m = re.search(r"<tool>(.*?)</tool>", text, re.S)
     if m:
         try:
-            obj = json.loads(m.group(1))
+            raw = m.group(1).strip().removeprefix("```json").removeprefix("```").removesuffix("```")
+            obj = json.loads(raw, strict=False)          # strict=False allows raw newlines inside strings
             if not isinstance(obj, dict) or "name" not in obj:
                 return Parsed("malformed", error='Tool call JSON must be an object with "name" and "args".')
-            return Parsed("tool", call=ToolCall(str(obj["name"]), obj.get("args") or {}))
+            args = obj.get("args") or {}
+            if not isinstance(args, dict):
+                return Parsed("malformed", error='"args" must be a JSON object.')
+            return Parsed("tool", call=ToolCall(str(obj["name"]), args))
         except json.JSONDecodeError as e:
             return Parsed("malformed", error=f"Tool call is not valid JSON ({e.msg}).")
     if "<tool>" in text or "<answer>" in text:

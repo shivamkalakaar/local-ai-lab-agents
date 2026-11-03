@@ -56,7 +56,8 @@ def team(cid):
         reports = list(ex.map(specialist, [(cid, r) for r in PB["rules"]]))
     merged = ask("You are the lead reviewer. Combine these specialist reports. List the rule names that are broken, "
                  "comma-separated, or 'none'.\n\n" + "\n\n".join(f"[{r}] {t}" for r, t in reports))
-    return {r for r in PB["rules"] if r in merged}
+    text = merged.lower().replace(" ", "_")                     # "Liability cap" -> "liability_cap"
+    return {r for r in PB["rules"] if r in text}
 
 # %% [markdown]
 # ## Compare on 8 contracts: accuracy, time and model calls

@@ -6,6 +6,7 @@
 
 # %%
 # EXTRA: rank-bm25
+import re
 import numpy as np
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
@@ -30,19 +31,21 @@ print(len(chunks), "chunks. Example:", chunks[6])
 
 # %%
 embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")      # small, local embedding model
+QUERY_PREFIX = "Represent this sentence for searching relevant passages: "   # what bge models expect on queries
+tok = lambda s: re.findall(r"\w+", s.lower())                 # word tokens, so "msa_15," matches "msa_15"
 
 class HybridIndex:
     def __init__(self, chunks):
         self.chunks = chunks
         docs = [f"{c['context']}\n{c['text']}" for c in chunks]
-        self.bm25 = BM25Okapi([d.lower().split() for d in docs])
+        self.bm25 = BM25Okapi([tok(d) for d in docs])
         self.vecs = embedder.encode(docs, normalize_embeddings=True, show_progress_bar=False)
 
     def keyword(self, q, n):
-        return list(np.argsort(-self.bm25.get_scores(q.lower().split()))[:n])
+        return list(np.argsort(-self.bm25.get_scores(tok(q)))[:n])
 
     def semantic(self, q, n):
-        qv = embedder.encode([q], normalize_embeddings=True)[0]
+        qv = embedder.encode([QUERY_PREFIX + q], normalize_embeddings=True)[0]
         return list(np.argsort(-(self.vecs @ qv))[:n])
 
     def search(self, q, k=5, pool=50, mode="hybrid", rrf_k=60):
@@ -63,7 +66,6 @@ for c in index.search("msa_15 cap on damages", k=3):
 # Did the right chunk come back? We test with questions that use different words from the contract ("cap on damages" vs. "limitation of liability"), and questions with exact IDs.
 
 # %%
-SECTION_FOR = {"liability": "7", "law": "10", "renewal": "4", "breach": "9"}
 QUERIES = []
 for cid in ids()[:10]:
     QUERIES += [(f"{cid} cap on damages", f"{cid}#7"), (f"which state's law applies in {cid}", f"{cid}#10"),
@@ -90,7 +92,8 @@ def rag(question, k=4):
     ctx = "\n\n".join(f"[{c['id']}] {c['text']}" for c in hits)
     a = structured([{"role": "system", "content": "Answer only from the sources. Give the source id and an exact quote."},
                     {"role": "user", "content": f"Sources:\n{ctx}\n\nQuestion: {question}"}], Answer)
-    src = next((c for c in hits if c["id"] == a.chunk_id), None)
+    cid = a.chunk_id.strip().strip("[]")                     # models often copy the brackets
+    src = next((c for c in hits if c["id"] == cid), None)
     a_ok = src is not None and quote_is_in_doc(a.quote, src["text"])
     return a, a_ok
 

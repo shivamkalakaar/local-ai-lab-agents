@@ -45,13 +45,16 @@ class Finding(BaseModel):
 
 def work_session():
     state = json.loads((WORK / "checklist.json").read_text())
-    todo = next((i for i in state["items"] if not i["done"]), None)
+    todo = next((i for i in state["items"] if not i["done"] and i.get("tries", 0) < 3), None)   # skip items that failed 3 times
     if todo is None:
         return "ALL DONE"
     clause = next(s for s in sections(contract(todo["contract"])) if WORD[todo["rule"]] in s["title"])["text"]
     f = structured(f"Rule: {PB['rules'][todo['rule']]}\nClause: {clause}\n"
-                   "Does the clause break the rule? Quote the exact words that decide it.", Finding)
+                   "Does the clause break the rule? Quote the exact words that decide it.", Finding,
+                   temperature=0.0 if todo.get("tries", 0) == 0 else 0.5)    # retries get some variety
     if not quote_is_in_doc(f.quote, contract(todo["contract"])):             # evidence must be real
+        todo["tries"] = todo.get("tries", 0) + 1
+        (WORK / "checklist.json").write_text(json.dumps(state, indent=1))
         with open(WORK / "progress.md", "a") as p: p.write(f"- {todo['id']}: evidence failed check, retry later\n")
         return "RETRY"
     todo.update(done=True, evidence={"breaks_rule": f.breaks_rule, "quote": f.quote})
@@ -98,7 +101,7 @@ check("at least 12 of 16 items judged correctly", correct >= 12)
 # Solution 1: resume after a crash. Mark 3 items as not done (as if the run died) and rerun the loop.
 state = json.loads((WORK / "checklist.json").read_text())
 for i in state["items"][-3:]:
-    i.update(done=False, evidence=None)
+    i.update(done=False, evidence=None, tries=0)
 (WORK / "checklist.json").write_text(json.dumps(state, indent=1))
 redone = []
 for _ in range(10):
@@ -117,4 +120,7 @@ def final_report():
         raise RuntimeError(f"Cannot finish: {len(missing)} items lack evidence: {missing[:5]}")
     broken = [i["id"] for i in st["items"] if i["evidence"]["breaks_rule"]]
     return f"Matter complete. {len(st['items'])} checks, {len(broken)} issues: {broken}"
-print(final_report())
+try:
+    print(final_report())
+except RuntimeError as e:
+    print(e)        # the stop hook doing its job: the matter can't be closed yet

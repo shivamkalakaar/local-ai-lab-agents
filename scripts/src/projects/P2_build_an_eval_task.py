@@ -40,11 +40,12 @@ def run_attempt(task: Path, attempt_fn) -> float:
         attempt_fn(ws, (task / "instruction.md").read_text())
     except Exception as e:
         print("attempt crashed:", type(e).__name__, e)
-    reward_file = ws / ".reward"
+    # The reward file lives OUTSIDE the agent's workspace, so the agent can't write its own score.
+    reward_file = Path(tempfile.mkdtemp(prefix="reward_")) / "reward"
     out = subprocess.run([sys.executable, str(task / "tests" / "test.py"), str(ws), str(reward_file)],
                          capture_output=True, text=True, timeout=120)
-    print("  verifier:", out.stdout.strip())
-    reward = float(reward_file.read_text()) if reward_file.exists() else 0.0
+    print("  verifier:", out.stdout.strip() or out.stderr.strip()[-200:])
+    reward = float(reward_file.read_text()) if out.returncode == 0 and reward_file.exists() else 0.0   # a crashed verifier scores 0
     shutil.rmtree(ws, ignore_errors=True)
     return reward
 

@@ -28,7 +28,6 @@ except json.JSONDecodeError:
 if not isinstance(report, dict):
     finish(0.0, "report.json must be an object")
 
-rules = set(json.loads((ws / "playbook.json").read_text())["rules"]) if (ws / "playbook.json").exists() else set()
 right = 0
 for cid, want in expected.items():                             # requirement: every contract, exact rule names
     got = report.get(cid)

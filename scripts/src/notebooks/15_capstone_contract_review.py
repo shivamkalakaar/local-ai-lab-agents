@@ -10,7 +10,7 @@
 # ```
 
 # %%
-import json, re, time
+import json, os, re, time
 from pydantic import BaseModel
 from lal.llm import structured
 from lal.data import contract, sections, labels, playbook, ids
@@ -55,7 +55,8 @@ def apply_playbook(t: Terms, text):
         return True
     if need(t.cap_quote, "liability_cap") and (t.cap_unlimited or t.liability_cap_months is None or t.liability_cap_months > PB["max_cap_months"]):
         issues.append({"rule": "liability_cap", "quote": t.cap_quote})
-    if need(t.law_quote, "governing_law") and t.governing_law not in PB["allowed_law"]:
+    law = next((s for s in PB["allowed_law"] if s.lower() in (t.governing_law or "").lower()), None)   # "State of Delaware" -> Delaware
+    if need(t.law_quote, "governing_law") and law is None:
         issues.append({"rule": "governing_law", "quote": t.law_quote})
     if need(t.renewal_quote, "renewal"):
         if t.renewal_years and t.renewal_years > PB["max_renewal_years"]:
@@ -101,7 +102,7 @@ def review_contract(cid, temperature=0.0, with_redlines=True):
         for i in issues:
             i["redline"] = redline(i)
     return {"contract": cid, "issues": issues, "holds": holds, "suspicious": terms.suspicious_text,
-            "seconds": round(time.time() - t0, 1), "model": MODEL, "status": "READY FOR LAWYER SIGN-OFF"}
+            "seconds": round(time.time() - t0, 1), "model": os.environ.get("LAL_MODEL", MODEL), "status": "READY FOR LAWYER SIGN-OFF"}
 
 packet = review_contract("msa_15")
 print(json.dumps(packet, indent=2))
@@ -153,8 +154,10 @@ from lal.runtime import pull
 pull("llama3.2:3b")
 def quick_eval(model_name, cids):
     os.environ["LAL_MODEL"] = model_name
-    rows = [prf({i["rule"] for i in review_contract(c, with_redlines=False)["issues"]}, {i["rule"] for i in labels()[c]["issues"]}) for c in cids]
-    os.environ["LAL_MODEL"] = MODEL
+    try:
+        rows = [prf({i["rule"] for i in review_contract(c, with_redlines=False)["issues"]}, {i["rule"] for i in labels()[c]["issues"]}) for c in cids]
+    finally:
+        os.environ["LAL_MODEL"] = MODEL            # always switch back, even if a call fails
     tp = sum(r["tp"] for r in rows); fp = sum(r["fp"] for r in rows); fn = sum(r["fn"] for r in rows)
     return f"precision {tp/max(tp+fp,1):.0%}, recall {tp/max(tp+fn,1):.0%}"
 cids = ids()[::2]

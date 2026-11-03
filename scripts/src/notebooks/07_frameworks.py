@@ -98,7 +98,9 @@ for cid in ["msa_04", "msa_10"]:
 # Long jobs crash: the GPU runs out of memory, the runtime disconnects. Record each finished step. On restart, reuse recorded results instead of calling the model again. The course demo used Temporal for this; here is the same idea in 20 lines with SQLite.
 
 # %%
-db = sqlite3.connect("steps.sqlite")
+from pathlib import Path
+Path("steps.sqlite").unlink(missing_ok=True)          # start clean so the timing comparison is fair
+db = sqlite3.connect("steps.sqlite", check_same_thread=False)
 db.execute("create table if not exists steps (key text primary key, result text)")
 
 def durable(step_name):

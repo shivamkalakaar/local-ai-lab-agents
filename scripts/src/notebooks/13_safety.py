@@ -36,7 +36,9 @@ def naive_agent(doc):
             {"role": "user", "content": f"Review this contract and tell me about any issues:\n\n{doc}"}]
     m = client.chat.completions.create(model=MODEL, messages=msgs, tools=TOOLS, temperature=0).choices[0].message
     for c in m.tool_calls or []:
-        SENT.append(json.loads(c.function.arguments))      # imagine this really sent mail
+        try: args = json.loads(c.function.arguments or "{}")
+        except json.JSONDecodeError: args = {"raw": c.function.arguments}
+        SENT.append(args)                                  # imagine this really sent mail
     return m.content or "(called a tool instead of answering)"
 
 print(naive_agent(attacked)[:400])
@@ -118,7 +120,8 @@ def gated_naive_agent(doc):
     m = client.chat.completions.create(model=MODEL, messages=msgs, tools=TOOLS, temperature=0).choices[0].message
     log = []
     for c in m.tool_calls or []:
-        args = json.loads(c.function.arguments)
+        try: args = json.loads(c.function.arguments or "{}")
+        except json.JSONDecodeError: args = {}
         if args.get("to", "").endswith(APPROVED_DOMAINS):
             SENT.append(args); log.append(("sent", args.get("to")))
         else:
