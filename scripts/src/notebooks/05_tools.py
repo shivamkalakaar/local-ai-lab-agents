@@ -133,3 +133,25 @@ check("no email was sent without approval", SENT == [])
 # 2. Give `read_pages` a bad description ("reads stuff") and see if the model still pages correctly.
 #
 # **Next:** 06 · Design patterns
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: an approval rule that only allows email inside the firm
+registry.approve = lambda name, args: name == "send_email" and args.get("to", "").lower().endswith("@yourfirm.com")
+print(registry.execute("send_email", {"to": "partner@yourfirm.com", "body": "Clause 7.1 attached"}))
+print(registry.execute("send_email", {"to": "someone@gmail.com", "body": "Clause 7.1 attached"}))
+print("sent so far:", SENT)
+SENT.clear(); registry.approve = lambda name, args: False      # back to "deny everything"
+# In a real product the approval is a person clicking Approve, shown the exact recipient and text.
+
+# %%
+# Solution 2: a vague tool description
+original = registry.specs["read_pages"].description
+registry.specs["read_pages"].description = "reads stuff"
+print(run("Show me lines 16 to 30 of contract msa_07."))
+registry.specs["read_pages"].description = original
+print("\nwith the good description:")
+print(run("Show me lines 16 to 30 of contract msa_07."))
+# With "reads stuff" the model has to guess what start_line and n_lines mean. Good descriptions are free accuracy.

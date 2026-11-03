@@ -103,3 +103,27 @@ check("traces were logged", TRACES.exists())
 # 2. Mix 50% synthetic and 50% real cases into one eval. Why does the course warn against synthetic-only data?
 #
 # **Next:** 13 · Safety
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: a new fault type (short cure period) plus a playbook rule for it
+FAULTS["cure_period"] = lambda t: re.sub(r"uncured \w+(?: \(\d+\))? days", "uncured five (5) days", t)
+PB["rules"]["cure_period"] = "The cure period for material breach must be at least 10 days."
+assert FAULTS["cure_period"](contract("msa_01")) != contract("msa_01")
+cure_cases = [{"text": FAULTS["cure_period"](contract(c)), "issues": ["cure_period"]} for c in clean[:4]]
+for c in cure_cases:
+    print("truth", c["issues"], "| model", review(c["text"]))
+
+# %%
+# Solution 2: one eval that mixes real and synthetic cases, scored per group
+real = [{"text": contract(c), "issues": sorted(i["rule"] for i in labels()[c]["issues"])} for c in list(labels())[::3][:6]]
+mixed = [("real", c) for c in real] + [("synthetic", c) for c in synthetic[16:22]]
+score_by = {"real": [], "synthetic": []}
+for group, c in mixed:
+    score_by[group].append(review(c["text"]) == c["issues"])
+for g, xs in score_by.items():
+    print(f"{g:9} exact {sum(xs)}/{len(xs)}")
+# If a model only ever sees cases built from your own templates, it can look great on them and still fail on
+# real documents. Keep real cases in every eval and in training data.

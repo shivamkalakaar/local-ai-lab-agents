@@ -165,3 +165,74 @@ check("no email was sent despite the injection", SENT == [])
 # 2. Add a **disk cache** keyed by a hash of the messages, so reruns cost nothing.
 # 3. Add **steering**: a `pending_message()` hook checked before every model call.
 # 4. Run the live part 5 times. How often does it end with `done`? That's pass^5 for your harness.
+
+# %% [markdown]
+# ## Stretch goal solutions
+
+# %%
+# Stretch 1: compaction by summary. When masking isn't enough, summarize the middle with a second model.
+from lal.llm import ask
+class SummarizingAgent(S.Agent):
+    def context(self):
+        ctx = super().context()                                   # already masks old tool results
+        if sum(len(m["content"]) for m in ctx) > self.cfg.compact_at_chars:
+            head, mid, tail = ctx[:2], ctx[2:-self.cfg.keep_recent], ctx[-self.cfg.keep_recent:]
+            summary = ask("Summarize this agent history in at most 6 bullets. Keep document names, clause numbers and numbers exact:\n\n"
+                          + "\n".join(f"{m['role']}: {m['content'][:400]}" for m in mid))
+            self.log(type="compaction", content=summary)
+            ctx = head + [{"role": "user", "content": "Summary of earlier steps:\n" + summary}] + tail
+        return ctx                                                 # the system prompt (head[0]) is never summarized
+
+a = SummarizingAgent(local_lm, registry, Config(compact_at_chars=3000))
+print(a.send("Read msa_15 page by page and list every number you find in it.").text[:400])
+print("compactions:", sum(e["type"] == "compaction" for e in a.transcript))
+
+# %%
+# Stretch 2: a disk cache keyed by a hash of the messages, so reruns cost nothing
+import hashlib, os
+os.makedirs(".lm_cache", exist_ok=True)
+def cached(lm):
+    def inner(messages):
+        key = hashlib.sha256(json.dumps(messages, sort_keys=True).encode()).hexdigest()
+        path = f".lm_cache/{key}.txt"
+        if os.path.exists(path):
+            return open(path).read()
+        out = lm(messages)
+        open(path, "w").write(out)
+        return out
+    return inner
+
+import time
+cached_lm = cached(local_lm)
+for run in (1, 2):
+    t0 = time.time(); S.Agent(cached_lm, registry).send("Which contract has the governing law of Texas?")
+    print(f"run {run}: {time.time()-t0:.1f}s")
+
+# %%
+# Stretch 3: steering. A message queued by a person is added before the next model call.
+class SteerableAgent(S.Agent):
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw); self.queue = []
+    def pending_message(self):
+        return self.queue.pop(0) if self.queue else None
+    def context(self):
+        msg = self.pending_message()                              # polled once before every model call
+        if msg:
+            self.messages.append({"role": "user", "content": f"[steering from the user] {msg}"})
+            self.log(type="steer", content=msg)
+        return super().context()
+
+s = SteerableAgent(local_lm, registry)
+s.queue.append("Only look at msa_16.")
+print(s.send("Find a contract with unlimited liability.").text)
+
+# %%
+# Stretch 4: pass^5 for the harness on one task
+from lal.checks import pass_hat_k, pass_at_k
+done = 0
+for i in range(5):
+    r = S.Agent(lambda m: chat(m, temperature=0.5).content or "", registry).send("Which contracts are governed by Florida law? Answer with ids.")
+    ok = r.stop_reason == "done" and "msa_10" in r.text
+    done += ok
+    print(f"try {i+1}: {r.stop_reason}, correct={ok}")
+print(f"pass@5 {pass_at_k(5, done, 5):.0%}  pass^5 {pass_hat_k(5, done, 5):.0%}")

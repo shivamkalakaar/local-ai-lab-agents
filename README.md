@@ -2,7 +2,7 @@
 
 A hands-on course in Google Colab notebooks. Every agent runs on an **open model on the same machine** (Meta Llama via [Ollama](https://ollama.com)), with no API keys, no cloud AI, and no data leaving the box.
 
-It follows Stanford's CS329Z *Engineering AI Agents* (Fall 2026) topic by topic, using a running example: reviewing service contracts against a law firm's playbook. Reading companion: [Agent Engineering School](https://claude.ai/artifact/41sHaxGwFWf7SjJWDdtK5w).
+It follows Stanford's CS329Z *Engineering AI Agents* (Fall 2026) topic by topic, using a running example: reviewing service contracts against a law firm's playbook. **Course site:** https://shivamkalakaar.github.io/local-ai-lab-agents/ (lessons with one-click Colab buttons). Every notebook ends with worked solutions to its exercises.
 
 ## How to run
 1. Click an **Open in Colab** badge below.

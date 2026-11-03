@@ -128,3 +128,37 @@ check("redline meets the playbook", d.months <= PB["max_cap_months"])
 # 2. Replace the code checker in step 4 with "ask the model if the draft is good". Compare how often it catches a 24-month cap.
 #
 # **Next:** 07 · Frameworks (DSPy and LangGraph)
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: plan then execute. One call writes the plan; code runs every step.
+class Plan(BaseModel):
+    checks: list[Literal["liability_cap", "governing_law", "auto_renewal", "termination_notice"]]
+
+import json
+plan = structured(f"You will review a vendor services agreement against these playbook rules: {json.dumps(PB['rules'])}.\n"
+                  "Return the list of rule checks to run.", Plan)
+print("plan:", plan.checks)
+results = [check_rule(("msa_15", r)) for r in dict.fromkeys(plan.checks)]       # code executes the plan
+print("results:", results, "| truth:", [i["rule"] for i in labels()["msa_15"]["issues"]])
+
+# %%
+# Solution 2: "ask the model if it's good" vs a code checker, on drafts we KNOW are bad (cap > 12 months)
+bad_drafts = [
+    "Each party's total liability shall not exceed the fees paid in the twenty-four (24) months preceding the claim.",
+    "Liability is capped at fees paid during the 18 months before the claim, a market-standard position.",
+    "Total liability shall not exceed three (3) years of fees.",
+]
+def llm_checker(text):
+    v = ask(f"Playbook: the cap must not exceed fees paid in the prior 12 months.\nClause: {text}\n"
+            "Does the clause meet the playbook? Answer YES or NO only.").strip().upper()
+    return v.startswith("YES")
+def code_checker(text):
+    months = [int(n) for n in re.findall(r"(\d+)\)? months", text)]
+    years = [int(n) * 12 for n in re.findall(r"(\d+)\)? years", text)]
+    vals = months + years
+    return bool(vals) and max(vals) <= 12
+print("LLM checker wrongly approved:", sum(llm_checker(t) for t in bad_drafts), "of", len(bad_drafts))
+print("code checker wrongly approved:", sum(code_checker(t) for t in bad_drafts), "of", len(bad_drafts))

@@ -142,3 +142,33 @@ check("precision at least 80%", tp / max(tp + fp, 1) >= 0.8)
 # **Next steps:** add GEPA (11) to the reader, log lawyer corrections (08, 12), and run the same notebook against a bigger local model.
 #
 # Then try the projects: **P1 · Build your own agent harness** and **P2 · Build an eval task**.
+
+# %% [markdown]
+# ## Solutions to the next steps
+
+# %%
+# Next step 1: compare two local models in the SAME harness (the fair way to compare models)
+import os
+from lal.runtime import pull
+pull("llama3.2:3b")
+def quick_eval(model_name, cids):
+    os.environ["LAL_MODEL"] = model_name
+    rows = [prf({i["rule"] for i in review_contract(c, with_redlines=False)["issues"]}, {i["rule"] for i in labels()[c]["issues"]}) for c in cids]
+    os.environ["LAL_MODEL"] = MODEL
+    tp = sum(r["tp"] for r in rows); fp = sum(r["fp"] for r in rows); fn = sum(r["fn"] for r in rows)
+    return f"precision {tp/max(tp+fp,1):.0%}, recall {tp/max(tp+fn,1):.0%}"
+cids = ids()[::2]
+for m in (MODEL, "llama3.2:3b"):
+    print(f"{m:12}", quick_eval(m, cids))
+
+# %%
+# Next step 2: log a lawyer's correction and turn it into a regression test immediately
+CORRECTIONS = []
+def lawyer_corrects(cid, rule, should_flag, reason):
+    CORRECTIONS.append({"contract": cid, "rule": rule, "should_flag": should_flag, "reason": reason})
+lawyer_corrects("msa_15", "governing_law", True, "New York law is outside our playbook.")
+def regression_tests():
+    for c in CORRECTIONS:
+        flagged = c["rule"] in {i["rule"] for i in review_contract(c["contract"], with_redlines=False)["issues"]}
+        check(f"{c['contract']} {c['rule']} flagged={c['should_flag']}", flagged == c["should_flag"])
+regression_tests()

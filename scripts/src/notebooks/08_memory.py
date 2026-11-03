@@ -106,3 +106,30 @@ check("each run records its memory version", review_law("msa_15", "client_northw
 # 2. What should happen if a lesson from Northwind is retrieved while reviewing for another client? Add a guard.
 #
 # **Next:** 09 · Multi-agent systems
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: a second lesson as version 2, then compare reviews with v1 and v2
+ev2 = [log_correction("client_northwind", c, "governing_law", "ISSUE", "OK", "Client also accepts Texas law for logistics vendors.", "partner_b")
+       for c in ["msa_09", "x_201"]]
+prop2 = propose_lesson("client_northwind", "Texas governing law is acceptable for this client.", ev2)
+v2 = approve("client_northwind", prop2, "partner_b")
+print("v1 lessons:", [l["text"] for l in load_lessons("client_northwind", 1)])
+print("v2 lessons:", [l["text"] for l in load_lessons("client_northwind", v2)])
+print("msa_09 with v1:", review_law("msa_09", "client_northwind", 1))
+print("msa_09 with v2:", review_law("msa_09", "client_northwind", v2))
+# Old runs can still be replayed with v1, so you can always explain an earlier decision.
+
+# %%
+# Solution 2: a scope guard so one client's lessons can never be used for another client
+def load_lessons_for(review_client, lesson_client, version):
+    if review_client != lesson_client:
+        raise PermissionError(f"Lessons from {lesson_client} cannot be used when reviewing for {review_client}.")
+    return load_lessons(lesson_client, version)
+
+try:
+    load_lessons_for("client_bayview", "client_northwind", v2)
+except PermissionError as e:
+    print("blocked:", e)

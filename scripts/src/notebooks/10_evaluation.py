@@ -115,3 +115,27 @@ check("reviewer beats do-nothing on recall", sum(sum(r) for r in runs.values()) 
 # 2. Run all 20 contracts with 5 runs and compare pass^5 between temperature 0 and 0.7.
 #
 # **Next:** 11 · Optimization with GEPA
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: a "cheat" reviewer that always flags the two most common rules
+from collections import Counter
+common = [r for r, _ in Counter(i["rule"] for l in labels().values() for i in l["issues"]).most_common(2)]
+cheat = lambda c: set(common)
+print("cheat flags:", common)
+print("cheat     ", {k: f"{v:.0%}" for k, v in run_eval(cheat, ALL).items()})
+print("oracle    ", {k: f"{v:.0%}" for k, v in run_eval(oracle, ALL).items()})
+# Recall looks fine, but precision and exact-match expose it, because clean contracts are in the set.
+# This is why an eval needs clean cases and precision, not just recall.
+
+# %%
+# Solution 2: pass^5 at temperature 0 vs 0.7 (5 contracts x 5 runs x 2 settings = 50 calls)
+SMALL = ALL[::4]
+for temp in (0.0, 0.7):
+    runs5 = {c: [score(reviewer(c, temp), c)["exact"] for _ in range(5)] for c in SMALL}
+    ph = [pass_hat_k(5, sum(r), 5) for r in runs5.values()]
+    avg = [sum(r) / 5 for r in runs5.values()]
+    print(f"temperature {temp}: average {sum(avg)/len(avg):.0%}, pass^5 {sum(ph)/len(ph):.0%}")
+# Higher temperature usually hurts pass^5 much more than the average: the system becomes inconsistent.

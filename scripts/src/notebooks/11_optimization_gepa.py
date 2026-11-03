@@ -106,3 +106,27 @@ check("held-out score did not get worse", after >= before)
 # 2. Make the feedback vague ("wrong") instead of specific. Rerun GEPA. What happens?
 #
 # **Next:** 12 · Data and flywheels
+
+# %% [markdown]
+# ## Solutions
+# Both runs below are long, so they are off by default. Set the flag to True to run one.
+
+# %%
+# Solution 1: a bigger GEPA budget (about 30-40 minutes on a T4)
+RUN_BIG_BUDGET = False
+if RUN_BIG_BUDGET:
+    big = dspy.GEPA(metric=metric, max_metric_calls=150, reflection_lm=teacher).compile(program, trainset=train, valset=train[:6])
+    print(f"held-out: baseline {before:.0%} | 60 calls {after:.0%} | 150 calls {evaluate(big, test):.0%}")
+# Typically the score keeps rising for a while and then flattens. Stop when the held-out score stops moving.
+
+# %%
+# Solution 2: vague feedback. GEPA gets only a score and the word "wrong".
+RUN_VAGUE = False
+def vague_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
+    s = metric(gold, pred).score
+    return dspy.Prediction(score=s, feedback="Correct." if s == 1 else "Wrong.")
+if RUN_VAGUE:
+    vague = dspy.GEPA(metric=vague_metric, max_metric_calls=60, reflection_lm=teacher).compile(program, trainset=train, valset=train[:6])
+    print(f"held-out: specific feedback {after:.0%} vs vague feedback {evaluate(vague, test):.0%}")
+# With specific feedback ("notice_days: expected 15, got 30") the reflection model can see WHAT to fix.
+# With "Wrong." it can only guess, so gains are usually smaller.

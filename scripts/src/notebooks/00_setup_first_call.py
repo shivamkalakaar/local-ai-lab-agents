@@ -68,3 +68,22 @@ check("20 practice contracts loaded", len(ids()) == 20)
 # 2. Change `temperature` and see how the summary changes.
 #
 # **Next:** 01 · Build an agent loop from scratch
+
+# %% [markdown]
+# ## Solutions
+# Try the exercises yourself first, then compare.
+
+# %%
+# Solution 1: summarize msa_07 in three bullets and time it
+t0 = time.time()
+summary = ask("Summarize this contract in exactly three short bullet points:\n\n" + contract("msa_07"))
+print(summary)
+print(f"\n{time.time() - t0:.1f} seconds")
+
+# %%
+# Solution 2: the same summary at three temperatures
+for temp in (0, 0.7, 1.3):
+    print(f"--- temperature {temp} ---")
+    print(ask("Summarize this contract in exactly three short bullet points:\n\n" + contract("msa_07"), temperature=temp))
+# What to notice: at 0 the summary is the same every run. At higher temperatures the wording changes,
+# and at very high values facts can drift (for example, the cap period). Use 0 for anything you will check.

@@ -98,3 +98,29 @@ check("governing law right on at least 6 of 8", right["governing_law"] >= 6)
 # 2. Change `governing_law` to a `Literal[...]` of US states. Does accuracy change?
 #
 # **Next:** 03 · Context engineering
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: remove the "use null" escape hatch and force an integer cap on an UNLIMITED contract
+class CapForced(BaseModel):
+    liability_cap_months: int          # no None allowed
+    cap_quote: str
+
+forced = structured([{"role": "system", "content": "Extract the requested terms from the contract. Copy quotes exactly."},
+                     {"role": "user", "content": contract("msa_16")}], CapForced)
+print(forced)
+print("truth:", labels()["msa_16"]["terms"]["liability_cap_months"], "(None = unlimited)")
+# What to notice: when the schema demands a number, the model has to invent one. Always give an explicit "absent" option.
+
+# %%
+# Solution 2: governing law as a fixed list of choices
+STATES = Literal["California", "Delaware", "New York", "Texas", "Florida", "Nevada", "Other"]
+class LawOnly(BaseModel):
+    governing_law: STATES
+
+hits = sum(structured([{"role": "system", "content": SYSTEM}, {"role": "user", "content": contract(c)}], LawOnly).governing_law
+           == labels()[c]["terms"]["governing_law"] for c in sample)
+print(f"governing law with a fixed list: {hits}/{len(sample)}  (free text was {right['governing_law']}/{len(sample)})")
+# A fixed list makes off-menu answers impossible ("State of Delaware", "DE", "Delaware law") and makes grading exact.

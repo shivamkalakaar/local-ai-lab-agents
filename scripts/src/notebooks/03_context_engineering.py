@@ -96,3 +96,36 @@ check("pinned rules survive compaction", "never send" in ctx[0]["content"])
 # 2. Write a `notes.md` file the agent appends to after each section, and rebuild context from it.
 #
 # **Next:** 04 · Retrieval (RAG)
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: question at the START of a 10-contract prompt vs at the END
+docs = [cid for cid in ids() if cid != "msa_09"][:9] + ["msa_09"]
+body = "\n\n".join(f"=== {cid} ===\n{contract(cid)}" for cid in docs)
+for where, prompt in [("question first", question + "\n\n" + body), ("question last", body + "\n\n" + question)]:
+    answers = [ask(prompt).strip()[:25] for _ in range(2)]
+    print(f"{where:15} -> {answers}")
+print("truth:", labels()["msa_09"]["terms"]["governing_law"])
+# Models often do better when the question is near the end (closest to where they start writing),
+# and they can lose facts buried in the middle. Measure it on your own model rather than assuming.
+
+# %%
+# Solution 2: a notes file the agent appends to, and a context rebuilt from it
+from pathlib import Path
+from lal.data import sections
+from lal.llm import chat
+notes = Path("notes.md")
+notes.write_text("# Review notes: msa_15\n")
+for s in sections(contract("msa_15")):
+    if s["title"] in ("Renewal", "Limitation Of Liability", "Governing Law"):
+        line = ask(f"In one line, with exact numbers, what does this clause say?\n{s['text']}").strip()
+        with open(notes, "a") as f:
+            f.write(f"- {s['id']}. {s['title']}: {line}\n")
+print(notes.read_text())
+ctx = [{"role": "system", "content": PINNED},
+       {"role": "user", "content": "Using only these notes, list any concerns against a playbook that requires CA or DE law "
+                                   "and a cap of at most 12 months of fees:\n" + notes.read_text()}]
+print(chat(ctx).content)
+# The notes survive any context reset: a new session can start from notes.md instead of re-reading the whole contract.

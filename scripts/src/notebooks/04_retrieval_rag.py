@@ -107,3 +107,28 @@ check("RAG answer cites a real quote", ok)
 # 2. Add a reranker: `from sentence_transformers import CrossEncoder; CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")`, score the top 20, keep 4.
 #
 # **Next:** 05 · Tools
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: the same index WITHOUT the context note on each chunk
+plain_index = HybridIndex([{**c, "context": ""} for c in chunks])
+def recall_with(idx, mode, k=3):
+    return sum(any(c["id"] == gold for c in idx.search(q, k=k, mode=mode)) for q, gold in QUERIES) / len(QUERIES)
+print(f"{'mode':9} {'with context':>13} {'without':>8}")
+for mode in ("keyword", "semantic", "hybrid"):
+    print(f"{mode:9} {recall_with(index, mode):>13.0%} {recall_with(plain_index, mode):>8.0%}")
+# What to notice: our queries name the contract ("msa_07 cap on damages"), but the chunk text alone never says which
+# contract it is from. The context note carries that, which is exactly why contextual retrieval helps.
+
+# %%
+# Solution 2: add a reranker: fetch 20, rerank with a cross-encoder, keep the best
+from sentence_transformers import CrossEncoder
+reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+def search_rerank(q, k=3, first=20):
+    cands = index.search(q, k=first)
+    scores = reranker.predict([(q, f"{c['context']} {c['text']}") for c in cands])
+    return [c for _, c in sorted(zip(scores, cands), key=lambda x: -x[0])][:k]
+rr = sum(any(c["id"] == gold for c in search_rerank(q)) for q, gold in QUERIES) / len(QUERIES)
+print(f"hybrid recall@3 {recall_at_k('hybrid'):.0%} -> hybrid + rerank recall@3 {rr:.0%}")

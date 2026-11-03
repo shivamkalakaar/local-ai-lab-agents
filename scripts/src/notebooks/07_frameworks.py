@@ -133,3 +133,39 @@ check("rerun reused recorded steps", t2 < t1)
 # 2. Add a LangGraph node that drafts a redline only when status is ISSUE.
 #
 # **Next:** 08 · Memory
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: an agent in one line with dspy.ReAct
+from lal.data import clauses
+def get_clause(contract_id: str, clause: str) -> str:
+    """Read one numbered clause of a contract, for example contract_id='msa_09', clause='10.1'."""
+    return clauses(contract(contract_id)).get(clause, "NOT FOUND")
+
+react = dspy.ReAct("question -> answer", tools=[get_clause], max_iters=5)
+pred = react(question="Which state's law governs contract msa_09? The governing law is in clause 10.1.")
+print(pred.answer, "| truth:", labels()["msa_09"]["terms"]["governing_law"])
+
+# %%
+# Solution 2: a redline node that runs only when the status is ISSUE
+def redline(state):
+    text = llm.invoke(f"Rewrite this clause so the governing law is Delaware. Keep everything else.\n{state['clause']}").content
+    return {"redline": text}
+
+class State2(State, total=False):
+    redline: str
+
+g2 = StateGraph(State2)
+for name, fn in [("get", get_law_clause), ("read", read_law), ("check", check_law), ("human", human), ("redline", redline)]:
+    g2.add_node(name, fn)
+g2.set_entry_point("get")
+g2.add_edge("get", "read")
+g2.add_conditional_edges("read", decide, {"check": "check", "human": "human"})
+g2.add_conditional_edges("check", lambda s: "redline" if s["status"] == "ISSUE" else "end", {"redline": "redline", "end": END})
+g2.add_edge("redline", END); g2.add_edge("human", END)
+app2 = g2.compile()
+for cid in ["msa_04", "msa_10"]:
+    out = app2.invoke({"cid": cid})
+    print(cid, out["status"], "->", out.get("redline", "(no redline needed)"))

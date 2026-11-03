@@ -149,3 +149,74 @@ check("agent ran 5 attempts through the hidden verifier", len(rewards) == K)
 # Then prove your task is sound with the same four checks (oracle 1.0, do-nothing 0, alternative correct solution 1.0, shortcut low), and run the agent 5 times.
 #
 # **Writing tips from the Terminal-Bench lecture:** keep the instruction short and complete; each test should match one requirement in the instruction; test the final result, not the steps; keep the tests where the agent can't read or edit them.
+
+# %% [markdown]
+# ## Solution: a complete second task, "fee-check"
+# The agent gets one contract and three invoices. It must list the invoices whose monthly amount doesn't match the fee in clause 2.1. We build all four parts, prove the task is sound, then run the agent.
+
+# %%
+from lal.data import contract, labels
+NEW = Path("projects/p2_tasks/fee-check")
+shutil.rmtree(NEW, ignore_errors=True)
+for sub in ("environment", "tests", "solution"):
+    (NEW / sub).mkdir(parents=True)
+
+fee = labels()["msa_07"]["terms"]["monthly_fee"]                       # $4,500 in our data
+(NEW / "environment" / "contract.txt").write_text(contract("msa_07"))
+invoices = {"invoice_jan.txt": fee, "invoice_feb.txt": fee + 500, "invoice_mar.txt": fee}   # February is wrong
+for name, amount in invoices.items():
+    (NEW / "environment" / name).write_text(f"INVOICE\nVendor: Orbit Software LLC\nPeriod: {name[8:11].title()} 2027\n"
+                                            f"Services per Master Services Agreement\nAmount due: ${amount:,}\n")
+(NEW / "instruction.md").write_text(
+    "Compare each invoice_*.txt in this folder with the monthly fee in clause 2.1 of contract.txt.\n"
+    "Write mismatches.json: a JSON list of the invoice file names whose 'Amount due' differs from the monthly fee. "
+    "Use an empty list if all match.\n")
+(NEW / "tests" / "expected.json").write_text(json.dumps(sorted(n for n, a in invoices.items() if a != fee)))
+(NEW / "tests" / "test.py").write_text('''import json, sys
+from pathlib import Path
+ws, out = Path(sys.argv[1]), Path(sys.argv[2])
+want = json.loads((Path(__file__).parent / "expected.json").read_text())
+p = ws / "mismatches.json"
+try:
+    got = json.loads(p.read_text()) if p.exists() else None
+except json.JSONDecodeError:
+    got = None
+ok = isinstance(got, list) and sorted(got) == want
+out.write_text("1.0" if ok else "0.0")
+print("reward=" + ("1.0" if ok else "0.0"), "got", got)
+''')
+(NEW / "solution" / "solve.py").write_text('''import json, re, sys
+from pathlib import Path
+ws = Path(sys.argv[1])
+fee = int(re.search(r"\\$([\\d,]+) per month", (ws / "contract.txt").read_text()).group(1).replace(",", ""))
+bad = [f.name for f in sorted(ws.glob("invoice_*.txt"))
+       if int(re.search(r"Amount due: \\$([\\d,]+)", f.read_text()).group(1).replace(",", "")) != fee]
+(ws / "mismatches.json").write_text(json.dumps(bad))
+''')
+print(NEW.joinpath("instruction.md").read_text())
+
+# %%
+def oracle2(ws, instruction):
+    subprocess.run([sys.executable, str(NEW / "solution" / "solve.py"), str(ws)], check=True)
+def nothing2(ws, instruction):
+    pass
+def alternative2(ws, instruction):
+    import re
+    fee_line = next(l for l in (ws / "contract.txt").read_text().splitlines() if l.startswith("2.1"))
+    fee_val = int("".join(ch for ch in fee_line.split("$")[1].split(" ")[0] if ch.isdigit()))
+    bad = [f.name for f in ws.glob("invoice_*.txt") if int("".join(ch for ch in f.read_text().split("$")[-1] if ch.isdigit())) != fee_val]
+    (ws / "mismatches.json").write_text(json.dumps(bad))
+def shortcut2(ws, instruction):                          # gaming attempt: list every invoice
+    (ws / "mismatches.json").write_text(json.dumps([f.name for f in ws.glob("invoice_*.txt")]))
+
+s2 = {n: run_attempt(NEW, f) for n, f in [("oracle", oracle2), ("do nothing", nothing2), ("alternative", alternative2), ("list all", shortcut2)]}
+print(s2)
+check("fee-check: oracle 1.0", s2["oracle"] == 1.0)
+check("fee-check: do nothing 0", s2["do nothing"] == 0.0)
+check("fee-check: alternative correct solution 1.0", s2["alternative"] == 1.0)
+check("fee-check: listing everything fails", s2["list all"] == 0.0)
+
+# %%
+rewards2 = [run_attempt(NEW, agent_attempt) for _ in range(3)]
+solved2 = sum(r == 1.0 for r in rewards2)
+print(f"rewards {rewards2} | pass@3 {pass_at_k(3, solved2, 3):.0%} | pass^3 {pass_hat_k(3, solved2, 3):.0%}")

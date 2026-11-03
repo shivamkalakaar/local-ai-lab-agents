@@ -90,3 +90,31 @@ check("at least 12 of 16 items judged correctly", correct >= 12)
 # 2. Add a "stop hook": the job may only print a final report when every item has evidence.
 #
 # **Next:** 15 · Capstone
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: resume after a crash. Mark 3 items as not done (as if the run died) and rerun the loop.
+state = json.loads((WORK / "checklist.json").read_text())
+for i in state["items"][-3:]:
+    i.update(done=False, evidence=None)
+(WORK / "checklist.json").write_text(json.dumps(state, indent=1))
+redone = []
+for _ in range(10):
+    r = work_session()
+    if r == "ALL DONE": break
+    redone.append(r)
+print("redone after restart:", redone)
+# Only the unfinished items ran again. The checklist file, not the model's memory, holds the progress.
+
+# %%
+# Solution 2: a stop hook. The final report refuses to run until every item has evidence.
+def final_report():
+    st = json.loads((WORK / "checklist.json").read_text())
+    missing = [i["id"] for i in st["items"] if not (i["done"] and i["evidence"])]
+    if missing:
+        raise RuntimeError(f"Cannot finish: {len(missing)} items lack evidence: {missing[:5]}")
+    broken = [i["id"] for i in st["items"] if i["evidence"]["breaks_rule"]]
+    return f"Matter complete. {len(st['items'])} checks, {len(broken)} issues: {broken}"
+print(final_report())

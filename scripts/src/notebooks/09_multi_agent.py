@@ -97,3 +97,40 @@ check("single agent + checker finds most issues (recall >= 70%)", s_tp / max(s_t
 # 2. Give the team a vague brief ("review this") instead of a specific one. What breaks?
 #
 # **Next:** 10 · Evaluation
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: Design A without the code checker
+def single_agent_no_checker(cid):
+    secs = {s["title"]: s["text"] for s in sections(contract(cid))}
+    relevant = "\n".join(f"{t}: {x}" for t, x in secs.items() if any(w in t for w in ("Liability", "Governing", "Renewal")))
+    v = structured(f"Playbook rules:\n{json.dumps(PB['rules'], indent=1)}\n\nClauses:\n{relevant}\n\n"
+                   "For each rule, return true if the contract BREAKS it, false if it follows it.", Verdicts)
+    return {k for k, broken in v.model_dump().items() if broken}
+
+for name, fn in [("with checker", single_agent), ("without checker", single_agent_no_checker)]:
+    rows = [prf({r for r in fn(c) if r in ("auto_renewal", "termination_notice")},
+                {i["rule"] for i in labels()[c]["issues"] if i["rule"] in ("auto_renewal", "termination_notice")}) for c in sample]
+    tp = sum(r["tp"] for r in rows); fn_ = sum(r["fn"] for r in rows); fp = sum(r["fp"] for r in rows)
+    print(f"{name:16} renewal rules: recall {tp/max(tp+fn_,1):.0%}, false flags {fp}")
+
+# %%
+# Solution 2: the team with a vague brief
+def vague_specialist(args):
+    cid, rule = args
+    clause = next(s for s in sections(contract(cid)) if RULE_SECTION[rule] in s["title"])["text"]
+    return rule, ask(f"Review this.\n{clause}")
+
+def vague_team(cid):
+    with ThreadPoolExecutor(4) as ex:
+        reports = list(ex.map(vague_specialist, [(cid, r) for r in PB["rules"]]))
+    merged = ask("Combine these reports into a list of problems.\n\n" + "\n\n".join(t for _, t in reports))
+    return {r for r in PB["rules"] if r in merged}, merged
+
+pred, merged = vague_team("msa_15")
+print("found:", pred, "| truth:", {i["rule"] for i in labels()["msa_15"]["issues"]})
+print(merged[:500])
+# With no rule, no output format and no stopping point, the specialists comment on anything and the merger
+# can't map their prose back to rule names. Most multi-agent failures are this kind of design problem.

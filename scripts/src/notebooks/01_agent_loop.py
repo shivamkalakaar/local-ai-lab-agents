@@ -114,3 +114,47 @@ check("workflow correct on at least 4 of 5", sum(r[4] for r in rows) >= 4)
 # 2. Add a `search_text(contract_id, phrase)` tool. Does the agent use it?
 #
 # **Next:** 02 · LLMs for builders
+
+# %% [markdown]
+# ## Solutions
+
+# %%
+# Solution 1: the same loop WITHOUT the stuck detector, on a question the tools can't answer
+def run_agent_no_stuck(task, max_turns=8):
+    messages = [{"role": "system", "content": "You review contracts. Use the tools to read clauses before answering. Cite clause numbers."},
+                {"role": "user", "content": task}]
+    for turn in range(max_turns):
+        msg = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS, temperature=0).choices[0].message
+        messages.append(msg)
+        if not msg.tool_calls:
+            return {"answer": msg.content, "turns": turn + 1}
+        for call in msg.tool_calls:
+            try:
+                result = IMPL[call.function.name](**json.loads(call.function.arguments))
+            except Exception as e:
+                result = f"ERROR: {e}"
+            print(f"  turn {turn+1}: {call.function.name}({call.function.arguments})")
+            messages.append({"role": "tool", "tool_call_id": call.id, "content": str(result)})
+    return {"answer": "STOPPED: turn limit reached.", "turns": max_turns}
+
+q = "What is the vendor's tax ID in contract msa_07?"
+print("WITHOUT stuck detector:", run_agent_no_stuck(q))
+print("\nWITH stuck detector:   ", run_agent(q, verbose=False))
+# What to notice: without the detector, small models often re-read the same clauses until the turn cap.
+# With it, the model is told to stop repeating and usually answers "not in the contract". The turn cap is the last safety net.
+
+# %%
+# Solution 2: add a search_text tool
+def search_text(contract_id: str, phrase: str) -> str:
+    """Return every clause that contains the phrase."""
+    hits = [f"{num}: {text}" for num, text in clauses(contract(contract_id)).items() if phrase.lower() in text.lower()]
+    return "\n".join(hits) or "No clause contains that phrase."
+
+TOOLS.append({"type": "function", "function": {"name": "search_text",
+    "description": "Find clauses in one contract that contain a phrase, e.g. 'notice' or 'State of'. Faster than reading every clause.",
+    "parameters": {"type": "object", "properties": {"contract_id": {"type": "string"}, "phrase": {"type": "string"}},
+                   "required": ["contract_id", "phrase"]}}})
+IMPL["search_text"] = search_text
+
+out = run_agent("In contract msa_13, how many days of notice are needed to stop the renewal?")
+print("\nANSWER:", out["answer"], "| truth:", labels()["msa_13"]["terms"]["notice_days"])
