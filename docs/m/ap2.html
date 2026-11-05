@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PRIME: Planning with Reflective Iterative Multi-Agentic Exploration · Agent Engineering School</title>
+<meta name="description" content="How a Stanford team let an agent pick the right thinking trick for each step of a plan, and why you must compare at the same call budget.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP2</span></div><section class="mod" id="ap2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP2</div><h2>PRIME: Planning with Reflective Iterative Multi-Agentic Exploration</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap2_prime.ipynb">Open in Colab</a><button class="done-btn" data-done="ap2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>11 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How a Stanford team let an agent pick the right thinking trick for each step of a plan, and why you must compare at the same call budget.</p><article class="lesson"><h2>The big idea</h2>
+<p>There are many tricks to make a model think better. It can reflect on its own answer. It can refine a draft. Two copies can debate. Most teams pick one trick and use it everywhere.</p>
+<p>Chelsea Zou, Samuel Liu and Jui Khankari (the poster also lists Miriam Cheng) asked a better question in their CS329A project, PRIME (Winter 2025). What if the agent picked the best trick for each step of the task?</p>
+<p>Think of a head chef. They don't use the same method for every dish. Some get a quick sear. Some get slow tasting and adjusting. A good chef learns which method works for which dish, and keeps that knowledge for next time.</p>
+<p>PRIME does this with a search method called Monte Carlo Tree Search (MCTS): try promising options, keep score of what worked, and spend more effort on the winners while still testing others now and then.</p>
+<h2>Why it matters for us</h2>
+<p>A contract review has many steps. Some are easy, like "find the governing-law clause." Some are hard, like "does this indemnity clause break the playbook rule on liability caps?"</p>
+<ul>
+<li>Spending the same effort on every step wastes calls on the easy ones and starves the hard ones. Picking a method per step can help.</li>
+<li>On a firm's own computers, model calls are cheap but not free. PRIME's lesson is to compare methods at the same number of calls. Otherwise "smarter" may just mean "tried more times."</li>
+<li>A cheap test, called a reverse ablation, shows which part of a pipeline deserves the bigger model. You upgrade one part at a time and see which upgrade helps most.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Plan.</strong> A planner splits the task into subgoals (smaller pieces of the job). Each subgoal gets a confidence score from the model.</p>
+</li>
+<li>
+<p><strong>Choose an action at each step.</strong> PRIME can Drill down (break the subgoal up further), Solve it with a chosen tool (self-reflection, self-refinement or debate), or Backtrack (give up on this branch and go back).</p>
+</li>
+<li>
+<p><strong>Pick which option to try with UCT.</strong> UCT stands for Upper Confidence bound for Trees. It is a simple score: how well this option has done so far, plus a bonus for options you haven't tried much. The bonus keeps the search curious.</p>
+</li>
+<li>
+<p><strong>Score the result.</strong> In the paper, values mix a model's own score with self-consistency (whether repeated answers agree).</p>
+</li>
+<li>
+<p><strong>Back up the score.</strong> The option's value becomes the running mean (average so far) of all its results. Good options rise. Bad ones sink.</p>
+</li>
+</ol>
+<p>PRIME used GPT-4o-mini inside the search and tested on PlanBench, WebShop and Game of 24, 60 questions each. In Table 1, PRIME scored 36.2% / 40% / 75%. LATS, an earlier tree-search agent, scored 2.2% / 38% / 44%. Plain GPT-4o-mini scored 0% on all three. A word of caution: the paper's text gives different figures for some of the same cells, so these numbers are not fully consistent. The authors estimate PRIME cost about 4x less than o1, even with more calls.</p>
+<p>Two honest results matter most. On WebShop, PRIME and LATS nearly tied, and reflections were generic. And the search wandered when it was unclear whether a step had worked.</p>
+<h2>Worked example</h2>
+<p>Picture a paralegal with a budget of five model calls for one tricky clause. The plan lists three angles: compare the cap to fees, check carve-outs, check the time window. For each angle, the agent can answer directly, answer then reflect, or break the angle down further. After each try, a checker says pass or fail. The agent learns which angle-and-method pairs pay off.</p>
+<p>Contract checks are rarely exact, so our notebook uses Game of 24 instead. You must use four numbers once each, with + − × ÷, to make 24. A code checker can grade every answer perfectly. That makes the reward clear, which is exactly when tree search shines.</p>
+<p>Here is the heart of the selection loop:</p>
+<pre><code class="language-python">uct = lambda a: a[&quot;V&quot;] + C * math.sqrt(math.log(total) / a[&quot;N&quot;])
+arm = max(arms, key=uct)
+ok, used = run_tool(arm[&quot;tool&quot;], nums, steps, arm[&quot;left&quot;], budget - calls)
+calls += used
+r = 1.0 if ok else 0.0
+arm[&quot;V&quot;] = (arm[&quot;V&quot;] * arm[&quot;N&quot;] + r) / (arm[&quot;N&quot;] + 1); arm[&quot;N&quot;] += 1; total += 1
+</code></pre>
+<ul>
+<li>An "arm" is one pairing of a first step and a tool, like "8 − 2 = 6, then reflect."</li>
+<li>Line 1 is the UCT score. <code>V</code> is how well the arm has done. The square-root part is the curiosity bonus. It is big when the arm <code>N</code> has been tried rarely. <code>C</code> sets how curious to be.</li>
+<li>Line 2 picks the arm with the highest score.</li>
+<li>Line 3 runs the tool and reports success and how many calls it used.</li>
+<li>Line 4 counts calls against the budget of 5.</li>
+<li>Line 5 turns pass or fail into a reward of 1 or 0.</li>
+<li>Line 6 updates the running mean, the same rule the paper uses.</li>
+</ul>
+<p>The notebook runs PRIME-lite next to two baselines. One is a single call. The other is "retry with feedback," which also gets up to 5 calls. If PRIME-lite only beats the single call, the extra calls did the work, not the cleverness.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Comparing at unequal budgets.</strong> A method with 5 calls will usually beat 1 call. Always include a simple retry baseline with the same budget.</li>
+<li><strong>Using tree search without a clear reward.</strong> If you can't tell whether a step worked, the search wanders. Use it where a checker exists.</li>
+<li><strong>Upgrading every part at once.</strong> Swap in the bigger model one part at a time. That shows where the money should go.</li>
+<li><strong>Trusting one table.</strong> The PRIME paper's own numbers disagree in places. Read results with care and rerun what matters.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>What does the curiosity bonus in UCT do?</summary>
+<p>It raises the score of options that haven&#x27;t been tried much. That stops the search from locking onto its first favorite too early.</p>
+</details>
+<details>
+<summary>Why does the notebook include a &quot;retry with feedback&quot; baseline?</summary>
+<p>It uses the same 5-call budget as PRIME-lite. If they tie, the gain came from extra tries, not from smart strategy choice.</p>
+</details>
+<details>
+<summary>Where did PRIME struggle?</summary>
+<p>On WebShop it nearly tied with LATS, and its reflections were generic. It also wandered when a step&#x27;s value was unclear.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the notebook to compare single shot, retry with feedback, and PRIME-lite on six solvable puzzles. Look at the success rate next to the average number of calls. Then check the option statistics to see which tool the search learned to prefer, and try the exploration constant at 0.2 and 2.0.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Winter 2025 · Chelsea Zou, Samuel Liu, Jui Khankari (the poster lists Chelsea Zou, Jui Khankari, Miriam Cheng)</p>
+
+  <p class="src"><a href="https://cs329a.stanford.edu/winter2025projects/prime.pdf">Paper</a> · <a href="https://cs329a.stanford.edu/winter2025projects/primeposter.pdf">Poster</a></p>
+<div class="paper"><dl><dt>Problem</dt><dd>Reasoning tricks such as reflection, debate and voting are applied ad hoc, with no principled way to choose the right one for each step of a multi-step plan.</dd><dt>Method</dt><dd>Treat each reasoning technique as an &#x27;option&#x27; and search with Monte Carlo Tree Search. A planner splits the task into subgoals; at each node it can Drill down, Solve with the best-suited self-improvement tool (self-reflection, self-refinement, debate), or Backtrack. Values are backed up with a running mean and nodes chosen with UCT; non-leaf values mix an LM score with self-consistency. Built on LATS. GPT-4o-mini inside PRIME, compared with LATS, plain 4o-mini and one-shot o1 on 60 sampled questions each from PlanBench, WebShop and Game of 24, plus a reverse ablation that upgrades only the planner or only the executor.</dd><dt>Results</dt><dd>Table 1 success rates (PlanBench / WebShop / Game of 24): PRIME 36.2% / 40% / 75%; LATS 2.2% / 38% / 44%; GPT-4o-mini 0% / 0% / 0%; GPT-o1 100% / 100% / 100%; PRIME with upgraded planner 95% / 94% / 100%; with upgraded executor 96% / 92% / 100%. The text gives different figures for some cells (PRIME &#x27;a 2.2% improvement over LATS&#x27; on PlanBench; o1 at 37.3% on PlanBench and 80% on WebShop), so these numbers are internally inconsistent. Estimated about 4x lower cost than o1 despite more API calls.</dd><dt>Lessons</dt><dd>Choosing the strategy per subgoal can beat one fixed strategy, but compare at equal call budgets: on WebShop, PRIME and LATS tied and reflections were generic. Tree search shines when each step&#x27;s result is clear and checkable, and wanders when it isn&#x27;t. A reverse ablation (upgrade one component at a time) is a cheap way to find which part of a pipeline deserves the expensive model.</dd><dt>Our rebuild</dt><dd>Game of 24 with an exact ast-based checker. PRIME-lite: the planner proposes first steps with a confidence (LM value); code drops impossible steps (backtrack); a bandit-style MCTS picks (subgoal, tool) arms with UCT across three tools (solve, reflect, drill down), uses the checker as reward, backs up values with the paper&#x27;s running mean, and carries tool statistics across puzzles. Compared at a 5-call budget against single-shot and retry-with-feedback; solutions run a reverse ablation with a 3B executor and vary the exploration constant.</dd></dl></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap2_prime.ipynb" target="_blank" rel="noopener">ap2_prime.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="nb-md"><h3>The original project</h3>
+<p><strong>PRIME: Planning with Reflective, Iterative, Multi-agentic Exploration</strong> by Chelsea Zou, Samuel Liu and Jui Khankari
+(the poster lists Chelsea Zou, Jui Khankari and Miriam Cheng). Stanford CS329A, Winter 2025.
+<a href="https://cs329a.stanford.edu/winter2025projects/prime.pdf">Paper</a> · <a href="https://cs329a.stanford.edu/winter2025projects/primeposter.pdf">Poster</a></p>
+<p><strong>Problem.</strong> Top-down planning with LLMs is unsolved. Reflection, debate and voting are used "ad hoc", with no
+principled way to pick the right one for a given step.</p>
+<p><strong>Method.</strong> Treat each reasoning technique as an <em>option</em> (a reusable sub-policy, from reinforcement learning) and
+search with Monte Carlo Tree Search (MCTS). A planner splits the problem into N subgoals (tree children). At each
+node it chooses <strong>Drill down</strong> (split further), <strong>Solve</strong> (call the best-suited self-improvement tool: self-reflection,
+self-refinement or debate) or <strong>Backtrack</strong> (drop a useless subgoal). Results flow back up the tree with a running
+mean, V(s) ← (V·N + r)/(N+1), and the next node is chosen with UCT = w/n + C·√(ln N / n). Leaves are judged by
+ground truth when it exists, otherwise by V(s) = λ·LM(s) + (1−λ)·SC(s), a mix of a model's score and self-consistency.
+It builds on LATS (Zhou et al. 2024, <em>Language Agent Tree Search</em>).</p>
+<p><strong>Setup.</strong> GPT-4o-mini inside PRIME vs. LATS (4o-mini), plain 4o-mini, and one-shot GPT-o1, on 60 sampled
+questions each from PlanBench, WebShop and Game of 24. Plus a "reverse ablation": upgrade only the planner, or only
+the executor, to a stronger model.</p>
+<p><strong>Key results (as reported, Table 1, success rate).</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>PlanBench</th>
+<th>WebShop</th>
+<th>Game of 24</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PRIME (4o-mini)</td>
+<td>36.2%</td>
+<td>40%</td>
+<td>75%</td>
+</tr>
+<tr>
+<td>LATS (4o-mini)</td>
+<td>2.2%</td>
+<td>38%</td>
+<td>44%</td>
+</tr>
+<tr>
+<td>GPT-4o-mini</td>
+<td>0%</td>
+<td>0%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>GPT-o1</td>
+<td>100%</td>
+<td>100%</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>PRIME, upgraded planner</td>
+<td>95%</td>
+<td>94%</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>PRIME, upgraded executor</td>
+<td>96%</td>
+<td>92%</td>
+<td>100%</td>
+</tr>
+</tbody>
+</table></div>
+<p>The text gives some different numbers for the same comparisons: PRIME is "a 2.2% improvement over LATS" on
+PlanBench, and o1 scores 37.3% on PlanBench and 80% on WebShop. We report both and can't tell which is right.
+The authors estimate PRIME costs about 4× less than o1, despite more API calls.</p>
+<p><strong>Limitations they state.</strong> PRIME wanders when the value of an action is unclear (obfuscated PlanBench);
+on WebShop, reflections were generic and the agent got stuck in local minima, so subgoals helped little.</p>
+<p><strong>Our mini version.</strong> Game of 24 only, because a checker can grade it exactly. The planner proposes first steps
+with a confidence (the LM value). Code rejects impossible steps (backtrack). A small bandit-style MCTS picks a
+(subgoal, tool) pair with UCT, where the tools are <em>solve</em>, <em>reflect</em> and <em>drill down</em>. The checker is the reward.
+Tool statistics carry over from puzzle to puzzle, a tiny version of "learning which option works".</p></div>
+<div class="code"><div class="cap"><span class="cell">ap2_prime.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import ast, itertools, math, random, re
+from concurrent.futures import ThreadPoolExecutor
+from fractions import Fraction
+from typing import List
+from pydantic import BaseModel, Field
+from lal.llm import ask, chat, structured
+from lal.checks import check</code></pre></div>
+<div class="nb-md"><h3>1. The task and an exact checker</h3>
+<p>Use each of four numbers once with + − × ÷ to make 24. The checker parses the expression with Python's <code>ast</code>
+module (no <code>eval</code>), checks the numbers used, and computes with exact fractions.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap2_prime.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">OPS = {ast.Add: lambda a, b: a + b, ast.Sub: lambda a, b: a - b, ast.Mult: lambda a, b: a * b, ast.Div: lambda a, b: a / b}
+
+def evaluate(node, used):
+    if isinstance(node, ast.Expression):
+        return evaluate(node.body, used)
+    if isinstance(node, ast.Constant) and isinstance(node.value, int) and not isinstance(node.value, bool):
+        used.append(node.value); return Fraction(node.value)
+    if isinstance(node, ast.BinOp) and type(node.op) in OPS:
+        return OPS[type(node.op)](evaluate(node.left, used), evaluate(node.right, used))
+    raise ValueError(&quot;only whole numbers, + - * / and brackets are allowed&quot;)
+
+def check24(expr: str, nums) -&gt; tuple:
+    &quot;&quot;&quot;(ok, message). The message is what a reflecting agent gets to see.&quot;&quot;&quot;
+    try:
+        used = []
+        val = evaluate(ast.parse(expr, mode=&quot;eval&quot;), used)
+    except ZeroDivisionError:
+        return False, &quot;it divides by zero&quot;
+    except Exception as e:
+        return False, f&quot;it is not a valid expression ({e})&quot;
+    if sorted(used) != sorted(nums):
+        return False, f&quot;it uses the numbers {sorted(used)} but must use exactly {sorted(nums)}&quot;
+    if val != 24:
+        return False, f&quot;it equals {val}, not 24&quot;
+    return True, &quot;correct&quot;
+
+def extract_expr(text: str) -&gt; str:
+    text = (text or &quot;&quot;).replace(&quot;×&quot;, &quot;*&quot;).replace(&quot;÷&quot;, &quot;/&quot;).replace(&quot;−&quot;, &quot;-&quot;)
+    m = re.findall(r&quot;ANSWER:\s*(.+)&quot;, text, re.I)
+    cand = m[-1] if m else (text.strip().splitlines() or [&quot;&quot;])[-1]
+    cand = re.sub(r&quot;(?&lt;=[\d\)])\s*[xX]\s*(?=[\d\(])&quot;, &quot;*&quot;, cand)
+    parts = [p for p in cand.split(&quot;=&quot;) if re.search(r&quot;\d&quot;, p)]
+    if len(parts) &gt; 1 and re.fullmatch(r&quot;\s*24\s*\.?\s*&quot;, parts[-1]):
+        parts = parts[:-1]
+    cand = max(parts, key=lambda p: len(re.findall(r&quot;\d+&quot;, p))) if parts else &quot;&quot;
+    return re.sub(r&quot;[^\d\s\+\-\*/\(\)]&quot;, &quot;&quot;, cand).strip()
+
+def solve24(nums):
+    &quot;&quot;&quot;Brute force: returns one solution or None. Used only to pick solvable puzzles, never by the agents.&quot;&quot;&quot;
+    items = [(Fraction(n), str(n)) for n in nums]
+    def rec(items):
+        if len(items) == 1:
+            return items[0][1] if items[0][0] == 24 else None
+        for i, j in itertools.permutations(range(len(items)), 2):
+            (a, ea), (b, eb) = items[i], items[j]
+            rest = [items[k] for k in range(len(items)) if k not in (i, j)]
+            for v, e in [(a + b, f&quot;({ea}+{eb})&quot;), (a - b, f&quot;({ea}-{eb})&quot;), (a * b, f&quot;({ea}*{eb})&quot;)] + \
+                        ([(a / b, f&quot;({ea}/{eb})&quot;)] if b != 0 else []):
+                r = rec(rest + [(v, e)])
+                if r:
+                    return r
+        return None
+    return rec(items)
+
+rng = random.Random(329)
+PUZZLES = []
+while len(PUZZLES) &lt; 6:
+    nums = sorted(rng.randint(1, 13) for _ in range(4))
+    if nums not in PUZZLES and solve24(nums):
+        PUZZLES.append(nums)
+print(PUZZLES)
+print(check24(&quot;(8-2)*(3+1)&quot;, [1, 2, 3, 8]), check24(&quot;8*3&quot;, [1, 2, 3, 8]), extract_expr(&quot;So: (8 − 2) × (3 + 1) = 24\nANSWER: (8-2)*(3+1) = 24&quot;))</code></pre></div>
+<div class="nb-md"><h3>2. Baselines: one shot, and retry with feedback (same budget as PRIME)</h3>
+<p>The retry baseline is a plain reflection loop: try, get the checker's message, try again. If PRIME only wins
+because it makes more calls, this baseline will catch it.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap2_prime.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">BUDGET = 5            # model calls per puzzle for the two search methods
+ASK24 = (&quot;Use each of the numbers {nums} exactly once, with + - * / and brackets, to make exactly 24.\n&quot;
+         &quot;Think briefly, then end with one line: ANSWER: &lt;expression&gt;&quot;)
+
+def single_shot(nums):
+    out = ask(ASK24.format(nums=nums), max_tokens=600)
+    ok, _ = check24(extract_expr(out), nums)
+    return {&quot;ok&quot;: ok, &quot;calls&quot;: 1}
+
+def retry_with_feedback(nums, budget=BUDGET):
+    msgs = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: ASK24.format(nums=nums)}]
+    for call in range(1, budget + 1):
+        out = chat(msgs, temperature=0.7, max_tokens=600).content or &quot;&quot;
+        expr = extract_expr(out)
+        ok, why = check24(expr, nums)
+        if ok:
+            return {&quot;ok&quot;: True, &quot;calls&quot;: call}
+        msgs += [{&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: out},
+                 {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;Your expression &#x27;{expr}&#x27; is wrong: {why}. Reflect on the mistake and try a different approach.&quot;}]
+    return {&quot;ok&quot;: False, &quot;calls&quot;: budget}</code></pre></div>
+<div class="nb-md"><h3>3. PRIME-lite</h3>
+<ul>
+<li><strong>Plan</strong> (1 call): propose up to 4 first steps like <code>8 - 2 = 6</code>, each with a confidence 1–10.</li>
+<li><strong>Backtrack</strong> for free: code drops steps that use numbers we don't have or have wrong arithmetic.</li>
+<li><strong>Options</strong> for each surviving subgoal: <code>solve</code> (1 call), <code>reflect</code> (solve, and if the checker says no, fix once: up to 2 calls),
+  <code>drill</code> (propose the next step, code checks it, then solve with both steps fixed: 2 calls).</li>
+<li><strong>Select</strong> the (subgoal, option) arm with the highest UCT score, run it, get reward 1 or 0 from the checker,
+  update the arm with the running mean from the paper. Stop on success or when the budget is used up.</li>
+<li><strong>Learn across puzzles:</strong> each option keeps a global success rate that becomes the starting value of new arms.</li>
+</ul></div>
+<div class="code"><div class="cap"><span class="cell">ap2_prime.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class Subgoal(BaseModel):
+    step: str = Field(description=&quot;one operation on two of the available numbers, like &#x27;8 - 2 = 6&#x27;&quot;)
+    confidence: int = Field(ge=1, le=10, description=&quot;how likely this step leads to 24&quot;)
+
+class Plan(BaseModel):
+    subgoals: List[Subgoal] = Field(max_length=4)
+
+def fmt(x: Fraction):
+    return str(x.numerator) if x.denominator == 1 else f&quot;{x.numerator}/{x.denominator}&quot;
+
+def apply_step(step: str, state):
+    &quot;&quot;&quot;Check one step against the available numbers. Returns (new_state, text) or None (= backtrack).&quot;&quot;&quot;
+    m = re.search(r&quot;(\d+(?:/\d+)?)\s*([\+\-\*/xX×÷])\s*(\d+(?:/\d+)?)&quot;, (step or &quot;&quot;).replace(&quot;−&quot;, &quot;-&quot;))
+    if not m:
+        return None
+    a, op, b = Fraction(m.group(1)), m.group(2), Fraction(m.group(3))
+    pool = list(state)
+    for v in (a, b):
+        if v not in pool:
+            return None
+        pool.remove(v)
+    op = {&quot;x&quot;: &quot;*&quot;, &quot;X&quot;: &quot;*&quot;, &quot;×&quot;: &quot;*&quot;, &quot;÷&quot;: &quot;/&quot;}.get(op, op)
+    if op == &quot;/&quot; and b == 0:
+        return None
+    val = {&quot;+&quot;: a + b, &quot;-&quot;: a - b, &quot;*&quot;: a * b, &quot;/&quot;: a / b if b else None}[op]
+    return pool + [val], f&quot;{fmt(a)} {op} {fmt(b)} = {fmt(val)}&quot;
+
+SOLVE = (&quot;Numbers: {nums}. Goal: 24, using each number exactly once with + - * / and brackets.\n&quot;
+         &quot;Follow this plan: {steps}. After these steps the numbers left are {left}.\n&quot;
+         &quot;Write ONE expression with the ORIGINAL numbers {nums} that follows the plan and equals 24.\n&quot;
+         &quot;End with one line: ANSWER: &lt;expression&gt;&quot;)
+
+class Step(BaseModel):
+    step: str
+
+TOOL_STATS = {t: [1, 2] for t in (&quot;solve&quot;, &quot;reflect&quot;, &quot;drill&quot;)}     # [successes+1, tries+2]: a gentle prior
+
+def run_tool(tool, nums, steps, left, budget_left):
+    &quot;&quot;&quot;Returns (ok, calls_used).&quot;&quot;&quot;
+    prompt = SOLVE.format(nums=nums, steps=&quot;; &quot;.join(steps), left=[fmt(x) for x in left])
+    if tool == &quot;drill&quot;:
+        try:
+            nxt = structured(f&quot;Numbers left: {[fmt(x) for x in left]}. Goal: reach 24 in the end. &quot;
+                             f&quot;Propose the single best next step on two of these numbers, like &#x27;a op b = c&#x27;.&quot;, Step, temperature=0.7)
+            res = apply_step(nxt.step, left)
+        except Exception:
+            res = None
+        if res is None or budget_left &lt; 2:
+            return False, 1
+        left, txt = res
+        prompt = SOLVE.format(nums=nums, steps=&quot;; &quot;.join(steps + [txt]), left=[fmt(x) for x in left])
+        ok, _ = check24(extract_expr(ask(prompt, temperature=0.3, max_tokens=500)), nums)
+        return ok, 2
+    msgs = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt}]
+    out = chat(msgs, temperature=0.3, max_tokens=500).content or &quot;&quot;
+    ok, why = check24(extract_expr(out), nums)
+    if ok or tool == &quot;solve&quot; or budget_left &lt; 2:
+        return ok, 1
+    msgs += [{&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: out},
+             {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;A checker says your expression is wrong: {why}. Reflect, then give a fixed ANSWER line.&quot;}]
+    ok, _ = check24(extract_expr(chat(msgs, temperature=0.3, max_tokens=500).content), nums)
+    return ok, 2
+
+def prime(nums, budget=BUDGET, C=1.0, log=False):
+    calls = 1
+    try:
+        plan = structured(f&quot;Numbers: {nums}. Goal: make 24 using each number once with + - * /.\n&quot;
+                          &quot;Propose up to 4 DIFFERENT promising first steps. Each step combines two of the numbers.&quot;,
+                          Plan, temperature=0.7)
+        subgoals = plan.subgoals
+    except Exception:
+        subgoals = []
+    state0 = [Fraction(n) for n in nums]
+    arms = []                                            # one arm per (valid subgoal, tool)
+    for sg in subgoals:
+        res = apply_step(sg.step, state0)
+        if res is None:
+            if log: print(&quot;   backtrack (invalid step):&quot;, sg.step)
+            continue
+        left, txt = res
+        for tool, (s, n) in TOOL_STATS.items():
+            prior = 0.5 * sg.confidence / 10 + 0.5 * s / n   # V = λ·LM + (1−λ)·(what this option did before)
+            arms.append({&quot;txt&quot;: txt, &quot;left&quot;: left, &quot;tool&quot;: tool, &quot;N&quot;: 1, &quot;V&quot;: prior})
+    if not arms:                                         # nothing valid: fall back to solving from scratch
+        arms = [{&quot;txt&quot;: &quot;(no plan)&quot;, &quot;left&quot;: state0, &quot;tool&quot;: &quot;reflect&quot;, &quot;N&quot;: 1, &quot;V&quot;: 0.5}]
+    total = sum(a[&quot;N&quot;] for a in arms)
+    while calls &lt; budget:
+        uct = lambda a: a[&quot;V&quot;] + C * math.sqrt(math.log(total) / a[&quot;N&quot;])
+        arm = max(arms, key=uct)
+        steps = [] if arm[&quot;txt&quot;] == &quot;(no plan)&quot; else [arm[&quot;txt&quot;]]
+        ok, used = run_tool(arm[&quot;tool&quot;], nums, steps, arm[&quot;left&quot;], budget - calls)
+        calls += used
+        r = 1.0 if ok else 0.0
+        arm[&quot;V&quot;] = (arm[&quot;V&quot;] * arm[&quot;N&quot;] + r) / (arm[&quot;N&quot;] + 1); arm[&quot;N&quot;] += 1; total += 1     # backpropagation
+        TOOL_STATS[arm[&quot;tool&quot;]][0] += r; TOOL_STATS[arm[&quot;tool&quot;]][1] += 1
+        if log: print(f&quot;   try {arm[&#x27;tool&#x27;]:7s} on [{arm[&#x27;txt&#x27;]}] -&gt; {&#x27;✓&#x27; if ok else &#x27;✗&#x27;} (calls {calls})&quot;)
+        if ok:
+            return {&quot;ok&quot;: True, &quot;calls&quot;: calls}
+    return {&quot;ok&quot;: False, &quot;calls&quot;: calls}
+
+print(apply_step(&quot;8 - 2 = 6&quot;, [Fraction(n) for n in (1, 2, 3, 8)]), apply_step(&quot;9 - 2&quot;, [Fraction(n) for n in (1, 2, 3, 8)]))</code></pre></div>
+<div class="nb-md"><h3>4. Run all three methods</h3>
+<p>Puzzles run two at a time. Total model calls: at most 6 + 30 + 30.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap2_prime.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def run(method):
+    with ThreadPoolExecutor(2) as ex:
+        return list(ex.map(method, PUZZLES))
+
+results = {&quot;single shot&quot;: run(single_shot), &quot;retry + feedback&quot;: run(retry_with_feedback)}
+print(&quot;PRIME-lite, puzzle by puzzle:&quot;)
+results[&quot;PRIME-lite&quot;] = []
+for nums in PUZZLES:                                   # sequential so tool statistics carry over in order
+    print(&quot; &quot;, nums)
+    results[&quot;PRIME-lite&quot;].append(prime(nums, log=True))
+
+for name, rs in results.items():
+    acc = sum(r[&quot;ok&quot;] for r in rs) / len(rs)
+    calls = sum(r[&quot;calls&quot;] for r in rs) / len(rs)
+    print(f&quot;{name:18s} success {acc:4.0%}   avg calls {calls:.1f}&quot;)
+print(&quot;option statistics (successes+1, tries+2):&quot;, TOOL_STATS)</code></pre></div>
+<div class="nb-md"><p><strong>What to notice.</strong> With an 8B model the single shot is often weak, like 4o-mini's 0% in the paper. Compare PRIME-lite
+with <em>retry + feedback</em>, not just with the single shot: both spend up to 5 calls. If PRIME-lite wins, the
+plan + strategy choice is doing work. If they tie, the gain came from more tries, which is the honest result the
+paper's WebShop row also shows. Also look at the option statistics: which tool did the search learn to prefer?</p></div>
+<div class="code"><div class="cap"><span class="cell">ap2_prime.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">acc = {k: sum(r[&quot;ok&quot;] for r in v) / len(v) for k, v in results.items()}
+check(&quot;all three methods ran on every puzzle&quot;, all(len(v) == len(PUZZLES) for v in results.values()))
+check(&quot;search methods stay within the call budget&quot;, all(r[&quot;calls&quot;] &lt;= BUDGET for k in (&quot;retry + feedback&quot;, &quot;PRIME-lite&quot;) for r in results[k]))
+check(&quot;checker rejects a wrong answer&quot;, not check24(&quot;8*3&quot;, [1, 2, 3, 8])[0] and check24(&quot;(8-2)*(3+1)&quot;, [1, 2, 3, 8])[0])
+check(&quot;PRIME-lite solves at least one puzzle&quot;, acc[&quot;PRIME-lite&quot;] &gt; 0)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Reverse ablation.</strong> PRIME upgraded one part at a time to see where a better model helps. Use <code>llama3.2:3b</code>
+   for the executor tools but keep <code>llama3.1:8b</code> as the planner. Does accuracy drop more than you expected?</li>
+<li><strong>Turn off learning.</strong> Reset <code>TOOL_STATS</code> before every puzzle. Does carrying option statistics across puzzles help?</li>
+<li><strong>Exploration constant.</strong> Try <code>C=0.2</code> and <code>C=2.0</code>. What happens to the number of different arms tried?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">ap2_prime.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 1. Reverse ablation on 2 puzzles (up to 10 calls). We swap the model used by the executor tools only.
+#    Notice: in the paper the executor upgrade mattered about as much as the planner upgrade.
+import lal.llm as L
+_ask, _chat = L.ask, L.chat
+def small_ask(p, **kw): return _ask(p, model_name=&quot;llama3.2:3b&quot;, **kw)
+def small_chat(m, **kw): return _chat(m, model_name=&quot;llama3.2:3b&quot;, **kw)
+ask, chat = small_ask, small_chat            # run_tool looks these names up at call time
+small = [prime(n) for n in PUZZLES[:2]]
+ask, chat = _ask, _chat
+print(&quot;small executor:&quot;, sum(r[&quot;ok&quot;] for r in small), &quot;/ 2   vs 8B executor:&quot;,
+      sum(r[&quot;ok&quot;] for r in results[&quot;PRIME-lite&quot;][:2]), &quot;/ 2&quot;)</code></pre></div><div class="code"><div class="cap"><span class="cell">ap2_prime.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 2. No learning across puzzles: reset the option statistics each time (written, not run, to save calls).
+#    for nums in PUZZLES:
+#        TOOL_STATS.update({t: [1, 2] for t in TOOL_STATS}); prime(nums)
+#    Notice: with only 6 puzzles the effect is small and noisy; this is a 30+ puzzle experiment.</code></pre></div><div class="code"><div class="cap"><span class="cell">ap2_prime.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 3. Exploration: count distinct arms tried by logging. Low C sticks with the planner&#x27;s favourite step;
+#    high C spreads calls across subgoals. Run one puzzle each way with a budget of 3 (up to 6 calls):
+for c in (0.2, 2.0):
+    print(&quot;C =&quot;, c); prime(PUZZLES[0], budget=3, C=c, log=True)</code></pre></div></details>
+</div></section><nav class="pager"><a class="prev" href="ap1.html"><small>← Previous</small>AppBench: Benchmarking AI-Generated Web Applications</a><a class="next" href="ap3.html"><small>Next →</small>Enhancing Mathematical Reasoning in LLMs through Reasoning Distillation, GRPO, and Multi-agent PRM Reranking</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

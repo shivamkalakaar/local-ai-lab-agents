@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LLMs for builders · Agent Engineering School</title>
+<meta name="description" content="How to treat a language model like an unreliable part: force its answers into a fixed shape, check them against the source, and sample several when unsure.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 02</span></div><section class="mod" id="m2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 02</div><h2>LLMs for builders</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/02_llms_for_builders.ipynb">Open in Colab</a><button class="done-btn" data-done="m2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to treat a language model like an unreliable part: force its answers into a fixed shape, check them against the source, and sample several when unsure.</p><article class="lesson"><h2>The big idea</h2>
+<p>A language model is clever but unreliable. It can give a great answer, then a made-up one, in the same tone. So builders don't trust it. They wrap it.</p>
+<p>Think of a temp worker filling in a paper form. You don't let them write a free-form essay. You give them boxes: "Governing law: <strong><em>_". "Cap in months: </em></strong>_". You add a box marked "not stated." Then you check their answers against the original document before anyone signs.</p>
+<p>That is this whole module. Give the model a form (a schema). Make it fill in the boxes. Check the boxes. And when you can't check, ask several times and see if the answers agree.</p>
+<h2>Why it matters for us</h2>
+<p>A contract review is only useful if the next step can rely on it. If the model writes "about a year or so" when code expects the number 12, everything after breaks. A fixed shape fixes that.</p>
+<p>Small local models make more mistakes than big cloud ones. But there is good news. Spending more effort at answer time, by sampling several answers and checking them, can close much of the gap. With enough samples and a checker, small Llama models beat GPT-4o's single answer on math problems (course Lecture 2). That is a strong reason to run small models well instead of big models badly.</p>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Set temperature low for facts.</strong> Temperature controls randomness. Use 0 to 0.3 for pulling out facts. Use higher values only when you want variety.</p>
+</li>
+<li>
+<p><strong>Define a schema.</strong> A schema is a description of the exact fields you want, with types. For example, <code>liability_cap_months</code> must be a whole number. In Python we write this with Pydantic, a library for typed data.</p>
+</li>
+<li>
+<p><strong>Always add an "absent" option.</strong> Let each field be <code>None</code> (empty) if the contract doesn't say. Without this, the model invents a value to fill the box.</p>
+</li>
+<li>
+<p><strong>Let the server force the shape.</strong> Constrained decoding means the server only lets the model write words that fit the schema. The output is always valid JSON (a standard data format). Parsing never fails.</p>
+</li>
+<li>
+<p><strong>Check the content anyway.</strong> Valid shape is not correct content. The number could still be wrong. So we check in code. For example: does the quoted sentence really appear in the contract?</p>
+</li>
+<li>
+<p><strong>Sample when unsure.</strong> Two ways:</p>
+</li>
+<li><strong>Best-of-n</strong>, when you have a checker. Ask up to n times. Keep the first answer that passes the check.</li>
+<li><strong>Majority vote</strong>, when you have no checker. Ask several times and take the most common answer. How often they agree is a confidence signal. Low agreement means "send to a person."</li>
+</ol>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>You have...</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A code check (quote in document, rule passes)</td>
+<td>Best-of-n</td>
+</tr>
+<tr>
+<td>No checker, short answers like yes/no</td>
+<td>Majority vote</td>
+</tr>
+</tbody>
+</table></div>
+<h2>Worked example</h2>
+<p>The notebook defines the form for a contract:</p>
+<pre><code class="language-python">class Terms(BaseModel):
+    governing_law: str | None = Field(description=&quot;US state name, e.g. 'Delaware', or null&quot;)
+    liability_cap_months: int | None = Field(description=&quot;Cap as months of fees, e.g. 12. null if liability is unlimited&quot;)
+    cap_quote: str | None = Field(description=&quot;Exact sentence from the contract stating the liability cap&quot;)
+</code></pre>
+<ul>
+<li><code>class Terms(BaseModel)</code> declares a new form called Terms.</li>
+<li><code>governing_law</code> is text, or <code>None</code> if absent. The description tells the model what to write.</li>
+<li><code>liability_cap_months</code> is a whole number, or <code>None</code> if liability is unlimited.</li>
+<li><code>cap_quote</code> asks for the exact sentence. This is what lets us check the answer.</li>
+</ul>
+<p>The system prompt says: "Copy quotes exactly. If a term is absent, use null. Never guess."</p>
+<p>We run it on <code>msa_07</code>. Out comes a neat record: a state, a cap in months, renewal years, notice days, and a quote. Then one line of code asks: is that quote really in the contract? For the real quote, yes. For a made-up quote like "Liability is capped at $1 million," no.</p>
+<p>The notebook then scores each field on 8 contracts against the known answers. You see which fields the model gets right and how many quotes check out.</p>
+<p>Finally, best-of-n. The code asks up to four times at a higher temperature. It returns the first answer whose quote is found in the contract. If none pass, it returns nothing. That means "escalate to a person," not "guess."</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Asking for JSON in the prompt and hoping.</strong> Use the server's schema mode so the shape is guaranteed.</li>
+<li><strong>No "absent" option.</strong> Force a number on a contract with unlimited liability, and the model will invent one. The notebook shows this on <code>msa_16</code>.</li>
+<li><strong>Free text for fixed choices.</strong> If the answer must be one of a few states, use a fixed list (<code>Literal</code> in Python). Then "DE" and "State of Delaware" can't sneak in.</li>
+<li><strong>Trusting the model's own confidence.</strong> Use agreement across samples, or an outside check, instead.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Constrained decoding guarantees valid JSON. Why check the answer anyway?</summary>
+<p>Valid format is not correct content. The value can still be wrong or made up. Check it against the source, for example by confirming the quote is in the document.</p>
+</details>
+<details>
+<summary>When do you use majority vote instead of best-of-n?</summary>
+<p>When you have no checker. Majority vote works for short answers you can compare, like yes/no or a number. Best-of-n needs a check to decide which sample passes.</p>
+</details>
+<details>
+<summary>Why does the schema let every field be empty?</summary>
+<p>So the model has an honest way to say &quot;not in this contract.&quot; Without it, the model fills required boxes with invented values.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the extraction on <code>msa_07</code> and compare it to the printed truth. Then look at the field scores across 8 contracts. Last, run the solution that removes the "null" option on <code>msa_16</code> and watch the model invent a cap for a contract that has none.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">Lecture 2 · DSPy · SGLang and vLLM structured output</p>
+  <p class="big">Treat the model as an unreliable component with a typed interface. Force its output into a schema, and when you can check answers, sample several and keep the one that passes.</p>
+  <div class="terms"><h4>Key terms</h4><dl><div><dt>Temperature</dt><dd>A setting that controls randomness when the model picks each next token. 0 is (nearly) the same answer every time; higher values give more varied answers.<span class="from">Source: CS329Z Lecture 2</span></dd></div><div><dt>Structured output</dt><dd>Asking the model to return data in a fixed schema (fields, types, allowed values) instead of free text, so code can use it.<span class="from">Source: CS329Z Lecture 2; DSPy signatures (Khattab et al., ICLR 2024)</span></dd></div><div><dt>Constrained decoding</dt><dd>The server only allows tokens that keep the output valid for a grammar or JSON schema, so the format can&#x27;t break. The values can still be wrong.<span class="from">Source: CS329Z Lecture 2 (xgrammar / SGLang / vLLM structured outputs)</span></dd></div><div><dt>Test-time scaling</dt><dd>Spending more compute when answering (more samples, longer reasoning) instead of using a bigger model. With a checker, sampling many answers and verifying can beat a much larger model.<span class="from">Source: CS329Z Lecture 2</span></dd></div><div><dt>Self-consistency</dt><dd>Sample several reasoning paths and take the majority answer. Useful when no checker exists.<span class="from">Source: Wang et al., &quot;Self-Consistency&quot; (2023), cited in Lecture 2</span></dd></div></dl></div>
+  <h3>Four things every builder should know</h3>
+  <ol>
+    <li><b>Temperature.</b> Use low temperature (0–0.3) for extraction, code and structured output. Use higher temperature only when you want variety, such as generating several candidates to check.</li>
+    <li><b>Structured output.</b> Give every component a typed contract: fields, types and fixed choice lists. Then the next step can rely on it.</li>
+    <li><b>Constrained decoding.</b> The server can force the model to produce valid JSON matching your schema, token by token (vLLM uses xgrammar for this). Parsing never fails. The content can still be wrong, so you still validate it.</li>
+    <li><b>Test-time scaling.</b> Spending more compute at answer time often beats a bigger model. With a checker, sample many answers and verify. Without a checker, take a majority vote.</li>
+  </ol>
+  <div class="evidence">
+    <div class="ev"><div class="num">8B &gt; GPT-4o</div><p>With enough samples and a checker, small Llama models beat GPT-4o's single answer on math (L2 s.145).</p></div>
+    <div class="ev"><div class="num">43% → 53%</div><p>Majority vote over 40 reasoning paths on ARC, with no checker needed (L2 s.148).</p></div>
+  </div>
+<p>Note the explicit "null if absent" option. Without it, models invent values to fill required fields.</p>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/02_llms_for_builders.ipynb" target="_blank" rel="noopener">02_llms_for_builders.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="nb-md"><h3>1. A typed contract with Pydantic</h3>
+<p>Note the "null if absent" option. Without it, models invent values to fill required fields.</p></div>
+<div class="code"><div class="cap"><span class="cell">02_llms_for_builders.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from typing import Literal
+from pydantic import BaseModel, Field
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
+from lal.llm import structured, ask
+from lal.data import contract, labels, ids
+from lal.checks import quote_is_in_doc, check
+
+class Terms(BaseModel):
+    governing_law: str | None = Field(description=&quot;US state name, e.g. &#x27;Delaware&#x27;, or null&quot;)
+    liability_cap_months: int | None = Field(description=&quot;Cap as months of fees, e.g. 12. null if liability is unlimited&quot;)
+    renewal_years: int | None = Field(description=&quot;Length of each automatic renewal period in years&quot;)
+    notice_days: int | None = Field(description=&quot;Days of notice needed to stop renewal&quot;)
+    cap_quote: str | None = Field(description=&quot;Exact sentence from the contract stating the liability cap&quot;)
+
+SYSTEM = &quot;Extract the requested terms from the contract. Copy quotes exactly. If a term is absent, use null. Never guess.&quot;
+
+def extract(cid):
+    return structured([{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: contract(cid)}], Terms)
+
+t = extract(&quot;msa_07&quot;)
+print(t.model_dump_json(indent=2))
+print(&quot;Truth:&quot;, labels()[&quot;msa_07&quot;][&quot;terms&quot;])</code></pre></div>
+<div class="nb-md"><h3>2. Valid JSON is not correct content</h3>
+<p>The server guarantees the <em>format</em>. We still check the <em>content</em>: is the quote really in the document?</p></div>
+<div class="code"><div class="cap"><span class="cell">02_llms_for_builders.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">print(&quot;cap quote really in the contract?&quot;, quote_is_in_doc(t.cap_quote, contract(&quot;msa_07&quot;)))
+print(&quot;made-up quote in the contract?   &quot;, quote_is_in_doc(&quot;Liability is capped at $1 million.&quot;, contract(&quot;msa_07&quot;)))</code></pre></div>
+<div class="nb-md"><h3>3. Field accuracy on 8 contracts</h3></div>
+<div class="code"><div class="cap"><span class="cell">02_llms_for_builders.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">FIELDS = [&quot;governing_law&quot;, &quot;liability_cap_months&quot;, &quot;renewal_years&quot;, &quot;notice_days&quot;]
+sample = ids()[:4] + ids()[-4:]
+right = {f: 0 for f in FIELDS}
+quotes_ok = 0
+for cid in sample:
+    t = extract(cid)
+    truth = labels()[cid][&quot;terms&quot;]
+    for f in FIELDS:
+        right[f] += getattr(t, f) == truth[f]
+    quotes_ok += quote_is_in_doc(t.cap_quote, contract(cid))
+for f in FIELDS:
+    print(f&quot;{f:22} {right[f]}/{len(sample)}&quot;)
+print(f&quot;{&#x27;cap quote verified&#x27;:22} {quotes_ok}/{len(sample)}&quot;)</code></pre></div>
+<div class="nb-md"><h3>4. Majority vote: when you have no checker</h3>
+<p>Ask several times at a higher temperature and take the most common answer. The agreement rate is a useful confidence signal; low agreement means "send to a human".</p></div>
+<div class="code"><div class="cap"><span class="cell">02_llms_for_builders.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from collections import Counter
+def vote(question, n=5):
+    answers = [ask(question, temperature=0.8).strip().lower().rstrip(&quot;.&quot;) for _ in range(n)]
+    label, count = Counter(answers).most_common(1)[0]
+    return label, count / n, answers
+
+q = (&quot;Is this clause favorable to the customer? Answer only &#x27;yes&#x27; or &#x27;no&#x27;.\n\n&quot;
+     + contract(&quot;msa_08&quot;).split(&quot;7.1 &quot;)[1].split(&quot;\n&quot;)[0])
+label, agree, answers = vote(q)
+print(f&quot;vote: {label} (agreement {agree:.0%}) from {answers}&quot;)</code></pre></div>
+<div class="nb-md"><h3>5. Best-of-n: when you do have a checker</h3>
+<p>Sample until an answer passes a check. Here the check is code: the quote must be in the document.</p></div>
+<div class="code"><div class="cap"><span class="cell">02_llms_for_builders.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def best_of_n(cid, n=4):
+    for i in range(n):
+        t = structured([{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: contract(cid)}], Terms, temperature=0.7)
+        if quote_is_in_doc(t.cap_quote, contract(cid)):
+            return t, i + 1
+    return None, n   # nothing passed: escalate to a person instead of guessing
+
+t, tries = best_of_n(&quot;msa_12&quot;)
+print(f&quot;passed after {tries} tries:&quot; if t else &quot;no sample passed&quot;, t.cap_quote if t else &quot;&quot;)</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">02_llms_for_builders.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;extraction returns a valid Terms object&quot;, isinstance(extract(&quot;msa_01&quot;), Terms))
+check(&quot;governing law right on at least 6 of 8&quot;, right[&quot;governing_law&quot;] &gt;= 6)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li>Remove "use null" from the system prompt and run <code>extract</code> on a contract with unlimited liability (<code>msa_16</code>). Does the model invent a cap?</li>
+<li>Change <code>governing_law</code> to a <code>Literal[...]</code> of US states. Does accuracy change?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">02_llms_for_builders.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: remove the &quot;use null&quot; escape hatch and force an integer cap on an UNLIMITED contract
+class CapForced(BaseModel):
+    liability_cap_months: int          # no None allowed
+    cap_quote: str
+
+forced = structured([{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;Extract the requested terms from the contract. Copy quotes exactly.&quot;},
+                     {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: contract(&quot;msa_16&quot;)}], CapForced)
+print(forced)
+print(&quot;truth:&quot;, labels()[&quot;msa_16&quot;][&quot;terms&quot;][&quot;liability_cap_months&quot;], &quot;(None = unlimited)&quot;)
+# What to notice: when the schema demands a number, the model has to invent one. Always give an explicit &quot;absent&quot; option.</code></pre></div><div class="code"><div class="cap"><span class="cell">02_llms_for_builders.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: governing law as a fixed list of choices
+STATES = Literal[&quot;California&quot;, &quot;Delaware&quot;, &quot;New York&quot;, &quot;Texas&quot;, &quot;Florida&quot;, &quot;Nevada&quot;, &quot;Other&quot;]
+class LawOnly(BaseModel):
+    governing_law: STATES
+
+hits = sum(structured([{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: contract(c)}], LawOnly).governing_law
+           == labels()[c][&quot;terms&quot;][&quot;governing_law&quot;] for c in sample)
+print(f&quot;governing law with a fixed list: {hits}/{len(sample)}  (free text was {right[&#x27;governing_law&#x27;]}/{len(sample)})&quot;)
+# A fixed list makes off-menu answers impossible (&quot;State of Delaware&quot;, &quot;DE&quot;, &quot;Delaware law&quot;) and makes grading exact.</code></pre></div></details>
+  <div class="pit"><strong>Traps</strong><ul>
+    <li>Asking for JSON in the prompt and hoping. Use the server's schema mode.</li>
+    <li>Free-text answers for fixed choices. Use an enum (<code>Literal</code>) or a small classifier, so the model can't answer off the menu.</li>
+    <li>Trusting the model's own confidence score. Use agreement across samples or an outside check instead.</li>
+  </ul></div>
+  <div class="check"><h4>Check yourself</h4>
+    <details><summary>Constrained decoding guarantees valid JSON. Why validate anyway?</summary><p>Valid format is not correct content. The value can still be wrong, made up, or in the wrong unit. Check values against the source (for example, the quote must really appear in the document).</p></details>
+    <details><summary>When does majority vote help and when does best-of-n help?</summary><p>Best-of-n needs a checker (tests, rules, a schema plus source match). Majority vote works without a checker, but only for short answers you can compare, like labels or numbers.</p></details>
+  </div>
+</div></section><nav class="pager"><a class="prev" href="m1.html"><small>← Previous</small>What an agent is, and when you don&#x27;t need one</a><a class="next" href="m3.html"><small>Next →</small>Context engineering</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

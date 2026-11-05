@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Robust verification · Agent Engineering School</title>
+<meta name="description" content="Learn how verifiers pick the right answer from many tries, why checking each step beats checking only the end, and how several weak checkers can beat one.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A02</span></div><section class="mod" id="a02" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A02</div><h2>Robust verification</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a02_verification.ipynb">Open in Colab</a><button class="done-btn" data-done="a02" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Learn how verifiers pick the right answer from many tries, why checking each step beats checking only the end, and how several weak checkers can beat one.</p><article class="lesson"><h2>The big idea</h2>
+<p>In a01, more tries meant a better chance that one try was right. But someone still has to find that try. A verifier is anything that scores a candidate answer. It can be exact code, unit tests, a trained model, an AI judge, or a simple rule.</p>
+<p>Think of a firm reviewing a junior's memo. A partner can check only the conclusion. Or she can read each step and mark where the reasoning slipped. She can also ask three colleagues, each good at spotting different errors, and weigh their views.</p>
+<p>Those are the three ideas in this module. Check the outcome. Check each step. And combine several weak checkers into one strong one.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>A small local model can often produce a right answer in a few tries. The verifier decides whether you actually ship it. Without one, extra tries are wasted money.</li>
+<li>Contract review has many cheap checks. Does a cited clause exist? Is there a clear "sign" or "don't sign" verdict? Do the numbers add up? Each is weak alone, but together they are strong.</li>
+<li>Step scores also help the lawyer. They point to the exact line where an answer went wrong.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Score a verifier like a filter.</strong> A verifier accepts or rejects each candidate. Precision asks: of what it accepted, how much was really right? Recall asks: of the right answers, how many did it accept? When you must pick one answer, precision matters most. A judge that says yes to everything is useless for picking.</p>
+</li>
+<li>
+<p><strong>Outcome verifiers.</strong> An outcome verifier judges only the final answer. The GSM8K paper (Cobbe et al., 2021) trained one, then picked the best of 100 samples. It gave about the same boost as a 30x larger model. But there was a warning. With their 6B verifier, accuracy fell past 400 samples. Search started finding wrong answers that fooled the verifier. This is called reward hacking.</p>
+</li>
+<li>
+<p><strong>Process verifiers.</strong> A process verifier scores each step. The "Let's Verify Step by Step" paper (Lightman et al., 2023) had people label 800,000 steps. A solution's score is the chance that every step is right: multiply the step scores. Picking the best of 1,860 solutions on a math set, step checking got 78.2%. Outcome checking got 72.4%. Majority vote got 69.6%.</p>
+</li>
+<li>
+<p><strong>Step labels without people.</strong> Labeling steps by hand is expensive. The Math-Shepherd paper (2023) found a shortcut. Cut a solution after step i. Let a model finish it several times (8 in their data). Check the final answers. The share that come out right is the soft label. "Did any come out right?" is the hard label. If a step is wrong, the finishes after it start failing. Training on these labels lifted a 7B model from 77.9% to 84.1% on a grade-school math set.</p>
+</li>
+<li>
+<p><strong>Combine weak verifiers.</strong> The Weaver paper (2025) started from many imperfect checkers. It turned each score into a yes/no vote. Then it estimated how accurate each checker is without true answers, from how much it agrees with the others. This is called weak supervision. Checkers that look no better than chance get dropped. The rest are weighted by accuracy. Weaver averaged 87.7% across four test sets, against 72.2% for majority vote. It then shrank the whole ensemble into a small model that kept about 98% of the accuracy at a tiny fraction of the cost.</p>
+</li>
+</ol>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Verifier</th>
+<th>Looks at</th>
+<th>Strength</th>
+<th>Weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Outcome</td>
+<td>Final answer</td>
+<td>Simple</td>
+<td>Can be fooled at scale</td>
+</tr>
+<tr>
+<td>Process</td>
+<td>Each step</td>
+<td>Shows where it broke</td>
+<td>Costly labels</td>
+</tr>
+<tr>
+<td>Weak ensemble</td>
+<td>Many checks</td>
+<td>No labels needed</td>
+<td>Twins with the same blind spot</td>
+</tr>
+</tbody>
+</table></div>
+<h2>Worked example</h2>
+<p>The firm asks the local model four times: "Can we sign msa_15 as written?" We get four answers. Now we score each with three cheap checkers.</p>
+<ul>
+<li><strong>Agreement:</strong> what share of the other answers reached the same verdict.</li>
+<li><strong>AI judge:</strong> the model rates the answer from 0 to 10.</li>
+<li><strong>Code check:</strong> do the cited clause numbers exist, and is there a clear verdict?</li>
+</ul>
+<p>Say the judge gives every answer 9. It can't help us pick. The agreement and code checks disagree on one answer. The weighting gives the judge little say, because it looks no better than chance. The answer with real citations and support from the others wins.</p>
+<p>The notebook does the same with math problems. Here are its three checkers as yes/no votes:</p>
+<pre><code class="language-python">VERIFIERS = {&quot;judge&quot;: lambda c: c[&quot;judge&quot;] &gt;= 0.7,
+             &quot;agree&quot;: lambda c: c[&quot;agree&quot;] &gt;= 0.5,
+             &quot;arith&quot;: lambda c: c[&quot;arith&quot;] &gt;= 0.75}
+</code></pre>
+<p>In plain words: the judge votes yes if it scored 7 or more out of 10. Agreement votes yes if at least half the other tries reached the same answer. The arithmetic check recomputes every "a op b = c" in the text with Python, and votes yes if at least 75% are right. The notebook then weights these votes without using the true answers.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Trusting a judge that says yes to almost everything.</strong> High recall with low precision can't pick one answer. Measure precision first.</li>
+<li><strong>Searching too hard against one verifier.</strong> Past some number of samples, wrong answers start to fool it. Cap the samples.</li>
+<li><strong>Combining checkers with the same blind spot.</strong> Two prompts to the same model will agree with each other. Label-free weighting then overrates both. Mix checkers that fail in different ways.</li>
+<li><strong>Using too few rollouts for step labels.</strong> Each finish moves a soft label by a big jump when there are few. Use more, or treat the labels as rough.</li>
+<li><strong>Fitting weights on your test set.</strong> Use a separate set, or a label-free method.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Why can majority vote fail even when the right answer was sampled?</summary>
+<p>If the right answer is rare and wrong answers cluster on the same value, the vote picks the cluster.</p>
+</details>
+<details>
+<summary>What does a process verifier give you that an outcome verifier doesn&#x27;t?</summary>
+<p>A score for each step, so you see where a solution broke. Lightman et al. found it also picked better: 78.2% against 72.4%.</p>
+</details>
+<details>
+<summary>How does Math-Shepherd label a step without people?</summary>
+<p>It finishes the solution from that step several times. The share of right final answers is the soft label; whether any is right is the hard label.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the notebook and compare precision and recall for the judge, agreement and arithmetic checks. Then look at the step scores and the rollout labels on one right and one wrong solution. Finally, compare the pickers in section 8. With 6 problems, one flip moves the score by 17 points, so read it as a demo.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Lecture 3 (Sep 29)</p>
+
+  <p class="big">More tries only help if something can tell right from wrong. Verifiers score candidate answers, either the whole answer (outcome) or each step (process), and several weak verifiers combined can come close to a perfect checker.</p>
+<div class="terms"><h4>Key terms</h4><dl><div><dt>Verifier</dt><dd>Anything that scores a candidate answer: an exact checker, unit tests, a trained model, an LLM judge, or a rule.<span class="from">Source: Cobbe et al. 2021</span></dd></div><div><dt>Generation-verification gap</dt><dd>The difference between coverage (some try is right) and what your verifier actually picks.<span class="from">Source: Saad-Falcon et al. 2025 (Weaver)</span></dd></div><div><dt>Outcome reward model (ORM)</dt><dd>A verifier that judges only the final answer of a solution.<span class="from">Source: Lightman et al. 2023</span></dd></div><div><dt>Process reward model (PRM)</dt><dd>A verifier that scores each reasoning step; the solution score multiplies the step scores.<span class="from">Source: Lightman et al. 2023</span></dd></div><div><dt>Soft / hard step label</dt><dd>From a step, finish the solution N times. Soft: share that reach the right answer. Hard: 1 if any do.<span class="from">Source: Wang et al. 2023 (Math-Shepherd)</span></dd></div><div><dt>Weak supervision</dt><dd>Estimating how accurate each noisy verifier is from how they agree with each other, without true labels.<span class="from">Source: Saad-Falcon et al. 2025 (Weaver)</span></dd></div><div><dt>Reward hacking (verifier exploitation)</dt><dd>Search finds answers that score high but are wrong. More samples make it more likely.<span class="from">Source: Cobbe et al. 2021</span></dd></div></dl></div>
+<h3>The papers</h3><div class="papers"><div class="paper"><h4><a href="https://arxiv.org/abs/2506.18203">Shrinking the Generation-Verification Gap with Weak Verifiers (Weaver)</a></h4><p class="by">Saad-Falcon, Buchanan, Chen, et al. · 2025</p><dl><dt>What</dt><dd>Combines many weak verifiers (33 open reward models and LLM judges, 7B-72B) into one score to pick among 100 samples from Llama 3.3 70B Instruct. Normalizes and binarizes scores, filters weak verifiers, and learns verifier weights with weak supervision (no ground-truth labels). Then distills the ensemble into a small cross-encoder.</dd><dt>Result</dt><dd>Average accuracy over MATH500, GPQA Diamond, MMLU College and MMLU Pro: 87.7% for Weaver vs 72.2% majority vote, 69.0% GPT-4o and 86.7% o3-mini; within 4.2% of the pass@100 oracle. Weighted ensembles with oracle labels beat naive averaging by up to 11.2 points. A 400M ModernBERT distillation kept 98.7% of the accuracy (98.2% in another section) while cutting verification compute by up to 99.97%. Struggles where correct answers are very rare.</dd><dt>Takeaway</dt><dd>Don&#x27;t hunt for one perfect judge. Stack cheap checks that fail in different ways (rules, agreement, a judge model, reward models), weight them by estimated accuracy, and distill the result into a small model for production.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2110.14168">Training Verifiers to Solve Math Word Problems</a></h4><p class="by">Cobbe, Kosaraju, Bavarian, Chen, Jun, Kaiser, Plappert, Tworek, Hilton, Nakano, Hesse, Schulman · 2021</p><dl><dt>What</dt><dd>Released GSM8K (8.5K grade-school word problems: 7.5K train, 1K test). Trained a verifier to judge whether a full solution is correct, then at test time sampled 100 solutions per problem and returned the one the verifier scored highest.</dd><dt>Result</dt><dd>Verification gave about the same boost as a 30x larger model over a fine-tuning baseline, and scaled better with more data (but did not help with small training sets). A large generator with a small verifier beat a small generator with a large verifier. For the 6B verifier, accuracy rose up to 400 completions per problem, then fell as search found wrong answers that fooled the verifier. A token-level verifier eventually beat a solution-level one.</dd><dt>Takeaway</dt><dd>A trained outcome verifier plus sampling is a cheap way to lift a small model, but cap the number of samples and watch for adversarial answers that game the verifier.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2305.20050">Let&#x27;s Verify Step by Step</a></h4><p class="by">Lightman, Kosaraju, Burda, Edwards, Baker, Lee, Leike, Schulman, Sutskever, Cobbe · 2023</p><dl><dt>What</dt><dd>Compared an outcome reward model (judges the final answer) with a process reward model (judges each step) for picking among GPT-4 solutions on MATH. Humans labeled steps positive, negative or neutral; a solution&#x27;s PRM score is the probability that every step is correct.</dd><dt>Result</dt><dd>Best-of-1,860 on a 500-problem MATH test subset: PRM 78.2%, ORM 72.4%, majority vote 69.6%. Released PRM800K: 800K step labels across 75K solutions to 12K problems. Active learning was about 2.6x more data-efficient than uniform labeling. On out-of-distribution AP and AMC problems (best-of-100) the PRM also led: aggregate 72.9% vs 63.8% ORM and 61.3% majority vote.</dd><dt>Takeaway</dt><dd>When you can, check steps, not just the result. Step scores also tell a reviewer where a solution broke. Spend labeling budget on convincing wrong answers (active learning).</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2312.08935">Math-Shepherd: Verify and Reinforce LLMs Step-by-step without Human Annotations</a></h4><p class="by">Wang, Li, Shao, Xu, Dai, Li, Chen, Wu, Sui · 2023</p><dl><dt>What</dt><dd>Labels steps automatically: from each step, a completer model finishes the solution N times (N=8 in their data) and the step is scored by how often it reaches the right answer (soft label) or whether it ever does (hard label). Trains a process reward model on these labels and uses it for reranking and for step-by-step PPO.</dd><dt>Result</dt><dd>Step-by-step PPO lifted Mistral-7B from 77.9% to 84.1% on GSM8K and 28.6% to 33.0% on MATH; adding verification reached 89.1% and 43.5%. DeepSeek-67B with best-of-256 went from 88.2% (self-consistency) to 93.3% on GSM8K, and 48.1% on MATH500 when combined with self-consistency.</dd><dt>Takeaway</dt><dd>If you have final-answer checks, you can turn them into step labels with rollouts, offline. That gives a process verifier and an RL signal without paying people to label steps.</dd></dl></div></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a02_verification.ipynb" target="_blank" rel="noopener">a02_verification.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import ast, math, re, operator as op
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+from pydantic import BaseModel
+from lal.llm import client, structured
+from lal.tasks import math_problems, extract_int
+from lal.checks import prf, check
+
+SOLVE = (&quot;Solve this problem step by step, one step per line. Keep it short.\n&quot;
+         &quot;On the last line write exactly: ANSWER: &lt;whole number&gt;\n\nProblem: {q}&quot;)
+
+def gen(prompt, temperature=0.8, max_tokens=400):
+    &quot;&quot;&quot;One model call, returns the text. Never raises.&quot;&quot;&quot;
+    try:
+        r = client.chat.completions.create(model=MODEL, messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt}],
+                                           temperature=temperature, max_tokens=max_tokens)
+        return r.choices[0].message.content or &quot;&quot;
+    except Exception as e:
+        print(&quot;call failed:&quot;, e)
+        return &quot;&quot;
+
+def pmap(fn, items):
+    with ThreadPoolExecutor(2) as ex:
+        return list(ex.map(fn, items))</code></pre></div>
+<div class="nb-md"><h3>1. Candidates to verify</h3>
+<p>6 problems (2 easy, 4 hard), 4 tries each at temperature 0.8: 24 calls. We want a mix of right and wrong tries, so most problems are hard.</p></div>
+<div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">PROBS = math_problems(2, seed=1, difficulty=&quot;easy&quot;) + math_problems(4, seed=1, difficulty=&quot;hard&quot;)
+BY_ID = {p[&quot;id&quot;]: p for p in PROBS}
+N = 4
+jobs = [p for p in PROBS for _ in range(N)]
+texts = pmap(lambda p: gen(SOLVE.format(q=p[&quot;question&quot;])), jobs)
+
+CANDS = []          # one dict per candidate answer
+for i, (p, t) in enumerate(zip(jobs, texts)):
+    a = extract_int(t)
+    CANDS.append({&quot;key&quot;: f&quot;{p[&#x27;id&#x27;]}#{i % N}&quot;, &quot;pid&quot;: p[&quot;id&quot;], &quot;text&quot;: t, &quot;answer&quot;: a, &quot;ok&quot;: a == p[&quot;answer&quot;]})
+for p in PROBS:
+    cs = [c for c in CANDS if c[&quot;pid&quot;] == p[&quot;id&quot;]]
+    print(f&quot;{p[&#x27;id&#x27;]}: answers {[c[&#x27;answer&#x27;] for c in cs]}  truth {p[&#x27;answer&#x27;]}&quot;)
+print(f&quot;\n{sum(c[&#x27;ok&#x27;] for c in CANDS)}/{len(CANDS)} candidates are right&quot;)</code></pre></div>
+<div class="nb-md"><h3>2. The oracle verifier, and how we score any verifier</h3>
+<p>A verifier <strong>accepts</strong> or <strong>rejects</strong> each candidate. We score it like a classifier:
+- <strong>precision:</strong> of the candidates it accepted, how many were really right;
+- <strong>recall:</strong> of the right candidates, how many it accepted.</p>
+<p>The <strong>oracle</strong> compares with the true answer. It is perfect by definition, and it is what Brown et al. had for code (unit tests) and proofs (Lean). For most business work you don't have one.</p></div>
+<div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">GOLD = {c[&quot;key&quot;] for c in CANDS if c[&quot;ok&quot;]}
+
+def score_accepts(accepted: set, name: str):
+    s = prf(accepted, GOLD)
+    print(f&quot;{name:26} accepts {len(accepted):2}   precision {s[&#x27;precision&#x27;]:.0%}   recall {s[&#x27;recall&#x27;]:.0%}&quot;)
+    return s
+
+oracle = score_accepts({c[&quot;key&quot;] for c in CANDS if c[&quot;answer&quot;] == BY_ID[c[&quot;pid&quot;]][&quot;answer&quot;]}, &quot;oracle (exact answer)&quot;)</code></pre></div>
+<div class="nb-md"><h3>3. An outcome verifier: an LLM judges the final answer</h3>
+<p>Cobbe et al. 2021 (<em>Training Verifiers to Solve Math Word Problems</em>) trained a model to judge whole solutions, then picked the best of 100 samples. On their GSM8K dataset this gave about the same boost as a 30x bigger model. They also warn that with too many samples (beyond about 400 for their 6B verifier) accuracy dropped, because search starts finding wrong answers that fool the verifier.</p>
+<p>We can't train here, so we prompt the model to act as the judge. One call per candidate: 24 calls.</p></div>
+<div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">JUDGE = (&quot;Problem: {q}\n\nProposed solution:\n{s}\n\n&quot;
+         &quot;Check the reasoning and arithmetic. How likely is the final answer correct, from 0 (surely wrong) to 10 (surely right)? &quot;
+         &quot;Reply with one number only.&quot;)
+
+def judge(c):
+    r = gen(JUDGE.format(q=BY_ID[c[&quot;pid&quot;]][&quot;question&quot;], s=c[&quot;text&quot;][:1500]), temperature=0, max_tokens=8)
+    m = re.search(r&quot;\d+&quot;, r)
+    return min(10, int(m.group())) / 10 if m else 0.5     # unparsable -&gt; &quot;don&#x27;t know&quot;
+
+for c, s in zip(CANDS, pmap(judge, CANDS)):
+    c[&quot;judge&quot;] = s
+judge_acc = score_accepts({c[&quot;key&quot;] for c in CANDS if c[&quot;judge&quot;] &gt;= 0.7}, &quot;LLM judge (score &gt;= 7)&quot;)
+right_mean = sum(c[&quot;judge&quot;] for c in CANDS if c[&quot;ok&quot;]) / max(1, sum(c[&quot;ok&quot;] for c in CANDS))
+wrong_mean = sum(c[&quot;judge&quot;] for c in CANDS if not c[&quot;ok&quot;]) / max(1, sum(not c[&quot;ok&quot;] for c in CANDS))
+print(f&quot;average judge score: right candidates {right_mean:.2f}, wrong candidates {wrong_mean:.2f}&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>How to read this:</strong> small models tend to say "yes" too often, which gives high recall and poor precision. A judge that gives every candidate 9/10 can't help you pick.</p></div>
+<div class="nb-md"><h3>4. Two cheap weak verifiers that need no model call</h3>
+<ul>
+<li><strong>Agreement</strong> (self-consistency): what share of the <em>other</em> tries reached the same answer. This is majority vote turned into a score.</li>
+<li><strong>Arithmetic check:</strong> find every "a op b = c" in the text and recompute it with Python. A plain rule, but it never gets tired.</li>
+</ul></div>
+<div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">OPS = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.Div: op.truediv}
+
+def safe_eval(expr):
+    &quot;&quot;&quot;Evaluate + - * / and brackets only. Anything else raises ValueError. No eval() on model text.&quot;&quot;&quot;
+    def ev(n):
+        if isinstance(n, ast.Expression):
+            return ev(n.body)
+        if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)):
+            return n.value
+        if isinstance(n, ast.BinOp) and type(n.op) in OPS:
+            return OPS[type(n.op)](ev(n.left), ev(n.right))
+        if isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.USub):
+            return -ev(n.operand)
+        raise ValueError(&quot;not plain arithmetic&quot;)
+    return ev(ast.parse(expr, mode=&quot;eval&quot;))
+
+EQ = re.compile(r&quot;([\d.+\-*/×÷x() ]+)=\s*(-?\d+(?:\.\d+)?)&quot;)
+
+def arithmetic_score(text):
+    &quot;&quot;&quot;Share of &#x27;a op b = c&#x27; equations that are right. 0.5 if there are none to check.&quot;&quot;&quot;
+    ok = total = 0
+    for line in (text or &quot;&quot;).splitlines():
+        line = re.sub(r&quot;^\s*(?:step\s*)?\d+[.):]\s+&quot;, &quot;&quot;, line, flags=re.I)         # drop &quot;1.&quot; / &quot;Step 2:&quot; markers
+        line = re.sub(r&quot;(?&lt;=\d),(?=\d{3})&quot;, &quot;&quot;, line).replace(&quot;$&quot;, &quot;&quot;)
+        for left, right in EQ.findall(line):
+            expr = left.strip().replace(&quot;×&quot;, &quot;*&quot;).replace(&quot;÷&quot;, &quot;/&quot;).replace(&quot;x&quot;, &quot;*&quot;)
+            if not re.search(r&quot;\d\s*[+\-*/]\s*[\d(]&quot;, expr):
+                continue
+            try:
+                val, want = safe_eval(expr), float(right)
+            except Exception:
+                continue
+            total += 1
+            close = abs(val - want) &lt;= 1e-6 * max(1.0, abs(want))
+            rounded = &quot;/&quot; in expr and want in (math.floor(val), math.ceil(val))   # &quot;96 / 9 = 10 full bags&quot; is fine
+            ok += close or rounded
+    return ok / total if total else 0.5
+
+print(arithmetic_score(&quot;Step 1: 12 * 5 = 60\nStep 2: 60 - 7 = 53&quot;), arithmetic_score(&quot;12 x 5 = 70&quot;), arithmetic_score(&quot;no maths here&quot;))
+
+for c in CANDS:
+    others = [o[&quot;answer&quot;] for o in CANDS if o[&quot;pid&quot;] == c[&quot;pid&quot;] and o[&quot;key&quot;] != c[&quot;key&quot;]]
+    c[&quot;agree&quot;] = sum(a == c[&quot;answer&quot;] for a in others) / len(others) if c[&quot;answer&quot;] is not None and others else 0.0
+    c[&quot;arith&quot;] = arithmetic_score(c[&quot;text&quot;])
+agree_acc = score_accepts({c[&quot;key&quot;] for c in CANDS if c[&quot;agree&quot;] &gt;= 0.5}, &quot;agreement (&gt;= half agree)&quot;)
+arith_acc = score_accepts({c[&quot;key&quot;] for c in CANDS if c[&quot;arith&quot;] &gt;= 0.75}, &quot;arithmetic check (&gt;= 75%)&quot;)</code></pre></div>
+<div class="nb-md"><h3>5. A process verifier: score each step (PRM-style)</h3>
+<p>Lightman et al. 2023 (<em>Let's Verify Step by Step</em>) compared an <strong>outcome reward model</strong> (ORM: judges only the end result) with a <strong>process reward model</strong> (PRM: judges every step). People labeled 800K steps (the PRM800K dataset). Picking the best of 1,860 GPT-4 solutions on a 500-problem MATH test set, the PRM got 78.2%, the ORM 72.4%, and majority vote 69.6%. A solution's PRM score is the chance that <strong>every</strong> step is right: multiply the step scores.</p>
+<p>We prompt our model to score each numbered step, on 6 candidates (right and wrong mixed). That is 6 calls.</p></div>
+<div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class StepScores(BaseModel):
+    scores: list[int]
+
+def steps_of(text, max_steps=8):
+    lines = [l.strip() for l in (text or &quot;&quot;).splitlines() if l.strip()]
+    if len(lines) &lt;= max_steps:
+        return lines
+    size = math.ceil(len(lines) / max_steps)
+    return [&quot; &quot;.join(lines[i:i + size]) for i in range(0, len(lines), size)]
+
+PRM_PROMPT = (&quot;Problem: {q}\n\nA solution, split into numbered steps:\n{steps}\n\n&quot;
+              &quot;For EACH step, give a score from 0 (this step is wrong) to 10 (this step is surely correct). &quot;
+              &quot;Judge the step itself: its logic and arithmetic. Return one score per step, in order.&quot;)
+
+def prm(c):
+    st = steps_of(c[&quot;text&quot;])
+    body = &quot;\n&quot;.join(f&quot;{i + 1}. {s}&quot; for i, s in enumerate(st))
+    try:
+        r = structured(PRM_PROMPT.format(q=BY_ID[c[&quot;pid&quot;]][&quot;question&quot;], steps=body), StepScores, max_tokens=200)
+        sc = [min(10, max(0, int(x))) / 10 for x in r.scores]
+    except Exception as e:
+        print(&quot;PRM call failed:&quot;, e)
+        sc = []
+    sc = (sc + [0.5] * len(st))[:len(st)]          # pad or cut to one score per step
+    return st, sc
+
+right = [c for c in CANDS if c[&quot;ok&quot;]][:3]
+wrong = [c for c in CANDS if not c[&quot;ok&quot;]][:6 - len(right)]
+PRM_SET = right + wrong
+for c, (st, sc) in zip(PRM_SET, pmap(prm, PRM_SET)):
+    c[&quot;steps&quot;], c[&quot;step_scores&quot;] = st, sc
+    c[&quot;prm_prod&quot;] = math.prod(sc) if sc else 0.0
+    c[&quot;prm_min&quot;] = min(sc) if sc else 0.0
+    first_bad = next((i + 1 for i, s in enumerate(sc) if s &lt; 0.5), None)
+    print(f&quot;{c[&#x27;key&#x27;]:16} right={c[&#x27;ok&#x27;]!s:5}  outcome judge {c[&#x27;judge&#x27;]:.1f}  PRM product {c[&#x27;prm_prod&#x27;]:.2f}  &quot;
+          f&quot;min {c[&#x27;prm_min&#x27;]:.1f}  first flagged step: {first_bad}&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>Why steps help:</strong> a wrong final answer usually comes from one bad step. A step score tells you <em>where</em> it broke, which is useful for a human reviewer, for retrying from that step, and as a training signal.</p></div>
+<div class="nb-md"><h3>6. Step labels without humans (Math-Shepherd)</h3>
+<p>People labeling 800K steps is expensive. Wang et al. 2023 (<em>Math-Shepherd</em>) label steps automatically: cut the solution after step i, let a model finish it N times, and check the final answers.
+- <strong>Soft label:</strong> share of finishes that reach the right answer.
+- <strong>Hard label:</strong> 1 if any finish reaches the right answer.</p>
+<p>They built their dataset with N = 8 finishes per step, and used it to train a PRM and to guide RL. We use N = 3 on 3 cut points of one right and one wrong candidate: 18 calls.</p></div>
+<div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">CONTINUE = (&quot;Problem: {q}\n\nHere is the start of a solution:\n{prefix}\n\n&quot;
+            &quot;Continue from exactly where it stops. Do not start over. &quot;
+            &quot;On the last line write exactly: ANSWER: &lt;whole number&gt;&quot;)
+ROLLOUTS = 3
+
+def cut_points(n_steps):
+    return sorted({1, max(1, n_steps // 2), max(1, n_steps - 1)})
+
+def shepherd(c):
+    p = BY_ID[c[&quot;pid&quot;]]
+    rows = []
+    for i in cut_points(len(c[&quot;steps&quot;])):
+        prefix = &quot;\n&quot;.join(c[&quot;steps&quot;][:i])
+        outs = pmap(lambda _: gen(CONTINUE.format(q=p[&quot;question&quot;], prefix=prefix)), range(ROLLOUTS))
+        hits = sum(extract_int(o) == p[&quot;answer&quot;] for o in outs)
+        rows.append({&quot;after_step&quot;: i, &quot;soft&quot;: hits / ROLLOUTS, &quot;hard&quot;: int(hits &gt; 0),
+                     &quot;prm&quot;: c[&quot;step_scores&quot;][i - 1] if i - 1 &lt; len(c[&quot;step_scores&quot;]) else None})
+    return rows
+
+SHEP = {}
+for c in [x for x in PRM_SET if x[&quot;ok&quot;]][:1] + [x for x in PRM_SET if not x[&quot;ok&quot;]][:1]:
+    SHEP[c[&quot;key&quot;]] = (c[&quot;ok&quot;], shepherd(c))
+    print(f&quot;\n{c[&#x27;key&#x27;]} (candidate is {&#x27;right&#x27; if c[&#x27;ok&#x27;] else &#x27;wrong&#x27;})&quot;)
+    for r in SHEP[c[&quot;key&quot;]][1]:
+        print(f&quot;  after step {r[&#x27;after_step&#x27;]}: soft {r[&#x27;soft&#x27;]:.2f}  hard {r[&#x27;hard&#x27;]}  | prompted PRM said {r[&#x27;prm&#x27;]}&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>How to read this:</strong> on a wrong solution, the soft label should drop after the step where it went wrong. Compare that with the step the prompted PRM flagged. Math-Shepherd reports that training on these labels lifted Mistral-7B from 77.9% to 84.1% on GSM8K with step-by-step RL, and to 89.1% when also used as a verifier. The catch: rollouts cost many calls per step, so this is an offline, data-making tool.</p></div>
+<div class="nb-md"><h3>7. Combine weak verifiers (Weaver)</h3>
+<p>Saad-Falcon et al. 2025 (<em>Shrinking the Generation-Verification Gap with Weak Verifiers</em>, "Weaver") start from many imperfect verifiers: reward models and LLM judges. Each one alone is weak. Their recipe:
+1. turn each verifier's score into a yes/no vote (they normalize and binarize);
+2. estimate how accurate each verifier is <strong>without labels</strong>, from how its votes agree with the others (weak supervision);
+3. drop verifiers that look no better than chance, and weight the rest by accuracy.</p>
+<p>With Llama 3.3 70B as the generator and 100 samples per question, Weaver averaged 87.7% across MATH500, GPQA Diamond, MMLU College and MMLU Pro, against 72.2% for majority vote and 86.7% for o3-mini.</p>
+<p>Our tiny version uses 3 verifiers we already have: judge, agreement, arithmetic. No new calls.</p></div>
+<div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">VERIFIERS = {&quot;judge&quot;: lambda c: c[&quot;judge&quot;] &gt;= 0.7, &quot;agree&quot;: lambda c: c[&quot;agree&quot;] &gt;= 0.5, &quot;arith&quot;: lambda c: c[&quot;arith&quot;] &gt;= 0.75}
+VOTES = {c[&quot;key&quot;]: {v: int(f(c)) for v, f in VERIFIERS.items()} for c in CANDS}
+
+def label_free_accuracy(name):
+    &quot;&quot;&quot;How well this verifier agrees with the average vote of the OTHER verifiers. No labels used.
+
+    Per candidate: 1 if it matches all the others, 0 if it matches none, 0.5 on a split. Then average.
+    A verifier that says &quot;yes&quot; to everything only scores as well as the others say &quot;yes&quot;.
+    &quot;&quot;&quot;
+    scores = []
+    for votes in VOTES.values():
+        others = [x for v, x in votes.items() if v != name]
+        if others:
+            scores.append(1 - abs(votes[name] - sum(others) / len(others)))
+    return sum(scores) / len(scores) if scores else 0.5
+
+def true_accuracy(name):
+    return sum(VOTES[c[&quot;key&quot;]][name] == int(c[&quot;ok&quot;]) for c in CANDS) / len(CANDS)
+
+def weights(acc_fn, min_acc=0.55):
+    out = {}
+    for v in VERIFIERS:
+        a = min(0.95, max(0.05, acc_fn(v)))
+        out[v] = math.log(a / (1 - a)) if a &gt;= min_acc else 0.0     # filter: weak-looking verifiers get no say
+    if not any(out.values()):                                         # everything filtered: fall back to equal votes
+        print(&quot;note: no verifier passed the filter, using equal weights&quot;)
+        out = {v: 1.0 for v in VERIFIERS}
+    return out
+
+W_FREE, W_LABELS = weights(label_free_accuracy), weights(true_accuracy)
+for v in VERIFIERS:
+    print(f&quot;{v:6} accuracy estimated without labels {label_free_accuracy(v):.0%}  true {true_accuracy(v):.0%}  &quot;
+          f&quot;-&gt; weight {W_FREE[v]:+.2f} (with labels {W_LABELS[v]:+.2f})&quot;)
+
+def combined(c, w):
+    return sum(w[v] * (2 * VOTES[c[&quot;key&quot;]][v] - 1) for v in VERIFIERS)
+
+# &quot;with labels&quot; uses the true answers of these same candidates, so it is a cheating upper bound,
+# shown only to see how close the label-free weights get.
+weaver_acc = score_accepts({c[&quot;key&quot;] for c in CANDS if combined(c, W_FREE) &gt; 0}, &quot;Weaver-lite (no labels)&quot;)
+naive_acc = score_accepts({c[&quot;key&quot;] for c in CANDS if sum(VOTES[c[&quot;key&quot;]].values()) &gt;= 2}, &quot;naive vote (2 of 3)&quot;)</code></pre></div>
+<div class="nb-md"><h3>8. What matters in the end: did we pick the right answer?</h3>
+<p>For each problem, keep the candidate with the highest score (ties go to the earlier try). Compare pickers. "Oracle" is the share of problems where <em>some</em> try was right: the ceiling.</p></div>
+<div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def pick_accuracy(score_fn):
+    right = 0
+    for p in PROBS:
+        cs = [c for c in CANDS if c[&quot;pid&quot;] == p[&quot;id&quot;]]
+        best = max(cs, key=score_fn)            # max keeps the first of equal scores
+        right += best[&quot;ok&quot;]
+    return right / len(PROBS)
+
+PICKERS = {
+    &quot;first try (no verifier)&quot;: lambda c: 0,
+    &quot;majority vote&quot;: lambda c: c[&quot;agree&quot;],
+    &quot;LLM judge&quot;: lambda c: c[&quot;judge&quot;],
+    &quot;arithmetic check&quot;: lambda c: c[&quot;arith&quot;],
+    &quot;Weaver-lite (no labels)&quot;: lambda c: (combined(c, W_FREE), c[&quot;agree&quot;]),
+    &quot;weighted with labels&quot;: lambda c: (combined(c, W_LABELS), c[&quot;agree&quot;]),
+    &quot;oracle&quot;: lambda c: c[&quot;ok&quot;],
+}
+RESULTS = {name: pick_accuracy(fn) for name, fn in PICKERS.items()}
+for name, acc in RESULTS.items():
+    print(f&quot;{name:26} {acc:.0%}&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>How to read this:</strong> with 6 problems one flip is 17 points, so treat this as a demo of the method, not a result. The lessons from the papers are: (1) a verifier's precision matters more than its recall when you pick one answer, (2) several weak, <em>different</em> verifiers beat one, and (3) Weaver distilled its ensemble into a 400M model that kept about 98% of the accuracy at a tiny fraction of the verification compute, so the combination can be cheap in production.</p></div>
+<div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;oracle verifier has 100% precision and recall&quot;, oracle[&quot;precision&quot;] == 1.0 and oracle[&quot;recall&quot;] == 1.0)
+check(&quot;arithmetic check catches a wrong equation and passes a right one&quot;,
+      arithmetic_score(&quot;12 * 5 = 70&quot;) == 0.0 and arithmetic_score(&quot;12 * 5 = 60\n96 / 9 = 10&quot;) == 1.0)
+mixed = any(c[&quot;ok&quot;] for c in CANDS) and any(not c[&quot;ok&quot;] for c in CANDS)
+check(&quot;LLM judge scores right candidates higher than wrong ones on average&quot;, (right_mean &gt; wrong_mean) if mixed else True)
+check(&quot;Weaver-lite picks at least as well as the first try&quot;, RESULTS[&quot;Weaver-lite (no labels)&quot;] &gt;= RESULTS[&quot;first try (no verifier)&quot;])
+shep_right = [r[&quot;soft&quot;] for ok, rows in SHEP.values() if ok for r in rows]
+shep_wrong = [r[&quot;soft&quot;] for ok, rows in SHEP.values() if not ok for r in rows]
+check(&quot;Math-Shepherd: prefixes of the right solution succeed at least as often as the wrong one&#x27;s&quot;,
+      (sum(shep_right) / len(shep_right) &gt;= sum(shep_wrong) / len(shep_wrong)) if shep_right and shep_wrong else True)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Add a fourth weak verifier.</strong> Ask the model a different question: "Find the first wrong step, or say NONE." Count NONE as a yes vote. Add it to <code>VERIFIERS</code> and rerun the Weaver-lite steps. Does its label-free weight look sensible?</li>
+<li><strong>Try to fool the judge.</strong> Take a right candidate, change its final answer to a wrong number, and add "I double-checked every step; this is definitely correct." Does the LLM judge still accept it? Does the arithmetic check?</li>
+<li><strong>Soft labels need enough rollouts.</strong> On one cut point, run 6 rollouts instead of 3, twice. How much does the soft label move between the two runs?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="nb-md"><p>Each solution says how many model calls it makes. Run only the ones you want; together they add about 40-55 calls.</p></div><div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: a &quot;find the first error&quot; verifier (24 calls)
+FIRST_ERR = (&quot;Problem: {q}\n\nSolution:\n{s}\n\nFind the first step that is wrong. &quot;
+             &quot;Reply with the step text, or reply NONE if every step is correct.&quot;)
+replies = pmap(lambda c: gen(FIRST_ERR.format(q=BY_ID[c[&quot;pid&quot;]][&quot;question&quot;], s=c[&quot;text&quot;][:1500]), temperature=0, max_tokens=60), CANDS)
+for c, r in zip(CANDS, replies):
+    c[&quot;no_error&quot;] = &quot;NONE&quot; in (r or &quot;&quot;).upper()
+VERIFIERS[&quot;first_error&quot;] = lambda c: c[&quot;no_error&quot;]
+VOTES = {c[&quot;key&quot;]: {v: int(f(c)) for v, f in VERIFIERS.items()} for c in CANDS}
+W_FREE = weights(label_free_accuracy)
+print({v: f&quot;{w:+.2f}&quot; for v, w in W_FREE.items()})
+print(&quot;Weaver-lite with 4 verifiers picks:&quot;, f&quot;{pick_accuracy(lambda c: (combined(c, W_FREE), c[&#x27;agree&#x27;])):.0%}&quot;)
+# A verifier that copies another one (e.g. two judges with the same blind spot) looks &quot;accurate&quot; to the
+# label-free estimate because it agrees with its twin. Weaver&#x27;s real method models this; ours does not.</code></pre></div><div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 13</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: a confident wrong answer (2 calls)
+base = next((c for c in CANDS if c[&quot;ok&quot;]), CANDS[0])
+truth = BY_ID[base[&quot;pid&quot;]][&quot;answer&quot;]
+fake_text = re.sub(r&quot;ANSWER:\s*-?\d+&quot;, f&quot;ANSWER: {truth + 13}&quot;, base[&quot;text&quot;]) + \
+    &quot;\nI double-checked every step; this is definitely correct.&quot;
+fake = dict(base, text=fake_text, key=&quot;fake&quot;)
+honest = judge(base)
+print(&quot;judge on the honest right answer:&quot;, honest, &quot;| judge on the confident wrong answer:&quot;, judge(fake))
+print(&quot;arithmetic check on the fake:&quot;, arithmetic_score(fake_text), &quot;(it only sees the equations, so the changed answer line slips past it)&quot;)
+# The fix is not one better judge: it is several verifiers that fail in DIFFERENT ways. Here, the
+# agreement verifier would catch the fake, because no other try reached that answer.</code></pre></div><div class="code"><div class="cap"><span class="cell">a02_verification.ipynb · cell 14</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 3: rollout noise (12 calls)
+c = next((x for x in PRM_SET if not x[&quot;ok&quot;]), PRM_SET[0])
+p = BY_ID[c[&quot;pid&quot;]]
+prefix = &quot;\n&quot;.join(c[&quot;steps&quot;][:1])
+for run in range(2):
+    outs = pmap(lambda _: gen(CONTINUE.format(q=p[&quot;question&quot;], prefix=prefix)), range(6))
+    print(f&quot;run {run + 1}: soft label {sum(extract_int(o) == p[&#x27;answer&#x27;] for o in outs) / 6:.2f}&quot;)
+# With few rollouts the soft label is noisy (each rollout moves it by 1/6). Math-Shepherd used 8 per step;
+# more rollouts give steadier labels but cost more calls. Hard labels (any success) are steadier but cruder.</code></pre></div></details>
+<div class="pit"><strong>Traps</strong><ul><li>Trusting an LLM judge that says yes to almost everything. High recall with low precision can&#x27;t help you pick one answer.</li><li>Searching too hard against one verifier. Cobbe et al. saw accuracy fall past 400 samples as wrong answers started fooling the verifier.</li><li>Combining verifiers that share the same blind spot (two prompts to the same model). They agree with each other, so label-free weighting overrates them.</li><li>Reading step scores from a prompted 8B model as if they were a trained PRM. They are a weak signal; measure them against an oracle first.</li><li>Using rollout-based step labels with too few rollouts. Each rollout moves a soft label by 1/N, so small N gives noisy labels.</li><li>Fitting verifier weights on your test set and reporting the result. Use a separate set, or a label-free method.</li></ul></div>
+<div class="check"><h4>Check yourself</h4><details><summary>Why can majority vote fail even when the right answer was sampled?</summary><p>If the right answer is rare (sampled once in many tries) and wrong answers cluster, the vote picks the cluster. Brown et al. note correct answers can have 1% or lower probability.</p></details><details><summary>What does a process verifier give you that an outcome verifier doesn&#x27;t?</summary><p>A score per step, so you see where a solution broke. Lightman et al. found it also picked better: 78.2% vs 72.4% for outcome supervision on their MATH subset.</p></details><details><summary>How does Math-Shepherd label a step without people?</summary><p>It finishes the solution from that step several times and checks the final answers: the share that are right is the soft label; whether any is right is the hard label.</p></details></div>
+</div></section><nav class="pager"><a class="prev" href="a01.html"><small>← Previous</small>Test-time compute scaling</a><a class="next" href="a03.html"><small>Next →</small>Learning from feedback with tools and code</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

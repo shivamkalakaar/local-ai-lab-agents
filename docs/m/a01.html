@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Test-time compute scaling · Agent Engineering School</title>
+<meta name="description" content="Learn how letting a model try many times, or revise its work, can beat a bigger model, and why it only pays off if you can spot the right try.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A01</span></div><section class="mod" id="a01" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A01</div><h2>Test-time compute scaling</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a01_test_time_compute.ipynb">Open in Colab</a><button class="done-btn" data-done="a01" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Learn how letting a model try many times, or revise its work, can beat a bigger model, and why it only pays off if you can spot the right try.</p><article class="lesson"><h2>The big idea</h2>
+<p>You can make a model better without training it. Just let it try the same problem many times and keep a good answer. Extra work done at answer time is called test-time compute.</p>
+<p>Think of a student on a hard exam question. One rushed attempt may be wrong. Five attempts on scrap paper give a much better chance that one of them is right. The catch: the student must then know which attempt to hand in.</p>
+<p>That catch is the whole story of this module. More tries help only if something can tell the right try from the wrong ones. And the best way to spend those tries depends on how hard the question is.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>On the firm's own computers, a small open model is cheap to run many times. Many cheap tries plus a good checker can beat one call to an expensive cloud model.</li>
+<li>Contract review often has checkable parts. Did the answer cite a real clause? Is the cap at most 12 months of fees? Code can check those. That makes extra tries worth it.</li>
+<li>Where nothing can check the answer, more tries mostly add cost. Build the checker first.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Repeated sampling.</strong> Ask the same question many times at a temperature above 0. Temperature is a setting for how random the model's word choices are. At 0, every try is identical, so more tries add nothing.</p>
+</li>
+<li>
+<p><strong>Coverage.</strong> Coverage, also written pass@k, is the share of problems where at least one of k tries is right. The Large Language Monkeys paper (2024) sampled up to 10,000 times per problem. Coverage kept rising across four orders of magnitude. On a coding benchmark, one model went from 15.9% with one try to 56% with 250 tries.</p>
+</li>
+<li>
+<p><strong>Picking is the hard part.</strong> Coverage assumes a perfect checker that always finds the right try. Without one, the simplest picker is majority vote: keep the most common answer. In the same paper, on a math set, coverage passed 95%, but majority vote stalled near 40–41% after about 100 samples. The difference is called the generation-verification gap: the model could produce the right answer, but the picker can't find it.</p>
+</li>
+<li>
+<p><strong>Why the curve has that shape.</strong> The Power Laws paper (2025) explains it. For one problem, the chance that every try fails drops fast as you add tries. But averaged over many problems, the curve drops slowly. That's because a few problems are very hard, with almost no chance per try. This group of near-hopeless problems is called a heavy tail. The practical lesson: sample a little first, look at how often each problem succeeds, and forecast before spending.</p>
+</li>
+<li>
+<p><strong>Build a pipeline of steps.</strong> The Archon paper (2024) treats tricks as building blocks. A generator makes candidates. A ranker orders them and keeps the best. A fuser merges several into one better answer. A verifier keeps only answers that check out. Archon then searches for the best stack per task, instead of guessing.</p>
+</li>
+<li>
+<p><strong>Spend by difficulty.</strong> The Compute-Optimal paper (Snell et al., 2024) compared two ways to spend a budget. Parallel means many independent tries, then pick. Sequential means one try, then revise it, then revise again. Sequential worked best on easy questions. A mix worked best on harder ones. Choosing per question matched or beat simple best-of-N with up to 4x less compute. But on the hardest questions, a bigger model was the better buy.</p>
+</li>
+</ol>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>What it does</th>
+<th>Best when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Parallel</td>
+<td>Many separate tries, then pick</td>
+<td>Harder questions, with a good picker</td>
+</tr>
+<tr>
+<td>Sequential</td>
+<td>One try, then revise it</td>
+<td>Easy questions</td>
+</tr>
+<tr>
+<td>Bigger model</td>
+<td>Pay for size, not tries</td>
+<td>The hardest questions, or heavy traffic</td>
+</tr>
+</tbody>
+</table></div>
+<h2>Worked example</h2>
+<p>A paralegal asks the local model: "In msa_07, what is the liability cap in dollars?" The cap is a number of months times the monthly fee.</p>
+<p>We ask 6 times at temperature 0.8. Say four tries give one figure and two give another. Majority vote picks the four. That is a fine guess, but not proof.</p>
+<p>Now add a checker. Code can pull the clause numbers the answer cites and confirm the math. If only one try cites the right clause and multiplies correctly, the checker picks it even though it lost the vote. This is the generation-verification gap closing.</p>
+<p>The notebook does the same with math word problems, which have exact answers. Here is how it scores majority vote:</p>
+<pre><code class="language-python">def majority_acc(probs, k):
+    return sum(majority([s[&quot;answer&quot;] for s in SAMPLES[p[&quot;id&quot;]][:k]]) == p[&quot;answer&quot;] for p in probs) / len(probs)
+</code></pre>
+<p>In plain words: for each problem, take the first k answers, keep the most common one, and check it against the true answer. Then report the share of problems it got right. The notebook prints this next to coverage, so you see the gap for every k.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Reporting coverage as accuracy.</strong> Coverage assumes you can always spot the right try. In real work you usually can't.</li>
+<li><strong>Adding samples without a checker.</strong> Majority vote and reward models stalled near 100 samples while coverage kept rising.</li>
+<li><strong>Sampling at temperature 0.</strong> Every try is the same. Turn the temperature up.</li>
+<li><strong>Counting calls instead of tokens.</strong> A fuser or revision call reads all the candidates, so its cost grows with their number.</li>
+<li><strong>Picking a strategy on the same small set you report on.</strong> That overfits. Hold some questions back for the final score.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Coverage at 100 tries is 90%, but majority vote at 100 tries is 45%. What is missing?</summary>
+<p>A good verifier. The model can produce the right answer, but the picker can&#x27;t find it. That gap is the generation-verification gap.</p>
+</details>
+<details>
+<summary>Why does the average success curve flatten even though each single problem gets solved quickly with more tries?</summary>
+<p>A few problems are very hard, with almost no chance per try. These pull the average down and make it improve slowly.</p>
+</details>
+<details>
+<summary>For an easy question, should you spend 4 calls on 4 separate tries or on 1 try plus 3 revisions?</summary>
+<p>Snell et al. found revision worked best on easy questions. They used a specially trained revision model, so test it on your own task.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the sampling section and compare the coverage column with the majority-vote column at each k. Then run the Archon-style pipeline on the hard problems and the parallel-versus-sequential test. With only a few problems the results are noisy, so look at the pattern, not one number.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Lecture 2 (Sep 26)</p>
+
+  <p class="big">You can buy accuracy at answer time instead of training time: let the model try many times, or revise its own work, and keep a good answer. The gain is only real if something can tell which try is right, and the best way to spend the compute depends on how hard the question is.</p>
+<div class="terms"><h4>Key terms</h4><dl><div><dt>Test-time compute</dt><dd>Extra computation spent when answering (more samples, revisions, search) instead of when training.<span class="from">Source: Snell et al. 2024</span></dd></div><div><dt>Coverage (pass@k)</dt><dd>Share of problems where at least one of k tries is right. An upper bound on what any picker can reach.<span class="from">Source: Brown et al. 2024</span></dd></div><div><dt>Repeated sampling</dt><dd>Asking the same question many times at a temperature above 0 so the tries differ.<span class="from">Source: Brown et al. 2024</span></dd></div><div><dt>Majority vote (self-consistency)</dt><dd>Keep the answer that the most tries agree on. Needs no checker, but plateaus.<span class="from">Source: Brown et al. 2024</span></dd></div><div><dt>Fuser / Ranker</dt><dd>A model call that merges several candidates into one answer / that orders candidates and keeps the best.<span class="from">Source: Saad-Falcon et al. 2024 (Archon)</span></dd></div><div><dt>Sequential vs parallel</dt><dd>Sequential: revise one answer step after step. Parallel: many independent tries, then pick.<span class="from">Source: Snell et al. 2024</span></dd></div><div><dt>Compute-optimal strategy</dt><dd>Choosing how to spend test-time compute per question, based on its predicted difficulty.<span class="from">Source: Snell et al. 2024</span></dd></div></dl></div>
+<h3>The papers</h3><div class="papers"><div class="paper"><h4><a href="https://arxiv.org/abs/2407.21787">Large Language Monkeys: Scaling Inference Compute with Repeated Sampling</a></h4><p class="by">Brown, Juravsky, Ehrlich, Clark, Le, Ré, Mirhoseini · 2024</p><dl><dt>What</dt><dd>Sampled the same model up to 10,000 times per problem on GSM8K, MATH, MiniF2F, CodeContests and SWE-bench Lite. Measured coverage (share of problems where any sample is right) and fit it with an exponentiated power law in the number of samples.</dd><dt>Result</dt><dd>Coverage grew with samples over four orders of magnitude. SWE-bench Lite with DeepSeek-Coder-V2-Instruct: 15.9% with one sample to 56% with 250 (single-sample state of the art was 43%). 5 DeepSeek tries solved 29.62% for $10.8 vs 24.00% for $39 with one GPT-4o try. On MATH with Llama-3-8B-Instruct, coverage went from 82.9% (100 samples) to 98.44% (10,000), but majority vote and reward models plateaued around 100 samples (best gain only 40.50% to 41.41%).</dd><dt>Takeaway</dt><dd>If your task has a cheap automatic checker (tests, a solver, a schema plus business rules), many cheap tries from a small local model can beat one expensive call. Without a checker, invest in verification before you invest in more samples.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2409.15254">Archon: An Architecture Search Framework for Inference-Time Techniques</a></h4><p class="by">Saad-Falcon, Gamarra Lafuente, Natarajan, Maru, Todorov, Guha, Buchanan, Chen, Guha, Ré, Mirhoseini · 2024</p><dl><dt>What</dt><dd>Treats inference-time techniques as modules (generator/ensemble, fuser, ranker, critic, verifier, unit-test generator and evaluator) stacked in layers, and uses Bayesian optimization to search a space of 9,576 configurations for the best stack under a compute budget.</dd><dt>Result</dt><dd>Searched stacks beat o1, GPT-4o and Claude 3.5 Sonnet by 15.1% on average across instruction-following, reasoning and coding benchmarks; open-source-only stacks were 11.2% above prior open-source approaches. Bayesian optimization found the best stack in 96.0% of searches with 88.5% fewer evaluations than greedy search. Unit tests plus more samples raised CodeContests Pass@1 from 17.9% to 29.3%. The fuser helped on every benchmark (8.9% on average); verifiers helped most on reasoning tasks.</dd><dt>Takeaway</dt><dd>Don&#x27;t hand-pick one trick. Build sampling, ranking, fusing and checking as swappable steps, then let a small eval set choose the stack per task.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2408.03314">Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters</a></h4><p class="by">Snell, Lee, Xu, Kumar · 2024</p><dl><dt>What</dt><dd>On MATH with PaLM 2-S*, compared two ways to spend test-time compute: searching against a process reward model (best-of-N, beam search, lookahead) and a fine-tuned model that revises its own answer (sequential vs parallel). Questions were binned into 5 difficulty levels by the base model&#x27;s own success rate over 2048 samples.</dd><dt>Result</dt><dd>The best method depends on difficulty: sequential revision did best on easy questions, a mix of sequential and parallel on harder ones; beam search beat best-of-N on medium-hard questions but over-optimized the verifier on easy ones. Choosing per difficulty matched or beat best-of-N with up to 4x less compute (abstract: more than 4x). FLOPs-matched, a small model with test-time compute beat a 14x larger model on questions where it had some success, but pretraining was better on the hardest questions or with high inference load.</dd><dt>Takeaway</dt><dd>Estimate difficulty first (for example, by how much a few samples agree), then route: easy questions get one try plus a revision, hard ones get more parallel tries, and the hardest may need a bigger model.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2502.17578">How Do Large Language Monkeys Get Their Power (Laws)?</a></h4><p class="by">Schaeffer, Kazdan, Hughes, Juravsky, Price, Lynch, Jones, Kirk, Mirhoseini, Koyejo · 2025</p><dl><dt>What</dt><dd>Explains why aggregate success with k attempts follows a power law even though each single problem&#x27;s failure rate falls exponentially in k: the power law comes from a heavy left tail of very hard problems in the distribution of single-attempt success rates. Tested on Pythia models on MATH and frontier models on HarmBench jailbreaking.</dd><dt>Result</dt><dd>Proved the tail near zero (density like p^(b-1)) is necessary and sufficient for a k^(-b) power law. Cases without the heavy tail (e.g. Llama 3 8B IT, jailbroken on every prompt within budget) did not show a power law. A distributional estimator of the exponent had about an order of magnitude lower relative error than curve fitting, which the authors equate to roughly 2-4 orders of magnitude less inference compute.</dd><dt>Takeaway</dt><dd>Before buying a big sampling budget, sample a little, look at the per-problem success rates, and forecast. A task with many near-zero problems will be expensive to brute-force.</dd></dl></div></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a01_test_time_compute.ipynb" target="_blank" rel="noopener">a01_test_time_compute.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import math, time
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+import numpy as np
+import matplotlib.pyplot as plt
+from lal.llm import client
+from lal.tasks import math_problems, extract_int
+from lal.checks import pass_at_k, check
+
+SOLVE = (&quot;Solve this problem step by step. Keep it short.\n&quot;
+         &quot;On the last line write exactly: ANSWER: &lt;whole number&gt;\n\nProblem: {q}&quot;)
+
+def gen(prompt, temperature=0.8, max_tokens=400, model_name=None):
+    &quot;&quot;&quot;One model call. Returns (text, completion tokens). Never raises, so one bad call can&#x27;t stop a loop.&quot;&quot;&quot;
+    try:
+        r = client.chat.completions.create(model=model_name or MODEL, messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt}],
+                                           temperature=temperature, max_tokens=max_tokens)
+        text = r.choices[0].message.content or &quot;&quot;
+        toks = getattr(r.usage, &quot;completion_tokens&quot;, None) or max(1, len(text) // 4)
+    except Exception as e:
+        print(&quot;call failed:&quot;, e)
+        text, toks = &quot;&quot;, 0
+    return text, toks
+
+def majority(answers):
+    &quot;&quot;&quot;Most common answer, ignoring replies we could not parse. None if there are none.&quot;&quot;&quot;
+    votes = Counter(a for a in answers if a is not None)
+    return votes.most_common(1)[0][0] if votes else None</code></pre></div>
+<div class="nb-md"><h3>1. A task set we can grade with code</h3>
+<p>Test-time scaling only pays off when you can tell right from wrong. So we use word problems with exact integer answers, made by <code>lal.tasks.math_problems</code> with a fixed seed. "Easy" takes 2 steps. "Hard" takes 3 to 5 steps (percentages, rounding up, a little algebra).</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">EASY = math_problems(4, seed=0, difficulty=&quot;easy&quot;)
+HARD = math_problems(4, seed=0, difficulty=&quot;hard&quot;)
+PROBS = EASY + HARD
+BY_ID = {p[&quot;id&quot;]: p for p in PROBS}
+for p in PROBS[:1] + PROBS[-1:]:
+    print(p[&quot;id&quot;], &quot;|&quot;, p[&quot;question&quot;], &quot;| answer:&quot;, p[&quot;answer&quot;])
+print(&quot;extract_int test:&quot;, extract_int(&quot;...so 12 x 5 = 60 apples.\nANSWER: 60&quot;))</code></pre></div>
+<div class="nb-md"><h3>2. Repeated sampling: K tries per problem</h3>
+<p>We ask the same question K = 6 times at temperature 0.8, so the tries differ. That is 8 problems x 6 = 48 calls, two at a time.</p>
+<p>Brown et al. 2024 (<em>Large Language Monkeys</em>) did this with up to 10,000 samples per problem. Their key word is <strong>coverage</strong>: the share of problems where at least one sample is right.</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">K = 6
+jobs = [p for p in PROBS for _ in range(K)]
+t0 = time.time()
+with ThreadPoolExecutor(2) as ex:
+    outs = list(ex.map(lambda p: gen(SOLVE.format(q=p[&quot;question&quot;])), jobs))
+print(f&quot;{len(jobs)} calls in {time.time() - t0:.0f}s&quot;)
+
+SAMPLES = {p[&quot;id&quot;]: [] for p in PROBS}
+for p, (text, toks) in zip(jobs, outs):
+    a = extract_int(text)
+    SAMPLES[p[&quot;id&quot;]].append({&quot;text&quot;: text, &quot;answer&quot;: a, &quot;ok&quot;: a == p[&quot;answer&quot;], &quot;tokens&quot;: toks})
+
+for pid, ss in SAMPLES.items():
+    print(f&quot;{pid}: right {sum(s[&#x27;ok&#x27;] for s in ss)}/{K}   answers {[s[&#x27;answer&#x27;] for s in ss]}   truth {BY_ID[pid][&#x27;answer&#x27;]}&quot;)</code></pre></div>
+<div class="nb-md"><h3>3. Coverage (pass@k) grows with k</h3>
+<p><code>pass_at_k(n, c, k)</code> is the unbiased estimate of "at least one of k tries is right", given c right out of n. We plot it with a log scale on k. Brown et al. found coverage often rises in a straight line against log(k), over four orders of magnitude.</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def coverage(probs, k):
+    return sum(pass_at_k(K, sum(s[&quot;ok&quot;] for s in SAMPLES[p[&quot;id&quot;]]), k) for p in probs) / len(probs)
+
+ks = list(range(1, K + 1))
+cov = {name: [coverage(ps, k) for k in ks] for name, ps in [(&quot;all&quot;, PROBS), (&quot;easy&quot;, EASY), (&quot;hard&quot;, HARD)]}
+for name, ys in cov.items():
+    print(f&quot;{name:5}&quot;, &quot;  &quot;.join(f&quot;k={k}:{y:.0%}&quot; for k, y in zip(ks, ys)))
+
+plt.figure(figsize=(5, 3.2))
+for name, ys in cov.items():
+    plt.plot(ks, ys, marker=&quot;o&quot;, label=name)
+plt.xscale(&quot;log&quot;); plt.xticks(ks, [str(k) for k in ks]); plt.ylim(0, 1.05)
+plt.xlabel(&quot;k (tries per problem, log scale)&quot;); plt.ylabel(&quot;coverage (pass@k)&quot;); plt.title(&quot;More tries, more problems solved&quot;)
+plt.legend(); plt.grid(alpha=0.3); plt.show()</code></pre></div>
+<div class="nb-md"><h3>4. Coverage is an upper bound. Picking is the hard part.</h3>
+<p>Coverage assumes an <strong>oracle verifier</strong>: a checker that always knows which try is right. Here we have one (the exact answer), but real work often doesn't.</p>
+<p>Without it, the simplest picker is <strong>majority vote</strong> (also called self-consistency): keep the most common answer. Brown et al. report that on MATH with Llama-3-8B-Instruct, coverage passed 95% while majority vote and reward models stalled near 40-41% after about 100 samples.</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def majority_acc(probs, k):
+    return sum(majority([s[&quot;answer&quot;] for s in SAMPLES[p[&quot;id&quot;]][:k]]) == p[&quot;answer&quot;] for p in probs) / len(probs)
+
+maj = [majority_acc(PROBS, k) for k in ks]
+print(&quot; k   oracle (coverage)   majority vote   gap&quot;)
+for k, c, m in zip(ks, cov[&quot;all&quot;], maj):
+    print(f&quot;{k:2}   {c:&gt;14.0%}   {m:&gt;13.0%}   {c - m:+.0%}&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>How to read this:</strong> the gap between the two columns is the <strong>generation-verification gap</strong>. The model <em>could</em> give the right answer, but our picker can't find it. Module a02 is about closing that gap.</p></div>
+<div class="nb-md"><h3>5. What it costs: tokens vs accuracy</h3>
+<p>Every try costs tokens. Plot accuracy against total tokens spent, so you can compare one big call with many small ones on the same axis.</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">avg_toks = sum(s[&quot;tokens&quot;] for ss in SAMPLES.values() for s in ss) / (len(PROBS) * K)
+spent = [k * avg_toks * len(PROBS) for k in ks]
+print(f&quot;average tokens per try: {avg_toks:.0f}&quot;)
+for k, t, c, m in zip(ks, spent, cov[&quot;all&quot;], maj):
+    print(f&quot;k={k}: {t:6.0f} tokens for the set   oracle {c:.0%}   majority {m:.0%}&quot;)
+
+plt.figure(figsize=(5, 3.2))
+plt.plot(spent, cov[&quot;all&quot;], marker=&quot;o&quot;, label=&quot;oracle verifier (coverage)&quot;)
+plt.plot(spent, maj, marker=&quot;s&quot;, label=&quot;majority vote&quot;)
+plt.xlabel(&quot;output tokens spent on the 8 problems&quot;); plt.ylabel(&quot;share solved&quot;); plt.ylim(0, 1.05)
+plt.legend(); plt.grid(alpha=0.3); plt.title(&quot;Accuracy per token&quot;); plt.show()</code></pre></div>
+<div class="nb-md"><p>Brown et al. made the same point with money: on SWE-bench Lite, 5 tries of DeepSeek-Coder-V2-Instruct solved 29.62% for $10.8, while 1 try of GPT-4o solved 24.00% for $39. Cheap model plus many tries plus a checker can beat an expensive model.</p></div>
+<div class="nb-md"><h3>6. Why the curve looks like a power law (no model calls)</h3>
+<p>Schaeffer et al. 2025 (<em>How Do Large Language Monkeys Get Their Power (Laws)?</em>) explain the shape.
+- For <strong>one</strong> problem with single-try success p, the chance that all k tries fail is (1 - p)^k. That falls <strong>exponentially</strong> in k.
+- Averaged over <strong>many</strong> problems, the failure curve looks like a <strong>power law</strong> in k (a straight line on a log-log plot). That happens when a few problems are very hard (p close to 0). This is called a <strong>heavy left tail</strong>.</p>
+<p>We check this with exact math. Say single-try success rates follow a Beta(alpha, beta) distribution, which has a tail near 0 shaped like p^(alpha-1). Then the theory says -log(coverage) should fall like k^(-alpha).</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">ALPHA, BETA = 0.3, 3.0
+
+def agg_fail(k, a=ALPHA, b=BETA):
+    &quot;&quot;&quot;Mean over problems of (1-p)^k when p ~ Beta(a, b). Exact: B(a, b+k) / B(a, b).&quot;&quot;&quot;
+    lb = lambda x, y: math.lgamma(x) + math.lgamma(y) - math.lgamma(x + y)
+    return math.exp(lb(a, b + k) - lb(a, b))
+
+kk = np.unique(np.logspace(0, 4, 40).astype(int))
+neglog_cov = np.array([-math.log(1 - agg_fail(k)) for k in kk])
+big = kk &gt;= 100
+slope = np.polyfit(np.log(kk[big]), np.log(neglog_cov[big]), 1)[0]
+print(f&quot;fitted power-law exponent for k &gt;= 100: {slope:.3f}   (theory: -alpha = {-ALPHA})&quot;)
+
+fig, ax = plt.subplots(1, 2, figsize=(9, 3.2))
+for p in (0.3, 0.05, 0.01):
+    fail = [(1 - p) ** k for k in kk]
+    ax[0].plot(kk, [-math.log1p(-f) if 0 &lt; f &lt; 1 else np.nan for f in fail], label=f&quot;one problem, p={p}&quot;)
+ax[0].set_xscale(&quot;log&quot;); ax[0].set_yscale(&quot;log&quot;); ax[0].set_ylim(1e-6, 10)
+ax[0].set_title(&quot;Each problem: falls off a cliff (exponential)&quot;); ax[0].set_xlabel(&quot;k&quot;); ax[0].set_ylabel(&quot;-log(pass@k)&quot;); ax[0].legend(fontsize=7)
+ax[1].plot(kk, neglog_cov, marker=&quot;.&quot;, label=f&quot;many problems, p ~ Beta({ALPHA}, {BETA})&quot;)
+ax[1].set_xscale(&quot;log&quot;); ax[1].set_yscale(&quot;log&quot;)
+ax[1].set_title(&quot;Average: straight line (power law)&quot;); ax[1].set_xlabel(&quot;k&quot;); ax[1].legend(fontsize=7)
+plt.tight_layout(); plt.show()</code></pre></div>
+<div class="nb-md"><p><strong>Why a builder cares:</strong> the exponent tells you how fast more samples pay off, so you can forecast before you spend. Schaeffer et al. estimate it from the distribution of single-try success rates and report about an order of magnitude lower error than fitting the curve directly, which they describe as roughly 2-4 orders of magnitude less inference compute.</p></div>
+<div class="nb-md"><h3>7. An Archon-style pipeline: generate, rank, fuse, verify</h3>
+<p>Saad-Falcon et al. 2024 (<em>Archon</em>) treat inference-time tricks as building blocks and search for the best stack. The blocks include a <strong>Generator</strong> (makes candidates), a <strong>Ranker</strong> (picks the best ones), a <strong>Fuser</strong> (merges candidates into one better answer), and a <strong>Verifier</strong> (keeps only answers whose reasoning checks out).</p>
+<p>We build one fixed stack by hand on the 4 hard problems: reuse the 6 samples, then rank (1 call), fuse (1 call), verify the fused answer (1 call). If the verifier says NO, we fall back to majority vote. That is 12 calls.</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def numbered(cands, limit=600):
+    return &quot;\n\n&quot;.join(f&quot;Candidate {i + 1}:\n{c[&#x27;text&#x27;][:limit]}&quot; for i, c in enumerate(cands))
+
+RANK = (&quot;Problem: {q}\n\n{c}\n\nWhich candidate has the correct final answer? Check the arithmetic. &quot;
+        &quot;Reply with the candidate number only.&quot;)
+FUSE = (&quot;Problem: {q}\n\nHere are several attempts. Some may be wrong.\n\n{c}\n\n&quot;
+        &quot;Use the attempts to write one careful, correct solution. On the last line write exactly: ANSWER: &lt;whole number&gt;&quot;)
+VERIFY = (&quot;Problem: {q}\n\nProposed solution:\n{s}\n\nCheck every step and the arithmetic. &quot;
+          &quot;Is the final answer correct? Reply YES or NO only.&quot;)
+
+def archon(p):
+    cands = SAMPLES[p[&quot;id&quot;]]
+    r, _ = gen(RANK.format(q=p[&quot;question&quot;], c=numbered(cands)), temperature=0, max_tokens=10)
+    digits = [int(x) for x in &quot;&quot;.join(ch if ch.isdigit() else &quot; &quot; for ch in r).split()]
+    idx = digits[0] - 1 if digits and 1 &lt;= digits[0] &lt;= len(cands) else 0
+    fused, _ = gen(FUSE.format(q=p[&quot;question&quot;], c=numbered(cands)), temperature=0, max_tokens=500)
+    v, _ = gen(VERIFY.format(q=p[&quot;question&quot;], s=fused), temperature=0, max_tokens=5)
+    fused_ans = extract_int(fused)
+    final = fused_ans if &quot;YES&quot; in v.upper() else majority([c[&quot;answer&quot;] for c in cands])
+    return {&quot;first&quot;: cands[0][&quot;answer&quot;], &quot;majority&quot;: majority([c[&quot;answer&quot;] for c in cands]),
+            &quot;ranked&quot;: cands[idx][&quot;answer&quot;], &quot;fused&quot;: fused_ans, &quot;fused+verify&quot;: final,
+            &quot;oracle&quot;: p[&quot;answer&quot;] if any(c[&quot;ok&quot;] for c in cands) else None}
+
+with ThreadPoolExecutor(2) as ex:
+    ARCH = dict(zip([p[&quot;id&quot;] for p in HARD], ex.map(archon, HARD)))
+for method in [&quot;first&quot;, &quot;majority&quot;, &quot;ranked&quot;, &quot;fused&quot;, &quot;fused+verify&quot;, &quot;oracle&quot;]:
+    right = sum(ARCH[p[&quot;id&quot;]][method] == p[&quot;answer&quot;] for p in HARD)
+    print(f&quot;{method:13} {right}/{len(HARD)}&quot;)</code></pre></div>
+<div class="nb-md"><p>With 4 problems this is noisy, so don't read too much into one run. The paper's lesson is about <strong>combining</strong> blocks: Archon reports that across its benchmarks the Fuser helped on every one (8.9% on average), the Ranker came within 2.7% of oracle selection on MT-Bench and Arena-Hard-Auto, and the Verifier helped most on reasoning tasks. Their searched stacks beat o1, GPT-4o and Claude 3.5 Sonnet by 15.1% on average.</p></div>
+<div class="nb-md"><h3>8. Spend compute by difficulty (Snell et al. 2024)</h3>
+<p>Snell et al. 2024 (<em>Scaling LLM Test-Time Compute Optimally</em>) ask: with a fixed budget, should you sample in <strong>parallel</strong> (many independent tries, then vote) or <strong>sequentially</strong> (one try, then revise it, then revise again)? Their answer: it depends on difficulty. On easy questions, sequential revision worked best. On harder ones, a mix of both did. Picking the strategy per question beat best-of-N with up to 4x less compute.</p>
+<p>First, how hard is each problem <em>for this model</em>? Snell et al. measure difficulty as the model's own success rate over many samples, not a human label. We do the same with our 6 samples.</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">for p in PROBS:
+    rate = sum(s[&quot;ok&quot;] for s in SAMPLES[p[&quot;id&quot;]]) / K
+    print(f&quot;{p[&#x27;id&#x27;]}  label={p[&#x27;difficulty&#x27;]:4}  model success rate={rate:.0%}&quot;)</code></pre></div>
+<div class="nb-md"><p>Now a budget of 3 generations per problem, two ways:
+- <strong>parallel:</strong> majority vote over 3 of our existing samples (0 new calls);
+- <strong>sequential:</strong> take sample 1, then ask the model twice to check and fix its own work (2 new calls per problem, 16 in total).</p>
+<p>Note: Snell et al. fine-tuned a special revision model. We only prompt, so our revisions are weaker than theirs.</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">REVISE = (&quot;Problem: {q}\n\nYour previous attempt:\n{prev}\n\nCheck each step of the attempt. If you find a mistake, fix it. &quot;
+          &quot;Write the full corrected solution. On the last line write exactly: ANSWER: &lt;whole number&gt;&quot;)
+
+def sequential(p, rounds=2):
+    text = SAMPLES[p[&quot;id&quot;]][0][&quot;text&quot;]
+    for _ in range(rounds):
+        new, _ = gen(REVISE.format(q=p[&quot;question&quot;], prev=text[:1500]), temperature=0.3)
+        text = new or text
+    return extract_int(text)
+
+with ThreadPoolExecutor(2) as ex:
+    SEQ = dict(zip([p[&quot;id&quot;] for p in PROBS], ex.map(sequential, PROBS)))
+PAR = {p[&quot;id&quot;]: majority([s[&quot;answer&quot;] for s in SAMPLES[p[&quot;id&quot;]][:3]]) for p in PROBS}
+
+for name, ps in [(&quot;easy&quot;, EASY), (&quot;hard&quot;, HARD)]:
+    par = sum(PAR[p[&quot;id&quot;]] == p[&quot;answer&quot;] for p in ps)
+    seq = sum(SEQ[p[&quot;id&quot;]] == p[&quot;answer&quot;] for p in ps)
+    print(f&quot;{name}: parallel (vote of 3) {par}/{len(ps)}   sequential (1 + 2 revisions) {seq}/{len(ps)}&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>How to read this:</strong> a "compute-optimal" policy picks, for each difficulty level, whichever strategy wins there. To do that in production you need a cheap <strong>difficulty predictor</strong> (Snell et al. used a verifier's scores; you could use agreement between a few samples). Snell et al. also found the trade has limits: on the hardest questions, or when you serve a lot of traffic, a bigger pretrained model was the better use of compute.</p></div>
+<div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;task generator is seeded (same seed, same problems)&quot;, math_problems(5, 3, &quot;hard&quot;) == math_problems(5, 3, &quot;hard&quot;))
+check(&quot;coverage never goes down as k grows&quot;, all(b &gt;= a - 1e-9 for a, b in zip(cov[&quot;all&quot;], cov[&quot;all&quot;][1:])))
+check(&quot;repeated sampling helps: coverage@6 &gt; pass@1 (or pass@1 is already 100%)&quot;, cov[&quot;all&quot;][-1] &gt; cov[&quot;all&quot;][0] or cov[&quot;all&quot;][0] == 1.0)
+check(&quot;the model solves at least half the easy problems within 6 tries&quot;, cov[&quot;easy&quot;][-1] &gt;= 0.5)
+check(&quot;power-law exponent matches the Beta tail (within 0.1)&quot;, abs(slope + ALPHA) &lt; 0.1)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Temperature and diversity.</strong> Rerun repeated sampling on the 4 hard problems with 4 tries each at temperature 0.2 and at 1.0. Which gives higher coverage? Which gives better majority vote?</li>
+<li><strong>Small model, more tries.</strong> Pull <code>llama3.2:3b</code> and give it 6 tries on the hard problems. Does the 3B model's coverage@6 beat the 8B model's pass@1? Compare tokens spent too. (This is a tiny version of Snell et al.'s "smaller model plus test-time compute vs bigger model".)</li>
+<li><strong>Fit your own power law.</strong> Change <code>ALPHA</code> to 0.1 and 0.8 and refit the slope. Which tail gives slower gains from more samples, and why?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="nb-md"><p>Each solution says how many model calls it makes. Run only the ones you want; together they add about 40-55 calls.</p></div><div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 13</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: temperature 0.2 vs 1.0 (4 problems x 4 tries x 2 settings = 32 calls)
+for temp in (0.2, 1.0):
+    jobs = [p for p in HARD for _ in range(4)]
+    with ThreadPoolExecutor(2) as ex:
+        outs = list(ex.map(lambda p: gen(SOLVE.format(q=p[&quot;question&quot;]), temperature=temp), jobs))
+    ans = {p[&quot;id&quot;]: [] for p in HARD}
+    for p, (text, _) in zip(jobs, outs):
+        ans[p[&quot;id&quot;]].append(extract_int(text))
+    cov4 = sum(any(a == p[&quot;answer&quot;] for a in ans[p[&quot;id&quot;]]) for p in HARD) / len(HARD)
+    maj4 = sum(majority(ans[p[&quot;id&quot;]]) == p[&quot;answer&quot;] for p in HARD) / len(HARD)
+    print(f&quot;temperature {temp}: coverage@4 {cov4:.0%}   majority@4 {maj4:.0%}   distinct answers {[len(set(v)) for v in ans.values()]}&quot;)
+# Low temperature gives near-identical tries, so extra tries add little coverage.
+# High temperature adds diversity (more coverage) but more noise, which can hurt majority vote.</code></pre></div><div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 14</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: llama3.2:3b with 6 tries vs llama3.1:8b with 1 try (24 calls plus a ~2 GB download)
+from lal.runtime import pull
+SMALL = &quot;llama3.2:3b&quot;
+pull(SMALL)
+jobs = [p for p in HARD for _ in range(K)]
+with ThreadPoolExecutor(2) as ex:
+    outs = list(ex.map(lambda p: gen(SOLVE.format(q=p[&quot;question&quot;]), model_name=SMALL), jobs))
+right = {p[&quot;id&quot;]: 0 for p in HARD}
+small_toks = 0
+for p, (text, toks) in zip(jobs, outs):
+    right[p[&quot;id&quot;]] += extract_int(text) == p[&quot;answer&quot;]
+    small_toks += toks
+small_cov = sum(pass_at_k(K, c, K) for c in right.values()) / len(HARD)
+big_p1 = cov[&quot;hard&quot;][0]
+big_toks = sum(s[&quot;tokens&quot;] for p in HARD for s in SAMPLES[p[&quot;id&quot;]]) / K
+print(f&quot;3B coverage@{K}: {small_cov:.0%} using {small_toks} tokens&quot;)
+print(f&quot;8B pass@1:      {big_p1:.0%} using about {big_toks:.0f} tokens&quot;)
+# A 3B token is much cheaper than an 8B token. If the small model&#x27;s coverage is higher AND you have
+# a checker to pick the right try, many small tries can be the better deal. Without a checker, it often isn&#x27;t.</code></pre></div><div class="code"><div class="cap"><span class="cell">a01_test_time_compute.ipynb · cell 15</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 3: the tail shape sets the exponent
+for a in (0.1, 0.3, 0.8):
+    y = np.array([-math.log(1 - agg_fail(k, a=a)) for k in kk])
+    s = np.polyfit(np.log(kk[big]), np.log(y[big]), 1)[0]
+    print(f&quot;alpha={a}: fitted exponent {s:.2f}&quot;)
+# Small alpha = many problems with success rate near 0 = a flatter line: each 10x more samples
+# removes less of the failure. That is the &quot;heavy tail&quot; that makes some tasks expensive to brute-force.</code></pre></div></details>
+<div class="pit"><strong>Traps</strong><ul><li>Reporting coverage (pass@k) as if it were accuracy. Coverage assumes you can always spot the right try; in production you usually can&#x27;t.</li><li>Adding samples without a verifier. Brown et al. saw majority vote and reward models stall near 100 samples while coverage kept rising.</li><li>Sampling at temperature 0. Every try is the same, so more tries add nothing.</li><li>Counting calls instead of tokens. A fuser or revision call reads all candidates, so its cost grows with the number of candidates.</li><li>Assuming test-time compute always replaces a bigger model. Snell et al. found pretraining wins on the hardest questions and at high inference volume.</li><li>Choosing the strategy per difficulty on the same small set you then report on. That overfits; hold out data.</li></ul></div>
+<div class="check"><h4>Check yourself</h4><details><summary>Coverage at k=100 is 90% but majority vote at k=100 is 45%. What is missing?</summary><p>A good verifier. The model can produce the right answer, but the picker can&#x27;t find it: that 45-point difference is the generation-verification gap.</p></details><details><summary>Why can a per-problem failure rate fall exponentially while the average follows a power law?</summary><p>Because the average mixes problems of different difficulty. A heavy tail of problems with near-zero single-try success makes the average fall slowly, like a power law (Schaeffer et al. 2025).</p></details><details><summary>For an easy question, should you spend 4 calls on 4 parallel samples or on 1 sample plus 3 revisions?</summary><p>Snell et al. found sequential revision best on easy questions, and a mix of both on harder ones. Test on your own task, since they used a fine-tuned revision model.</p></details></div>
+</div></section><nav class="pager"><a class="prev" href="part2-lessons.html"><small>← Previous</small>What this means for building agents</a><a class="next" href="a02.html"><small>Next →</small>Robust verification</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

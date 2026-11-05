@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agentic evaluations and long-horizon tasks · Agent Engineering School</title>
+<meta name="description" content="How to measure an agent in terms a customer understands. You&#x27;ll learn METR&#x27;s time horizon, GDPval&#x27;s expert comparisons, and DeepScholar&#x27;s separate scores for research reports.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A10</span></div><section class="mod" id="a10" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A10</div><h2>Agentic evaluations and long-horizon tasks</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a10_evals_long_horizon.ipynb">Open in Colab</a><button class="done-btn" data-done="a10" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to measure an agent in terms a customer understands. You&#x27;ll learn METR&#x27;s time horizon, GDPval&#x27;s expert comparisons, and DeepScholar&#x27;s separate scores for research reports.</p><article class="lesson"><h2>The big idea</h2>
+<p>"78% on a benchmark" tells a customer almost nothing. Which 78%? Of what? Would the work be usable? This lesson measures agents in human terms instead.</p>
+<p>Think of hiring a paralegal. You don't ask for their test score. You ask: how big a task can I hand them and expect it done? Would a senior lawyer accept their memo? When they cite a source, does the source really say that?</p>
+<p>Three papers turn those questions into numbers. METR asks how long a task (in human minutes) the agent finishes half the time. GDPval asks whether an expert would prefer the agent's work over another expert's. DeepScholar-Bench scores a research report on several separate axes, so you can see exactly what went wrong.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>A firm deciding whether to trust a local agent needs a plain claim, like "it finishes 10-minute contract checks 80% of the time". A benchmark percentage won't do.</li>
+<li>Every agent output at a law firm gets reviewed. Review time must be counted in any claim about savings.</li>
+<li>Contract summaries cite clauses. You need to check that each citation actually supports the sentence it sits next to.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Time real people first</strong> (the METR paper, 2025). METR timed skilled people on 170 tasks, from seconds to many hours. A task's difficulty is how long people took to do it. Guessing these times would ruin everything that follows.</p>
+</li>
+<li>
+<p><strong>Fit an S-curve.</strong> For each model, plot success against task length. Longer tasks fail more. A logistic curve (an S-shaped curve running from 0 to 1) fits this well. The 50% time horizon is the task length where the curve crosses 50%. METR found frontier models' 50% horizons doubled about every 7 months since 2019. Claude 3.7 Sonnet was about 50 minutes.</p>
+</li>
+<li>
+<p><strong>Quote the reliable number.</strong> Half of tasks failing is not a product. The 80% horizon is the length a model finishes 80% of the time. METR found it was roughly 4 to 6 times shorter than the 50% horizon. That is the number a business should plan around.</p>
+</li>
+<li>
+<p><strong>Grade the real work product</strong> (the GDPval paper, 2025). GDPval has 1,320 tasks across 44 occupations, written by professionals with about 14 years of experience on average. Each asks for a real deliverable (a memo, a spreadsheet, slides). Experts compare the model's version with a human expert's, blind and side by side. The score is the win-or-tie rate: how often the model's work was judged as good or better. The best model on their gold set, Claude Opus 4.1, reached 47.6%.</p>
+</li>
+<li>
+<p><strong>Count review time.</strong> GDPval found GPT-5 was about 90 times faster than an expert on raw time. But someone must review the output and fix it when it's wrong. Counting that, the gain shrank to about 1.12 times faster and 1.18 times cheaper. An automatic grader agreed with experts 65.7% of the time, against 70.8% between experts. Useful for quick checks, not a replacement.</p>
+</li>
+<li>
+<p><strong>Score research reports on separate axes</strong> (the DeepScholar-Bench paper, 2025). Systems write a cited related-work section for a recent paper. It is a live benchmark (new items keep being added, so models can't have trained on them). Scores cover three axes: synthesis (did it include the key facts?), retrieval (did it find the important sources?) and verifiability (does each citation support its sentence?). No system passed 31% on the combined score. The best system overall was weak on citations, while another led on citations.</p>
+</li>
+</ol>
+<pre><code>success
+ 100% |*****
+      |      ***
+  50% |---------*---------   &lt;- 50% horizon
+      |            ***
+   0% |________________****
+       1    4    16   64  human minutes (log scale)
+</code></pre>
+<h2>Worked example</h2>
+<p>The notebook builds all three on contracts.</p>
+<p><strong>Time horizon.</strong> A task with N steps asks the agent to walk through N facts from a contract fact sheet, keeping a running total. More steps means more chances to slip. The notebook assumes a person needs 1 minute to set up plus 1.5 minutes per step. That is a made-up estimate, and it says so. Each task runs twice. Then it fits the S-curve and reads off the 50% and 80% horizons.</p>
+<p><strong>Expert comparison.</strong> Three client emails about contracts that break the playbook. For example, a liability cap above 12 months of fees. An expert reference email is written from the labels. A model grader compares the agent's email with the expert's, in both orders. Small graders often pick whichever email comes first. So if the verdict flips when the order swaps, it counts as a tie.</p>
+<p><strong>Research report.</strong> The agent gets six sources: three about evaluating agents, three about memory (distractors). It writes a short cited summary. Plain code then checks each metric:</p>
+<ul>
+<li>Citing a distractor lowers retrieval precision.</li>
+<li>A sentence with no citation lowers claim coverage (the share of sentences backed by a source).</li>
+<li>Citing a real source for a claim it doesn't make lowers citation precision.</li>
+</ul>
+<p>One overall score would hide which of these went wrong.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Guessing human times.</strong> The horizon is only as good as the timings. Time real people where you can.</li>
+<li><strong>Quoting the 50% horizon to a customer.</strong> Quote 80% or higher, and design review around it.</li>
+<li><strong>Claiming big speed-ups without review time.</strong> GDPval's gain nearly vanished once review and fixes were counted.</li>
+<li><strong>Trusting a grader that saw only one order.</strong> Swap the order and count a flip as a tie.</li>
+<li><strong>Rewarding copied text.</strong> Word-overlap scores can be gamed by pasting sources. Keep a judge for whether it is a real synthesis.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>How does METR turn success rates into a time horizon?</summary>
+<p>For each model it fits an S-curve of success against the log of human task time. The horizon is the task length where the curve crosses 50%.</p>
+</details>
+<details>
+<summary>Why did GDPval&#x27;s speed and cost advantage shrink so much?</summary>
+<p>An expert must review the model&#x27;s output and fix or redo it when it is wrong. Once that time is counted, most of the raw speed gain disappears.</p>
+</details>
+<details>
+<summary>A summary cites a memory paper for a sentence about agent evaluation. Which metrics drop?</summary>
+<p>Retrieval precision, because a non-relevant source was cited. Probably citation precision too, because that source doesn&#x27;t support the sentence.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the a10 notebook. Fit the time-horizon curve on the multi-step contract tasks and compare the 50% and 80% numbers. Then watch how often the email grader flips when the order swaps, and see which research metric each kind of error lowers.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Lecture 17 (Nov 17)</p>
+
+  <p class="big">Benchmark percentages do not tell a customer what an agent can do. Measure agents in human terms: the length of task (in human minutes) they finish half the time, whether an expert would prefer their work product over another expert&#x27;s, and, for research reports, separate scores for coverage, retrieval and citations.</p>
+<div class="terms"><h4>Key terms</h4><dl><div><dt>Time horizon (50%)</dt><dd>The human time length of tasks that a model completes with 50% success, read from a fitted logistic curve.<span class="from">Source: Kwa et al. 2025</span></dd></div><div><dt>80% time horizon</dt><dd>The same, at 80% success; much shorter, and closer to what business use needs.<span class="from">Source: Kwa et al. 2025</span></dd></div><div><dt>Logistic curve</dt><dd>An S-shaped curve from 0 to 1; here, chance of success against log of task length.<span class="from">Source: general</span></dd></div><div><dt>Human baseline</dt><dd>A timed attempt by a skilled person; the task&#x27;s difficulty is the geometric mean of successful times.<span class="from">Source: Kwa et al. 2025</span></dd></div><div><dt>Deliverable</dt><dd>The actual work product (memo, spreadsheet, slides) a task asks for, graded as a whole.<span class="from">Source: Patwardhan et al. 2025</span></dd></div><div><dt>Win-or-tie rate</dt><dd>Share of pairwise comparisons where the model&#x27;s deliverable was judged as good as or better than the expert&#x27;s.<span class="from">Source: Patwardhan et al. 2025</span></dd></div><div><dt>Order swap</dt><dd>Grading each pair twice with positions swapped, and treating a flip as a tie, to cancel position bias.<span class="from">Source: general</span></dd></div><div><dt>Nugget coverage</dt><dd>Share of key facts from the human-written reference that appear in the generated report.<span class="from">Source: Patel et al. 2025</span></dd></div><div><dt>Reference coverage</dt><dd>Share of the reference&#x27;s important citations that the system found.<span class="from">Source: Patel et al. 2025</span></dd></div><div><dt>Citation precision</dt><dd>Share of citations whose source actually supports the sentence they are attached to.<span class="from">Source: Patel et al. 2025</span></dd></div><div><dt>Claim coverage</dt><dd>Share of sentences whose claims are all backed by cited sources.<span class="from">Source: Patel et al. 2025</span></dd></div><div><dt>Live benchmark</dt><dd>A benchmark refreshed with new items over time, so models cannot have trained on it.<span class="from">Source: Patel et al. 2025</span></dd></div></dl></div>
+<h3>The papers</h3><div class="papers"><div class="paper"><h4><a href="https://arxiv.org/abs/2503.14499">Measuring AI Ability to Complete Long Tasks</a></h4><p class="by">Kwa, West, Becker, Deng, et al. (METR) · 2025</p><dl><dt>What</dt><dd>Timed skilled humans (over 800 baselines, 2,529 hours) on 170 tasks: 97 from HCAST, 7 from RE-Bench and 66 new short software tasks. For each model, fit a logistic curve of success against log human time (task difficulty = geometric mean of successful human times; tasks weighted by inverse square root of family size; 8 runs per agent and task) and read off the 50% time horizon.</dd><dt>Result</dt><dd>Frontier 50% horizons doubled about every 7 months since 2019 (207 days, 95% CI 166-240), possibly faster in 2024. Claude 3.7 Sonnet was about 50 minutes; GPT-2 about 2 seconds; a later revision reports o3 at about 110 minutes. 80% horizons were roughly 4-6x shorter than 50% horizons. Gains came mainly from reliability, recovering from mistakes, logical reasoning and tool use.</dd><dt>Takeaway</dt><dd>Describe your agent to customers as &#x27;finishes X-minute tasks Y% of the time&#x27;, and quote the high-reliability horizon (80% or more), not the 50% one. Build your task set across a range of lengths and time real people.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2510.04374">GDPval: Evaluating AI Model Performance on Real-World Economically Valuable Tasks</a></h4><p class="by">Patwardhan, Dias, Proehl, Kim, Wang, Watkins, et al. (OpenAI) · 2025</p><dl><dt>What</dt><dd>1,320 tasks across 44 occupations in the 9 sectors contributing most to US GDP, built from the work of professionals with 14 years of experience on average. Each task asks for a real deliverable (documents, slides, spreadsheets). Occupation experts compare model and human deliverables blind and pairwise; a 220-task gold subset and an automated grader are public.</dd><dt>Result</dt><dd>On the gold subset, Claude Opus 4.1 was best, with 47.6% of deliverables rated as wins or ties against the expert. Strict win rates: GPT-4o 12.5%, o4-mini 29.1%, o3 35.2%, GPT-5 39.0%. Naively GPT-5 was about 90x faster and 474x cheaper than experts, but with expert review and fixing (&#x27;try once, then fix&#x27;) the gain shrank to about 1.12x faster and 1.18x cheaper. The automated grader agreed with experts 65.7% of the time vs 70.8% human-human agreement. More reasoning effort, more task context and more scaffolding all helped.</dd><dt>Takeaway</dt><dd>Grade agents on the actual work product against an expert reference, pairwise and blind, and include review time when you claim savings. An LLM grader is useful for iteration but is not as reliable as an expert.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2508.20033">DeepScholar-Bench: A Live Benchmark and Automated Evaluation for Generative Research Synthesis</a></h4><p class="by">Patel, Arabzadeh, Gupta, Sundar, Stoica, Zaharia, Guestrin · 2025</p><dl><dt>What</dt><dd>A live benchmark: queries and human-written related-work sections are drawn from recent arXiv papers, so it stays fresh and hard to contaminate. Systems must research and write a cited related-work section. Automatic metrics on three axes: knowledge synthesis (organization via pairwise LLM judge; nugget coverage), retrieval quality (relevance rate; reference coverage; document importance) and verifiability (citation precision; claim coverage). Also releases DeepScholar-ref, an open reference pipeline on LOTUS.</dd><dt>Result</dt><dd>The first set has 63 papers from 18 arXiv domains. No system exceeded a geometric mean of 31% across metrics; OpenAI DeepResearch scored 0.309 but only 0.138 claim coverage and 0.187 reference coverage. A Claude-based search agent had the highest verifiability (citation precision 0.701, claim coverage 0.760). DeepScholar-ref reached 0.285 at lower cost.</dd><dt>Takeaway</dt><dd>Score research and summary agents with separate metrics for coverage, retrieval and citation support. One overall score hides which part failed, and the best system on one axis is often weak on another.</dd></dl></div></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a10_evals_long_horizon.ipynb" target="_blank" rel="noopener">a10_evals_long_horizon.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, math, random, re, time
+from concurrent.futures import ThreadPoolExecutor
+import numpy as np
+from lal.llm import ask
+from lal.data import contract, labels, playbook, ids
+from lal.tasks import extract_int
+from lal.checks import check
+
+LAB, PB = labels(), playbook()</code></pre></div>
+<div class="nb-md"><h3>1. METR's time horizon, on a toy</h3>
+<p>METR (Kwa et al. 2025, <em>Measuring AI Ability to Complete Long Tasks</em>) timed skilled people on 170 software tasks, from seconds to many hours. For each model they fit a <strong>logistic curve</strong>: chance of success against the log of the human time. The <strong>50% time horizon</strong> is the human task length where that curve crosses 50%. They report it doubled about every 7 months since 2019 (Claude 3.7 Sonnet: about 50 minutes in the abstract).</p>
+<p>Our toy: multi-step contract checks. A task with N steps asks the agent to walk through N facts from a contract fact sheet, keeping a running total. Each extra step is one more lookup and one more chance to slip. We <strong>assume</strong> a person needs 1 minute to set up plus 1.5 minutes per step. That is our made-up estimate; METR timed real people.</p></div>
+<div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">FACTS = {c: LAB[c][&quot;terms&quot;] for c in ids()}
+SHEET = &quot;id | monthly fee ($) | notice days | renewal years | liability cap (months) | governing law\n&quot; + &quot;\n&quot;.join(
+    f&quot;{c} | {t[&#x27;monthly_fee&#x27;]} | {t[&#x27;notice_days&#x27;]} | {t[&#x27;renewal_years&#x27;]} | {t[&#x27;liability_cap_months&#x27;] if t[&#x27;liability_cap_months&#x27;] else &#x27;none&#x27;} | {t[&#x27;governing_law&#x27;]}&quot;
+    for c, t in FACTS.items())
+CAPPED = [c for c, t in FACTS.items() if t[&quot;liability_cap_months&quot;]]
+
+def make_task(n_steps, seed):
+    &quot;&quot;&quot;A chain of n_steps lookups with an exact answer.&quot;&quot;&quot;
+    rng = random.Random(f&quot;metr-toy-{n_steps}-{seed}&quot;)
+    c0 = rng.choice(ids())
+    total = FACTS[c0][&quot;monthly_fee&quot;] // 100
+    steps = [f&quot;Start with the monthly fee of {c0} divided by 100.&quot;]
+    for _ in range(n_steps - 1):
+        kind = rng.randrange(4)
+        if kind == 0:
+            c = rng.choice(ids()); total += FACTS[c][&quot;notice_days&quot;]
+            steps.append(f&quot;Add the notice days of {c}.&quot;)
+        elif kind == 1:
+            c = rng.choice(ids()); total -= FACTS[c][&quot;renewal_years&quot;]
+            steps.append(f&quot;Subtract the renewal years of {c}.&quot;)
+        elif kind == 2:
+            c = rng.choice(CAPPED); total += FACTS[c][&quot;liability_cap_months&quot;]
+            steps.append(f&quot;Add the liability cap in months of {c}.&quot;)
+        else:
+            c = rng.choice(ids()); ok = FACTS[c][&quot;governing_law&quot;] in PB[&quot;allowed_law&quot;]
+            total += 10 if ok else -10
+            steps.append(f&quot;Add 10 if the governing law of {c} is California or Delaware; otherwise subtract 10.&quot;)
+    return {&quot;n&quot;: n_steps, &quot;minutes&quot;: 1 + 1.5 * n_steps, &quot;steps&quot;: steps, &quot;answer&quot;: total}
+
+STEP_COUNTS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32]     # 15 tasks, 2.5 to 49 &quot;human minutes&quot;
+TASKS = [make_task(n, seed=0) for n in STEP_COUNTS]
+print(TASKS[2])
+
+def run_task(task, temperature=0.5):
+    prompt = (f&quot;Contract fact sheet:\n{SHEET}\n\nDo these steps in order. Write the running total after each step, &quot;
+              &quot;then end with &#x27;ANSWER: &lt;number&gt;&#x27;.\n&quot; + &quot;\n&quot;.join(f&quot;{i+1}. {s}&quot; for i, s in enumerate(task[&quot;steps&quot;])))
+    return extract_int(ask(prompt, temperature=temperature, max_tokens=1500)) == task[&quot;answer&quot;]</code></pre></div>
+<div class="nb-md"><p>Run each task twice (30 calls). METR ran each agent 8 times per task; we keep it small.</p></div>
+<div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">N_RUNS = 2
+t0 = time.time()
+jobs = [t for t in TASKS for _ in range(N_RUNS)]
+with ThreadPoolExecutor(2) as ex:
+    outcomes = list(ex.map(run_task, jobs))
+minutes = np.array([t[&quot;minutes&quot;] for t in jobs])
+success = np.array(outcomes, dtype=float)
+print(f&quot;{len(jobs)} runs in {time.time()-t0:.0f}s&quot;)
+for t in TASKS:
+    s = [o for j, o in zip(jobs, outcomes) if j is t]
+    print(f&quot;  {t[&#x27;n&#x27;]:2} steps ~{t[&#x27;minutes&#x27;]:4.1f} min: {sum(s)}/{len(s)}&quot;)</code></pre></div>
+<div class="nb-md"><h3>Fit the logistic curve</h3>
+<p>Model: P(success) = sigmoid(a + b · log2(minutes)). We fit a and b by maximum likelihood with Newton's method (a few exact steps instead of many small ones), plus a tiny penalty so the fit stays finite when the data separate perfectly. The 50% horizon is where a + b·x = 0, so x = -a/b and horizon = 2^x minutes. The 80% horizon solves a + b·x = log(0.8/0.2).</p></div>
+<div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def fit_logistic(minutes, success, l2=1e-2, iters=50):
+    x = np.log2(np.asarray(minutes, float)); y = np.asarray(success, float)
+    X = np.stack([np.ones_like(x), x], 1)
+    w = np.zeros(2)
+    for _ in range(iters):
+        p = 1 / (1 + np.exp(-(X @ w)))
+        grad = X.T @ (p - y) + l2 * np.array([0, w[1]])
+        H = X.T @ (X * (p * (1 - p))[:, None]) + l2 * np.diag([1e-6, 1.0])
+        w = w - np.linalg.solve(H, grad)
+    return w
+
+def horizon(w, level=0.5):
+    a, b = w
+    if b &gt;= 0:                       # success does not fall with length: no horizon in this range
+        return float(&quot;inf&quot;)
+    return float(2 ** ((math.log(level / (1 - level)) - a) / b))
+
+# Test the fit on fake data with a known answer: true 50% horizon = 16 minutes.
+rng = np.random.default_rng(0)
+fake_m = np.repeat(2 ** np.linspace(0, 7, 15), 40)
+fake_y = (rng.random(fake_m.size) &lt; 1 / (1 + np.exp(-(-1.2 * (np.log2(fake_m) - 4))))).astype(float)
+w_fake = fit_logistic(fake_m, fake_y)
+print(f&quot;fake data: recovered 50% horizon {horizon(w_fake):.1f} min (true 16.0)&quot;)
+
+w = fit_logistic(minutes, success)
+h50, h80 = horizon(w, 0.5), horizon(w, 0.8)
+print(f&quot;our model: slope {w[1]:.2f}, 50% horizon {h50:.1f} min, 80% horizon {h80:.1f} min&quot;)
+
+# Bootstrap over tasks for a rough interval (METR resampled families, tasks and runs).
+task_idx = np.repeat(np.arange(len(TASKS)), N_RUNS)
+boots = []
+for _ in range(500):
+    pick = rng.integers(0, len(TASKS), len(TASKS))
+    mask = np.concatenate([np.where(task_idx == k)[0] for k in pick])
+    boots.append(horizon(fit_logistic(minutes[mask], success[mask])))
+finite = np.array([b for b in boots if np.isfinite(b)])
+if finite.size:
+    print(f&quot;bootstrap 50% horizon: median {np.median(finite):.1f} min, 10th-90th percentile {np.percentile(finite, 10):.1f}-{np.percentile(finite, 90):.1f}&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>How to read this.</strong> If the 50% horizon is, say, 12 minutes, the model finishes about half of tasks that would take a person 12 minutes, and fewer of the longer ones. The 80% horizon is always shorter: METR found 80% horizons about 4-6x shorter than 50% ones. For a business, the 80% (or higher) number is the one that matters, since a review step must catch every miss. Three caveats from the paper apply here too: the human times drive everything (ours are guesses); tasks within one family are related (METR down-weighted large families); and success on tidy tasks may not carry over to messy real work.</p>
+<p>If the horizon prints as <code>inf</code> or is beyond 49 minutes, the model never dropped below 50% in our range: make longer tasks. If every run failed, make shorter ones.</p></div>
+<div class="nb-md"><h3>2. GDPval: would an expert prefer this deliverable?</h3>
+<p>GDPval (Patwardhan et al. 2025, <em>GDPval: Evaluating AI Model Performance on Real-World Economically Valuable Tasks</em>) has 1,320 tasks across 44 occupations, written by professionals with about 14 years of experience on average. Each task asks for a real work product (a memo, a spreadsheet, a slide deck). Expert graders compare the model's deliverable against a human expert's, <strong>blind and pairwise</strong>, and the score is the <strong>win-or-tie rate</strong>. The best model on their gold set, Claude Opus 4.1, had 47.6% of deliverables rated as good as or better than the expert's. Their experimental automatic grader agreed with human experts 65.7% of the time, while human experts agreed with each other 70.8% of the time.</p>
+<p>Our version: three client emails about contracts that break the playbook. We write the expert reference from the labels. An LLM grader compares the model's email with the expert's, in both orders.</p></div>
+<div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">RULE_TEXT = PB[&quot;rules&quot;]
+TASK_CIDS = [&quot;msa_08&quot;, &quot;msa_10&quot;, &quot;msa_17&quot;]
+EXPERT = {
+    &quot;msa_08&quot;: &quot;Subject: msa_08 - liability cap too high\n\nThe liability cap in clause 7.1 is fees paid in the prior 36 months. Our playbook allows at most 12 months. &quot;
+              &quot;Recommendation: revise 7.1 to cap each party&#x27;s liability at the fees paid in the 12 months preceding the claim. The rest of the agreement meets the playbook.&quot;,
+    &quot;msa_10&quot;: &quot;Subject: msa_10 - governing law\n\nClause 10.1 chooses Florida law. Our playbook requires California or Delaware law. &quot;
+              &quot;Recommendation: change 10.1 to Delaware (or California) law. The liability cap (12 months), one-year renewals and 30-day notice all meet the playbook.&quot;,
+    &quot;msa_17&quot;: &quot;Subject: msa_17 - renewal and notice terms\n\nClause 4.1 has two problems. It renews automatically for five-year periods; the playbook allows one year at most. &quot;
+              &quot;It also needs only 15 days&#x27; notice of non-renewal; the playbook requires at least 30 days. Recommendation: revise 4.1 to one-year renewals with at least 30 days&#x27; notice.&quot;,
+}
+TASK = (&quot;Write a short email (under 120 words) to the client&#x27;s general counsel about contract {cid}. Say which playbook rules it breaks, &quot;
+        &quot;cite the clause numbers, and recommend a specific fix.\n\nPlaybook rules:\n{rules}\n\nContract:\n{doc}&quot;)
+
+def deliverable(cid):
+    return ask(TASK.format(cid=cid, rules=json.dumps(RULE_TEXT, indent=1), doc=contract(cid)), max_tokens=300)
+
+GRADER = &quot;&quot;&quot;You are a senior contracts lawyer grading two work products for the same task. You cannot see who wrote them.
+Task: {task}
+Playbook rules: {rules}
+Contract:
+{doc}
+
+Email A:
+{a}
+
+Email B:
+{b}
+
+Judge correctness first (right rules, right clause numbers, workable fix), then clarity. Length is not quality.
+Reply with one word: A, B, or TIE.&quot;&quot;&quot;
+
+def grade_once(cid, a, b):
+    r = ask(GRADER.format(task=TASK.split(&quot;\n&quot;)[0].format(cid=cid), rules=json.dumps(RULE_TEXT), doc=contract(cid), a=a, b=b), max_tokens=5)
+    m = re.search(r&quot;\b(A|B|TIE)\b&quot;, r.upper())
+    return m.group(1) if m else &quot;TIE&quot;
+
+def pairwise(cid, model_text, expert_text):
+    &quot;&quot;&quot;Model vs expert, graded twice with the order swapped. Disagreement after the swap counts as a tie.&quot;&quot;&quot;
+    first = grade_once(cid, model_text, expert_text)     # model is A
+    second = grade_once(cid, expert_text, model_text)    # model is B
+    if first == &quot;A&quot; and second == &quot;B&quot;: return &quot;win&quot;
+    if first == &quot;B&quot; and second == &quot;A&quot;: return &quot;loss&quot;
+    return &quot;tie&quot;
+
+with ThreadPoolExecutor(2) as ex:
+    drafts = dict(zip(TASK_CIDS, ex.map(deliverable, TASK_CIDS)))         # 3 calls
+verdicts = {c: pairwise(c, drafts[c], EXPERT[c]) for c in TASK_CIDS}      # 6 calls
+for c in TASK_CIDS:
+    print(f&quot;--- {c}: {verdicts[c]}\n{drafts[c][:300]}\n&quot;)
+win_or_tie = sum(v in (&quot;win&quot;, &quot;tie&quot;) for v in verdicts.values()) / len(verdicts)
+print(f&quot;win-or-tie rate vs expert: {win_or_tie:.0%}  ({verdicts})&quot;)
+
+# Sanity check of the grader: a confidently wrong email should lose to the expert.
+WRONG = &quot;Subject: msa_17 looks good\n\nI reviewed msa_17. It meets every playbook rule, so the client can sign it as is.&quot;
+sanity = pairwise(&quot;msa_17&quot;, WRONG, EXPERT[&quot;msa_17&quot;])                    # 2 calls
+print(&quot;wrong email vs expert:&quot;, sanity)</code></pre></div>
+<div class="nb-md"><p><strong>What to notice:</strong> the swap matters. Small graders often pick the same position both times, and we count that as a tie rather than trusting it. GDPval also found that review time eats most of the speed gain: for GPT-5, the raw ratio was about 90x faster than an expert, but once an expert reviews the output and redoes it when needed ("try once, then fix"), the gain was about 1.12x faster and 1.18x cheaper. Report both numbers to a customer.</p></div>
+<div class="nb-md"><h3>3. DeepScholar-Bench: score a research summary automatically</h3>
+<p>DeepScholar-Bench (Patel et al. 2025, <em>DeepScholar-Bench: A Live Benchmark and Automated Evaluation for Generative Research Synthesis</em>) asks systems to write the related-work section of a recent arXiv paper, and scores three things: <strong>knowledge synthesis</strong> (e.g. <em>nugget coverage</em>: how many key facts from the human-written section appear), <strong>retrieval quality</strong> (e.g. <em>reference coverage</em>: how many important references were found) and <strong>verifiability</strong> (<em>citation precision</em>: does each cited source support its sentence; <em>claim coverage</em>: is every sentence backed by a citation). No system passed a geometric mean of 31% across their metrics.</p>
+<p>Our version uses code only, so it is cheap and repeatable. We give the model six sources: three on agent evaluation (relevant) and three on memory and serving (distractors). It writes a short cited summary about evaluating agents.</p>
+<p>One simplification: the paper uses an LLM judge to decide whether a source supports a sentence. We use a word-overlap rule instead (a cited source "supports" a sentence if they share at least 3 content words). It is crude but deterministic.</p></div>
+<div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">SOURCES = {
+    &quot;S1&quot;: &quot;METR measures AI ability to complete long tasks with the 50% task-completion time horizon: the length of tasks, timed on skilled humans, that a model completes with 50% success. The horizon has doubled about every seven months since 2019.&quot;,
+    &quot;S2&quot;: &quot;GDPval evaluates models on real-world economically valuable tasks from 44 occupations, written by industry experts. Experts compare model deliverables with expert deliverables in blind pairwise grading and report win or tie rates.&quot;,
+    &quot;S3&quot;: &quot;DeepScholar-Bench is a live benchmark for generative research synthesis. It scores generated related-work sections on knowledge synthesis, retrieval quality and verifiability, and no system exceeds a geometric mean of 31 percent.&quot;,
+    &quot;S4&quot;: &quot;MemGPT manages memory tiers for language models like an operating system, paging data between main context and archival storage through function calls.&quot;,
+    &quot;S5&quot;: &quot;CacheBlend reuses precomputed KV caches of retrieved text chunks and recomputes a small subset of tokens, reducing time to first token.&quot;,
+    &quot;S6&quot;: &quot;Cartridges train a small KV cache offline for a corpus using self-study and context distillation, cutting serving memory.&quot;,
+}
+GOLD = {&quot;S1&quot;, &quot;S2&quot;, &quot;S3&quot;}
+NUGGETS = {   # key facts a good summary should contain: (description, regex)
+    &quot;50% time horizon&quot;: r&quot;50\s*%|half|time horizon&quot;,
+    &quot;doubling about every 7 months&quot;: r&quot;(7|seven)\s*months|doubl&quot;,
+    &quot;44 occupations / real work&quot;: r&quot;44|occupation&quot;,
+    &quot;blind pairwise expert grading&quot;: r&quot;pairwise|blind|win&quot;,
+    &quot;three axes: synthesis, retrieval, verifiability&quot;: r&quot;verifiab|retrieval quality|synthesis&quot;,
+    &quot;benchmarks far from saturated (31%)&quot;: r&quot;31|saturat&quot;,
+}
+STOP = set(&quot;the a an of and or to for in on with by is are that this it as from at be its their they about each than model models&quot;.split())
+
+def content_words(s):
+    return {w for w in re.findall(r&quot;[a-z0-9%]+&quot;, s.lower()) if w not in STOP and len(w) &gt; 2}
+
+def split_sentences(text):
+    text = re.sub(r&quot;([.!?])\s*((?:\[[^\]]+\]\s*)+)&quot;, lambda m: &quot; &quot; + m.group(2).strip() + m.group(1) + &quot; &quot;, text)   # &quot;x. [S1]&quot; -&gt; &quot;x [S1].&quot;
+    return [s.strip() for s in re.split(r&quot;(?&lt;=[.!?])\s+&quot;, text.strip()) if len(s.strip()) &gt; 3]
+
+def citations(sentence):
+    return {f&quot;S{n}&quot; for group in re.findall(r&quot;\[([^\]]+)\]&quot;, sentence) for n in re.findall(r&quot;S\s*(\d+)&quot;, group)}
+
+def scholar_metrics(text, sources=SOURCES, gold=GOLD, nuggets=NUGGETS):
+    sents = split_sentences(text)
+    cited = set().union(*[citations(s) for s in sents]) &amp; set(sources) if sents else set()
+    pairs = [(s, c) for s in sents for c in citations(s) if c in sources]
+    supported = [len(content_words(re.sub(r&quot;\[[^\]]+\]&quot;, &quot;&quot;, s)) &amp; content_words(sources[c])) &gt;= 3 for s, c in pairs]
+    sent_ok = [any(len(content_words(re.sub(r&quot;\[[^\]]+\]&quot;, &quot;&quot;, s)) &amp; content_words(sources[c])) &gt;= 3 for c in citations(s) if c in sources) for s in sents]
+    m = {
+        &quot;nugget_coverage&quot;: sum(bool(re.search(p, text, re.I)) for p in nuggets.values()) / len(nuggets),
+        &quot;reference_coverage&quot;: len(cited &amp; gold) / len(gold),
+        &quot;retrieval_precision&quot;: len(cited &amp; gold) / len(cited) if cited else 0.0,
+        &quot;citation_precision&quot;: sum(supported) / len(supported) if supported else 0.0,
+        &quot;claim_coverage&quot;: sum(sent_ok) / len(sent_ok) if sent_ok else 0.0,
+    }
+    vals = list(m.values())
+    m[&quot;geometric_mean&quot;] = float(np.exp(np.mean(np.log(np.maximum(vals, 1e-3)))))
+    return m
+
+ORACLE = (&quot;METR reports a 50% task-completion time horizon, the length of human-timed tasks a model completes with 50% success, which has doubled about every seven months since 2019 [S1]. &quot;
+          &quot;GDPval evaluates real-world economically valuable tasks from 44 occupations, using blind pairwise grading by experts against expert deliverables [S2]. &quot;
+          &quot;DeepScholar-Bench scores generated related-work sections on knowledge synthesis, retrieval quality and verifiability, and no system exceeds a geometric mean of 31 percent [S3].&quot;)
+BAD = (&quot;Agents are evaluated in many ways. Memory systems page data between main context and archival storage [S1]. &quot;
+       &quot;Caching reduces time to first token [S5]. Benchmarks are important.&quot;)
+for name, txt in [(&quot;oracle&quot;, ORACLE), (&quot;bad&quot;, BAD)]:
+    print(f&quot;{name:7}&quot;, {k: round(v, 2) for k, v in scholar_metrics(txt).items()})</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">SRC_BLOCK = &quot;\n&quot;.join(f&quot;[{k}] {v}&quot; for k, v in SOURCES.items())
+summary = ask(f&quot;Sources:\n{SRC_BLOCK}\n\nWrite a 4-sentence related-work paragraph on how to evaluate AI agents on long, realistic tasks. &quot;
+              &quot;Use only sources that are relevant. Cite sources inline like [S1] at the end of each sentence.&quot;, max_tokens=350)
+print(summary, &quot;\n&quot;)
+model_m = scholar_metrics(summary)
+print({k: round(v, 2) for k, v in model_m.items()})</code></pre></div>
+<div class="nb-md"><p><strong>What to notice:</strong> each metric catches a different failure. Citing a distractor (MemGPT, CacheBlend) lowers retrieval precision. A sentence with no citation lowers claim coverage. Citing a real source for a claim it does not make lowers citation precision. A single "quality" score would hide which one went wrong. DeepScholar-Bench's results show the same split: OpenAI DeepResearch led on the geometric mean (0.309), but a Claude-based search agent had much higher citation precision (0.701) and claim coverage (0.760).</p></div>
+<div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;logistic fit recovers a known horizon (within 30%)&quot;, abs(horizon(w_fake) - 16) / 16 &lt; 0.3)
+check(&quot;80% horizon is shorter than 50% horizon on fake data&quot;, horizon(w_fake, 0.8) &lt; horizon(w_fake))
+check(&quot;the agent solves the shortest task at least once&quot;, any(o for j, o in zip(jobs, outcomes) if j[&quot;n&quot;] &lt;= 2))
+check(&quot;success on long tasks is no better than on short tasks&quot;, success[minutes &gt;= 25].mean() &lt;= success[minutes &lt;= 8].mean())
+check(&quot;grader does not prefer the wrong email over the expert&quot;, sanity != &quot;win&quot;)
+check(&quot;oracle summary beats bad summary on every metric&quot;,
+      all(scholar_metrics(ORACLE)[k] &gt; scholar_metrics(BAD)[k] for k in scholar_metrics(ORACLE)))
+check(&quot;model summary cites at least 2 of the 3 relevant sources&quot;, model_m[&quot;reference_coverage&quot;] &gt;= 2 / 3)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li>Make the toy tasks harder per step (for example, ask for the fee in dollars instead of fee / 100, so the numbers are bigger). Refit. How much does the 50% horizon move? What does that say about how much the human-time estimates matter?</li>
+<li>Run the GDPval comparison with <code>llama3.2:3b</code> as the writer and <code>MODEL</code> as the grader. Is the win-or-tie rate lower?</li>
+<li>Write a summary that games our DeepScholar metrics (high scores, but useless to a reader). Which metric would the paper's LLM-judge version catch it with?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: bigger numbers per step (30 calls). We keep the same human-minute estimates.
+def run_task_dollars(task, temperature=0.5):
+    t = dict(task)
+    first = t[&quot;steps&quot;][0].replace(&quot; divided by 100&quot;, &quot;&quot;)
+    c0 = re.search(r&quot;msa_\d+&quot;, first).group(0)
+    t[&quot;steps&quot;] = [first] + t[&quot;steps&quot;][1:]
+    t[&quot;answer&quot;] = task[&quot;answer&quot;] - FACTS[c0][&quot;monthly_fee&quot;] // 100 + FACTS[c0][&quot;monthly_fee&quot;]
+    return run_task(t, temperature)
+
+with ThreadPoolExecutor(2) as ex:
+    out2 = np.array(list(ex.map(run_task_dollars, jobs)), dtype=float)
+print(f&quot;fee/100: 50% horizon {h50:.1f} min | dollars: {horizon(fit_logistic(minutes, out2)):.1f} min&quot;)
+# Notice: the same &#x27;human minutes&#x27; can hide very different difficulty. METR&#x27;s number is only as good as its
+# human baselines, which is why they timed real people instead of guessing.</code></pre></div><div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: a smaller writer (3 + 6 calls)
+with ThreadPoolExecutor(2) as ex:
+    small = dict(zip(TASK_CIDS, ex.map(lambda c: ask(TASK.format(cid=c, rules=json.dumps(RULE_TEXT, indent=1), doc=contract(c)),
+                                                       model_name=&quot;llama3.2:3b&quot;, max_tokens=300), TASK_CIDS)))
+v_small = {c: pairwise(c, small[c], EXPERT[c]) for c in TASK_CIDS}
+print(&quot;3B writer:&quot;, v_small, &quot;| 8B writer:&quot;, verdicts)
+# Notice: with only 3 tasks the rate moves in steps of 33%. GDPval used 220 gold tasks and three graders per sample
+# for a reason. Never decide between models on a handful of comparisons.</code></pre></div><div class="code"><div class="cap"><span class="cell">a10_evals_long_horizon.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 3: a summary that games word-overlap metrics
+GAMED = &quot; &quot;.join(f&quot;{s.rstrip(&#x27;.&#x27;)} [{k}].&quot; for k in sorted(GOLD) for s in split_sentences(SOURCES[k]))   # copy the sources word for word
+print({k: round(v, 2) for k, v in scholar_metrics(GAMED).items()})
+# Notice: copying the sources scores near-perfect here. The paper&#x27;s organization metric (an LLM judge comparing
+# against the human-written section, pairwise) would catch that it is not a synthesis, just a list of abstracts.</code></pre></div></details>
+<div class="pit"><strong>Traps</strong><ul><li>Guessing human times. The time horizon is only as good as the human baselines; our toy&#x27;s made-up 1.5 minutes per step is exactly what METR avoided by timing people.</li><li>Quoting the 50% horizon to a customer. Half of tasks failing is not a product; quote the 80% or 95% horizon and design review around it.</li><li>Claiming &#x27;90x faster&#x27; without review time. GDPval&#x27;s speed-up nearly vanished once expert review and fixes were counted.</li><li>Trusting a single-order LLM grader. Small graders often pick the same position both times; swap and count disagreement as a tie.</li><li>Rewarding long or copied text. Word-overlap metrics can be gamed by pasting sources; keep an LLM or human judge for organization and synthesis.</li><li>Fitting a curve when every run succeeded or every run failed. There is no crossing point in your range; make longer or shorter tasks.</li></ul></div>
+<div class="check"><h4>Check yourself</h4><details><summary>How does METR turn success rates into a time horizon?</summary><p>Fit a logistic curve of success against log human time per model, then find the task length where the curve crosses 50%.</p></details><details><summary>Why is the 80% horizon shorter than the 50% horizon?</summary><p>Success falls as tasks get longer, so to succeed 80% of the time the tasks must be shorter; METR found 4-6x shorter.</p></details><details><summary>What does GDPval compare, and how?</summary><p>The model&#x27;s deliverable vs a human expert&#x27;s for the same task, judged blind and pairwise by occupation experts; the score is the win-or-tie rate.</p></details><details><summary>Why did GDPval&#x27;s speed and cost advantage shrink?</summary><p>Because an expert must review the model&#x27;s output and fix or redo it when it is wrong; that review time counts.</p></details><details><summary>Name the three axes DeepScholar-Bench scores.</summary><p>Knowledge synthesis, retrieval quality and verifiability.</p></details><details><summary>A summary cites a distractor source for a true sentence. Which of our metrics drops?</summary><p>Retrieval precision (a non-relevant source was cited) and probably citation precision (the source does not support the sentence).</p></details></div>
+</div></section><nav class="pager"><a class="prev" href="a09.html"><small>← Previous</small>Augmenting agents with memory</a><a class="next" href="a11.html"><small>Next →</small>Guest lectures and reasoning frontiers</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

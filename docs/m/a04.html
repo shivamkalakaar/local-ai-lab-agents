@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Multi-step reasoning and planning · Agent Engineering School</title>
+<meta name="description" content="Learn how agents handle hard multi-step tasks: search and back up from dead ends, split tasks only when needed, run independent steps at once, and learn from steps.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A04</span></div><section class="mod" id="a04" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A04</div><h2>Multi-step reasoning and planning</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a04_planning_search.ipynb">Open in Colab</a><button class="done-btn" data-done="a04" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>13 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Learn how agents handle hard multi-step tasks: search and back up from dead ends, split tasks only when needed, run independent steps at once, and learn from steps.</p><article class="lesson"><h2>The big idea</h2>
+<p>Some tasks can't be done in one straight pass. The first idea may lead to a dead end. A plain chain of steps commits early and never looks back.</p>
+<p>Think of finding your way through an unfamiliar office building. You try a corridor. If it ends at a locked door, you go back and try another. You don't map the whole building first. You split the trip into parts only where you get lost. And if two colleagues are free, you send them down two corridors at once.</p>
+<p>This module covers those habits for agents. Search a tree of steps and back up. Split a task only when a direct try fails. Choose between new ideas and fixing old ones. Run independent steps at the same time. And log every step, so it can become training data.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>Contract review is many steps: find clauses, check rules, compute figures, write a summary. Some depend on each other, some don't. Knowing which is which saves time.</li>
+<li>Local models are slower than cloud ones. Running independent checks at once, and not over-planning easy tasks, keeps waiting time down.</li>
+<li>Search only works where steps can be undone. Reading a clause can be undone. Sending an email cannot. A firm must know the difference.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Tree search with backtracking (LATS).</strong> The LATS paper (2023) runs a tree search over agent steps. Select a promising step. Expand it into several possible next steps (5 by default). Evaluate each with a value score: how promising it looks. LATS mixes the model's own rating with how often the same step was proposed. If a path fails, write a short note on why, and try another branch. On a number puzzle, LATS scored 0.44 against 0.20 for an earlier tree method. The cost: more calls than a single chain, and it needs states you can go back to.</p>
+</li>
+<li>
+<p><strong>Split only when needed (ADaPT).</strong> The ADaPT paper (2024) first lets the model try the whole task. Only if that fails does a planner split it into smaller parts. Then it repeats on each part, up to a set depth. Easy tasks cost one call. With GPT-3.5, it reached 71.6% on a household-task benchmark, against 43.3% for ReAct. A warning: the model judged its own success, and overrated it by more than 30 points on a shopping benchmark. Use a real checker when you can.</p>
+</li>
+<li>
+<p><strong>Wider or deeper (AB-MCTS).</strong> With a fixed budget, the next call can make a brand-new answer (wider) or improve the best one so far using feedback (deeper). The AB-MCTS paper (2025) lets the scores decide, using Thompson sampling: a method that mostly picks what has worked, but still tries the other option sometimes. On a coding benchmark with 128 calls, pure refinement scored 30.1%, repeated sampling 37.9%, and AB-MCTS 40.6%. The gains showed up at large budgets.</p>
+</li>
+<li>
+<p><strong>Run independent steps at once (SPRINT).</strong> Reasoning models usually think in one long line. The SPRINT paper (2025) trained a model to write a plan of independent subtasks, then run them in parallel. It matched its baselines on math while cutting sequential tokens (the text that must be written one piece after another) by up to 39% on long problems. The key point: waiting time is set by the longest chain of dependent steps, called the critical path, not by the total work.</p>
+</li>
+<li>
+<p><strong>Learn from steps, not just outcomes (SWiRL).</strong> The SWiRL paper (2025) cut each multi-step run into one example per action: the context so far, then the next action. A judge model kept steps it found reasonable, even when the final answer was wrong. This process filtering beat keeping only runs with correct answers. A failed run still contains good steps.</p>
+</li>
+</ol>
+<h2>Worked example</h2>
+<p>A contract review plan has four rule checks, then a summary. The checks don't depend on each other. The summary needs all four.</p>
+<pre><code class="language-python">PLAN = {&quot;liability_cap&quot;: [], &quot;governing_law&quot;: [], &quot;auto_renewal&quot;: [], &quot;termination_notice&quot;: [],
+        &quot;summary&quot;: [&quot;liability_cap&quot;, &quot;governing_law&quot;, &quot;auto_renewal&quot;, &quot;termination_notice&quot;]}
+print(&quot;plan rounds:&quot;, stages(PLAN))
+</code></pre>
+<p>In plain words:</p>
+<ul>
+<li>Line 1–2: each step lists what it depends on. The four checks depend on nothing. The summary depends on all four.</li>
+<li>Line 3: <code>stages</code> groups steps into rounds. A step runs once everything it needs is done. So round 1 holds all four checks, and round 2 holds the summary.</li>
+</ul>
+<p>Now run it on contract msa_15. Each check asks the model: "Does this clause follow this rule? PASS or FAIL." With two parallel slots, the four checks take about two rounds instead of four. The summary then lists every FAIL: "Cannot sign as written: ..."</p>
+<pre><code>round 1:  [liability_cap] [governing_law] [auto_renewal] [termination_notice]
+round 2:              [summary]
+</code></pre>
+<p>Add one more step, say "compute the dollar cap," which needs the liability check. Now the chain gets longer. No number of parallel slots can beat that longest chain.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Searching where actions can't be undone.</strong> A sent email or a database write can't be rewound. Only search over safe, reversible steps.</li>
+<li><strong>Trusting the model's own value scores.</strong> They are noisy. Use a real checker when one exists.</li>
+<li><strong>Planning everything up front.</strong> A long fixed plan breaks when any step fails. Try first, and split only what fails.</li>
+<li><strong>Running dependent steps in parallel.</strong> Map what depends on what first. Otherwise a step runs before its inputs exist.</li>
+<li><strong>Keeping only successful runs as training data.</strong> Good steps inside failed runs are lost. Label steps, not just outcomes.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>What does ADaPT do differently from planning everything first?</summary>
+<p>It tries the whole task first. It only plans and splits when that fails, and repeats on the failed parts, so easy tasks cost one call.</p>
+</details>
+<details>
+<summary>In AB-MCTS, what choice is made at each step, and what decides it?</summary>
+<p>Whether to make a new answer (wider) or improve an existing one (deeper). Thompson sampling on the feedback scores decides.</p>
+</details>
+<details>
+<summary>Why might SWiRL keep a step from a run whose final answer was wrong?</summary>
+<p>The step itself was judged reasonable. Keeping such steps gave better training results than keeping only successful runs.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the greedy chain and the tree search on the number puzzles, and compare how often each solves them and how many calls they use. Then run the ADaPT section and see that easy puzzles stop after one call. Finally, run the parallel review plan and compare the sequential and parallel times.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Lecture 5 (Oct 6)</p>
+
+  <p class="big">Hard tasks need more than one straight pass. Search a tree of steps and back up from dead ends, split a task only when a direct try fails, spend budget on new ideas or on refining old ones depending on feedback, and run independent steps at the same time. Every step you log can become step-level training data.</p>
+<div class="terms"><h4>Key terms</h4><dl><div><dt>Tree search</dt><dd>Exploring several possible next steps, scoring them, and going back to a better branch when one fails, instead of committing to one chain.<span class="from">Source: Zhou et al. 2023</span></dd></div><div><dt>Value function</dt><dd>A score for how promising a partial solution is. In LATS it mixes the LM&#x27;s own rating with self-consistency (how often a state is proposed).<span class="from">Source: Zhou et al. 2023</span></dd></div><div><dt>As-needed decomposition</dt><dd>Split a task into sub-tasks only after a direct attempt fails, and recurse on the failing parts.<span class="from">Source: Prasad et al. 2024</span></dd></div><div><dt>Wider vs deeper</dt><dd>Spending the next call on a new independent answer (wider) or on refining an existing one with feedback (deeper).<span class="from">Source: Inoue et al. 2025</span></dd></div><div><dt>Thompson sampling</dt><dd>Pick the option whose random draw from its score distribution is highest; it balances trying new options with using proven ones.<span class="from">Source: Inoue et al. 2025</span></dd></div><div><dt>Sequential tokens / critical path</dt><dd>The tokens or steps that must happen one after another; parallel steps only count once per round.<span class="from">Source: Biju et al. 2025</span></dd></div><div><dt>Sub-trajectory and process filtering</dt><dd>Cutting a multi-step run into one example per action, and keeping steps a judge calls reasonable regardless of the final outcome.<span class="from">Source: Goldie et al. 2025</span></dd></div></dl></div>
+<h3>The papers</h3><div class="papers"><div class="paper"><h4><a href="https://arxiv.org/abs/2504.04736">Synthetic Data Generation &amp; Multi-Step RL for Reasoning &amp; Tool Use (SWiRL)</a></h4><p class="by">Goldie et al. · 2025</p><dl><dt>What</dt><dd>Gemma 2 generates multi-step trajectories with tools (a search engine for QA, a calculator for math). Each trajectory with k actions is cut into k sub-trajectories (context so far, then the next action). These are filtered, and the model is trained with step-wise RL where a generative reward model (Gemini 1.5 Pro) judges each action.</dd><dt>Result</dt><dd>Relative accuracy gains over baselines: 21.5% GSM8K, 12.3% HotPotQA, 14.8% CofCA, 11.1% MuSiQue, 15.3% BeerQA. Training only on HotPotQA improved zero-shot GSM8K by 16.9% relative. Process-only filtering (keep steps judged reasonable, even if the final answer was wrong) gave the best results for RL; outcome filtering usually hurt compared with no filter. Smaller 2B and 9B models generalized less consistently than 27B.</dd><dt>Takeaway</dt><dd>Log agent runs step by step and label steps, not only final outcomes. A failed run still contains good steps worth training on.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2310.04406">Language Agent Tree Search Unifies Reasoning Acting and Planning in Language Models (LATS)</a></h4><p class="by">Zhou et al. · 2023</p><dl><dt>What</dt><dd>Monte Carlo Tree Search over agent actions. Each round: select a node by UCT, expand n sampled actions (n = 5 by default) and run them in the environment, evaluate with V = λ·(LM score) + (1-λ)·(self-consistency), simulate to the end, backpropagate, and write a verbal reflection after a failure.</dd><dt>Result</dt><dd>HumanEval pass@1 92.7% with GPT-4 (83.8% with GPT-3.5, vs 68.1% for Reflexion). HotPotQA EM 0.63 vs 0.32 for ReAct (GPT-3.5, 100-question subset). WebShop score 75.9 without gradient training. Game of 24 success 0.44 vs 0.20 for Tree-of-Thoughts. It costs more than ReAct or Reflexion and assumes you can return to earlier states.</dd><dt>Takeaway</dt><dd>When you have a checkable reward (tests, a verifier), search beats a single chain. Only use it where states can be undone, and cap the expansions.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2506.05745">SPRINT: Enabling Interleaved Planning and Parallelized Execution in Reasoning Models</a></h4><p class="by">Biju et al. · 2025</p><dl><dt>What</dt><dd>A data pipeline rewrites long sequential reasoning traces (from DeepSeek-R1 on MATH) into rounds: a plan listing independent subtasks, then parallel execution of those subtasks. GPT-4o and GPT-4o-mini split traces into steps and build a dependency graph; about 1,700 examples fine-tune a 7B distilled reasoning model to plan and run steps in parallel.</dd><dt>Result</dt><dd>Matched reasoning baselines on math (MATH-500 92.5% vs 91.0% for the same model fine-tuned on sequential traces) while cutting sequential tokens by up to 39% on problems needing more than 8,000 tokens. The gains carried over to out-of-domain tasks: up to 45% fewer sequential tokens on GPQA and 65% on Countdown.</dd><dt>Takeaway</dt><dd>Latency is set by the longest chain of dependent steps, not the total work. Have the planner mark which steps are independent and run those in parallel.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2311.05772">ADaPT: As-Needed Decomposition and Planning with Language Models</a></h4><p class="by">Prasad et al. · 2024</p><dl><dt>What</dt><dd>An executor LLM first tries the whole task. Only if it reports failure does a planner split the task into a few sub-tasks joined by AND/OR, and ADaPT recurses on each, up to a max depth (3 for ALFWorld and WebShop, 4 for TextCraft). Success is the executor&#x27;s own judgment.</dd><dt>Result</dt><dd>With GPT-3.5: ALFWorld 71.6% vs 43.3% ReAct and 57.5% Reflexion; WebShop 44.0% vs 32.0% ReAct; TextCraft (a new compositional dataset) 52.0% vs 19.0% ReAct. The abstract summarizes this as up to 28.3%, 27% and 33% higher success rates than strong baselines. The executor&#x27;s self-reported success overestimated real success, by more than 30 points on WebShop.</dd><dt>Takeaway</dt><dd>Don&#x27;t plan everything up front. Try directly, and decompose only the parts that fail. Use a real checker for &#x27;did it work&#x27; when you can; self-reports are optimistic.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2503.04412">Wider or Deeper? Scaling LLM Inference-Time Compute with Adaptive Branching Tree Search (AB-MCTS)</a></h4><p class="by">Inoue et al. · 2025</p><dl><dt>What</dt><dd>A tree search where each node can generate a brand-new answer (wider, via a GEN node) or refine an existing child (deeper), chosen by Thompson sampling on feedback scores. Two variants: AB-MCTS-M (a mixed model) and AB-MCTS-A (node aggregation). Tested with GPT-4o and DeepSeek-V3 on LiveCodeBench, CodeContests, ARC-AGI and MLE-Bench.</dd><dt>Result</dt><dd>At 128 calls on CodeContests with GPT-4o: AB-MCTS-M 40.6%, repeated sampling 37.9%, standard MCTS 37.5%, pure sequential refinement 30.1%. AB-MCTS-M had the best average rank across benchmarks. On ARC-AGI at 128 calls repeated sampling was still best, but with up to 512 calls AB-MCTS kept improving while repeated sampling plateaued. Many LiveCodeBench gaps look within the reported standard deviations (our reading of the tables).</dd><dt>Takeaway</dt><dd>Neither &#x27;sample more&#x27; nor &#x27;refine more&#x27; always wins. Let feedback scores decide where the next call goes, and expect the gains to appear at larger budgets.</dd></dl></div></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a04_planning_search.ipynb" target="_blank" rel="noopener">a04_planning_search.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import ast, json, math, random, re, time
+from fractions import Fraction
+from functools import lru_cache
+from typing import Literal
+from concurrent.futures import ThreadPoolExecutor
+from pydantic import BaseModel
+from lal.llm import ask, structured
+from lal.data import contract, sections, labels, playbook
+from lal.checks import check
+
+CALLS = [0]                                   # this notebook aims for about 70-80 model calls in total
+def llm(prompt, **kw):
+    CALLS[0] += 1
+    try:
+        return ask(prompt, **kw)
+    except Exception as e:
+        return f&quot;ERROR: {e}&quot;
+
+def llm_struct(prompt, schema, **kw):
+    CALLS[0] += 1
+    try:
+        return structured(prompt, schema, **kw)
+    except Exception:                         # bad JSON after retries: treat as &quot;no answer&quot;
+        return None</code></pre></div>
+<div class="nb-md"><h3>1. The puzzle and its checker</h3>
+<p>Rules: use each number exactly once; + - * /; every intermediate result must be a whole number that is not negative.
+The puzzles are generated with a fixed seed, and the generator only keeps targets that a brute-force solver can reach,
+so every puzzle has an answer. The solver is our ground truth; the model never sees it.</p></div>
+<div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">OPS = {&quot;+&quot;: lambda a, b: a + b, &quot;-&quot;: lambda a, b: a - b if a &gt;= b else None,
+       &quot;*&quot;: lambda a, b: a * b, &quot;/&quot;: lambda a, b: a // b if b and a % b == 0 else None}
+
+@lru_cache(maxsize=None)
+def solve(values: tuple, target: int):
+    &quot;&quot;&quot;Brute force: return an expression that reaches target, or None. values is a sorted tuple.&quot;&quot;&quot;
+    if len(values) == 1:
+        return str(values[0]) if values[0] == target else None
+    vals = list(values)
+    for i in range(len(vals)):
+        for j in range(len(vals)):
+            if i == j:
+                continue
+            rest = [v for k, v in enumerate(vals) if k not in (i, j)]
+            for op, f in OPS.items():
+                r = f(vals[i], vals[j])
+                if r is None:
+                    continue
+                sub = solve(tuple(sorted(rest + [r])), target)
+                if sub is not None:
+                    return f&quot;[{vals[i]} {op} {vals[j]} = {r}] then {sub}&quot;
+    return None
+
+@lru_cache(maxsize=None)
+def reachable(values: tuple) -&gt; frozenset:
+    if len(values) == 1:
+        return frozenset(values)
+    out = set()
+    for i in range(len(values)):
+        for j in range(len(values)):
+            if i != j:
+                rest = [v for k, v in enumerate(values) if k not in (i, j)]
+                for f in OPS.values():
+                    r = f(values[i], values[j])
+                    if r is not None:
+                        out |= reachable(tuple(sorted(rest + [r])))
+    return frozenset(out)
+
+def good_first_steps(nums, target):
+    &quot;&quot;&quot;How many legal first steps keep the target reachable. More = a friendlier puzzle.&quot;&quot;&quot;
+    n = 0
+    for i in range(4):
+        for j in range(4):
+            if i != j:
+                rest = [v for k, v in enumerate(nums) if k not in (i, j)]
+                for f in OPS.values():
+                    r = f(nums[i], nums[j])
+                    n += r is not None and target in reachable(tuple(sorted(rest + [r])))
+    return n
+
+def make_puzzles(n, seed=7):
+    &quot;&quot;&quot;Random numbers 1-9; the target is one of the friendliest reachable targets (several paths work, but not all).&quot;&quot;&quot;
+    rng, out = random.Random(seed), []
+    while len(out) &lt; n:
+        nums = sorted(rng.randint(1, 9) for _ in range(4))
+        cands = [t for t in reachable(tuple(nums)) if 12 &lt;= t &lt;= 40 and t != sum(nums)]   # not just &quot;add everything&quot;
+        if not cands:
+            continue
+        ranked = sorted(cands, key=lambda t: -good_first_steps(nums, t))
+        out.append({&quot;numbers&quot;: nums, &quot;target&quot;: rng.choice(ranked[:3])})
+    return out
+
+def check_expr(expr, numbers, target):
+    &quot;&quot;&quot;Exact check of a full expression. Returns (ok, value_or_None, message).&quot;&quot;&quot;
+    try:
+        tree = ast.parse(expr, mode=&quot;eval&quot;)
+    except Exception:
+        return False, None, &quot;not a valid arithmetic expression&quot;
+    used = []
+    def ev(n):
+        if isinstance(n, ast.Expression): return ev(n.body)
+        if isinstance(n, ast.Constant) and isinstance(n.value, int):
+            used.append(n.value); return Fraction(n.value)
+        if isinstance(n, ast.BinOp) and type(n.op) in (ast.Add, ast.Sub, ast.Mult, ast.Div):
+            a, b = ev(n.left), ev(n.right)
+            if isinstance(n.op, ast.Add): return a + b
+            if isinstance(n.op, ast.Sub): return a - b
+            if isinstance(n.op, ast.Mult): return a * b
+            if b == 0: raise ZeroDivisionError
+            return a / b
+        raise ValueError(&quot;only numbers and + - * / are allowed&quot;)
+    try:
+        val = ev(tree)
+    except Exception as e:
+        return False, None, f&quot;could not evaluate: {e}&quot;
+    if sorted(used) != sorted(numbers):
+        return False, val, f&quot;must use exactly the numbers {sorted(numbers)}, but used {sorted(used)}&quot;
+    if val != target:
+        return False, val, f&quot;it equals {float(val):g}, not {target}&quot;
+    return True, val, &quot;correct&quot;
+
+def clean_expr(text):
+    &quot;&quot;&quot;Model replies often add words or &#x27;= 24&#x27;. Keep the last line that looks like arithmetic.&quot;&quot;&quot;
+    text = (text or &quot;&quot;).replace(&quot;×&quot;, &quot;*&quot;).replace(&quot;÷&quot;, &quot;/&quot;).replace(&quot;x&quot;, &quot;*&quot;).replace(&quot;`&quot;, &quot;&quot;)
+    lines = [l.split(&quot;=&quot;)[0] for l in text.splitlines() if re.search(r&quot;\d\s*[-+*/]\s*\(?\d&quot;, l)]
+    return re.sub(r&quot;[^\d+\-*/() ]&quot;, &quot;&quot;, lines[-1]).strip() if lines else &quot;&quot;
+
+PUZZLES = make_puzzles(6)
+P = PUZZLES[:3]                               # 3 puzzles keep us inside the call budget
+for p in PUZZLES:
+    print(p, &quot;| solver:&quot;, solve(tuple(p[&quot;numbers&quot;]), p[&quot;target&quot;]))
+print(check_expr(&quot;(9 - 1) * 3 + 2&quot;, [1, 2, 3, 9], 26), check_expr(&quot;9 * 3&quot;, [1, 2, 3, 9], 27)[2])</code></pre></div>
+<div class="nb-md"><h3>2. A step, a state, and a greedy chain</h3>
+<p>A <strong>state</strong> is the list of numbers still left (each remembers the expression that made it). A <strong>step</strong> combines two of them.
+Four numbers need three steps. When two numbers are left, the last step is easy to check in code, like running a unit test,
+so every method below gets that check for free. The greedy chain asks for one step at a time and never looks back.</p></div>
+<div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class Step(BaseModel):
+    a: int
+    op: Literal[&quot;+&quot;, &quot;-&quot;, &quot;*&quot;, &quot;/&quot;]
+    b: int
+
+class Proposals(BaseModel):
+    steps: list[Step]
+
+def start(p):
+    return [(n, str(n)) for n in p[&quot;numbers&quot;]]
+
+def apply(state, s: Step):
+    &quot;&quot;&quot;Return the new state, or None if the step is not allowed.&quot;&quot;&quot;
+    vals = [v for v, _ in state]
+    if s.a not in vals:
+        return None
+    i = vals.index(s.a)
+    rest = state[:i] + state[i + 1:]
+    j = next((k for k, (v, _) in enumerate(rest) if v == s.b), None)
+    if j is None:
+        return None
+    ea, eb = state[i][1], rest[j][1]
+    r = OPS[s.op](s.a, s.b)
+    if r is None:
+        return None
+    return rest[:j] + rest[j + 1:] + [(r, f&quot;({ea} {s.op} {eb})&quot;)]
+
+def finish(state, target):
+    &quot;&quot;&quot;Two numbers left: try every last step in code. Returns the full expression or None.&quot;&quot;&quot;
+    (a, ea), (b, eb) = state
+    for (x, ex), (y, ey) in (((a, ea), (b, eb)), ((b, eb), (a, ea))):
+        for op, f in OPS.items():
+            if f(x, y) == target:
+                return f&quot;{ex} {op} {ey}&quot;
+    return None
+
+def values(state):
+    return [v for v, _ in state]
+
+def propose(state, target, k=1, memory=&quot;&quot;, temperature=0.0):
+    prompt = (f&quot;Number puzzle. Numbers left: {values(state)}. Target: {target}.\n&quot;
+              &quot;Pick TWO of the numbers and one operation (+, -, *, /) to combine them into one new number. &quot;
+              &quot;Results must be whole numbers and not negative. Choose steps that keep it possible to reach the target &quot;
+              f&quot;with the numbers that remain.\n{memory}Give {k} different option(s), best first, as a, op, b.&quot;)
+    out = llm_struct(prompt, Proposals, temperature=temperature, max_tokens=300)
+    return (out.steps if out else [])[:k]
+
+def greedy(p):
+    state, traj = start(p), []
+    for _ in range(2):                                   # 4 numbers -&gt; 3 -&gt; 2
+        steps = [s for s in propose(state, p[&quot;target&quot;], k=1) if apply(state, s)]
+        if not steps:
+            return {&quot;ok&quot;: False, &quot;traj&quot;: traj, &quot;expr&quot;: None}
+        nxt = apply(state, steps[0])
+        traj.append({&quot;state&quot;: values(state), &quot;action&quot;: steps[0].model_dump(), &quot;next&quot;: values(nxt)})
+        state = nxt
+    expr = finish(state, p[&quot;target&quot;])
+    return {&quot;ok&quot;: expr is not None, &quot;traj&quot;: traj, &quot;expr&quot;: expr}
+
+greedy_runs = [greedy(p) for p in P]
+for p, r in zip(P, greedy_runs):
+    print(p[&quot;numbers&quot;], &quot;-&gt;&quot;, p[&quot;target&quot;], &quot;| greedy:&quot;, &quot;SOLVED &quot; + r[&quot;expr&quot;] if r[&quot;ok&quot;] else &quot;failed&quot;,
+          &quot;| path:&quot;, [t[&quot;next&quot;] for t in r[&quot;traj&quot;]])
+print(CALLS[0], &quot;calls so far&quot;)</code></pre></div>
+<div class="nb-md"><h3>3. Tree search with backtracking (LATS, simplified)</h3>
+<p><strong>LATS</strong> (Zhou et al. 2023, <em>Language Agent Tree Search Unifies Reasoning, Acting, and Planning in Language Models</em>) runs
+Monte Carlo Tree Search over agent steps: <strong>select</strong> a promising node, <strong>expand</strong> it with n sampled actions (n = 5 in the paper),
+<strong>evaluate</strong> children with a value V = λ·(LM score) + (1-λ)·(self-consistency score), <strong>backpropagate</strong>, and store a
+<strong>reflection</strong> after a failed path. It reached 92.7% pass@1 on HumanEval with GPT-4; on Game of 24 it scored 0.44 against
+0.20 for Tree-of-Thoughts.</p>
+<p>Our version is a small best-first search, which is the "select the highest value and backtrack" core of MCTS without the
+visit-count bonus:
+- <strong>expand</strong>: one call returns k=3 candidate steps; code drops illegal ones;
+- <strong>evaluate</strong>: one call rates the new states 1-10; self-consistency = how many proposals led to the same state;
+- <strong>terminal</strong>: with two numbers left, code checks the last step (the environment's reward);
+- <strong>reflection</strong>: dead ends are written into the next prompt (LATS asks the LM to write them; we let code write them, which is free).</p></div>
+<div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class Scores(BaseModel):
+    scores: list[int]
+
+def rate(states, target):
+    lists = &quot;\n&quot;.join(f&quot;{i+1}. {values(s)}&quot; for i, s in enumerate(states))
+    out = llm_struct(f&quot;Target: {target}. For each list of numbers below, rate from 1 (impossible) to 10 (surely possible) &quot;
+                     f&quot;how likely it is to reach the target using each number once with + - * /.\n{lists}\n&quot;
+                     f&quot;Return exactly {len(states)} scores in order.&quot;, Scores, max_tokens=150)
+    s = (out.scores if out else [])
+    return [min(10, max(1, s[i])) / 10 if i &lt; len(s) else 0.5 for i in range(len(states))]
+
+def tree_search(p, k=3, max_expansions=4, lam=0.5):
+    target, root = p[&quot;target&quot;], start(p)
+    frontier = [(1.0, 0, root, [])]                     # (value, tie-break id, state, trajectory)
+    dead, expansions, uid, last = [], 0, 1, []
+    while frontier and expansions &lt; max_expansions:
+        frontier.sort(key=lambda x: -x[0])
+        v, _, state, traj = frontier.pop(0)             # SELECT the best open node
+        memory = (&quot;Dead ends already tried (do not repeat): &quot; + &quot;; &quot;.join(dead[-4:]) + &quot;\n&quot;) if dead else &quot;&quot;
+        steps = propose(state, target, k=k, memory=memory, temperature=0.7)     # EXPAND
+        expansions += 1
+        kids = {}
+        for s in steps:
+            nxt = apply(state, s)
+            if nxt is None:
+                continue
+            key = tuple(sorted(values(nxt)))
+            kids.setdefault(key, [nxt, s, 0])[2] += 1     # count duplicates for self-consistency
+        if not kids:
+            continue
+        open_kids = []
+        for key, (nxt, s, count) in kids.items():
+            t2 = traj + [{&quot;state&quot;: values(state), &quot;action&quot;: s.model_dump(), &quot;next&quot;: values(nxt)}]
+            last = t2                                     # keep the latest path, for the SWiRL section
+            if len(nxt) == 2:                             # TERMINAL: code checks the last step
+                expr = finish(nxt, target)
+                if expr:
+                    return {&quot;ok&quot;: True, &quot;traj&quot;: t2, &quot;expr&quot;: expr, &quot;expansions&quot;: expansions}
+                dead.append(str(list(key)))               # REFLECTION (code-written)
+            else:
+                open_kids.append((key, nxt, s, count, t2))
+        if open_kids:
+            lm = rate([nk[1] for nk in open_kids], target)                       # EVALUATE
+            for (key, nxt, s, count, t2), score in zip(open_kids, lm):
+                value = lam * score + (1 - lam) * count / max(1, len(steps))
+                frontier.append((value, uid, nxt, t2)); uid += 1
+    return {&quot;ok&quot;: False, &quot;traj&quot;: last, &quot;expr&quot;: None, &quot;expansions&quot;: expansions, &quot;dead&quot;: dead}
+
+t0 = time.time()
+tree_runs = [tree_search(p) for p in P]
+for p, r in zip(P, tree_runs):
+    print(p[&quot;numbers&quot;], &quot;-&gt;&quot;, p[&quot;target&quot;], &quot;| tree:&quot;, &quot;SOLVED &quot; + r[&quot;expr&quot;] if r[&quot;ok&quot;] else &quot;failed&quot;,
+          f&quot;after {r[&#x27;expansions&#x27;]} expansions&quot;)
+print(f&quot;greedy solved {sum(r[&#x27;ok&#x27;] for r in greedy_runs)}/{len(P)}, tree solved {sum(r[&#x27;ok&#x27;] for r in tree_runs)}/{len(P)} &quot;
+      f&quot;| {time.time()-t0:.0f}s, {CALLS[0]} calls so far&quot;)</code></pre></div>
+<div class="nb-md"><p>The tree spends more calls, but on a dead end it can go back instead of failing. LATS's own limits apply here too: it costs
+more than a single chain, and it needs states you can <strong>go back to</strong>. A puzzle can; an agent that already sent an email cannot.</p></div>
+<div class="nb-md"><h3>4. ADaPT: decompose only when needed</h3>
+<p><strong>ADaPT</strong> (Prasad et al. 2024, <em>ADaPT: As-Needed Decomposition and Planning with Language Models</em>) first lets an executor try
+the whole task. Only if it fails does a planner split the task, and then ADaPT recurses on each piece, up to a max depth.
+With GPT-3.5 it beat ReAct, Plan-and-Execute and Reflexion: 71.6% vs 43.3% for ReAct on ALFWorld, 52% vs 19% on TextCraft.</p>
+<p>Here the executor writes a whole expression in one go. If the checker rejects it, the planner picks one step, and we recurse
+on the smaller puzzle. (ADaPT's executor judged its own success; our checker is stricter and more honest.)</p></div>
+<div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def direct(state, target, temperature=0.0, extra=&quot;&quot;):
+    nums = values(state)
+    reply = llm(f&quot;Use each of the numbers {nums} exactly once, with + - * / and parentheses, to make {target}. &quot;
+                f&quot;{extra}Reply with only the expression, for example (8 - 2) * (3 + 1).&quot;, temperature=temperature, max_tokens=80)
+    return clean_expr(reply)
+
+def substitute(expr, state):
+    &quot;&quot;&quot;Rewrite an expression over the state&#x27;s values into one over the ORIGINAL numbers.&quot;&quot;&quot;
+    pools = {}
+    for v, e in state:
+        pools.setdefault(v, []).append(e)
+    try:
+        tree = ast.parse(expr, mode=&quot;eval&quot;)
+        class Sub(ast.NodeTransformer):
+            def visit_Constant(self, node):
+                return ast.parse(pools[node.value].pop(0), mode=&quot;eval&quot;).body
+        return ast.unparse(Sub().visit(tree))
+    except Exception:
+        return None
+
+def adapt(state, p, depth=0, d_max=2, log=None):
+    log = [] if log is None else log
+    expr = direct(state, p[&quot;target&quot;])                                # 1. try directly
+    full = substitute(expr, state) if expr else None
+    ok = bool(full) and check_expr(full, p[&quot;numbers&quot;], p[&quot;target&quot;])[0]
+    log.append({&quot;depth&quot;: depth, &quot;numbers&quot;: values(state), &quot;try&quot;: expr, &quot;ok&quot;: ok})
+    if ok:
+        return full, log
+    if depth &gt;= d_max or len(state) &lt;= 2:
+        return None, log
+    steps = [s for s in propose(state, p[&quot;target&quot;], k=1) if apply(state, s)]    # 2. only now: plan one sub-step
+    if not steps:
+        return None, log
+    return adapt(apply(state, steps[0]), p, depth + 1, d_max, log)              # 3. recurse on the smaller task
+
+adapt_runs = []
+for p in P:
+    expr, log = adapt(start(p), p)
+    adapt_runs.append({&quot;ok&quot;: expr is not None, &quot;expr&quot;: expr, &quot;log&quot;: log})
+    print(p[&quot;numbers&quot;], &quot;-&gt;&quot;, p[&quot;target&quot;], &quot;|&quot;, &quot; -&gt; &quot;.join(f&quot;d{l[&#x27;depth&#x27;]}:{&#x27;OK&#x27; if l[&#x27;ok&#x27;] else &#x27;x&#x27;}&quot; for l in log),
+          &quot;|&quot;, expr or &quot;failed&quot;)
+direct_only = sum(r[&quot;log&quot;][0][&quot;ok&quot;] for r in adapt_runs)
+print(f&quot;direct only: {direct_only}/{len(P)} | ADaPT: {sum(r[&#x27;ok&#x27;] for r in adapt_runs)}/{len(P)} | {CALLS[0]} calls so far&quot;)</code></pre></div>
+<div class="nb-md"><p>The point is cost: easy puzzles stop after one call; only the hard ones pay for planning.</p></div>
+<div class="nb-md"><h3>5. Wider or deeper? (AB-MCTS)</h3>
+<p>With a fixed budget of calls, you can sample <strong>new</strong> answers (wider) or <strong>refine</strong> the best one using feedback (deeper).
+<strong>AB-MCTS</strong> (Inoue et al. 2025, <em>Wider or Deeper? Scaling LLM Inference-Time Compute with Adaptive Branching Tree Search</em>)
+decides at every node, using Thompson sampling on the scores so far. With 128 calls of GPT-4o on CodeContests, pure
+refinement scored 30.1%, repeated sampling 37.9%, and AB-MCTS 40.6%. Pure "deeper" can be worse than pure "wider".</p>
+<p>We give each strategy the same budget of 3 calls per puzzle and score answers with the checker (1.0 if correct, partial
+credit if it uses the right numbers and lands close).</p></div>
+<div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">BUDGET = 3
+
+def score(expr, p):
+    ok, val, msg = check_expr(expr, p[&quot;numbers&quot;], p[&quot;target&quot;]) if expr else (False, None, &quot;empty answer&quot;)
+    if ok:
+        return 1.0, msg
+    if val is None or &quot;must use&quot; in msg:
+        return 0.0, msg
+    return 0.5 * max(0.0, 1 - abs(float(val) - p[&quot;target&quot;]) / p[&quot;target&quot;]), msg
+
+def wider(p):
+    with ThreadPoolExecutor(2) as ex:
+        exprs = list(ex.map(lambda _: direct(start(p), p[&quot;target&quot;], temperature=0.9), range(BUDGET)))
+    return max(score(e, p)[0] for e in exprs)
+
+def deeper(p):
+    best = direct(start(p), p[&quot;target&quot;], temperature=0.9)
+    best_s, msg = score(best, p)
+    for _ in range(BUDGET - 1):
+        if best_s == 1.0:
+            break
+        e = direct(start(p), p[&quot;target&quot;], temperature=0.7,
+                   extra=f&quot;Your last try was {best or &#x27;(empty)&#x27;}: {msg}. Fix it. &quot;)
+        s, m = score(e, p)
+        if s &gt;= best_s:
+            best, best_s, msg = e, s, m
+    return best_s
+
+wd = {&quot;wider&quot;: [wider(p) for p in P], &quot;deeper&quot;: [deeper(p) for p in P]}
+for name, ss in wd.items():
+    print(f&quot;{name:7s} solved {sum(s == 1.0 for s in ss)}/{len(P)} | mean best score {sum(ss)/len(ss):.2f}&quot;)
+print(CALLS[0], &quot;calls so far&quot;)</code></pre></div>
+<div class="nb-md"><p>Three puzzles and three calls each is far too little to pick a winner; the paper needed up to 128 calls per problem. What
+you should take away is the knob itself: when feedback is informative ("it equals 30, not 24"), deeper helps; when the first
+idea is wrong at the root, only wider escapes it. AB-MCTS learns which one is paying off.</p></div>
+<div class="nb-md"><h3>6. SPRINT: run independent steps at the same time</h3>
+<p>Reasoning models usually think in one long sequence. <strong>SPRINT</strong> (Biju et al. 2025, <em>SPRINT: Enabling Interleaved Planning and
+Parallelized Execution in Reasoning Models</em>) fine-tunes a model to alternate a <strong>plan</strong> (a list of independent subtasks) with
+<strong>parallel execution</strong> of those subtasks. It matched its baselines on math while using up to 39% fewer sequential tokens on
+long problems (and up to 45% on GPQA, 65% on Countdown).</p>
+<p>The same idea works at the agent level. A contract review plan has four independent rule checks, then one summary that needs
+all four. Independent checks can run together.</p></div>
+<div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">PB = playbook()
+WORD = {&quot;liability_cap&quot;: &quot;Liability&quot;, &quot;governing_law&quot;: &quot;Governing&quot;, &quot;auto_renewal&quot;: &quot;Renewal&quot;, &quot;termination_notice&quot;: &quot;Renewal&quot;}
+PLAN = {&quot;liability_cap&quot;: [], &quot;governing_law&quot;: [], &quot;auto_renewal&quot;: [], &quot;termination_notice&quot;: [],
+        &quot;summary&quot;: [&quot;liability_cap&quot;, &quot;governing_law&quot;, &quot;auto_renewal&quot;, &quot;termination_notice&quot;]}
+
+def stages(dag):
+    &quot;&quot;&quot;Group steps into rounds: a step runs once everything it depends on is done.&quot;&quot;&quot;
+    done, out = set(), []
+    while len(done) &lt; len(dag):
+        ready = [s for s, deps in dag.items() if s not in done and all(d in done for d in deps)]
+        if not ready:
+            raise ValueError(&quot;cycle in plan&quot;)
+        out.append(ready); done |= set(ready)
+    return out
+
+def check_rule(cid, rule):
+    sec = next((s for s in sections(contract(cid)) if WORD[rule] in s[&quot;title&quot;]), None)
+    v = llm(f&quot;Playbook rule: {PB[&#x27;rules&#x27;][rule]}\n\nClause: {sec[&#x27;text&#x27;] if sec else contract(cid)}\n\n&quot;
+            &quot;Does the clause follow the rule? Answer PASS or FAIL only.&quot;, max_tokens=5).strip().upper()
+    return rule, &quot;FAIL&quot; if &quot;FAIL&quot; in v else &quot;PASS&quot;
+
+print(&quot;plan rounds:&quot;, stages(PLAN))
+cid = &quot;msa_15&quot;
+t0 = time.time(); seq = [check_rule(cid, r) for r in stages(PLAN)[0]]; t_seq = time.time() - t0
+t0 = time.time()
+with ThreadPoolExecutor(2) as ex:
+    par = list(ex.map(lambda r: check_rule(cid, r), stages(PLAN)[0]))
+t_par = time.time() - t0
+summary = &quot;Cannot sign as written: &quot; + &quot;, &quot;.join(r for r, v in par if v == &quot;FAIL&quot;) if any(v == &quot;FAIL&quot; for _, v in par) else &quot;OK to sign&quot;
+print(f&quot;sequential {t_seq:.1f}s | parallel(2) {t_par:.1f}s | {summary}&quot;)
+print(&quot;truth issues:&quot;, [i[&quot;rule&quot;] for i in labels()[cid][&quot;issues&quot;]], &quot;|&quot;, CALLS[0], &quot;calls so far&quot;)</code></pre></div>
+<div class="nb-md"><p>With 2 parallel slots, 4 checks take about 2 rounds instead of 4. The planner's job is to find the <strong>independent</strong> steps;
+here the plan was written by hand, SPRINT trains the model to write it.</p></div>
+<div class="nb-md"><h3>7. SWiRL: turn logged runs into step-level training data</h3>
+<p><strong>SWiRL</strong> (Goldie et al. 2025, <em>Synthetic Data Generation &amp; Multi-Step RL for Reasoning &amp; Tool Use</em>) generates multi-step
+trajectories, cuts each one with k actions into k <strong>sub-trajectories</strong> (context so far → next action), filters them, and trains
+with RL where a model judges each step. Two findings worth knowing: with Gemma 2 27B it beat baselines by 21.5% (GSM8K) and
+12.3% (HotPotQA) relative accuracy; and <strong>process-only filtering</strong> (keep steps a judge calls reasonable, even when the final
+answer was wrong) worked better for RL than keeping only trajectories with correct answers.</p>
+<p>We already logged trajectories in sections 2 and 3. Our "process judge" is the solver: a step is good if the target is
+still reachable after it. (SWiRL used Gemini 1.5 Pro as the judge; a code judge is cheaper when you have one.)</p></div>
+<div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">trajectories = []
+for p, g, t in zip(P, greedy_runs, tree_runs):
+    for method, r in ((&quot;greedy&quot;, g), (&quot;tree&quot;, t)):
+        if r[&quot;traj&quot;]:
+            trajectories.append({&quot;puzzle&quot;: p, &quot;method&quot;: method, &quot;steps&quot;: r[&quot;traj&quot;], &quot;outcome_ok&quot;: r[&quot;ok&quot;]})
+
+examples = []
+for tr in trajectories:
+    p = tr[&quot;puzzle&quot;]
+    for i, st in enumerate(tr[&quot;steps&quot;]):                       # one example per action
+        context = f&quot;Numbers: {p[&#x27;numbers&#x27;]}. Target: {p[&#x27;target&#x27;]}. Steps so far: &quot; + \
+                  &quot;; &quot;.join(f&quot;{s[&#x27;action&#x27;][&#x27;a&#x27;]} {s[&#x27;action&#x27;][&#x27;op&#x27;]} {s[&#x27;action&#x27;][&#x27;b&#x27;]}&quot; for s in tr[&quot;steps&quot;][:i])
+        step_ok = p[&quot;target&quot;] in reachable(tuple(sorted(st[&quot;next&quot;])))     # process label from the solver
+        examples.append({&quot;context&quot;: context, &quot;action&quot;: st[&quot;action&quot;], &quot;process_ok&quot;: step_ok, &quot;outcome_ok&quot;: tr[&quot;outcome_ok&quot;]})
+
+filters = {&quot;no filter&quot;: lambda e: True, &quot;outcome only&quot;: lambda e: e[&quot;outcome_ok&quot;],
+           &quot;process only&quot;: lambda e: e[&quot;process_ok&quot;], &quot;process + outcome&quot;: lambda e: e[&quot;process_ok&quot;] and e[&quot;outcome_ok&quot;]}
+for name, f in filters.items():
+    kept = [e for e in examples if f(e)]
+    print(f&quot;{name:18s} keeps {len(kept):2d} of {len(examples)} step examples&quot;)
+good_steps_failed_runs = sum(e[&quot;process_ok&quot;] and not e[&quot;outcome_ok&quot;] for e in examples)
+print(&quot;good steps that live inside FAILED runs:&quot;, good_steps_failed_runs, &quot;(an outcome filter throws these away)&quot;)
+if examples:
+    print(&quot;example:&quot;, json.dumps(examples[0]))</code></pre></div>
+<div class="nb-md"><p>That last number is SWiRL's point in miniature: a failed run can still contain good steps, and step-level labels let you keep them.</p></div>
+<div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;puzzle checker accepts a right answer and rejects a wrong one&quot;,
+      check_expr(&quot;(9 - 1) * 3 + 2&quot;, [1, 2, 3, 9], 26)[0] and not check_expr(&quot;9 * 3&quot;, [1, 2, 3, 9], 27)[0])
+check(&quot;tree search is not worse than greedy (allowing one puzzle of noise)&quot;,
+      sum(r[&quot;ok&quot;] for r in tree_runs) &gt;= sum(r[&quot;ok&quot;] for r in greedy_runs) - 1)
+check(&quot;some method solves at least one puzzle&quot;,
+      any(r[&quot;ok&quot;] for r in greedy_runs + tree_runs + adapt_runs) or any(s == 1.0 for ss in wd.values() for s in ss))
+check(&quot;ADaPT solves at least one puzzle&quot;, any(r[&quot;ok&quot;] for r in adapt_runs))
+check(&quot;SPRINT: parallel run mostly gives the same verdicts as sequential&quot;, len(set(par) &amp; set(seq)) &gt;= 3)
+check(&quot;SWiRL: built step-level examples from logged runs&quot;, len(examples) &gt;= 3)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Adaptive branching.</strong> Write <code>adaptive(p)</code>: at each call, Thompson-sample between GEN (a new answer) and REFINE (fix the best
+   answer), using Beta posteriors built from the scores each choice has produced. Same budget of 3. Compare with wider and deeper.</li>
+<li><strong>What does the filter keep?</strong> Print the step examples that the process filter keeps but the outcome filter drops. Do they look
+   like good steps?</li>
+<li><strong>Plan rounds.</strong> A bigger review plan: extract parties and fees (no deps), check each of the 4 rules (each needs the
+   extraction), compute the dollar cap (needs fees and the liability check), write the summary (needs everything). Use
+   <code>stages()</code> to count rounds, and compute the best possible speedup = steps / rounds with unlimited parallel slots.</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: a tiny AB-MCTS-style choice between wider (GEN) and deeper (REFINE) at each step.
+def adaptive(p, seed=0):
+    rng = random.Random(seed)
+    stats = {&quot;GEN&quot;: [], &quot;REFINE&quot;: []}
+    best, best_s, msg = None, -1.0, &quot;&quot;
+    for call in range(BUDGET):
+        if best is None:
+            arm = &quot;GEN&quot;
+        else:
+            draws = {a: rng.betavariate(1 + sum(s), 1 + len(s) - sum(s)) for a, s in stats.items()}
+            arm = max(draws, key=draws.get)
+        extra = f&quot;Your last try was {best}: {msg}. Fix it. &quot; if arm == &quot;REFINE&quot; else &quot;&quot;
+        e = direct(start(p), p[&quot;target&quot;], temperature=0.9 if arm == &quot;GEN&quot; else 0.7, extra=extra)
+        s, m = score(e, p)
+        stats[arm].append(s)
+        if s &gt; best_s:
+            best, best_s, msg = e, s, m
+        if best_s == 1.0:
+            break
+    return best_s, {a: len(s) for a, s in stats.items()}
+
+for p in P:
+    s, used = adaptive(p)
+    print(p[&quot;numbers&quot;], &quot;-&gt;&quot;, p[&quot;target&quot;], f&quot;| adaptive best score {s:.2f} | calls per arm {used}&quot;)
+# Notice: the first call is always GEN (there is nothing to refine). With a budget of 3 the posterior barely moves;
+# AB-MCTS shines at budgets of 32-128+ where it can learn which arm pays off on each problem.</code></pre></div><div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: steps the process filter keeps but the outcome filter drops.
+for e in examples:
+    if e[&quot;process_ok&quot;] and not e[&quot;outcome_ok&quot;]:
+        print(e[&quot;context&quot;], &quot;-&gt;&quot;, e[&quot;action&quot;])
+# Notice: these are legal steps after which the target is still reachable. The run failed LATER. Throwing them away wastes signal.</code></pre></div><div class="code"><div class="cap"><span class="cell">a04_planning_search.ipynb · cell 13</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 3: rounds for a bigger plan.
+BIG = {&quot;extract&quot;: [], &quot;liability_cap&quot;: [&quot;extract&quot;], &quot;governing_law&quot;: [&quot;extract&quot;], &quot;auto_renewal&quot;: [&quot;extract&quot;],
+       &quot;termination_notice&quot;: [&quot;extract&quot;], &quot;dollar_cap&quot;: [&quot;extract&quot;, &quot;liability_cap&quot;],
+       &quot;summary&quot;: [&quot;liability_cap&quot;, &quot;governing_law&quot;, &quot;auto_renewal&quot;, &quot;termination_notice&quot;, &quot;dollar_cap&quot;]}
+rounds = stages(BIG)
+print(rounds)
+print(f&quot;{len(BIG)} steps in {len(rounds)} rounds -&gt; best speedup {len(BIG)/len(rounds):.2f}x&quot;)
+# Notice: the longest chain of dependencies (extract -&gt; liability -&gt; dollar_cap -&gt; summary) sets the floor on time,
+# no matter how many parallel slots you have. This &quot;critical path&quot; is what SPRINT&#x27;s sequential-token count measures.
+print(&quot;total model calls in this notebook:&quot;, CALLS[0])</code></pre></div></details>
+<div class="pit"><strong>Traps</strong><ul><li>Searching where you can&#x27;t undo actions. LATS assumes you can return to earlier states; a sent email or a database write can&#x27;t be rewound.</li><li>Trusting the model&#x27;s value scores alone. Use a real verifier when one exists; LM ratings are noisy.</li><li>Planning everything up front. A long fixed plan fails when any step fails; ADaPT decomposes only where needed.</li><li>Trusting self-reported success. ADaPT&#x27;s executor overestimated success by more than 30 points on WebShop.</li><li>Judging wider vs deeper at tiny budgets. AB-MCTS&#x27;s gains showed up at tens to hundreds of calls, and some gaps were within noise.</li><li>Parallelizing steps that depend on each other. Map dependencies first; the longest chain sets the floor on latency.</li><li>Keeping only successful runs as training data. SWiRL found process filtering beat outcome filtering for RL.</li></ul></div>
+<div class="check"><h4>Check yourself</h4><details><summary>What does ADaPT do differently from plan-and-execute?</summary><p>It tries the whole task first and only plans and splits it when the executor fails, recursing on failed parts up to a max depth, so easy tasks cost one call.</p></details><details><summary>In AB-MCTS, what is the choice made at each node, and what decides it?</summary><p>Whether to generate a new answer (wider) or refine an existing one (deeper); Thompson sampling on the feedback scores decides.</p></details><details><summary>Why might SWiRL keep a step from a trajectory whose final answer was wrong?</summary><p>Because the step itself was judged reasonable. Process-only filtering gave the best RL results, and failed runs still contain useful good steps.</p></details></div>
+</div></section><nav class="pager"><a class="prev" href="a03.html"><small>← Previous</small>Learning from feedback with tools and code</a><a class="next" href="a05.html"><small>Next →</small>Train-time scaling and RL</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

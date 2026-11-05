@@ -210,7 +210,7 @@ def render_part2():
             mod = pr["id"]
             if mod not in SOURCES:
                 continue
-            nav.append(f'    <li><a href="#{mod}"><span class="n">{mod.upper()}</span>{esc(pr["title"][:34])}</a></li>')
+            nav.append(f'    <li><a href="#{mod}"><span class="n">{mod.upper()}</span>{esc({"ap3": "Math reasoning (distillation, GRPO)"}.get(mod, pr["title"].split(":")[0]))}</a></li>')
             links = " · ".join(f'<a href="{esc(u)}">{lab}</a>' for lab, u in (("Paper", pr.get("paper_url")), ("Poster", pr.get("poster_url"))) if u)
             sec = [section_head(mod, f"Past project · {mod.upper()}", pr["title"], f"CS329A Winter 2025 · {pr.get('authors', '')}"),
                    f'  <p class="src">{links}</p>',

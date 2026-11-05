@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AppBench: Benchmarking AI-Generated Web Applications · Agent Engineering School</title>
+<meta name="description" content="How a Stanford team graded AI-built web apps by what a user can actually do, and how to check that your grader deserves trust.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP1</span></div><section class="mod" id="ap1" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP1</div><h2>AppBench: Benchmarking AI-Generated Web Applications</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap1_appbench.ipynb">Open in Colab</a><button class="done-btn" data-done="ap1" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>11 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How a Stanford team graded AI-built web apps by what a user can actually do, and how to check that your grader deserves trust.</p><article class="lesson"><h2>The big idea</h2>
+<p>AI tools can now build a whole web app from one request. But how do you know the app works? Most code tests only check small pieces, like "does this function return 10?" They don't ask whether a person can click, type and get the right result.</p>
+<p>Four Stanford students, Ethan Hellman, Brendan McLaughlin, Abhinav Lalwani and Belinda Mo, built AppBench (CS329A, Winter 2025) to fill that gap. They wrote 9 app requests, from L0 (a plain static page) up to L4 (a live whiteboard several people share). For each request they wrote a checklist and turned it into an automatic grader.</p>
+<p>Think of a building inspector. The inspector doesn't just confirm the house is standing. They flip switches, run taps and try the doors. And if the power is off, they don't fail every light separately. They note one root problem.</p>
+<p>That is AppBench in one picture: test what a user would do, in a sensible order, and skip the checks that can't work yet.</p>
+<h2>Why it matters for us</h2>
+<p>A law firm will soon ask a local model to build small internal tools. Think of a deadline tracker, a fee calculator, or a page that lists which clauses break the playbook (the firm's house rules, like "liability cap at most 12 months of fees").</p>
+<ul>
+<li>"It runs" is not enough. The tracker must still show your deadlines after you refresh the page.</li>
+<li>The grader itself can be wrong. AppBench checked theirs against three human raters before trusting it. We should do the same, even if only with a few known-good and known-broken examples.</li>
+<li>Fancy agent products did not clearly win. One-shot models (one request, one answer, no back-and-forth) were close to full agent products. Lovable and Bolt came out on top. So measure before you pay for the fancier tool.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Write the request.</strong> Describe the app in plain words, as a user would. AppBench spread its 9 requests over six areas: looks, features, saved state, outside services, moving between pages, and data handling.</p>
+</li>
+<li>
+<p><strong>Split the checklist in two.</strong> Explicit checks are what the user asked for. Implicit checks are what a good app would also do, like ignoring a blank entry or having a back button.</p>
+</li>
+<li>
+<p><strong>Order the checks as a dependency graph.</strong> A dependency graph is a map of which check needs which other check to pass first. You can't test "add to cart" if the product page never opens. If a parent check fails, its children are skipped and score zero. One root failure then shows up as one failure, not ten.</p>
+</li>
+<li>
+<p><strong>Turn each check into a test.</strong> AppBench used screenshots judged by a model that reads images, a model-driven browser that clicks through the app, and network tricks to fake server errors.</p>
+</li>
+<li>
+<p><strong>Weight and score.</strong> Important checks count more. The total is scaled to 0–100.</p>
+</li>
+<li>
+<p><strong>Grade the grader.</strong> Compare the automatic scores with human scores. AppBench reported a Pearson correlation of 0.8173 and a Spearman correlation of 0.6827 with three raters. Correlation is a number from -1 to 1 that says how closely two sets of scores move together.</p>
+</li>
+</ol>
+<p>What they found: every kind of builder scored above 75% up to level L2. Scores fell at L3 and dropped sharply at L4. Two of the seven builders could not produce a working app for one L3 task and one L4 task.</p>
+<h2>Worked example</h2>
+<p>Our rebuild is smaller. Colab has no browser, so each app must expose its logic as plain JavaScript functions on <code>window.app</code>. Python reads the page's structure. Node.js (a program that runs JavaScript outside a browser) runs the app's own code inside a fake page and calls those functions.</p>
+<p>Picture the firm asking for a deadline tracker that saves tasks. The closest app in our notebook is the L3 to-do list. Here are its checks:</p>
+<pre><code class="language-python">(&quot;app loads&quot;, 1, True, [], APP_LOADS),
+(&quot;add + toggle + remaining&quot;, 3, True, [&quot;app loads&quot;], js([[&quot;app.addTask('a')&quot;, &quot;app.addTask('b')&quot;, &quot;app.toggle(0)&quot;, &quot;app.remaining()&quot;]], 1)),
+(&quot;saves JSON under 'todos'&quot;, 2, True, [&quot;add + toggle + remaining&quot;], js([[&quot;app.addTask('a')&quot;, &quot;JSON.parse(localStorage.getItem('todos')).length&quot;]], 1)),
+(&quot;survives a refresh&quot;, 3, True, [&quot;saves JSON under 'todos'&quot;], js([[&quot;app.addTask('a')&quot;, &quot;app.addTask('b')&quot;], [&quot;app.remaining()&quot;]], 2)),
+(&quot;ignores blank tasks&quot;, 1, False, [&quot;app loads&quot;], js([[&quot;app.addTask('   ')&quot;, &quot;app.all().length&quot;]], 0)),
+</code></pre>
+<p>Each line has five parts: a name, a weight, whether the user asked for it (True) or it is implicit (False), the checks it depends on, and the test itself.</p>
+<ul>
+<li>"app loads" just asks: does <code>window.app</code> exist? Everything else depends on it.</li>
+<li>The second check adds two tasks, ticks one off, and expects 1 task left. It is worth 3 points.</li>
+<li>The third check looks inside <code>localStorage</code> (the browser's small built-in storage) for the saved list.</li>
+<li>The fourth check is the clever one. The inner lists are two "page loads". It adds two tasks, then reloads the page and asks how many remain. The answer must be 2.</li>
+<li>The last check is implicit. Nobody asked, but a good app ignores a blank task.</li>
+</ul>
+<p>If the app never saves, the refresh check is skipped instead of failing for a confusing reason. The report then points straight at the real problem.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Grading by "it compiles."</strong> A page can load and still lose all your data on refresh. Test what a user does.</li>
+<li><strong>Only checking what was asked.</strong> Implicit checks catch the gap between a literal answer and a good one. Keep them, but weight them lower.</li>
+<li><strong>Letting one failure cascade.</strong> Without dependencies, a missing button looks like ten bugs. Skip children of failed parents.</li>
+<li><strong>Trusting the grader blindly.</strong> First make sure a known-good app scores 100 and a known-broken app scores low. Then compare with a human.</li>
+<li><strong>Assuming the agent wins.</strong> Measure a strong one-shot model next to the agent product before you pay for the agent.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Why does AppBench skip a check when the check it depends on fails?</summary>
+<p>So one root problem shows up once. Otherwise a single missing feature would cause a pile of confusing failures.</p>
+</details>
+<details>
+<summary>What is the difference between an explicit and an implicit check?</summary>
+<p>An explicit check tests what the user asked for. An implicit check tests what a good app would also do, like ignoring blank input.</p>
+</details>
+<details>
+<summary>How did the team know their automatic grader was any good?</summary>
+<p>They compared its scores with three human raters. The Pearson correlation was 0.8173, so the grader mostly agreed with people.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the notebook to grade a known-good and a known-broken app, then let the local model build all five apps in one shot. Look at which checks fail as the level goes up, especially the implicit ones and the refresh test. Then run the one fix round and see how much precise failure messages help.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Winter 2025 · Ethan Hellman, Brendan McLaughlin, Abhinav Lalwani, Belinda Mo</p>
+
+  <p class="src"><a href="https://cs329a.stanford.edu/winter2025projects/appbench.pdf">Paper</a> · <a href="https://cs329a.stanford.edu/winter2025projects/appbenchposter.pdf">Poster</a></p>
+<div class="paper"><dl><dt>Problem</dt><dd>Code benchmarks check functions with unit tests. Nothing checked whether an AI-built web app is usable: does navigation work, does state survive a refresh, are errors handled?</dd><dt>Method</dt><dd>9 app requests from L0 (static page) to L4 (real-time collaborative whiteboard), spread over six axes (UI, features, state, API integration, cross-page navigation, data processing). Each request gets a checklist of explicit and implicit requirements, arranged as a dependency graph and turned into a scripted evaluator built from shared tools: screenshot + multimodal LLM judging, an LLM-driven browser (Stagehand on Playwright), and network interception for error states. Weighted scores scaled to 0-100. 7 builders tested one-shot: Replit, Bolt, Cursor Agent, Lovable, Claude Sonnet 3.7, GPT-4.5, OpenHands CodeAct 2.1.</dd><dt>Results</dt><dd>Grader vs. 3 human raters: mean MSE 0.0302, mean MAE 0.1313, Pearson 0.8173, Spearman 0.6827. Per-builder MSE from 0.0160 (Service 4) to 0.0501 (CodeAct); per-task MSE from 0.0042 (l2-add-to-cart) to 0.0751 (l3-food-order). All builder types scored above 75% up to L2, fell at L3 and dropped sharply at L4; 2 of 7 builders failed to produce a compiling app for one L3 and one L4 task. One-shot models were close to full agent products; Lovable and Bolt were the top builders.</dd><dt>Lessons</dt><dd>Grade AI-built software by what a user can do with it, not by whether it compiles. Split checks into what was asked and what a good result would also do, and skip checks whose prerequisites failed so one root failure doesn&#x27;t look like ten. Validate your grader against humans (or at least known-good and known-broken examples) before trusting it. Don&#x27;t assume an agent framework beats a strong one-shot model; measure it.</dd><dt>Our rebuild</dt><dd>The local model builds 5 single-file HTML apps (L0-L3: about page, theme switcher, tip calculator, food order, to-do list saved in localStorage). Python&#x27;s HTML parser checks structure; Node.js runs each app&#x27;s script in a fake page (subprocess with timeout) and calls the functions it exposes on window.app, including a &#x27;page refresh&#x27; test for saved state. Checks are weighted, core vs. implicit, with dependencies. We validate the grader on known-good/broken apps, compare one-shot vs. one fix round with failure feedback, and (in the solutions) correlate the grader with a hand score and an LLM judge.</dd></dl></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap1_appbench.ipynb" target="_blank" rel="noopener">ap1_appbench.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="nb-md"><h3>The original project</h3>
+<p><strong>AppBench: Benchmarking AI-Generated Web Applications</strong> by Ethan Hellman, Brendan McLaughlin, Abhinav Lalwani and Belinda Mo
+(Stanford CS329A, Winter 2025). <a href="https://cs329a.stanford.edu/winter2025projects/appbench.pdf">Paper</a> ·
+<a href="https://cs329a.stanford.edu/winter2025projects/appbenchposter.pdf">Poster</a></p>
+<p><strong>Problem.</strong> Code benchmarks check functions with unit tests. Nobody checked whether an AI-built web app is
+<em>usable</em>: does navigation work, does state survive a refresh, does the page handle errors?</p>
+<p><strong>Method.</strong> 9 app requests from L0 (static page) to L4 (real-time collaborative whiteboard), spread over six
+axes: UI complexity, features, state management, API integration, cross-page navigation, data processing.
+For each request the authors wrote a checklist of <strong>explicit</strong> requirements (what the user asked for) and
+<strong>implicit</strong> ones (what a good app would also do, like a back button). They arranged the checklist as a
+<strong>dependency graph</strong>: you can't test "add to cart" before the product page opens. Each node becomes a scripted
+test built from shared tools: screenshot + multimodal LLM judging, an LLM-driven browser (Stagehand on
+Playwright), and network interception to test error states. Scores are weighted and scaled to 0–100.</p>
+<p><strong>Setup.</strong> 7 builders: Replit, Bolt, Cursor Agent, Lovable, Claude Sonnet 3.7, GPT-4.5 and OpenHands CodeAct 2.1,
+each in one shot. Three humans scored every app without seeing the automatic scores.</p>
+<p><strong>Key results (as reported).</strong>
+- Grader vs. humans: mean MSE 0.0302, mean MAE 0.1313, Pearson 0.8173, Spearman 0.6827.
+- Per-builder MSE ranged from 0.0160 (Service 4) to 0.0501 (CodeAct); per-task MSE from 0.0042 (l2-add-to-cart) to 0.0751 (l3-food-order).
+- All builder types scored above 75% up to level L2; scores fell at L3 and dropped sharply at L4.
+  2 of 7 builders could not produce a compiling app for one L3 and one L4 task.
+- One-shot models were "surprisingly competitive" with full agent products; the gap narrowed at higher levels.
+  Lovable and Bolt were the top builders.</p>
+<p><strong>Limitations they state.</strong> Only 9 tasks, so no strong general claims; the graders need more calibration with UX experts.</p>
+<p><strong>Our mini version.</strong> Their apps ran in a real browser. Colab has no browser, so each app must expose its logic
+as plain JavaScript functions on <code>window.app</code>. We check the page structure with Python's built-in HTML parser, and
+we run the app's own script in Node.js (which Colab has) inside a fake page, then call its functions. Same ideas:
+explicit vs. implicit checks, a dependency graph, weighted 0–100 scores, and "page refresh" tests for saved state.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, re, shutil, subprocess, tempfile
+from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor
+from html.parser import HTMLParser
+from pathlib import Path
+from lal.llm import ask
+from lal.checks import check
+
+NODE = shutil.which(&quot;node&quot;)
+print(&quot;node.js:&quot;, NODE or &quot;not found (behavior tests fall back to weak text checks)&quot;)
+OUT = Path(&quot;cs329a_projects/ap1_apps&quot;); OUT.mkdir(parents=True, exist_ok=True)</code></pre></div>
+<div class="nb-md"><h3>1. Read the page like a browser would (pure Python)</h3>
+<p><code>Page</code> collects tag counts, element ids, the text inside each tag, and the inline scripts.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">VOID = {&quot;area&quot;, &quot;base&quot;, &quot;br&quot;, &quot;col&quot;, &quot;embed&quot;, &quot;hr&quot;, &quot;img&quot;, &quot;input&quot;, &quot;link&quot;, &quot;meta&quot;, &quot;source&quot;, &quot;track&quot;, &quot;wbr&quot;}
+
+class Page(HTMLParser):
+    def __init__(self, html: str):
+        super().__init__(convert_charrefs=True)
+        self.tags, self.ids, self.text = Counter(), {}, defaultdict(str)
+        self.scripts, self.stack, self._script = [], [], False
+        self.attrs = []
+        try:
+            self.feed(html or &quot;&quot;)
+        except Exception as e:                      # very broken HTML: keep what we parsed
+            print(&quot;parse warning:&quot;, e)
+
+    def handle_starttag(self, tag, attrs):
+        a = {k: (v or &quot;&quot;) for k, v in attrs}
+        self.tags[tag] += 1
+        self.attrs.append((tag, a))
+        if a.get(&quot;id&quot;):
+            self.ids[a[&quot;id&quot;]] = tag
+        if tag == &quot;script&quot;:
+            self._script = not a.get(&quot;src&quot;)         # external scripts are not run
+            if self._script:
+                self.scripts.append(&quot;&quot;)
+        if tag not in VOID:
+            self.stack.append(tag)
+
+    def handle_endtag(self, tag):
+        if tag == &quot;script&quot;:
+            self._script = False
+        if tag in self.stack:
+            while self.stack and self.stack.pop() != tag:
+                pass
+
+    def handle_data(self, data):
+        if self._script:
+            self.scripts[-1] += data
+            return
+        for t in set(self.stack):
+            self.text[t] += data + &quot; &quot;
+        self.text[&quot;*&quot;] += data + &quot; &quot;
+
+    def has(self, tag, n=1):
+        return self.tags[tag] &gt;= n
+
+    def text_has(self, tag, s):
+        return s.lower() in re.sub(r&quot;\s+&quot;, &quot; &quot;, self.text[tag]).lower()
+
+p = Page(&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;Hi&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;header&gt;Acme Labs&lt;/header&gt;&lt;input id=&#x27;x&#x27;&gt;&lt;script&gt;var a=1;&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;&quot;)
+print(p.tags[&quot;input&quot;], p.ids, p.text_has(&quot;header&quot;, &quot;acme&quot;), p.scripts)</code></pre></div>
+<div class="nb-md"><h3>2. Run the app's own JavaScript in a fake page (Node.js, in a subprocess with a timeout)</h3>
+<p>The fake page answers every DOM call with a harmless stand-in object, so the app's setup code doesn't crash.
+<code>localStorage</code> is real (a dictionary), so we can test saving. A <strong>phase</strong> is one page load: to test a refresh,
+we run phase 1, keep <code>localStorage</code>, and load the page again for phase 2. The value of the last expression
+in the last phase is the result.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">HARNESS_JS = r&quot;&quot;&quot;
+const vm = require(&#x27;vm&#x27;), fs = require(&#x27;fs&#x27;);
+const code = fs.readFileSync(process.argv[2], &#x27;utf8&#x27;);
+const phases = JSON.parse(fs.readFileSync(process.argv[3], &#x27;utf8&#x27;));
+const store = {};
+const TEXTY = [&#x27;value&#x27;,&#x27;textContent&#x27;,&#x27;innerHTML&#x27;,&#x27;innerText&#x27;,&#x27;className&#x27;,&#x27;id&#x27;,&#x27;src&#x27;,&#x27;href&#x27;,&#x27;checked&#x27;];
+function any() {                       // a stand-in for any DOM object
+  const props = {};
+  return new Proxy(function(){}, {
+    get(t, p) {
+      if (p === Symbol.toPrimitive) return () =&gt; &#x27;&#x27;;
+      if (p in props) return props[p];
+      if (p === &#x27;toString&#x27; || p === &#x27;valueOf&#x27;) return () =&gt; &#x27;&#x27;;
+      if (TEXTY.includes(p)) return &#x27;&#x27;;
+      if (p === &#x27;length&#x27;) return 0;
+      if (p === &#x27;then&#x27;) return undefined;
+      if (p === Symbol.iterator) return function* () {};
+      if (p === &#x27;children&#x27; || p === &#x27;childNodes&#x27;) return [];
+      const v = any(); props[p] = v; return v;
+    },
+    set(t, p, v) { props[p] = v; return true; },
+    apply() { return any(); },
+    construct() { return any(); },
+  });
+}
+const localStorage = {
+  getItem: k =&gt; (k in store ? store[k] : null),
+  setItem: (k, v) =&gt; { store[k] = String(v); },
+  removeItem: k =&gt; { delete store[k]; },
+  clear: () =&gt; { for (const k in store) delete store[k]; },
+  key: i =&gt; Object.keys(store)[i] ?? null,
+  get length() { return Object.keys(store).length; },
+};
+let out = {load_error: null, error: null, value: null};
+for (let i = 0; i &lt; phases.length; i++) {
+  const listeners = [];
+  const document = any();
+  document.readyState = &#x27;loading&#x27;;
+  document.addEventListener = (ev, fn) =&gt; { if (typeof fn === &#x27;function&#x27; &amp;&amp; /load/i.test(ev)) listeners.push(fn); };
+  const sb = {document, localStorage, console: {log(){}, error(){}, warn(){}, info(){}},
+              alert(){}, confirm(){ return true; }, prompt(){ return &#x27;&#x27;; },
+              setTimeout(){ return 0; }, clearTimeout(){}, setInterval(){ return 0; }, clearInterval(){},
+              requestAnimationFrame(){ return 0; }, fetch(){ return new Promise(() =&gt; {}); },
+              navigator: any(), location: any(), history: any()};
+  sb.window = sb; sb.self = sb;
+  sb.addEventListener = (ev, fn) =&gt; { if (typeof fn === &#x27;function&#x27; &amp;&amp; /load/i.test(ev)) listeners.push(fn); };
+  const ctx = vm.createContext(sb);
+  try {
+    vm.runInContext(code, ctx, {timeout: 2000});
+    for (const fn of listeners) fn.call(sb, any());
+    if (typeof sb.onload === &#x27;function&#x27;) sb.onload(any());
+  } catch (e) { out.load_error = String(e).slice(0, 200); }
+  try {
+    let v;
+    for (const expr of phases[i]) v = vm.runInContext(expr, ctx, {timeout: 1000});
+    out.value = (v === undefined) ? null : JSON.parse(JSON.stringify(v));
+  } catch (e) { out.error = String(e).slice(0, 200); out.value = null; }
+}
+console.log(JSON.stringify(out));
+&quot;&quot;&quot;
+WORK = Path(tempfile.mkdtemp(prefix=&quot;ap1_&quot;))
+(WORK / &quot;harness.js&quot;).write_text(HARNESS_JS)
+
+def run_js(script: str, phases: list) -&gt; dict:
+    &quot;&quot;&quot;Run the app&#x27;s inline script in the fake page. Untrusted code: subprocess + timeout.&quot;&quot;&quot;
+    if not NODE:
+        return {&quot;skipped&quot;: True}
+    d = Path(tempfile.mkdtemp(dir=WORK))
+    (d / &quot;app.js&quot;).write_text(script)
+    (d / &quot;phases.json&quot;).write_text(json.dumps(phases))
+    try:
+        r = subprocess.run([NODE, str(WORK / &quot;harness.js&quot;), str(d / &quot;app.js&quot;), str(d / &quot;phases.json&quot;)],
+                           capture_output=True, text=True, timeout=10)
+        return json.loads(r.stdout.strip().splitlines()[-1])
+    except subprocess.TimeoutExpired:
+        return {&quot;load_error&quot;: &quot;timeout&quot;, &quot;error&quot;: &quot;timeout&quot;, &quot;value&quot;: None}
+    except Exception as e:
+        return {&quot;load_error&quot;: f&quot;harness failed: {e}&quot;, &quot;error&quot;: &quot;harness failed&quot;, &quot;value&quot;: None}
+
+print(run_js(&quot;window.app = {double: x =&gt; 2*x}; localStorage.setItem(&#x27;k&#x27;,&#x27;1&#x27;);&quot;,
+             [[&quot;app.double(21)&quot;]]))
+print(run_js(&quot;const app = {n: () =&gt; Number(localStorage.getItem(&#x27;k&#x27;) || 0), inc(){ localStorage.setItem(&#x27;k&#x27;, this.n()+1); }};&quot;,
+             [[&quot;app.inc()&quot;, &quot;app.inc()&quot;], [&quot;app.n()&quot;]]))       # survives the &quot;refresh&quot;</code></pre></div>
+<div class="nb-md"><h3>3. The checklist as a dependency graph</h3>
+<p>Each check has a weight, a flag for <strong>core</strong> (explicitly asked) vs. <strong>implicit</strong> (a good app would do it),
+and a list of checks it depends on. If a parent fails, its children are skipped and score 0, the same
+"conditional test execution" AppBench uses so one missing button doesn't cause a pile of confusing failures.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def static(fn):
+    return (&quot;static&quot;, fn)
+
+def js(phases, expected):
+    return (&quot;js&quot;, (phases, expected))
+
+def same(got, want):
+    if isinstance(want, (int, float)) and isinstance(got, (int, float)) and not isinstance(got, bool):
+        return abs(got - want) &lt; 0.011
+    return got == want
+
+APP_LOADS = js([[&quot;typeof app === &#x27;object&#x27; &amp;&amp; app !== null&quot;]], True)
+
+SPECS = {
+ &quot;l0-about-us&quot;: dict(level=0, spec=
+   &quot;Design a static &#x27;About Us&#x27; page for a company called Acme Labs. It needs a &lt;header&gt; with the company name, &quot;
+   &quot;a &lt;main&gt; section with at least two paragraphs about the company, and a &lt;footer&gt; with the company address: &quot;
+   &quot;12 Market Street, Springfield. Make it look good on phones too.&quot;,
+   checks=[
+     (&quot;header names the company&quot;, 2, True, [], static(lambda p: p.text_has(&quot;header&quot;, &quot;Acme Labs&quot;))),
+     (&quot;main with 2+ paragraphs&quot;, 2, True, [], static(lambda p: p.has(&quot;main&quot;) and p.has(&quot;p&quot;, 2))),
+     (&quot;footer has the address&quot;, 2, True, [], static(lambda p: p.text_has(&quot;footer&quot;, &quot;12 Market Street&quot;))),
+     (&quot;has a &lt;title&gt;&quot;, 1, False, [], static(lambda p: p.has(&quot;title&quot;) and p.text[&quot;title&quot;].strip() != &quot;&quot;)),
+     (&quot;mobile viewport meta&quot;, 1, False, [], static(lambda p: any(t == &quot;meta&quot; and a.get(&quot;name&quot;) == &quot;viewport&quot; for t, a in p.attrs))),
+   ]),
+ &quot;l1-theme-switcher&quot;: dict(level=1, spec=
+   &quot;Create a theme switcher page. Three buttons with ids btn-light, btn-dark and btn-blue switch the whole page &quot;
+   &quot;between a light, a dark and a blue theme. Show a heading and a short paragraph so the theme is visible. &quot;
+   &quot;Expose window.app = { setTheme(name), getTheme() }: setTheme(&#x27;dark&#x27;) applies the dark theme and getTheme() then &quot;
+   &quot;returns &#x27;dark&#x27;. The default theme is &#x27;light&#x27;. Unknown theme names must be ignored. The buttons must call app.setTheme.&quot;,
+   checks=[
+     (&quot;three theme buttons&quot;, 2, True, [], static(lambda p: all(i in p.ids for i in (&quot;btn-light&quot;, &quot;btn-dark&quot;, &quot;btn-blue&quot;)))),
+     (&quot;heading and paragraph&quot;, 1, False, [], static(lambda p: (p.has(&quot;h1&quot;) or p.has(&quot;h2&quot;)) and p.has(&quot;p&quot;))),
+     (&quot;app loads&quot;, 1, True, [], APP_LOADS),
+     (&quot;default theme is light&quot;, 2, True, [&quot;app loads&quot;], js([[&quot;app.getTheme()&quot;]], &quot;light&quot;)),
+     (&quot;setTheme(&#x27;blue&#x27;) works&quot;, 3, True, [&quot;app loads&quot;], js([[&quot;app.setTheme(&#x27;blue&#x27;)&quot;, &quot;app.getTheme()&quot;]], &quot;blue&quot;)),
+     (&quot;unknown theme ignored&quot;, 2, False, [&quot;setTheme(&#x27;blue&#x27;) works&quot;], js([[&quot;app.setTheme(&#x27;dark&#x27;)&quot;, &quot;app.setTheme(&#x27;purple&#x27;)&quot;, &quot;app.getTheme()&quot;]], &quot;dark&quot;)),
+   ]),
+ &quot;l1-tip-calculator&quot;: dict(level=1, spec=
+   &quot;Build a tip calculator. It has an input with id bill, an input with id tip-pct (tip percent), a button with id &quot;
+   &quot;calc, and an element with id result that shows the tip and the total. Each input has a &lt;label&gt;. &quot;
+   &quot;Expose window.app = { tip(bill, pct), total(bill, pct) }: tip returns bill*pct/100 rounded to 2 decimals, &quot;
+   &quot;total returns bill + tip rounded to 2 decimals. If bill is negative or not a number, both return 0.&quot;,
+   checks=[
+     (&quot;inputs, button, result&quot;, 2, True, [], static(lambda p: all(i in p.ids for i in (&quot;bill&quot;, &quot;tip-pct&quot;, &quot;calc&quot;, &quot;result&quot;)))),
+     (&quot;inputs have labels&quot;, 1, False, [], static(lambda p: p.has(&quot;label&quot;, 2))),
+     (&quot;app loads&quot;, 1, True, [], APP_LOADS),
+     (&quot;tip(50, 20) = 10&quot;, 2, True, [&quot;app loads&quot;], js([[&quot;app.tip(50, 20)&quot;]], 10)),
+     (&quot;total(80, 15) = 92&quot;, 2, True, [&quot;app loads&quot;], js([[&quot;app.total(80, 15)&quot;]], 92)),
+     (&quot;rounds to cents&quot;, 2, True, [&quot;tip(50, 20) = 10&quot;], js([[&quot;Math.abs(app.tip(33.33, 18) - 6) &lt; 1e-9&quot;]], True)),
+     (&quot;negative bill gives 0&quot;, 1, False, [&quot;app loads&quot;], js([[&quot;app.tip(-10, 20)&quot;]], 0)),
+   ]),
+ &quot;l2-food-order&quot;: dict(level=2, spec=
+   &quot;Build a single-page restaurant menu with exactly these items and prices: Burger $8.50, Fries $3.00, &quot;
+   &quot;Soda $1.75, Salad $6.25. Each item has an add button. The bottom of the page lists the current order and shows &quot;
+   &quot;the total in an element with id order-total. No login. Expose window.app = { add(name), remove(name), &quot;
+   &quot;count(name), total() }: total() returns the order total as a number. remove takes away one unit and never &quot;
+   &quot;goes below zero. Unknown item names are ignored.&quot;,
+   checks=[
+     (&quot;menu shows all items and prices&quot;, 2, True, [], static(lambda p: all(p.text_has(&quot;*&quot;, s) for s in
+                                                    (&quot;Burger&quot;, &quot;8.50&quot;, &quot;Fries&quot;, &quot;3.00&quot;, &quot;Soda&quot;, &quot;1.75&quot;, &quot;Salad&quot;, &quot;6.25&quot;)))),
+     (&quot;order total element&quot;, 1, True, [], static(lambda p: &quot;order-total&quot; in p.ids)),
+     (&quot;app loads&quot;, 1, True, [], APP_LOADS),
+     (&quot;2 Burgers + Soda = 18.75&quot;, 3, True, [&quot;app loads&quot;], js([[&quot;app.add(&#x27;Burger&#x27;)&quot;, &quot;app.add(&#x27;Burger&#x27;)&quot;, &quot;app.add(&#x27;Soda&#x27;)&quot;, &quot;app.total()&quot;]], 18.75)),
+     (&quot;remove takes one unit&quot;, 2, True, [&quot;app loads&quot;], js([[&quot;app.add(&#x27;Fries&#x27;)&quot;, &quot;app.add(&#x27;Fries&#x27;)&quot;, &quot;app.remove(&#x27;Fries&#x27;)&quot;, &quot;app.count(&#x27;Fries&#x27;)&quot;]], 1)),
+     (&quot;remove never below zero&quot;, 1, False, [&quot;remove takes one unit&quot;], js([[&quot;app.remove(&#x27;Salad&#x27;)&quot;, &quot;app.count(&#x27;Salad&#x27;)&quot;]], 0)),
+     (&quot;unknown item ignored&quot;, 1, False, [&quot;2 Burgers + Soda = 18.75&quot;], js([[&quot;app.add(&#x27;Pizza&#x27;)&quot;, &quot;app.total()&quot;]], 0)),
+   ]),
+ &quot;l3-todo-saved&quot;: dict(level=3, spec=
+   &quot;Build a to-do list app with an input with id new-task, a button with id add-btn and a list with id task-list. &quot;
+   &quot;Expose window.app = { addTask(text), toggle(index), remaining(), all() }. all() returns an array of &quot;
+   &quot;{text, done} objects. toggle flips done for the task at that index. remaining() counts tasks that are not done. &quot;
+   &quot;Ignore empty or whitespace-only text. Save the tasks in localStorage under the key &#x27;todos&#x27; as JSON after every &quot;
+   &quot;change, and load them when the page opens, so tasks survive a page refresh.&quot;,
+   checks=[
+     (&quot;input, button, list&quot;, 2, True, [], static(lambda p: all(i in p.ids for i in (&quot;new-task&quot;, &quot;add-btn&quot;, &quot;task-list&quot;)))),
+     (&quot;app loads&quot;, 1, True, [], APP_LOADS),
+     (&quot;add + toggle + remaining&quot;, 3, True, [&quot;app loads&quot;], js([[&quot;app.addTask(&#x27;a&#x27;)&quot;, &quot;app.addTask(&#x27;b&#x27;)&quot;, &quot;app.toggle(0)&quot;, &quot;app.remaining()&quot;]], 1)),
+     (&quot;saves JSON under &#x27;todos&#x27;&quot;, 2, True, [&quot;add + toggle + remaining&quot;], js([[&quot;app.addTask(&#x27;a&#x27;)&quot;, &quot;JSON.parse(localStorage.getItem(&#x27;todos&#x27;)).length&quot;]], 1)),
+     (&quot;survives a refresh&quot;, 3, True, [&quot;saves JSON under &#x27;todos&#x27;&quot;], js([[&quot;app.addTask(&#x27;a&#x27;)&quot;, &quot;app.addTask(&#x27;b&#x27;)&quot;], [&quot;app.remaining()&quot;]], 2)),
+     (&quot;ignores blank tasks&quot;, 1, False, [&quot;app loads&quot;], js([[&quot;app.addTask(&#x27;   &#x27;)&quot;, &quot;app.all().length&quot;]], 0)),
+   ]),
+}
+print({k: len(v[&quot;checks&quot;]) for k, v in SPECS.items()})</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def grade(name: str, html: str, verbose=False) -&gt; dict:
+    page = Page(html)
+    script = &quot;\n;\n&quot;.join(page.scripts)
+    results, earned, total, core_earned, core_total = {}, 0, 0, 0, 0
+    for cname, w, core, deps, (kind, arg) in SPECS[name][&quot;checks&quot;]:
+        total += w; core_total += w if core else 0
+        if any(not results.get(d, (False,))[0] for d in deps):
+            results[cname] = (False, &quot;skipped: depends on &quot; + &quot;, &quot;.join(deps))
+        elif kind == &quot;static&quot;:
+            try:
+                ok = bool(arg(page))
+            except Exception as e:
+                ok = False
+            results[cname] = (ok, &quot;&quot;)
+        else:
+            phases, want = arg
+            r = run_js(script, phases)
+            if r.get(&quot;skipped&quot;):                     # no node: weak fallback, function names must at least appear
+                names = set(re.findall(r&quot;app\.(\w+)\(&quot;, &quot; &quot;.join(sum(phases, []))))
+                ok = bool(script) and all(re.search(rf&quot;\b{n}\b&quot;, script) for n in names)
+                results[cname] = (ok, &quot;weak check (no node)&quot;)
+            else:
+                ok = r.get(&quot;error&quot;) is None and same(r.get(&quot;value&quot;), want)
+                why = &quot;&quot; if ok else f&quot;got {r.get(&#x27;value&#x27;)!r}, want {want!r}&quot; + (f&quot;; error: {r[&#x27;error&#x27;]}&quot; if r.get(&quot;error&quot;) else &quot;&quot;) \
+                      + (f&quot;; page script error: {r[&#x27;load_error&#x27;]}&quot; if r.get(&quot;load_error&quot;) else &quot;&quot;)
+                results[cname] = (ok, why)
+        if results[cname][0]:
+            earned += w; core_earned += w if core else 0
+    out = {&quot;score&quot;: round(100 * earned / total, 1), &quot;core&quot;: round(100 * core_earned / max(core_total, 1), 1), &quot;checks&quot;: results}
+    if verbose:
+        for c, (ok, why) in results.items():
+            print(f&quot;  {&#x27;✓&#x27; if ok else &#x27;✗&#x27;} {c}  {why}&quot;)
+    return out</code></pre></div>
+<div class="nb-md"><h3>4. Test the grader before you trust it</h3>
+<p>AppBench's main claim is that its grader agrees with humans. We can't hire three humans here, so we do the
+cheaper first step: a <strong>known-good</strong> app must score 100, and a <strong>known-broken</strong> one must score low.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">GOOD_TIP = &quot;&quot;&quot;&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width&quot;&gt;&lt;title&gt;Tips&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;&lt;h1&gt;Tip calculator&lt;/h1&gt;
+&lt;label for=&quot;bill&quot;&gt;Bill&lt;/label&gt;&lt;input id=&quot;bill&quot; type=&quot;number&quot;&gt;
+&lt;label for=&quot;tip-pct&quot;&gt;Tip %&lt;/label&gt;&lt;input id=&quot;tip-pct&quot; type=&quot;number&quot; value=&quot;15&quot;&gt;
+&lt;button id=&quot;calc&quot;&gt;Calculate&lt;/button&gt;&lt;p id=&quot;result&quot;&gt;&lt;/p&gt;
+&lt;script&gt;
+const r2 = x =&gt; Math.round(x * 100) / 100;
+window.app = {
+  tip(bill, pct) { bill = Number(bill); if (!(bill &gt;= 0)) return 0; return r2(bill * Number(pct) / 100); },
+  total(bill, pct) { bill = Number(bill); if (!(bill &gt;= 0)) return 0; return r2(bill + this.tip(bill, pct)); },
+};
+document.addEventListener(&#x27;DOMContentLoaded&#x27;, () =&gt; {
+  document.getElementById(&#x27;calc&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+    const b = document.getElementById(&#x27;bill&#x27;).value, p = document.getElementById(&#x27;tip-pct&#x27;).value;
+    document.getElementById(&#x27;result&#x27;).textContent = `Tip ${app.tip(b, p)} · Total ${app.total(b, p)}`;
+  });
+});
+&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;&quot;&quot;&quot;
+BROKEN_TIP = GOOD_TIP.replace(&quot;&lt;label&quot;, &quot;&lt;span&quot;).replace(&quot;bill * Number(pct) / 100&quot;, &quot;bill * Number(pct)&quot;).replace(&#x27;id=&quot;calc&quot;&#x27;, &#x27;id=&quot;go&quot;&#x27;)
+CRASHING_TIP = GOOD_TIP.replace(&quot;const r2&quot;, &quot;undefinedFunction(); const r2&quot;)
+
+ref = {n: grade(&quot;l1-tip-calculator&quot;, h) for n, h in [(&quot;good&quot;, GOOD_TIP), (&quot;broken&quot;, BROKEN_TIP), (&quot;crashes&quot;, CRASHING_TIP)]}
+for n, g in ref.items():
+    print(f&quot;{n:8s} score {g[&#x27;score&#x27;]:5.1f}&quot;)
+grade(&quot;l1-tip-calculator&quot;, BROKEN_TIP, verbose=True);</code></pre></div>
+<div class="nb-md"><h3>5. Let the model build the five apps (one shot)</h3>
+<p>Like the paper's "one-shot regime": same prompt shape for every task, one turn, no feedback.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">BUILD = (&quot;You are an expert front-end developer. Build this web app as ONE complete HTML file with all CSS and &quot;
+         &quot;JavaScript inline. Do not load any external scripts, fonts or libraries.\n\nAPP REQUEST:\n{spec}\n\n&quot;
+         &quot;Return only the file inside a ```html code block.&quot;)
+
+def extract_html(text: str) -&gt; str:
+    m = re.search(r&quot;```(?:html)?\s*(.*?)```&quot;, text or &quot;&quot;, re.S | re.I)
+    if m and &quot;&lt;&quot; in m.group(1):
+        return m.group(1).strip()
+    m = re.search(r&quot;(&lt;!DOCTYPE.*?&lt;/html&gt;|&lt;html.*?&lt;/html&gt;)&quot;, text or &quot;&quot;, re.S | re.I)
+    return m.group(1) if m else (text or &quot;&quot;)
+
+def build(name):
+    try:
+        return extract_html(ask(BUILD.format(spec=SPECS[name][&quot;spec&quot;]), temperature=0, max_tokens=3000))
+    except Exception as e:
+        print(name, &quot;generation failed:&quot;, e)
+        return &quot;&quot;
+
+with ThreadPoolExecutor(2) as ex:
+    apps = dict(zip(SPECS, ex.map(build, SPECS)))
+one_shot = {}
+for name, html in apps.items():
+    (OUT / f&quot;{name}.html&quot;).write_text(html)
+    one_shot[name] = grade(name, html)
+    print(f&quot;\n{name} (L{SPECS[name][&#x27;level&#x27;]}): score {one_shot[name][&#x27;score&#x27;]} · core {one_shot[name][&#x27;core&#x27;]}&quot;)
+    grade(name, html, verbose=True)</code></pre></div>
+<div class="nb-md"><h3>6. Does an "agent loop" help? Build → grade → fix once</h3>
+<p>The paper found agent products only modestly better than one-shot models. Here the "agent" gets the names of its
+failed checks (not the hidden test code) and one chance to fix the file. Each fix is one more model call.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">FIX = (&quot;Here is a web app you built and the user tests it failed.\n\nAPP REQUEST:\n{spec}\n\nFAILED CHECKS:\n{fails}\n\n&quot;
+       &quot;CURRENT FILE:\n```html\n{html}\n```\n\nReturn the complete corrected file inside a ```html code block.&quot;)
+
+def fix(name):
+    g = one_shot[name]
+    fails = [f&quot;- {c}: {why}&quot; for c, (ok, why) in g[&quot;checks&quot;].items() if not ok]
+    if not fails:
+        return apps[name]                            # nothing to fix, no call spent
+    try:
+        return extract_html(ask(FIX.format(spec=SPECS[name][&quot;spec&quot;], fails=&quot;\n&quot;.join(fails), html=apps[name][:12000]),
+                                temperature=0, max_tokens=3000))
+    except Exception as e:
+        print(name, &quot;fix failed:&quot;, e)
+        return apps[name]
+
+with ThreadPoolExecutor(2) as ex:
+    fixed = dict(zip(SPECS, ex.map(fix, SPECS)))
+with_fix = {n: grade(n, h) for n, h in fixed.items()}
+print(f&quot;{&#x27;task&#x27;:20s} level  one-shot  after-fix&quot;)
+for n in SPECS:
+    print(f&quot;{n:20s}  L{SPECS[n][&#x27;level&#x27;]}    {one_shot[n][&#x27;score&#x27;]:6.1f}    {with_fix[n][&#x27;score&#x27;]:6.1f}&quot;)
+mean = lambda d: sum(v[&quot;score&quot;] for v in d.values()) / len(d)
+print(f&quot;mean                       {mean(one_shot):6.1f}    {mean(with_fix):6.1f}&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>What to notice.</strong> Scores usually fall as the level goes up, as in the paper. Look at <em>which</em> checks fail:
+implicit checks (blank tasks, unknown items) and saved state across a refresh are the usual misses. A fix round
+with precise failure messages often helps a lot here, because our checks name the exact problem. In AppBench the
+agents got no such feedback, which is one reason their edge over one-shot was small.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;grader: known-good app scores 100&quot;, ref[&quot;good&quot;][&quot;score&quot;] == 100)
+check(&quot;grader: broken app scores under 60&quot;, ref[&quot;broken&quot;][&quot;score&quot;] &lt; 60)
+check(&quot;grader: crashing script fails the behavior checks&quot;, ref[&quot;crashes&quot;][&quot;core&quot;] &lt; 50)
+check(&quot;all five apps were built and graded&quot;, len(one_shot) == 5 and all((OUT / f&quot;{n}.html&quot;).exists() for n in SPECS))
+check(&quot;the model&#x27;s apps score at least 30/100 on average&quot;, mean(one_shot) &gt;= 30)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Add an implicit check.</strong> For <code>l2-food-order</code>, a good app would let the user clear the order. Add an implicit
+   check that <code>app.clear()</code> (if it exists) sets the total to 0. How many of the model's apps pass a check nobody asked for?</li>
+<li><strong>Calibrate against a human (you).</strong> Open two or three apps in <code>cs329a_projects/ap1_apps/</code> (in Colab, use
+   <code>IPython.display.HTML</code>). Score each 0–100 by hand, then compute the Spearman correlation with the grader.
+   AppBench reported 0.68 with three humans. Where do you and the grader disagree?</li>
+<li><strong>Add an LLM judge.</strong> AppBench also used a model to judge screenshots. Ask the local model to score each
+   HTML file 0–10 against its spec, and compare its ranking with the checklist grader. Which one would you trust, and why?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 1. An implicit &quot;clear order&quot; check. It depends on &quot;app loads&quot;. Notice: the spec never asked for clear(),
+#    so most apps fail it. That is exactly what implicit checks measure: going beyond the literal request.
+SPECS[&quot;l2-food-order&quot;][&quot;checks&quot;].append(
+    (&quot;can clear the order&quot;, 1, False, [&quot;app loads&quot;],
+     js([[&quot;app.add(&#x27;Burger&#x27;)&quot;, &quot;typeof app.clear === &#x27;function&#x27; ? (app.clear(), app.total()) : -1&quot;]], 0)))
+g = grade(&quot;l2-food-order&quot;, fixed[&quot;l2-food-order&quot;], verbose=True)
+print(&quot;food-order score with the new check:&quot;, g[&quot;score&quot;])</code></pre></div><div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 2. Spearman correlation between your scores and the grader&#x27;s. Replace my_scores with your own numbers.
+def spearman(a, b):
+    def ranks(x):
+        order = sorted(range(len(x)), key=lambda i: x[i]); r = [0.0] * len(x)
+        i = 0
+        while i &lt; len(x):                                  # average ranks for ties
+            j = i
+            while j + 1 &lt; len(x) and x[order[j + 1]] == x[order[i]]:
+                j += 1
+            for k in range(i, j + 1):
+                r[order[k]] = (i + j) / 2
+            i = j + 1
+        return r
+    ra, rb = ranks(a), ranks(b); n = len(a)
+    ma, mb = sum(ra) / n, sum(rb) / n
+    cov = sum((x - ma) * (y - mb) for x, y in zip(ra, rb))
+    sd = (sum((x - ma) ** 2 for x in ra) * sum((y - mb) ** 2 for y in rb)) ** 0.5
+    return cov / sd if sd else 0.0
+
+names = list(SPECS)
+grader_scores = [with_fix[n][&quot;score&quot;] for n in names]
+my_scores = [90, 70, 80, 60, 50]                           # &lt;- your hand scores, same order as `names`
+print(dict(zip(names, grader_scores)))
+print(&quot;Spearman(you, grader) =&quot;, round(spearman(my_scores, grader_scores), 3))</code></pre></div><div class="code"><div class="cap"><span class="cell">ap1_appbench.ipynb · cell 13</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 3. A text-only LLM judge (5 calls). Notice how often it gives high scores to apps whose logic is broken:
+#    a judge that reads code can&#x27;t &quot;click&quot;, which is why AppBench simulated real interaction.
+def judge(name):
+    reply = ask(f&quot;APP REQUEST:\n{SPECS[name][&#x27;spec&#x27;]}\n\nHTML FILE:\n```html\n{fixed[name][:8000]}\n```\n\n&quot;
+                &quot;Score how well this file meets the request, 0 to 10. End with a line &#x27;SCORE: &lt;number&gt;&#x27;.&quot;, max_tokens=400)
+    m = re.findall(r&quot;SCORE:\s*(\d+(?:\.\d+)?)&quot;, reply or &quot;&quot;)
+    return float(m[-1]) * 10 if m else 50.0
+with ThreadPoolExecutor(2) as ex:
+    judge_scores = list(ex.map(judge, names))
+for n, a, b in zip(names, grader_scores, judge_scores):
+    print(f&quot;{n:20s} grader {a:5.1f}   judge {b:5.1f}&quot;)
+print(&quot;Spearman(judge, grader) =&quot;, round(spearman(judge_scores, grader_scores), 3))</code></pre></div></details>
+</div></section><nav class="pager"><a class="prev" href="a11.html"><small>← Previous</small>Guest lectures and reasoning frontiers</a><a class="next" href="ap2.html"><small>Next →</small>PRIME: Planning with Reflective Iterative Multi-Agentic Exploration</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

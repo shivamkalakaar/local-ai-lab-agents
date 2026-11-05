@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Multi-agent systems · Agent Engineering School</title>
+<meta name="description" content="When a team of AI agents helps and when it hurts. Default to one agent plus a checker, and split work only when the pieces are truly independent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 09</span></div><section class="mod" id="m9" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 09</div><h2>Multi-agent systems</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/09_multi_agent.ipynb">Open in Colab</a><button class="done-btn" data-done="m9" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>10 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">When a team of AI agents helps and when it hurts. Default to one agent plus a checker, and split work only when the pieces are truly independent.</p><article class="lesson"><h2>The big idea</h2>
+<p>A multi-agent system is several AI agents, each with its own role, passing messages to solve one task. It sounds powerful. Picture a team of specialists, each an expert in one thing.</p>
+<p>But think about how real teams work. If you need 50 letters stuffed into envelopes, five people finish faster than one. If you need one tricky contract read carefully, five people passing notes will do worse than one careful reader. Each handoff loses detail. Each person's mistake gets passed along.</p>
+<p>The research matches this. Across 260 setups, multi-agent systems averaged about the same as a single agent: −0.3%. They helped on wide work that splits cleanly into separate pieces. They hurt on step-by-step work where each step depends on the last.</p>
+<p>So the rule is simple. Start with one strong agent plus a separate checker. Add more agents only for wide, separable work, and only when your tests show a gain.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>On one local GPU (the chip that runs the model), agents do not truly run side by side for free. Every extra agent is another model call, and that means more waiting.</li>
+<li>Contract review is mostly linked work. Reading the renewal clause, checking the notice period and drafting a fix all depend on each other. That is exactly where teams struggle.</li>
+<li>Where teams do fit: reviewing 20 separate contracts at once. Each contract is its own job.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li><strong>Ask: is the work separable?</strong> Can the pieces be done without talking to each other? Twenty contracts, yes. Five clauses that must agree on dates and parties, no.</li>
+<li><strong>If not separable, use one agent plus a checker.</strong> One model call does the reading and judging. A checker then re-verifies what can be verified. The best checker is plain code, because code does not guess.</li>
+<li><strong>If separable, give each worker a written brief.</strong> A brief says the goal, the output format, the limits, and when to stop. "Review this" is not a brief.</li>
+<li><strong>Treat sub-agents like tools.</strong> Call a sub-agent like a function: send a bounded brief, get a short result back. The caller stays in charge. This is called agent-as-tool.</li>
+<li><strong>Pass files, not retellings.</strong> When one agent hands work to another, pass the actual document or result. Summaries in messages lose detail.</li>
+</ol>
+<p>Why teams fail, according to the MAST study (2025), which sorted failures into three groups:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Cause</th>
+<th>Share of failures</th>
+<th>What it looks like</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>System design</td>
+<td>44.2%</td>
+<td>Ignoring the task, repeating steps, not knowing when to stop</td>
+</tr>
+<tr>
+<td>Agents misaligned</td>
+<td>32.3%</td>
+<td>Context lost in handoffs, ignoring each other</td>
+</tr>
+<tr>
+<td>Weak checking</td>
+<td>23.5%</td>
+<td>No verification, or only a shallow final check</td>
+</tr>
+</tbody>
+</table></div>
+<p>Another study (Kim et al., 2025) measured error amplification, meaning how much mistakes grow as they pass between agents. Independent agents with a naive merge amplified errors 17.2 times. With a central checker, it was 4.4 times.</p>
+<h2>Worked example</h2>
+<p>The notebook compares two designs on 8 contracts. The playbook has four rules: liability cap, governing law, auto-renewal length, and termination notice.</p>
+<p><strong>Design A</strong> is one agent plus a checker. One call reads the relevant clauses and judges all four rules. Then code re-checks the two number rules directly:</p>
+<pre><code class="language-python">renew = next(x for t, x in secs.items() if &quot;Renewal&quot; in t)
+years = re.search(r&quot;\((\d+)\) year&quot;, renew); days = re.search(r&quot;(\d+)\)? days&quot;, renew)
+if years: flags = (flags - {&quot;auto_renewal&quot;}) | ({&quot;auto_renewal&quot;} if int(years.group(1)) &gt; 1 else set())
+if days: flags = (flags - {&quot;termination_notice&quot;}) | ({&quot;termination_notice&quot;} if int(days.group(1)) &lt; 30 else set())
+</code></pre>
+<p>Line by line: the first line finds the renewal clause. The second line uses a pattern search to pull out the number of years, like "(4) year", and the number of days. The third line says: forget what the model said about renewal; flag it only if the renewal is longer than 1 year. The fourth line does the same for notice: flag it only if notice is under 30 days. The model's opinion is replaced by a fact the code can check.</p>
+<p><strong>Design B</strong> is a team of five. Four specialist agents each judge one rule. A fifth "lead" agent reads their reports and writes the final list. That is five model calls per contract instead of one. The lead also has to turn prose back into rule names, which is another chance to slip.</p>
+<p>The notebook prints precision (how many flags were real), recall (how many real issues were found), time and calls for each design. Run it and compare. Then it shows where a team does fit: four parallel copies of Design A reviewing all 20 contracts at once.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>"More agents is better."</strong> On average it isn't, and it costs several times the tokens. On a local box it also costs several times the wait.</li>
+<li><strong>One-line delegation.</strong> "Review this" gives no rule, no format, no stopping point. The notebook shows a vague team that comments on anything and can't map its prose back to rules.</li>
+<li><strong>Splitting linked steps into chatty agents.</strong> An "extractor agent", a "risk agent" and a "redline agent" talking to each other is a fixed workflow in disguise. Build it as one.</li>
+<li><strong>Skipping the checker.</strong> Weak verification is a whole category of failure. Put a code check after the model wherever you can.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Should we split contract review into an extractor agent, a risk agent and a redline agent that chat with each other?</summary>
+<p>No. Those steps are linked, so use a fixed workflow with one checker. Split only independent work, like many separate contracts in parallel.</p>
+</details>
+<details>
+<summary>Why does a central checker reduce error amplification?</summary>
+<p>Without one, each agent&#x27;s mistake flows straight into the final answer. A checker catches errors before they are merged, so they don&#x27;t pile up.</p>
+</details>
+<details>
+<summary>What four things belong in a brief for a worker agent?</summary>
+<p>The goal, the output format, the limits, and when to stop.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the Module 09 notebook and compare the printed precision, recall, time and model calls for the two designs. Then do the exercises: remove the code checker from Design A, and give the team a vague brief. Watch which numbers move.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">Lecture 8 · Kim et al., "Towards a Science of Scaling Agent Systems" · MAST · AutoGen · Anthropic multi-agent research</p>
+  <p class="big">Default to one strong agent plus a separate checker. Add more agents only for wide, separable work, and only when your eval shows a gain.</p>
+  <div class="terms"><h4>Key terms</h4><dl><div><dt>Multi-agent system</dt><dd>Several LLM agents with separate roles or contexts that communicate to solve a task.<span class="from">Source: Wu et al., &quot;AutoGen&quot;, COLM (2024)</span></dd></div><div><dt>Orchestrator vs. swarm</dt><dd>A central agent that delegates and integrates, versus peers that coordinate among themselves.<span class="from">Source: Lecture 8</span></dd></div><div><dt>Error amplification</dt><dd>Mistakes compounding across agents. Independent agents with a naive merge amplified errors 17.2×; with a central checker, 4.4×.<span class="from">Source: Kim et al., &quot;Towards a Science of Scaling Agent Systems&quot; (2025)</span></dd></div><div><dt>MAST taxonomy</dt><dd>A catalog of why multi-agent systems fail: system design (44.2%), misalignment between agents (32.3%), and weak verification (23.5%).<span class="from">Source: Cemri et al., &quot;Why Do Multi-Agent LLM Systems Fail?&quot; (2025)</span></dd></div><div><dt>Agent-as-tool</dt><dd>Calling a sub-agent like a function with a bounded brief and getting a short result back, so the caller keeps control.<span class="from">Source: Lecture 8</span></dd></div></dl></div>
+  <div class="evidence">
+    <div class="ev"><div class="num">−0.3%</div><p>Average effect of multi-agent vs. single agent across 260 setups (Kim et al.).</p></div>
+    <div class="ev"><div class="num">−39% to −70%</div><p>Multi-agent result on step-by-step planning tasks.</p></div>
+    <div class="ev"><div class="num">+57% to +81%</div><p>Multi-agent result on separable finance analysis.</p></div>
+    <div class="ev"><div class="num">17.2× vs 4.4×</div><p>Error amplification: independent agents merged vs. a central checker.</p></div>
+  </div>
+  <h3>Why multi-agent systems fail (MAST)</h3>
+  <ul>
+    <li><b>44.2% system design</b>: ignoring the task spec, repeating steps, not knowing when to stop.</li>
+    <li><b>32.3% agents misaligned with each other</b>: lost context in handoffs, ignored input from other agents.</li>
+    <li><b>23.5% checking</b>: no verification, or only a shallow final check. Adding a check against the overall goal gave +15.6%.</li>
+  </ul>
+  <h3>When to use more than one agent</h3>
+  <ul>
+    <li>Yes: many independent documents in parallel, broad research, separate checks that don't depend on each other.</li>
+    <li>No: tightly linked steps (cross-checking dates, parties and amounts across one contract), or when one agent already scores above about 45%.</li>
+  </ul>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/09_multi_agent.ipynb" target="_blank" rel="noopener">09_multi_agent.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">09_multi_agent.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, time
+from concurrent.futures import ThreadPoolExecutor
+from pydantic import BaseModel
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
+from lal.llm import ask, structured
+from lal.data import contract, sections, labels, playbook, ids
+from lal.checks import prf, check
+
+PB = playbook()
+RULE_SECTION = {&quot;liability_cap&quot;: &quot;Liability&quot;, &quot;governing_law&quot;: &quot;Governing&quot;, &quot;auto_renewal&quot;: &quot;Renewal&quot;, &quot;termination_notice&quot;: &quot;Renewal&quot;}
+
+class Verdicts(BaseModel):
+    liability_cap: bool
+    governing_law: bool
+    auto_renewal: bool
+    termination_notice: bool</code></pre></div>
+<div class="nb-md"><h3>Design A: one agent, then one checker</h3>
+<p>One call reads the four relevant clauses and judges all four rules (true = breaks the rule). A second step, in code, re-checks the two numeric rules directly.</p></div>
+<div class="code"><div class="cap"><span class="cell">09_multi_agent.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import re
+def single_agent(cid):
+    secs = {s[&quot;title&quot;]: s[&quot;text&quot;] for s in sections(contract(cid))}
+    relevant = &quot;\n&quot;.join(f&quot;{t}: {x}&quot; for t, x in secs.items() if any(w in t for w in (&quot;Liability&quot;, &quot;Governing&quot;, &quot;Renewal&quot;)))
+    v = structured(f&quot;Playbook rules:\n{json.dumps(PB[&#x27;rules&#x27;], indent=1)}\n\nClauses:\n{relevant}\n\n&quot;
+                   &quot;For each rule, return true if the contract BREAKS it, false if it follows it.&quot;, Verdicts)
+    flags = {k for k, broken in v.model_dump().items() if broken}
+    # checker in code: numbers we can verify directly
+    renew = next(x for t, x in secs.items() if &quot;Renewal&quot; in t)
+    years = re.search(r&quot;\((\d+)\) year&quot;, renew); days = re.search(r&quot;(\d+)\)? days&quot;, renew)
+    if years: flags = (flags - {&quot;auto_renewal&quot;}) | ({&quot;auto_renewal&quot;} if int(years.group(1)) &gt; 1 else set())
+    if days: flags = (flags - {&quot;termination_notice&quot;}) | ({&quot;termination_notice&quot;} if int(days.group(1)) &lt; 30 else set())
+    return flags</code></pre></div>
+<div class="nb-md"><h3>Design B: a team of four specialist agents plus a merger agent</h3>
+<p>Each specialist judges one rule. A fifth agent merges their reports into a final list.</p></div>
+<div class="code"><div class="cap"><span class="cell">09_multi_agent.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def specialist(args):
+    cid, rule = args
+    clause = next(s for s in sections(contract(cid)) if RULE_SECTION[rule] in s[&quot;title&quot;])[&quot;text&quot;]
+    return rule, ask(f&quot;You are the {rule} specialist. Rule: {PB[&#x27;rules&#x27;][rule]}\nClause: {clause}\n&quot;
+                     &quot;Write a two-sentence report ending with VERDICT: BREAKS or VERDICT: FOLLOWS.&quot;)
+
+def team(cid):
+    with ThreadPoolExecutor(4) as ex:
+        reports = list(ex.map(specialist, [(cid, r) for r in PB[&quot;rules&quot;]]))
+    merged = ask(&quot;You are the lead reviewer. Combine these specialist reports. List the rule names that are broken, &quot;
+                 &quot;comma-separated, or &#x27;none&#x27;.\n\n&quot; + &quot;\n\n&quot;.join(f&quot;[{r}] {t}&quot; for r, t in reports))
+    text = merged.lower().replace(&quot; &quot;, &quot;_&quot;)                     # &quot;Liability cap&quot; -&gt; &quot;liability_cap&quot;
+    return {r for r in PB[&quot;rules&quot;] if r in text}</code></pre></div>
+<div class="nb-md"><h3>Compare on 8 contracts: accuracy, time and model calls</h3></div>
+<div class="code"><div class="cap"><span class="cell">09_multi_agent.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">sample = [&quot;msa_01&quot;, &quot;msa_05&quot;, &quot;msa_07&quot;, &quot;msa_09&quot;, &quot;msa_12&quot;, &quot;msa_14&quot;, &quot;msa_15&quot;, &quot;msa_18&quot;]
+res = {&quot;single+checker&quot;: [], &quot;team of 5&quot;: []}
+times = {k: 0.0 for k in res}
+for cid in sample:
+    gold = {i[&quot;rule&quot;] for i in labels()[cid][&quot;issues&quot;]}
+    for name, fn in [(&quot;single+checker&quot;, single_agent), (&quot;team of 5&quot;, team)]:
+        t0 = time.time(); pred = fn(cid); times[name] += time.time() - t0
+        res[name].append(prf(pred, gold))
+calls = {&quot;single+checker&quot;: 1, &quot;team of 5&quot;: 5}
+for name, rows in res.items():
+    tp = sum(r[&quot;tp&quot;] for r in rows); fp = sum(r[&quot;fp&quot;] for r in rows); fn_ = sum(r[&quot;fn&quot;] for r in rows)
+    print(f&quot;{name:15} precision {tp/max(tp+fp,1):.0%}  recall {tp/max(tp+fn_,1):.0%}  &quot;
+          f&quot;time {times[name]:.0f}s  model calls/contract {calls[name]}&quot;)</code></pre></div>
+<div class="nb-md"><h3>When a team does make sense</h3>
+<p>Separable, wide work: 20 independent contracts at once. Each worker gets a written brief (goal, output format, limits, when to stop) and returns a short result. Here the "team" is parallel copies of the single agent.</p></div>
+<div class="code"><div class="cap"><span class="cell">09_multi_agent.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">t0 = time.time()
+with ThreadPoolExecutor(4) as ex:
+    batch = dict(zip(ids(), ex.map(single_agent, ids())))
+print(f&quot;reviewed {len(batch)} contracts in {time.time()-t0:.0f}s&quot;)
+print({k: sorted(v) for k, v in list(batch.items())[6:10]})</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">09_multi_agent.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">s_tp = sum(r[&quot;tp&quot;] for r in res[&quot;single+checker&quot;]); s_fn = sum(r[&quot;fn&quot;] for r in res[&quot;single+checker&quot;])
+check(&quot;single agent + checker finds most issues (recall &gt;= 70%)&quot;, s_tp / max(s_tp + s_fn, 1) &gt;= 0.7)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li>Remove the code checker from Design A. How much does recall change on the renewal rules?</li>
+<li>Give the team a vague brief ("review this") instead of a specific one. What breaks?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">09_multi_agent.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: Design A without the code checker
+def single_agent_no_checker(cid):
+    secs = {s[&quot;title&quot;]: s[&quot;text&quot;] for s in sections(contract(cid))}
+    relevant = &quot;\n&quot;.join(f&quot;{t}: {x}&quot; for t, x in secs.items() if any(w in t for w in (&quot;Liability&quot;, &quot;Governing&quot;, &quot;Renewal&quot;)))
+    v = structured(f&quot;Playbook rules:\n{json.dumps(PB[&#x27;rules&#x27;], indent=1)}\n\nClauses:\n{relevant}\n\n&quot;
+                   &quot;For each rule, return true if the contract BREAKS it, false if it follows it.&quot;, Verdicts)
+    return {k for k, broken in v.model_dump().items() if broken}
+
+for name, fn in [(&quot;with checker&quot;, single_agent), (&quot;without checker&quot;, single_agent_no_checker)]:
+    rows = [prf({r for r in fn(c) if r in (&quot;auto_renewal&quot;, &quot;termination_notice&quot;)},
+                {i[&quot;rule&quot;] for i in labels()[c][&quot;issues&quot;] if i[&quot;rule&quot;] in (&quot;auto_renewal&quot;, &quot;termination_notice&quot;)}) for c in sample]
+    tp = sum(r[&quot;tp&quot;] for r in rows); fn_ = sum(r[&quot;fn&quot;] for r in rows); fp = sum(r[&quot;fp&quot;] for r in rows)
+    print(f&quot;{name:16} renewal rules: recall {tp/max(tp+fn_,1):.0%}, false flags {fp}&quot;)</code></pre></div><div class="code"><div class="cap"><span class="cell">09_multi_agent.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: the team with a vague brief
+def vague_specialist(args):
+    cid, rule = args
+    clause = next(s for s in sections(contract(cid)) if RULE_SECTION[rule] in s[&quot;title&quot;])[&quot;text&quot;]
+    return rule, ask(f&quot;Review this.\n{clause}&quot;)
+
+def vague_team(cid):
+    with ThreadPoolExecutor(4) as ex:
+        reports = list(ex.map(vague_specialist, [(cid, r) for r in PB[&quot;rules&quot;]]))
+    merged = ask(&quot;Combine these reports into a list of problems.\n\n&quot; + &quot;\n\n&quot;.join(t for _, t in reports))
+    return {r for r in PB[&quot;rules&quot;] if r in merged}, merged
+
+pred, merged = vague_team(&quot;msa_15&quot;)
+print(&quot;found:&quot;, pred, &quot;| truth:&quot;, {i[&quot;rule&quot;] for i in labels()[&quot;msa_15&quot;][&quot;issues&quot;]})
+print(merged[:500])
+# With no rule, no output format and no stopping point, the specialists comment on anything and the merger
+# can&#x27;t map their prose back to rule names. Most multi-agent failures are this kind of design problem.</code></pre></div></details>
+  <div class="pit"><strong>Traps</strong><ul>
+    <li>"More agents is better." On average it isn't, and it costs 3–6× the tokens. On one local GPU that also means 3–6× the wait.</li>
+    <li>One-line delegation ("review this"). Always give the goal, format, limits and stopping rule.</li>
+    <li>Passing work by retelling it in messages. Pass files.</li>
+  </ul></div>
+  <div class="check"><h4>Check yourself</h4>
+    <details><summary>Should we split contract review into an "extractor agent", a "risk agent" and a "redline agent" that chat with each other?</summary><p>No. Those steps are linked, so use a workflow with fixed steps and one checker. Split only independent work, like reviewing 50 separate contracts in parallel.</p></details>
+  </div>
+</div></section><nav class="pager"><a class="prev" href="m8.html"><small>← Previous</small>Memory</a><a class="next" href="m10.html"><small>Next →</small>Evaluation</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

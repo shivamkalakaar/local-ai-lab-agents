@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Towards Effective Meta-Agents: Designing Agents that Design Agents (paper: Inefficiencies of Meta Agents for Agent Design) · Agent Engineering School</title>
+<meta name="description" content="How a Stanford team tested agents that design other agents, and why you should do the cost arithmetic before building one.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP4</span></div><section class="mod" id="ap4" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP4</div><h2>Towards Effective Meta-Agents: Designing Agents that Design Agents (paper: Inefficiencies of Meta Agents for Agent Design)</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap4_meta_agents.ipynb">Open in Colab</a><button class="done-btn" data-done="ap4" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>11 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How a Stanford team tested agents that design other agents, and why you should do the cost arithmetic before building one.</p><article class="lesson"><h2>The big idea</h2>
+<p>A meta-agent is an agent that designs other agents. It writes a new agent, tests it, saves it in an archive (a list of every design so far with its score), and uses that archive to write the next one. It sounds like free progress.</p>
+<p>Batu El, Mert Yuksekgonul and James Zou studied this loop in their CS329A project (Winter 2025). The course page calls it "Towards Effective Meta-Agents." The paper is titled "Inefficiencies of Meta Agents for Agent Design." They asked three hard questions about meta-agents like ADAS (the Automated Design of Agentic Systems paper, 2024):</p>
+<ol>
+<li>Does the meta-agent really learn from its past designs?</li>
+<li>Are the designs different enough to combine?</li>
+<li>Does the design cost ever pay for itself?</li>
+</ol>
+<p>Think of hiring a consultant to redesign your intake process. The new process may be a bit better. But you paid the consultant, and the new process takes longer per client. You only come out ahead after enough clients.</p>
+<h2>Why it matters for us</h2>
+<p>A firm might want a system that keeps inventing better contract-review agents on its own. This project says: check the math first.</p>
+<ul>
+<li>Designed agents often cost more per question, because they make more model calls. Add the cost of designing them, and they may never pay back.</li>
+<li>Showing the designer everything it has tried can be worse than showing it only the best few.</li>
+<li>Running on the firm's own computers lowers the price per call, but not the number of calls. The arithmetic still matters.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Start with a library.</strong> The archive began with 7 hand-written agents, such as Chain-of-Thought (reason step by step), Majority Voting, LLM Debate and Step-back.</p>
+</li>
+<li>
+<p><strong>Pick what the designer sees.</strong> This choice is called the context strategy. There were three:</p>
+</li>
+<li>Cumulative: show all past agents (what ADAS does).</li>
+<li>Parallel: show only the 7 starting agents, so every new design starts fresh.</li>
+<li>
+<p>Evolutionary: show the 7 best agents so far, like picking parents.</p>
+</li>
+<li>
+<p><strong>Design, test, save.</strong> A gpt-4o meta-agent wrote agent code that ran on gpt-3.5. They repeated this for 30 rounds, on four test sets, 3 times each.</p>
+</li>
+<li>
+<p><strong>Measure diversity.</strong> Each agent gets a row of right and wrong answers. Cosine similarity (a number for how alike two rows are; near 1 means the same questions right) shows whether agents overlap. Coverage is the share of questions at least one agent gets right.</p>
+</li>
+<li>
+<p><strong>Do the cost math.</strong> Total cost is C0 + n × Cj. C0 is the one-time design cost. Cj is the cost per question once deployed. n is the number of questions.</p>
+</li>
+</ol>
+<p>What they found. Best training score, averaged: cumulative 55.0, parallel 60.0, evolutionary 60.3. So showing everything did not beat showing nothing new. Evolutionary gained up to 10 points over cumulative on MGSM (41.4 vs. 56.5). On test, the starting library scored 49.0, cumulative 52.2, parallel 55.9, evolutionary 55.2. Evolutionary agents were the least diverse.</p>
+<p>The cost result is the sharpest. Designed agents cost more per question than the starting ones. Counting design cost, a designed agent was cheaper per correct answer only after about 15,000 questions. That happened only on MMLU and DROP with parallel context. Elsewhere it never broke even.</p>
+<h2>Worked example</h2>
+<p>Say the firm's best plain agent reviews a clause in a single call. A meta-agent designs a "solve then check" agent that makes two calls and is a bit more accurate. Is it worth it?</p>
+<p>Our notebook asks the same question at small scale. Designs are data, not code: a system prompt plus one of four fixed procedures. So nothing the model writes is ever run as code. llama3.1:8b designs, llama3.2:3b runs the agents, on six kinds of checkable puzzles. Here is the break-even step:</p>
+<pre><code class="language-python">C0 = sum(tok(a[&quot;chars&quot;] + a.get(&quot;meta_chars&quot;, 0)) for a in designed)
+c_init, c_new = tok(test_init[&quot;chars&quot;]) / len(TEST), tok(test_new[&quot;chars&quot;]) / len(TEST)
+p_init, p_new = max(test_init[&quot;score&quot;], 1e-9), max(test_new[&quot;score&quot;], 1e-9)
+gap = c_init / p_init - c_new / p_new
+breakeven = C0 / (p_new * gap) if gap &gt; 0 and best_new is not best_init else float(&quot;inf&quot;)
+</code></pre>
+<ul>
+<li>Line 1 adds up the design cost, C0. It counts the designer's prompts plus testing every new design. <code>tok</code> turns characters into tokens (about 4 characters each).</li>
+<li>Line 2 finds the cost per question for the old agent and the new one.</li>
+<li>Line 3 takes each agent's accuracy on the test set. The tiny number avoids dividing by zero.</li>
+<li>Line 4 compares cost per correct answer. If the new agent is not cheaper per correct answer, the gap is zero or negative.</li>
+<li>Line 5 finds how many questions it takes to earn back C0. If there is no gap, the answer is "never."</li>
+</ul>
+<p>For the firm, swap in real numbers: clauses per month, tokens per review, and accuracy. If break-even is 15,000 clauses and you review 500 a month, that is years away.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Skipping the cost math.</strong> A better score can still lose money. Compute break-even first.</li>
+<li><strong>Feeding the designer everything.</strong> The full history did worse than a curated set. Show the best few designs.</li>
+<li><strong>Expecting a "pick the best agent per question" boost.</strong> Designed agents tend to solve the same questions, so combining them adds little unless you push for variety.</li>
+<li><strong>Trusting one run.</strong> Results from small test sets are noisy. The authors used 3 runs; use several too.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Which context strategy did ADAS use, and how did it compare?</summary>
+<p>Cumulative, which shows all past agents. It scored 55.0 on training, below parallel (60.0) and evolutionary (60.3).</p>
+</details>
+<details>
+<summary>What do C0 and Cj stand for in the cost formula?</summary>
+<p>C0 is the one-time cost of designing the agent. Cj is the cost per question once it is in use.</p>
+</details>
+<details>
+<summary>When did a designed agent pay for itself?</summary>
+<p>Only after about 15,000 questions, and only on MMLU and DROP with parallel context. On the other test sets it never did.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the notebook to test the 3 starting agents, then let the meta-agent design 3 more with evolutionary context. Compare the best designed agent with the best starting one on train and test. Then read the similarity table and the break-even line, and try the 10x designer price in the solutions.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Winter 2025 · Batu El, Mert Yuksekgonul, James Zou</p>
+
+  <p class="src"><a href="https://cs329a.stanford.edu/winter2025projects/batu.pdf">Paper</a> · <a href="https://cs329a.stanford.edu/winter2025projects/batuposter.pdf">Poster</a></p>
+<div class="paper"><dl><dt>Problem</dt><dd>Meta-agents such as ADAS write new agents in a sample-evaluate-iterate loop. Do they learn from past designs, are the designs diverse enough to combine, and is the design cost ever worth it?</dd><dt>Method</dt><dd>Archive starts with 7 hand-written agents (Chain-of-Thought, Majority Voting, Refinement from Feedback, LLM Debate, Quality-Diversity, Routing, Step-back). A gpt-4o meta-agent writes agent code run on gpt-3.5, for 30 iterations, with three context strategies: cumulative (all past agents, as in ADAS), parallel (only the initial library), evolutionary (top 7 so far). MGSM, DROP, MMLU (128 train / 200 test) and GPQA (32 / 160), 3 runs. Diversity via cosine similarity of per-question score vectors and coverage; economics via total cost C0 + n*Cj.</dd><dt>Results</dt><dd>Best agent&#x27;s train score, averaged over datasets: cumulative 55.0, parallel 60.0, evolutionary 60.3 (cumulative did not beat parallel). Evolutionary up to +10 points over cumulative on MGSM (41.4 vs. 56.5 train). Test score of the best-on-train agent, average: initial library 49.0, cumulative 52.2, parallel 55.9, evolutionary 55.2. Coverage average: cumulative 94.2%, parallel 95.9%, evolutionary 94.4%; evolutionary agents were the least diverse. Designed agents cost more per query than the initial ones (cumulative &gt; evolutionary &gt; parallel &gt; initial). The designed agent becomes cheaper per correct answer only after about 15,000 queries, and only on MMLU and DROP with parallel context; elsewhere never.</dd><dt>Lessons</dt><dd>Before building a self-improving agent designer, do the cost arithmetic: design cost plus higher per-query cost often never pays back. Showing the meta-agent everything it has tried can be worse than showing nothing; curate the context (best parents). Designed agents tend to be similar, so &#x27;pick the best per query&#x27; gains are limited unless you push for diversity. Meta-evaluation is noisy; use several runs.</dd><dt>Our rebuild</dt><dd>Six kinds of checkable puzzles (letter counts, reversing, sorting, weekdays, word problems, decimal comparison). Designs are data (system prompt + one of four fixed procedures), so no model-written code runs. llama3.1:8b is the meta-agent, llama3.2:3b runs agents. Starting library of 3, evolutionary context for 3 iterations, archive with score vectors, train/test comparison, cosine similarity and coverage, a break-even calculation with C0 + n*Cj, and in the solutions a parallel-context run (RUN_LONG), a per-kind router and a pricing what-if.</dd></dl></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap4_meta_agents.ipynb" target="_blank" rel="noopener">ap4_meta_agents.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="nb-md"><h3>The original project</h3>
+<p>Listed on the course page as <strong>Towards Effective Meta-Agents: Designing Agents that Design Agents</strong>. The linked paper
+is titled <strong>Inefficiencies of Meta Agents for Agent Design</strong>, by Batu El, Mert Yuksekgonul and James Zou (Stanford);
+the poster is titled <em>Exploring Two Open Questions in Meta-Agent Design</em>. Stanford CS329A, Winter 2025.
+<a href="https://cs329a.stanford.edu/winter2025projects/batu.pdf">Paper</a> · <a href="https://cs329a.stanford.edu/winter2025projects/batuposter.pdf">Poster</a></p>
+<p><strong>Problem.</strong> Meta-agents such as ADAS (Hu et al. 2024, <em>Automated Design of Agentic Systems</em>) follow a
+sample–evaluate–iterate loop. Is that loop efficient?</p>
+<p><strong>Method.</strong> An agent is code that takes a question and calls a model. The archive starts with 7 hand-written agents:
+Chain-of-Thought, Majority Voting, Refinement from Feedback, LLM Debate, Quality-Diversity, Routing, and Step-back.
+Each round, the meta-agent (gpt-4o) writes a new agent conditioned on a chosen part of the archive; agents run on
+gpt-3.5. Three ways to choose that context:
+- <strong>Cumulative:</strong> show all previous agents (what ADAS does).
+- <strong>Parallel:</strong> show only the 7 starting agents, so every sample is independent.
+- <strong>Evolutionary:</strong> show the 7 best agents so far (the "parents").</p>
+<p><strong>Setup.</strong> MGSM, DROP, MMLU (128 train / 200 test each) and GPQA (32 train / 160 test), 30 iterations, 3 runs.</p>
+<p><strong>Key results (as reported).</strong>
+- Best agent's train score, averaged over datasets: cumulative 55.0, parallel 60.0, evolutionary 60.3. "Cumulative
+  context curation does not outperform parallel", that is, showing all past designs was worse than showing none.
+  Evolutionary gave up to +10 points over cumulative on MGSM (41.4 → 56.5 train).
+- Test score of the best-on-train agent, average: initial library 49.0, cumulative 52.2, parallel 55.9, evolutionary 55.2.
+- Diversity: designed agents get many of the same questions right. Evolutionary agents are the most similar;
+  parallel gives the most coverage (questions solved by at least one agent): 95.9% on average vs. 94.2 cumulative, 94.4 evolutionary.
+- Cost: designed agents cost more per query than the starting agents (cumulative &gt; evolutionary &gt; parallel &gt; initial).
+  Counting the design cost, the designed agent is cheaper <em>per correct answer</em> only after about <strong>15,000 queries</strong>,
+  and only on MMLU and DROP with parallel context. On the other datasets it never breaks even.</p>
+<p><strong>Limitations they state.</strong> Only this one class of meta-agent; accuracy/F1 only; cost analysis fits tasks with
+strong verifiers; cosine similarity favors high-scoring agents; only 3 runs because each run is expensive.</p>
+<p><strong>Our mini version.</strong> Designs are <em>data</em> (a system prompt plus one of four fixed procedures), not free-form code, so
+nothing the model writes is ever executed. <code>llama3.1:8b</code> plays the meta-agent and <code>llama3.2:3b</code> runs the agents,
+mirroring their strong-designer / cheap-runner split. We use evolutionary context, measure diversity and coverage,
+and compute the break-even point with the paper's formula: total cost = C0 + n·Cj.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, math, random, re
+from concurrent.futures import ThreadPoolExecutor
+from typing import Literal
+from pydantic import BaseModel, Field
+from lal.llm import ask, structured
+from lal.checks import check
+
+RUN_LONG = False                     # True: also run the &quot;parallel&quot; context strategy for comparison (~40 more calls)
+DESIGNER, RUNNER = MODEL, &quot;llama3.2:3b&quot;          # MODEL is llama3.1:8b on a GPU runtime
+T = 3                                # meta-agent iterations (the paper used 30)</code></pre></div>
+<div class="nb-md"><h3>1. A small, mixed task set with exact checkers</h3>
+<p>Six kinds of questions where small models stumble in different ways: counting letters, reversing words, sorting,
+weekday arithmetic, word problems, and comparing decimals. Mixed kinds give designs a chance to specialize.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">WORDS = [&quot;strawberry&quot;, &quot;banana&quot;, &quot;committee&quot;, &quot;bookkeeper&quot;, &quot;mississippi&quot;, &quot;parallel&quot;, &quot;assessment&quot;, &quot;balloon&quot;, &quot;occurrence&quot;]
+DAYS = [&quot;Monday&quot;, &quot;Tuesday&quot;, &quot;Wednesday&quot;, &quot;Thursday&quot;, &quot;Friday&quot;, &quot;Saturday&quot;, &quot;Sunday&quot;]
+KINDS = [&quot;count&quot;, &quot;reverse&quot;, &quot;sort&quot;, &quot;weekday&quot;, &quot;math&quot;, &quot;compare&quot;]
+
+def make_task(rng, kind):
+    if kind == &quot;count&quot;:
+        w = rng.choice(WORDS); ch = rng.choice(sorted(set(w)))
+        return dict(kind=kind, q=f&quot;How many times does the letter &#x27;{ch}&#x27; appear in the word &#x27;{w}&#x27;?&quot;, a=str(w.count(ch)))
+    if kind == &quot;reverse&quot;:
+        w = rng.choice(WORDS)
+        return dict(kind=kind, q=f&quot;Write the word &#x27;{w}&#x27; backwards (its letters in reverse order).&quot;, a=w[::-1])
+    if kind == &quot;sort&quot;:
+        nums = rng.sample(range(1, 99), 6)
+        return dict(kind=kind, q=&quot;Sort these numbers from smallest to largest: &quot; + &quot;, &quot;.join(map(str, nums)), a=&quot;,&quot;.join(map(str, sorted(nums))))
+    if kind == &quot;weekday&quot;:
+        s, k = rng.randrange(7), rng.randint(9, 60)
+        return dict(kind=kind, q=f&quot;Today is {DAYS[s]}. What day of the week will it be in {k} days?&quot;, a=DAYS[(s + k) % 7].lower())
+    if kind == &quot;math&quot;:
+        a, b = rng.randint(6, 24), rng.randint(3, 12); c = rng.randint(5, a * b - 1)
+        return dict(kind=kind, q=f&quot;A crate holds {a} bottles. A shop gets {b} crates and sells {c} bottles. How many bottles are left?&quot;, a=str(a * b - c))
+    x = rng.randint(1, 9); p, q = f&quot;{x}.{rng.randint(10, 99)}&quot;, f&quot;{x}.{rng.randint(1, 9)}&quot;
+    return dict(kind=kind, q=f&quot;Which number is larger: {p} or {q}? Answer with the number.&quot;, a=max(p, q, key=float))
+
+rng = random.Random(42)
+TRAIN = [make_task(rng, k) for k in KINDS]
+TEST = [make_task(rng, k) for k in KINDS[:4]]      # 4 test tasks keeps the notebook within ~80 model calls
+
+def final_answer(text):
+    m = re.findall(r&quot;ANSWER:\s*(.+)&quot;, text or &quot;&quot;, re.I)
+    if m:
+        return m[-1].strip()
+    lines = (text or &quot;&quot;).strip().splitlines()
+    return lines[-1] if lines else &quot;&quot;
+
+def correct(task, text):
+    got = final_answer(text or &quot;&quot;)
+    if task[&quot;kind&quot;] == &quot;sort&quot;:
+        return re.findall(r&quot;\d+&quot;, got) == task[&quot;a&quot;].split(&quot;,&quot;)
+    if task[&quot;kind&quot;] in (&quot;reverse&quot;, &quot;weekday&quot;):
+        return re.sub(r&quot;[^a-z]&quot;, &quot;&quot;, got.lower()) == task[&quot;a&quot;]
+    nums = re.findall(r&quot;-?\d+(?:\.\d+)?&quot;, got)
+    return bool(nums) and abs(float(nums[0]) - float(task[&quot;a&quot;])) &lt; 1e-9
+
+for t in TRAIN:
+    print(f&quot;{t[&#x27;kind&#x27;]:8s} {t[&#x27;a&#x27;]:&gt;20s}  ← {t[&#x27;q&#x27;]}&quot;)
+print(correct(TRAIN[0], f&quot;so... ANSWER: {TRAIN[0][&#x27;a&#x27;]}&quot;), correct(TRAIN[2], &quot;ANSWER: 1, 2&quot;))</code></pre></div>
+<div class="nb-md"><h3>2. What an "agent design" is here, and the interpreter that runs it</h3>
+<p>A design is a name, a one-line idea, a system prompt, and a <strong>procedure</strong> from a fixed menu. The interpreter
+counts calls and characters, so we can do cost accounting later (tokens ≈ characters / 4).</p></div>
+<div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class Design(BaseModel):
+    name: str
+    idea: str = Field(description=&quot;one or two sentences: why this design should work&quot;)
+    system_prompt: str = Field(description=&quot;instructions for the agent, under 120 words&quot;)
+    procedure: Literal[&quot;direct&quot;, &quot;think_step_by_step&quot;, &quot;solve_then_check&quot;, &quot;plan_then_solve&quot;]
+
+FMT = &quot;\nEnd with one line: ANSWER: &lt;your final answer&gt;&quot;
+
+def run_agent(d: Design, q: str):
+    &quot;&quot;&quot;Returns (text, calls, chars).&quot;&quot;&quot;
+    sp = d.system_prompt[:1200]
+    chars, calls = 0, 0
+    def call(prompt):
+        nonlocal chars, calls
+        try:
+            out = ask(prompt, system=sp, model_name=RUNNER, temperature=0, max_tokens=600)
+        except Exception as e:
+            out = &quot;&quot;
+        chars += len(sp) + len(prompt) + len(out); calls += 1
+        return out
+    if d.procedure == &quot;direct&quot;:
+        out = call(q + FMT)
+    elif d.procedure == &quot;think_step_by_step&quot;:
+        out = call(q + &quot;\nThink step by step.&quot; + FMT)
+    elif d.procedure == &quot;solve_then_check&quot;:
+        first = call(q + &quot;\nThink step by step.&quot; + FMT)
+        out = call(f&quot;Question: {q}\nA first attempt:\n{first[-1500:]}\n\nCheck this attempt carefully, step by step. &quot;
+                   &quot;If it is wrong, fix it.&quot; + FMT)
+    else:  # plan_then_solve
+        plan = call(f&quot;Question: {q}\nWrite a short numbered plan for solving it. Do not solve it yet.&quot;)
+        out = call(f&quot;Question: {q}\nPlan:\n{plan[-1200:]}\nNow follow the plan.&quot; + FMT)
+    return out, calls, chars
+
+def evaluate(d: Design, tasks):
+    with ThreadPoolExecutor(2) as ex:
+        runs = list(ex.map(lambda t: run_agent(d, t[&quot;q&quot;]), tasks))
+    vec = [1.0 if correct(t, out) else 0.0 for t, (out, _, _) in zip(tasks, runs)]
+    return {&quot;vec&quot;: vec, &quot;score&quot;: sum(vec) / len(vec), &quot;calls&quot;: sum(r[1] for r in runs), &quot;chars&quot;: sum(r[2] for r in runs),
+            &quot;fails&quot;: [(t[&quot;q&quot;], final_answer(out)[:60], t[&quot;a&quot;]) for t, (out, _, _), v in zip(tasks, runs, vec) if not v]}</code></pre></div>
+<div class="nb-md"><h3>3. The starting library: three hand-written agents</h3>
+<p>Like the paper's initial library (Chain-of-Thought, self-refine, and so on), but only three, to save calls.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">LIBRARY = [
+    Design(name=&quot;Direct&quot;, idea=&quot;Just answer.&quot;, system_prompt=&quot;You are a careful assistant.&quot;, procedure=&quot;direct&quot;),
+    Design(name=&quot;Chain-of-Thought&quot;, idea=&quot;Reason before answering (Wei et al. 2022).&quot;,
+           system_prompt=&quot;You are a careful assistant. Reason step by step before you answer.&quot;, procedure=&quot;think_step_by_step&quot;),
+    Design(name=&quot;Self-Refine&quot;, idea=&quot;Answer, then check and fix the answer (Madaan et al. 2023).&quot;,
+           system_prompt=&quot;You are a careful assistant who double-checks work.&quot;, procedure=&quot;solve_then_check&quot;),
+]
+ARCHIVE = []
+for d in LIBRARY:
+    r = evaluate(d, TRAIN)
+    ARCHIVE.append({&quot;design&quot;: d, &quot;origin&quot;: &quot;initial&quot;, **r})
+    print(f&quot;{d.name:18s} train {r[&#x27;score&#x27;]:.0%}  calls {r[&#x27;calls&#x27;]}&quot;)</code></pre></div>
+<div class="nb-md"><h3>4. The meta-agent loop: sample → evaluate → add to archive</h3>
+<p><code>select_context</code> is the paper's φ. <strong>Evolutionary</strong> shows the best 3 designs so far with their scores and a few of
+their mistakes. <strong>Parallel</strong> shows only the starting library. <strong>Cumulative</strong> shows everything.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def select_context(archive, phi):
+    if phi == &quot;parallel&quot;:
+        return [a for a in archive if a[&quot;origin&quot;] == &quot;initial&quot;]
+    if phi == &quot;cumulative&quot;:
+        return list(archive)
+    return sorted(archive, key=lambda a: (a[&quot;score&quot;], -a[&quot;chars&quot;]), reverse=True)[:3]      # evolutionary: top-k parents
+
+def describe(a):
+    d = a[&quot;design&quot;]
+    fails = &quot;; &quot;.join(f&quot;Q: {q[:70]} | gave: {g} | correct: {c}&quot; for q, g, c in a[&quot;fails&quot;][:3]) or &quot;none&quot;
+    return (f&quot;- name: {d.name}\n  idea: {d.idea}\n  procedure: {d.procedure}\n  system_prompt: {d.system_prompt}\n&quot;
+            f&quot;  train score: {a[&#x27;score&#x27;]:.0%}\n  mistakes: {fails}&quot;)
+
+META = (&quot;You design AI agents. An agent is a system prompt plus one procedure:\n&quot;
+        &quot;- direct: one call, answer immediately\n- think_step_by_step: one call with step-by-step reasoning\n&quot;
+        &quot;- solve_then_check: two calls, solve then verify and fix\n- plan_then_solve: two calls, write a plan then follow it\n\n&quot;
+        &quot;The agents answer short puzzles: counting letters, reversing words, sorting numbers, weekday arithmetic, &quot;
+        &quot;word problems, comparing decimals.\n\nHere are existing agents and how they did:\n{ctx}\n\n&quot;
+        &quot;Design ONE new agent that will score higher. Learn from the mistakes. Give concrete, task-specific tactics &quot;
+        &quot;in the system prompt (for example: spell the word letter by letter). Use a new name.&quot;)
+
+def meta_search(archive, phi, T):
+    archive = list(archive)
+    for t in range(T):
+        ctx = &quot;\n&quot;.join(describe(a) for a in select_context(archive, phi))
+        try:
+            d = structured(META.format(ctx=ctx), Design, model_name=DESIGNER, temperature=0.8, max_tokens=700)
+        except Exception as e:
+            print(&quot;meta-agent output was invalid:&quot;, e); continue
+        r = evaluate(d, TRAIN)
+        archive.append({&quot;design&quot;: d, &quot;origin&quot;: f&quot;{phi} #{t + 1}&quot;, &quot;meta_chars&quot;: len(ctx) + len(META) + len(d.model_dump_json()), **r})
+        print(f&quot;[{phi} {t + 1}] {d.name[:30]:30s} {d.procedure:18s} train {r[&#x27;score&#x27;]:.0%}&quot;)
+    return archive
+
+ARCHIVE = meta_search(ARCHIVE, &quot;evolutionary&quot;, T)</code></pre></div>
+<div class="nb-md"><h3>5. Question 1: did search beat the starting library?</h3>
+<p>Pick the best design on the <em>training</em> set, then run it once on the held-out <em>test</em> set, next to the best starting agent.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">best_init = max([a for a in ARCHIVE if a[&quot;origin&quot;] == &quot;initial&quot;], key=lambda a: a[&quot;score&quot;])
+designed = [a for a in ARCHIVE if a[&quot;origin&quot;] != &quot;initial&quot;]
+best_new = max(designed, key=lambda a: a[&quot;score&quot;]) if designed else best_init
+test_init = evaluate(best_init[&quot;design&quot;], TEST)
+test_new = evaluate(best_new[&quot;design&quot;], TEST) if best_new is not best_init else test_init
+print(f&quot;best starting agent : {best_init[&#x27;design&#x27;].name:30s} train {best_init[&#x27;score&#x27;]:.0%}  test {test_init[&#x27;score&#x27;]:.0%}&quot;)
+print(f&quot;best designed agent : {best_new[&#x27;design&#x27;].name:30s} train {best_new[&#x27;score&#x27;]:.0%}  test {test_new[&#x27;score&#x27;]:.0%}&quot;)
+print(&quot;\nwinning design:\n&quot;, best_new[&quot;design&quot;].model_dump_json(indent=2))</code></pre></div>
+<div class="nb-md"><h3>6. Question 2: are the agents different enough to combine?</h3>
+<p>Each agent's row of right/wrong answers is its "embedding". Cosine similarity near 1 means two agents solve the same
+questions. <strong>Coverage</strong> is the share of questions that at least one agent solves: the ceiling for a perfect router.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def cosine(u, v):
+    nu, nv = math.sqrt(sum(x * x for x in u)), math.sqrt(sum(x * x for x in v))
+    return sum(x * y for x, y in zip(u, v)) / (nu * nv) if nu and nv else 0.0
+
+vecs = [a[&quot;vec&quot;] for a in ARCHIVE if any(a[&quot;vec&quot;])]
+pairs = [cosine(vecs[i], vecs[j]) for i in range(len(vecs)) for j in range(i + 1, len(vecs))]
+coverage = sum(any(a[&quot;vec&quot;][i] for a in ARCHIVE) for i in range(len(TRAIN))) / len(TRAIN)
+print(&quot;agent  &quot; + &quot;  &quot;.join(t[&quot;kind&quot;][:5] for t in TRAIN))
+for a in ARCHIVE:
+    print(f&quot;{a[&#x27;design&#x27;].name[:22]:22s} &quot; + &quot;  &quot;.join(&quot;  ✓  &quot; if x else &quot;  ·  &quot; for x in a[&quot;vec&quot;]))
+print(f&quot;mean pairwise similarity {sum(pairs) / max(len(pairs), 1):.2f}   coverage {coverage:.0%}   best single agent {max(a[&#x27;score&#x27;] for a in ARCHIVE):.0%}&quot;)</code></pre></div>
+<div class="nb-md"><h3>7. Question 3: does the design cost ever pay off?</h3>
+<p>Cost in tokens (≈ characters / 4). <strong>C0</strong> = everything spent to find the new agent: meta-agent prompts plus
+evaluating every designed agent on the training set. <strong>Cj</strong> = cost per query when deployed. After n queries:
+cost per correct answer = (C0 + n·Cj) / (n·accuracy). The starting agent has C0 = 0. The break-even n solves
+C0/(n·p_new) + C_new/p_new = C_init/p_init.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">tok = lambda chars: chars / 4
+C0 = sum(tok(a[&quot;chars&quot;] + a.get(&quot;meta_chars&quot;, 0)) for a in designed)
+c_init, c_new = tok(test_init[&quot;chars&quot;]) / len(TEST), tok(test_new[&quot;chars&quot;]) / len(TEST)
+p_init, p_new = max(test_init[&quot;score&quot;], 1e-9), max(test_new[&quot;score&quot;], 1e-9)
+gap = c_init / p_init - c_new / p_new
+breakeven = C0 / (p_new * gap) if gap &gt; 0 and best_new is not best_init else float(&quot;inf&quot;)
+print(f&quot;design cost C0 ≈ {C0:,.0f} tokens&quot;)
+print(f&quot;per query: starting agent {c_init:,.0f} tokens at {p_init:.0%}; designed agent {c_new:,.0f} tokens at {p_new:.0%}&quot;)
+print(&quot;break-even after&quot;, &quot;never (the designed agent is not cheaper per correct answer)&quot; if math.isinf(breakeven) else f&quot;{breakeven:,.0f} queries&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>What to notice.</strong> On a handful of tasks, a lucky design can look great on train and slip on test: that's the
+paper's warning about noisy meta-evaluation, and why they averaged 3 runs. Two-call designs often win on accuracy but
+double the per-query cost, so the break-even point can be "never". Before you build a meta-agent, do this arithmetic.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;archive holds the 3 starting agents plus designed ones&quot;, len(ARCHIVE) &gt;= 3 + 1)
+check(&quot;the best designed agent is no worse than the best starting agent minus one task&quot;, best_new[&quot;score&quot;] &gt;= best_init[&quot;score&quot;] - 1 / len(TRAIN))
+check(&quot;the best starting agent solves at least 2 of 6 training tasks&quot;, best_init[&quot;score&quot;] &gt;= 2 / 6)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Parallel vs. evolutionary.</strong> Set <code>RUN_LONG = True</code> and run <code>meta_search</code> with <code>phi="parallel"</code>. The paper found
+   parallel about as good as evolutionary and more diverse. What do you see? (Three iterations is very noisy.)</li>
+<li><strong>A router from the archive.</strong> Each task has a kind. For each kind, pick the agent that did best on that kind in
+   training. What is this router's training score, compared with the best single agent and with coverage? (No new calls.)</li>
+<li><strong>Your own prices.</strong> Redo the break-even with real numbers: a designer token costs 10× a runner token. Does that change the answer?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 1. Parallel context (RUN_LONG only, ~3 meta calls + up to 36 agent calls).
+if RUN_LONG:
+    par = meta_search([a for a in ARCHIVE if a[&quot;origin&quot;] == &quot;initial&quot;], &quot;parallel&quot;, T)
+    par_new = [a for a in par if a[&quot;origin&quot;] != &quot;initial&quot;]
+    pv = [a[&quot;vec&quot;] for a in par_new if any(a[&quot;vec&quot;])]
+    pp = [cosine(pv[i], pv[j]) for i in range(len(pv)) for j in range(i + 1, len(pv))]
+    print(&quot;parallel: best train&quot;, max(a[&quot;score&quot;] for a in par_new), &quot; mean similarity&quot;, round(sum(pp) / max(len(pp), 1), 2))
+else:
+    print(&quot;Set RUN_LONG = True to compare with parallel context.&quot;)</code></pre></div><div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 2. A per-kind router. Notice: on training data the router can match coverage, but with one task per kind it is
+#    &quot;choosing on the test set&quot;. A real router needs its own held-out data, which is why agent selection is hard.
+router = {}                                          # kind -&gt; index of the chosen agent in ARCHIVE
+for i, t in enumerate(TRAIN):
+    router[t[&quot;kind&quot;]] = max(range(len(ARCHIVE)), key=lambda j: (ARCHIVE[j][&quot;vec&quot;][i], -ARCHIVE[j][&quot;chars&quot;]))
+router_score = sum(ARCHIVE[router[t[&quot;kind&quot;]]][&quot;vec&quot;][i] for i, t in enumerate(TRAIN)) / len(TRAIN)
+print({k: ARCHIVE[j][&quot;design&quot;].name for k, j in router.items()})
+print(f&quot;router {router_score:.0%} · best single {max(a[&#x27;score&#x27;] for a in ARCHIVE):.0%} · coverage {coverage:.0%}&quot;)</code></pre></div><div class="code"><div class="cap"><span class="cell">ap4_meta_agents.ipynb · cell 13</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 3. Designer tokens cost 10x. Only the meta-agent part of C0 gets more expensive.
+meta_part = sum(tok(a.get(&quot;meta_chars&quot;, 0)) for a in designed)
+C0_priced = C0 + 9 * meta_part
+be = C0_priced / (p_new * gap) if gap &gt; 0 and best_new is not best_init else float(&quot;inf&quot;)
+print(&quot;break-even with 10x designer price:&quot;, &quot;never&quot; if math.isinf(be) else f&quot;{be:,.0f} queries&quot;)</code></pre></div></details>
+</div></section><nav class="pager"><a class="prev" href="ap3.html"><small>← Previous</small>Enhancing Mathematical Reasoning in LLMs through Reasoning Distillation, GRPO, and Multi-agent PRM Reranking</a><a class="next" href="ap5.html"><small>Next →</small>ARCHON Augmented: Planning and Web-Enhanced Components</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

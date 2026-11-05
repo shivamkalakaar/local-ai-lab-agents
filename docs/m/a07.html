@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Self-improvement with search and deep research agents · Agent Engineering School</title>
+<meta name="description" content="Two ways to make an agent better without retraining it. Search over many answers and pick wisely (AlphaCode), or let the model look things up mid-thought (Search-o1).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A07</span></div><section class="mod" id="a07" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A07</div><h2>Self-improvement with search and deep research agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a07_search_deep_research.ipynb">Open in Colab</a><button class="done-btn" data-done="a07" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Two ways to make an agent better without retraining it. Search over many answers and pick wisely (AlphaCode), or let the model look things up mid-thought (Search-o1).</p><article class="lesson"><h2>The big idea</h2>
+<p>You can make an agent better without changing the model at all. You make it search. There are two kinds of search, and they solve different problems.</p>
+<p>The first is search over answers. Think of hiring. You don't interview one candidate and hope. You get many applications, throw out the ones that fail the basic screen, and then pick carefully from the rest. AlphaCode does this with computer programs.</p>
+<p>The second is search for knowledge. Think of a lawyer drafting a memo. When they hit a fact they don't know, they stop, look it up, jot down the one line that matters, and keep writing. Search-o1 teaches a model to do this in the middle of its reasoning.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>A small local model often gets things wrong on the first try. But if you can check answers cheaply, drawing many and filtering is affordable on your own machine.</li>
+<li>A local model knows nothing about the firm's contracts or internal policies. It must look them up. Doing that well is the difference between a useful assistant and a confident guesser.</li>
+<li>Many firm questions need two facts from two places. "Who must approve this contract?" needs the fee from the contract and the rule from the policy. Searching once rarely gets both.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Sample many answers</strong> (the AlphaCode paper, 2022). For each coding problem, AlphaCode drew huge numbers of programs, up to millions. More tries means a better chance at least one is right. The share of problems where at least one try is right is called coverage. It is the ceiling for any picking method.</p>
+</li>
+<li>
+<p><strong>Filter with the examples.</strong> Each problem comes with a few example tests. Running every program on them threw away about 99% of samples. This is a cheap, exact check. But passing the examples is not the same as being correct. Many wrong programs still pass.</p>
+</li>
+<li>
+<p><strong>Cluster by behavior.</strong> Run the survivors on fresh inputs. These inputs need no known answers. Group programs that give the same outputs. Then submit one program from each group, biggest group first, with at most 10 submissions. Why biggest first? There are many ways to be wrong, but correct programs tend to agree. So they pile up in the largest group. AlphaCode 2 (2023) kept this pipeline and added a scoring model (a model that predicts how likely a program is correct) to choose inside each group. With a better base model, it needed about 100 samples to match what the original needed a million for.</p>
+</li>
+<li>
+<p><strong>Search for knowledge: first, RAG from zero.</strong> RAG (retrieval-augmented generation) means: before the model answers, a search tool finds relevant documents and pastes them into its prompt. It is like handing the intern a folder before they answer. Naive RAG searches once, with the whole question.</p>
+</li>
+<li>
+<p><strong>Search-o1: search while thinking</strong> (the Search-o1 paper, 2025). The model reasons step by step. When unsure, it writes a search query between special tags, like <code>&lt;search&gt;...&lt;/search&gt;</code>. The system pauses, runs the search, and the model continues. This is agentic RAG: the model itself decides when and what to search, possibly several times.</p>
+</li>
+<li>
+<p><strong>Condense before pasting back.</strong> Raw search results are long and noisy. They can pull the reasoning off track. So a separate step, called Reason-in-Documents, reads the results and writes back only the few facts that matter. On a hard science quiz, this setup scored 63.6, against 58.6 for standard RAG with the same model.</p>
+</li>
+</ol>
+<pre><code>model reasons ... &lt;search&gt;fee in Acme contract&lt;/search&gt;
+     -&gt; search tool -&gt; 3 pages -&gt; Reason-in-Documents -&gt; &quot;Monthly fee is $8,000.&quot;
+model continues ... &lt;search&gt;procurement approval tiers&lt;/search&gt;
+     -&gt; ... -&gt; &quot;$5,000 to $15,000: Finance Director.&quot;
+model: ANSWER: Finance Director
+</code></pre>
+<h2>Worked example</h2>
+<p>The notebook builds this exact case. The corpus has 20 contracts and a few internal policies. One policy, "Procurement Policy PP-4", says who approves vendor spending. Under $5,000 a month, the Department Head. From $5,000 up to $15,000, the Finance Director. Above that, the Chief Financial Officer.</p>
+<p>The question: "Who must approve the agreement between this customer and this vendor?"</p>
+<ul>
+<li><strong>No search.</strong> The model has never seen these documents. It guesses.</li>
+<li><strong>Naive RAG.</strong> One search with the whole question. It often brings back the contract or the policy, but not both. Half the facts means a wrong answer.</li>
+<li><strong>Search-o1 style.</strong> The model searches for the contract's fee first. The condensing step returns one sentence with the fee. Then it searches for the approval rule. It now has both hops and can answer.</li>
+</ul>
+<p>The search tool itself is plain code:</p>
+<pre><code class="language-python">def search(query, k=3):
+    scores = BM25.get_scores(tok(query))
+    return [DOCS[i] for i in sorted(range(len(DOCS)), key=lambda i: -scores[i])[:k]]
+</code></pre>
+<ul>
+<li>Line 1 defines a search that returns the top <code>k</code> documents, three by default.</li>
+<li>Line 2 scores every document with BM25, a classic keyword-matching method. More shared words, especially rare ones, means a higher score.</li>
+<li>Line 3 sorts documents from best to worst score and returns the top three.</li>
+</ul>
+<p>The AlphaCode half of the notebook plants a wrong program that passes both example tests. Filtering can't catch it. But on fresh inputs it behaves differently, so it lands in a separate, smaller group.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Treating "passes the examples" as "correct".</strong> Many wrong programs pass. Use clustering and hidden tests.</li>
+<li><strong>Picking survivors at random.</strong> You waste your submission budget on programs that look different but behave the same.</li>
+<li><strong>Searching once with the whole question.</strong> For two-step questions, let the model search for each fact on its own.</li>
+<li><strong>Pasting long raw results into the reasoning.</strong> Condense them to a few facts first.</li>
+<li><strong>Only reading the score.</strong> A small model may never search, or may search with vague words. Read the transcripts.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Why does AlphaCode pick from the largest cluster first?</summary>
+<p>There are many ways to be wrong, but correct programs tend to behave the same. So correct programs gather in the larger clusters.</p>
+</details>
+<details>
+<summary>What does Reason-in-Documents do?</summary>
+<p>It reads the retrieved pages along with the current reasoning and query. It returns only the relevant facts, which are pasted back into the reasoning.</p>
+</details>
+<details>
+<summary>Why can naive RAG fail on the approver question?</summary>
+<p>The answer needs both the contract&#x27;s monthly fee and the policy&#x27;s approval tiers. One search with the whole question may return only one of them.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the a07 notebook. Part A samples small programs, filters, clusters, and compares picking methods against the oracle ceiling. Part B compares no search, naive RAG and a Search-o1 loop on two-hop contract questions; read a few transcripts to see what the model searched for.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Lecture 8 (Oct 17)</p>
+
+  <p class="big">You can make an agent better without training it by searching. Search over answers: draw many programs, keep the ones that pass the examples, group them by behavior, and submit one per group. Search for knowledge: let the model pause mid-thought, look something up, boil the results down, and keep reasoning.</p>
+<div class="terms"><h4>Key terms</h4><dl><div><dt>Filtering</dt><dd>Throwing away candidate programs that fail the example tests given in the problem.<span class="from">Source: Li et al. 2022</span></dd></div><div><dt>Clustering by behavior</dt><dd>Running candidates on extra inputs and grouping the ones that give identical outputs; the inputs need no known answers.<span class="from">Source: Li et al. 2022</span></dd></div><div><dt>10@k</dt><dd>Percent of problems solved when k samples are drawn but only 10 may be submitted.<span class="from">Source: Li et al. 2022</span></dd></div><div><dt>Scoring model</dt><dd>A model that predicts how likely a code sample is to be correct, used to rank samples.<span class="from">Source: AlphaCode 2 report, 2023</span></dd></div><div><dt>Agentic RAG</dt><dd>Retrieval where the model itself decides when to search and what to search for, possibly many times.<span class="from">Source: Li et al. 2025</span></dd></div><div><dt>Reason-in-Documents</dt><dd>A separate step that reads retrieved pages and writes back only the useful facts, so noisy text does not derail reasoning.<span class="from">Source: Li et al. 2025</span></dd></div><div><dt>Coverage</dt><dd>Fraction of problems where at least one sample is correct; the ceiling for any selection method.<span class="from">Source: Brown et al. 2024</span></dd></div></dl></div>
+<h3>The papers</h3><div class="papers"><div class="paper"><h4><a href="https://arxiv.org/abs/2203.07814">Competition-Level Code Generation with AlphaCode</a></h4><p class="by">Li et al. · 2022</p><dl><dt>What</dt><dd>A transformer model sampled up to millions of programs per competitive-programming problem. It filtered them with the example tests from the problem statement, then clustered the survivors by their outputs on new test inputs written by a separate model, and submitted one program per cluster, largest first, with at most 10 submissions.</dd><dt>Result</dt><dd>Average ranking in the top 54.3% in simulated Codeforces contests with more than 5,000 participants. Solved 34.2% of held-out CodeContests problems with up to a million samples and 10 submissions. Filtering on example tests removed about 99% of samples. Solve rate grew roughly log-linearly with the number of samples.</dd><dt>Takeaway</dt><dd>When a cheap exact check exists (example tests), sample a lot and filter. When many candidates survive, group them by behavior and pick from the biggest group, because correct programs tend to agree with each other.</dd></dl></div><div class="paper"><h4><a href="https://storage.googleapis.com/deepmind-media/AlphaCode2/AlphaCode2_Tech_Report.pdf">AlphaCode 2 Technical Report</a></h4><p class="by">AlphaCode Team, Google DeepMind (Leblond et al.) · 2023</p><dl><dt>What</dt><dd>The same sample, filter and cluster pipeline, built on fine-tuned Gemini Pro models. It drew up to a million C++ samples per problem with randomized temperature, kept the 10 largest clusters, and added a second fine-tuned Gemini model that scores each sample&#x27;s chance of being correct to choose the best one in each cluster.</dd><dt>Result</dt><dd>Solved 43% of problems from 12 recent Codeforces contests (77 problems) within 10 attempts, vs 25% for the original AlphaCode. Estimated 85th percentile among participants (AlphaCode: about 46%). Filtering removed about 95% of samples. Needed about 100 samples to match AlphaCode with a million samples.</dd><dt>Takeaway</dt><dd>A better base model makes search far more sample-efficient, and a learned scorer helps choose inside a group. Selection, not generation, is often where the remaining gains are.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2501.05366">Search-o1: Agentic Search-Enhanced Large Reasoning Models</a></h4><p class="by">Li et al. · 2025</p><dl><dt>What</dt><dd>A reasoning model (QwQ-32B-Preview) writes a search query between special tags whenever it is unsure. The system pauses, retrieves the top 10 web results, and a separate Reason-in-Documents step condenses them into the facts that matter, which are inserted back into the reasoning chain.</dd><dt>Result</dt><dd>On GPQA diamond, overall 63.6 vs 58.1 for the same model without retrieval and 58.6 with standard RAG. Averaged over the five reasoning datasets it beat agentic RAG without Reason-in-Documents by 4.7% and no retrieval by 3.1%. On multi-hop QA, average exact match beat standard RAG by 29.6% and agentic RAG by 5.3%.</dd><dt>Takeaway</dt><dd>For multi-step questions, let the model decide when and what to search, one fact at a time, and condense the results before they reach the reasoning. One retrieval with the whole question often misses the second hop.</dd></dl></div></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a07_search_deep_research.ipynb" target="_blank" rel="noopener">a07_search_deep_research.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, math, os, random, re, subprocess, sys, tempfile, textwrap
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
+from rank_bm25 import BM25Okapi
+from lal.llm import ask
+from lal.data import contract, labels, ids, sections
+from lal.checks import pass_at_k, check</code></pre></div>
+<div class="nb-md"><h3>Part A · AlphaCode at laptop scale</h3>
+<p>AlphaCode (Li et al. 2022, <em>Competition-Level Code Generation with AlphaCode</em>) drew up to millions of programs per problem, then cut them down to 10 submissions in two steps:</p>
+<ol>
+<li><strong>Filter:</strong> run each program on the example tests in the problem statement. This removed about 99% of samples.</li>
+<li><strong>Cluster:</strong> run the survivors on <em>new</em> test inputs (made by a separate model) and group programs that give the same outputs. Submit one program per group, biggest group first.</li>
+</ol>
+<p>Why biggest first? The paper's guess: there are many ways to be wrong, but correct programs tend to agree, so they pile up in the largest group. AlphaCode 2 (2023) kept the same pipeline and added a scoring model to pick the best program inside each of the 10 biggest groups.</p>
+<p>Our version: 5 small tasks, 6 samples each. Each task has <strong>example tests</strong> (the model sees them), <strong>hidden tests</strong> (used only for grading) and an <strong>input generator</strong> (random inputs with no answers, used only for clustering).</p>
+<h3>A1. The tasks</h3>
+<p>The reference solutions live here, in trusted code. They compute every expected output, so no answer is typed by hand.</p></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">REF_CODE = &quot;&quot;&quot;
+import re
+
+def second_largest(nums):
+    d = sorted(set(nums))
+    return d[-2] if len(d) &gt;= 2 else None
+
+def merge_intervals(intervals):
+    out = []
+    for s, e in sorted(intervals):
+        if out and s &lt;= out[-1][1]:
+            out[-1][1] = max(out[-1][1], e)
+        else:
+            out.append([s, e])
+    return out
+
+def rle_decode(s):
+    return &quot;&quot;.join(ch * int(n) for ch, n in re.findall(r&quot;([a-zA-Z])(\\d+)&quot;, s))
+
+def max_subarray(nums):
+    best = cur = nums[0]
+    for x in nums[1:]:
+        cur = max(x, cur + x)
+        best = max(best, cur)
+    return best
+
+def to_roman(n):
+    vals = [(1000, &quot;M&quot;), (900, &quot;CM&quot;), (500, &quot;D&quot;), (400, &quot;CD&quot;), (100, &quot;C&quot;), (90, &quot;XC&quot;),
+            (50, &quot;L&quot;), (40, &quot;XL&quot;), (10, &quot;X&quot;), (9, &quot;IX&quot;), (5, &quot;V&quot;), (4, &quot;IV&quot;), (1, &quot;I&quot;)]
+    out = &quot;&quot;
+    for v, sym in vals:
+        while n &gt;= v:
+            out += sym
+            n -= v
+    return out
+&quot;&quot;&quot;
+REF = {}
+exec(REF_CODE, REF)          # trusted code we wrote, so it is fine to run it here
+
+rng = random.Random(0)
+def rand_list(lo, hi, nmin, nmax):
+    return [rng.randint(lo, hi) for _ in range(rng.randint(nmin, nmax))]
+def rand_intervals():
+    out = []
+    for _ in range(rng.randint(0, 5)):
+        s = rng.randint(0, 12); out.append([s, s + rng.randint(0, 4)])
+    return out
+def rand_rle():
+    return &quot;&quot;.join(rng.choice(&quot;abcxyz&quot;) + str(rng.randint(1, 14)) for _ in range(rng.randint(0, 4)))
+
+# Each input is a list of positional arguments.
+TASKS = [
+    dict(fn=&quot;second_largest&quot;, ref=REF[&quot;second_largest&quot;],
+         spec=&quot;Return the second largest DISTINCT value in the list `nums`. If there are fewer than two distinct values, return None.&quot;,
+         examples=[[[3, 1, 2]], [[5, 5, 4]]],
+         hidden=[[[7, 7]], [[]], [[-1, -5, -3]], [[1, 2, 2, 3, 3]], [[10]], [[4, 4, 4, 9]]],
+         gen=lambda: [rand_list(-4, 4, 0, 6)]),
+    dict(fn=&quot;merge_intervals&quot;, ref=REF[&quot;merge_intervals&quot;],
+         spec=&quot;Merge overlapping intervals. Each interval is a list [start, end] with start &lt;= end. Intervals that only touch &quot;
+              &quot;(one ends where the next starts) also merge. Return a new list of merged intervals sorted by start.&quot;,
+         examples=[[[[1, 3], [2, 6], [8, 10]]], [[[1, 2]]]],
+         hidden=[[[]], [[[5, 6], [1, 2]]], [[[1, 2], [2, 3]]], [[[1, 10], [2, 3]]], [[[4, 5], [1, 4], [0, 0]]]],
+         gen=lambda: [rand_intervals()]),
+    dict(fn=&quot;rle_decode&quot;, ref=REF[&quot;rle_decode&quot;],
+         spec=&quot;Decode a run-length string. Each letter is followed by a positive whole number (it may have several digits) &quot;
+              &quot;saying how many times to repeat it. Example: &#x27;a3b1&#x27; -&gt; &#x27;aaab&#x27;. The empty string decodes to &#x27;&#x27;.&quot;,
+         examples=[[&quot;a3b2&quot;], [&quot;x1&quot;]],
+         hidden=[[&quot;a12&quot;], [&quot;&quot;], [&quot;z10y2&quot;], [&quot;b1c1d1&quot;], [&quot;q20&quot;]],
+         gen=lambda: [rand_rle()]),
+    dict(fn=&quot;max_subarray&quot;, ref=REF[&quot;max_subarray&quot;],
+         spec=&quot;Return the largest possible sum of a NON-EMPTY contiguous slice of the list `nums`. &quot;
+              &quot;`nums` has at least one element, and all elements may be negative.&quot;,
+         examples=[[[1, -2, 3, 4, -1]], [[2, 3]]],
+         hidden=[[[-3, -1, -2]], [[-5]], [[5, -9, 6]], [[0, 0]], [[-2, 1, -3, 4, -1, 2, 1, -5, 4]]],
+         gen=lambda: [rand_list(-6, 6, 1, 7)]),
+    dict(fn=&quot;to_roman&quot;, ref=REF[&quot;to_roman&quot;],
+         spec=&quot;Convert an integer 1 &lt;= n &lt;= 3999 to a Roman numeral string, using the subtractive forms IV, IX, XL, XC, CD and CM.&quot;,
+         examples=[[3], [58]],
+         hidden=[[4], [9], [14], [40], [90], [400], [1994], [3999]],
+         gen=lambda: [rng.randint(1, 3999)]),
+]
+N_GEN = 12                                                       # generated inputs per task, for clustering only
+for t in TASKS:
+    t[&quot;gen_inputs&quot;] = [t[&quot;gen&quot;]() for _ in range(N_GEN)]
+print(len(TASKS), &quot;tasks. Example generated inputs for&quot;, TASKS[0][&quot;fn&quot;], &quot;:&quot;, TASKS[0][&quot;gen_inputs&quot;][:4])</code></pre></div>
+<div class="nb-md"><h3>A2. A safe runner</h3>
+<p>Model code runs <strong>only</strong> in a separate Python process with a timeout. The runner calls the function on a list of inputs and prints the outputs as JSON. A crash on one input is recorded as <code>"ERROR: &lt;type&gt;"</code> so it still forms part of the program's behavior.</p></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">RUNNER = r&#x27;&#x27;&#x27;
+import json, sys, copy
+src, fn, inputs_path = open(sys.argv[1]).read(), sys.argv[2], sys.argv[3]
+inputs = json.load(open(inputs_path))
+ns = {}
+try:
+    exec(compile(src, &quot;candidate&quot;, &quot;exec&quot;), ns)
+    f = ns[fn]
+except Exception as e:
+    print(json.dumps([&quot;ERROR: &quot; + type(e).__name__] * len(inputs))); sys.exit(0)
+outs = []
+for args in inputs:
+    try:
+        outs.append(f(*copy.deepcopy(args)))
+    except Exception as e:
+        outs.append(&quot;ERROR: &quot; + type(e).__name__)
+print(json.dumps(outs, default=repr))
+&#x27;&#x27;&#x27;
+WORK = tempfile.mkdtemp(prefix=&quot;a07_&quot;)
+RUNNER_PATH = os.path.join(WORK, &quot;runner.py&quot;)
+open(RUNNER_PATH, &quot;w&quot;).write(RUNNER)
+
+def run_outputs(code, fn, inputs, timeout=10):
+    &quot;&quot;&quot;Run `code` in a subprocess and return one JSON-normalized output per input.&quot;&quot;&quot;
+    with tempfile.NamedTemporaryFile(&quot;w&quot;, suffix=&quot;.py&quot;, dir=WORK, delete=False) as f:
+        f.write(code); src = f.name
+    inp = src + &quot;.json&quot;
+    open(inp, &quot;w&quot;).write(json.dumps(inputs))
+    try:
+        out = subprocess.run([sys.executable, &quot;-I&quot;, RUNNER_PATH, src, fn, inp], capture_output=True, text=True, timeout=timeout)
+        res = json.loads(out.stdout.strip().splitlines()[-1])
+        if not isinstance(res, list) or len(res) != len(inputs):
+            raise ValueError(&quot;bad output&quot;)
+    except subprocess.TimeoutExpired:
+        res = [&quot;TIMEOUT&quot;] * len(inputs)
+    except Exception:
+        res = [&quot;ERROR: runner&quot;] * len(inputs)
+    return [json.dumps(r, sort_keys=True) for r in res]       # strings, so outputs compare and hash cleanly
+
+def expected(task, inputs):
+    return [json.dumps(json.loads(json.dumps(task[&quot;ref&quot;](*json.loads(json.dumps(a))), default=repr)), sort_keys=True) for a in inputs]
+
+# Test the runner and the task set with the reference solutions themselves.
+ref_ok = all(run_outputs(REF_CODE, t[&quot;fn&quot;], t[&quot;hidden&quot;]) == expected(t, t[&quot;hidden&quot;]) for t in TASKS)
+print(&quot;reference solutions pass their own hidden tests through the runner:&quot;, ref_ok)
+print(&quot;a broken program:&quot;, run_outputs(&quot;def to_roman(n):\n    return 1/0&quot;, &quot;to_roman&quot;, [[1], [2]]))
+print(&quot;an endless loop:&quot;, run_outputs(&quot;def to_roman(n):\n    while True: pass&quot;, &quot;to_roman&quot;, [[1]], timeout=3))</code></pre></div>
+<div class="nb-md"><h3>A3. Why clustering works: a planted wrong answer</h3>
+<p>A common wrong <code>max_subarray</code> resets the running sum to 0, so it returns 0 when every number is negative. It <strong>passes both example tests</strong>. Filtering can't catch it, but its outputs on generated inputs differ from the correct program, so it lands in a different cluster.</p></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">CORRECT_MS = &quot;def max_subarray(nums):\n    best = cur = nums[0]\n    for x in nums[1:]:\n        cur = max(x, cur + x)\n        best = max(best, cur)\n    return best\n&quot;
+WRONG_MS = &quot;def max_subarray(nums):\n    best = cur = 0\n    for x in nums:\n        cur = max(0, cur + x)\n        best = max(best, cur)\n    return best\n&quot;
+ms = TASKS[3]
+for name, code in [(&quot;correct&quot;, CORRECT_MS), (&quot;reset-to-0&quot;, WRONG_MS)]:
+    print(f&quot;{name:10} passes examples: {run_outputs(code, &#x27;max_subarray&#x27;, ms[&#x27;examples&#x27;]) == expected(ms, ms[&#x27;examples&#x27;])} | &quot;
+          f&quot;behavior on generated inputs: {run_outputs(code, &#x27;max_subarray&#x27;, ms[&#x27;gen_inputs&#x27;])[:6]}&quot;)
+planted_split = run_outputs(CORRECT_MS, &quot;max_subarray&quot;, ms[&quot;gen_inputs&quot;]) != run_outputs(WRONG_MS, &quot;max_subarray&quot;, ms[&quot;gen_inputs&quot;])</code></pre></div>
+<div class="nb-md"><h3>A4. Sample many programs</h3>
+<p>For diversity, AlphaCode sampled half in Python and half in C++, put random problem tags and ratings in the prompt, and used a fairly high temperature. AlphaCode 2 also randomized the temperature per sample. We use a temperature of 0.8 and 6 samples per task (30 calls), 2 at a time.</p></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">N_SAMPLES = 6
+
+def code_prompt(t):
+    ex = &quot;\n&quot;.join(f&quot;{t[&#x27;fn&#x27;]}({&#x27;, &#x27;.join(map(repr, a))}) == {t[&#x27;ref&#x27;](*json.loads(json.dumps(a)))!r}&quot; for a in t[&quot;examples&quot;])
+    return (f&quot;Write a Python function `{t[&#x27;fn&#x27;]}`.\n{t[&#x27;spec&#x27;]}\n\nExamples:\n{ex}\n\n&quot;
+            &quot;Return only the code, in one ```python block. No explanation.&quot;)
+
+def extract_code(text):
+    blocks = re.findall(r&quot;```(?:python|py)?\s*\n(.*?)```&quot;, text or &quot;&quot;, flags=re.S)
+    return max(blocks, key=len) if blocks else (text or &quot;&quot;)
+
+def sample(t):
+    return extract_code(ask(code_prompt(t), temperature=0.8, max_tokens=600))
+
+jobs = [(ti, k) for ti in range(len(TASKS)) for k in range(N_SAMPLES)]
+with ThreadPoolExecutor(2) as ex:
+    codes = list(ex.map(lambda j: sample(TASKS[j[0]]), jobs))
+SAMPLES = defaultdict(list)
+for (ti, _), c in zip(jobs, codes):
+    SAMPLES[ti].append(c)
+print(SAMPLES[0][0][:400])</code></pre></div>
+<div class="nb-md"><h3>A5. Filter, cluster, select</h3>
+<p>For each sample we record three things: does it pass the examples, its behavior signature on generated inputs, and (for grading only) does it pass the hidden tests.</p></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def analyse(ti):
+    t = TASKS[ti]
+    rows = []
+    for code in SAMPLES[ti]:
+        rows.append(dict(code=code,
+                         ex_ok=run_outputs(code, t[&quot;fn&quot;], t[&quot;examples&quot;]) == expected(t, t[&quot;examples&quot;]),
+                         sig=tuple(run_outputs(code, t[&quot;fn&quot;], t[&quot;gen_inputs&quot;])),
+                         hidden_ok=run_outputs(code, t[&quot;fn&quot;], t[&quot;hidden&quot;]) == expected(t, t[&quot;hidden&quot;])))
+    return rows
+
+def clusters_of(rows):
+    &quot;&quot;&quot;Group the rows that passed the examples by behavior signature, biggest group first.&quot;&quot;&quot;
+    groups = defaultdict(list)
+    for r in rows:
+        if r[&quot;ex_ok&quot;]:
+            groups[r[&quot;sig&quot;]].append(r)
+    return sorted(groups.values(), key=len, reverse=True)
+
+RESULTS = {ti: analyse(ti) for ti in range(len(TASKS))}
+for ti, rows in RESULTS.items():
+    cl = clusters_of(rows)
+    print(f&quot;{TASKS[ti][&#x27;fn&#x27;]:16} samples {len(rows)} | pass examples {sum(r[&#x27;ex_ok&#x27;] for r in rows)} | &quot;
+          f&quot;clusters {[len(c) for c in cl]} | cluster correct? {[c[0][&#x27;hidden_ok&#x27;] for c in cl]} | &quot;
+          f&quot;any sample correct: {any(r[&#x27;hidden_ok&#x27;] for r in rows)}&quot;)</code></pre></div>
+<div class="nb-md"><h3>A6. Compare selection methods</h3>
+<p>We have a budget of <code>K</code> submissions per task. A task counts as solved if any submission passes all hidden tests.
+- <strong>random:</strong> pick K samples at random (expected value, using pass@k).
+- <strong>filter + random:</strong> pick K at random from the samples that pass the examples.
+- <strong>filter + cluster:</strong> one sample from each of the K biggest clusters.
+- <strong>oracle:</strong> any sample is correct (the ceiling, also called <em>coverage</em>).</p></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def solve_rates(K):
+    out = defaultdict(float)
+    for ti, rows in RESULTS.items():
+        n, c = len(rows), sum(r[&quot;hidden_ok&quot;] for r in rows)
+        f = [r for r in rows if r[&quot;ex_ok&quot;]]
+        fc = sum(r[&quot;hidden_ok&quot;] for r in f)
+        out[&quot;random&quot;] += pass_at_k(n, c, min(K, n)) if n else 0
+        out[&quot;filter + random&quot;] += pass_at_k(len(f), fc, min(K, len(f))) if f else 0
+        out[&quot;filter + cluster&quot;] += float(any(cl[0][&quot;hidden_ok&quot;] for cl in clusters_of(rows)[:K]))
+        out[&quot;oracle (coverage)&quot;] += float(c &gt; 0)
+    return {k: v / len(RESULTS) for k, v in out.items()}
+
+TABLE = {K: solve_rates(K) for K in (1, 2)}
+print(f&quot;{&#x27;method&#x27;:20}&quot; + &quot;&quot;.join(f&quot;{&#x27;K=&#x27; + str(K):&gt;8}&quot; for K in TABLE))
+for m in TABLE[1]:
+    print(f&quot;{m:20}&quot; + &quot;&quot;.join(f&quot;{TABLE[K][m]:&gt;8.0%}&quot; for K in TABLE))</code></pre></div>
+<div class="nb-md"><p>What to notice: filtering helps because example tests are a cheap, exact verifier. Clustering helps most when many samples pass the examples but disagree with each other. The gap to the oracle row is the <em>selection</em> problem, which AlphaCode 2 attacked with a learned scoring model.</p></div>
+<div class="nb-md"><h3>Part B · Search-o1: search in the middle of reasoning</h3>
+<p>Search-o1 (Li et al. 2025, <em>Search-o1: Agentic Search-Enhanced Large Reasoning Models</em>) lets a reasoning model write a search query between special tags whenever it is unsure. The system pauses, retrieves documents, and a separate <strong>Reason-in-Documents</strong> step condenses them into a few useful facts. Only those facts go back into the reasoning, so long noisy pages don't derail it.</p>
+<p>We compare three ways to answer questions about our company's contracts and policies:
+1. <strong>No search:</strong> the model alone. It has never seen our data, so it should fail.
+2. <strong>Naive RAG:</strong> retrieve once with the question, then answer.
+3. <strong>Search-o1 style:</strong> the model decides what to search, possibly several times, and each result is condensed first.</p>
+<h3>B1. The corpus: 20 contracts plus a few internal policies</h3>
+<p>The questions need <strong>two hops</strong>: one fact from a contract, and one rule from a policy.</p></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">POLICIES = {
+    &quot;Procurement Policy PP-4&quot;: [
+        &quot;Purpose. This policy sets who must sign off on recurring vendor spending.&quot;,
+        &quot;Approval tiers. The approver depends on the monthly fee in the vendor agreement. A monthly fee under $5,000 is approved by the Department Head. &quot;
+        &quot;A monthly fee from $5,000 up to and including $15,000 is approved by the Finance Director. A monthly fee above $15,000 is approved by the Chief Financial Officer.&quot;,
+        &quot;Records. Keep the signed approval with the contract file for seven years.&quot;,
+    ],
+    &quot;Legal Policy LP-2&quot;: [
+        &quot;Outside counsel. Disputes are handled by the outside counsel firm assigned to the state whose law governs the agreement.&quot;,
+        &quot;Assignments. Delaware law: Hale &amp; Ross LLP. California law: Pacific Ridge Law Group. Texas law: Lone Star Counsel. &quot;
+        &quot;Florida law: Bayfront Legal. New York law: Hudson Street Partners.&quot;,
+        &quot;Budget. Outside counsel spending above $50,000 per matter needs General Counsel approval.&quot;,
+    ],
+    &quot;Contracts Desk Policy CD-1&quot;: [
+        &quot;Non-renewal letters. To stop an agreement from renewing, the Contracts Desk sends the non-renewal letter early. &quot;
+        &quot;The letter must go out a number of days before the renewal date equal to the agreement&#x27;s notice period plus a 15-day internal buffer.&quot;,
+        &quot;Tracking. Every agreement&#x27;s renewal date is entered in the contracts calendar on signature.&quot;,
+    ],
+    &quot;Travel Policy TR-3&quot;: [
+        &quot;Approval. Trips above $3,000 are approved by the Department Head before booking.&quot;,
+        &quot;Per diem. Meals are reimbursed up to $75 per day in the United States.&quot;,
+    ],
+    &quot;IT Equipment Policy IT-7&quot;: [
+        &quot;Laptops. Standard laptops are replaced every 36 months. Exceptions are approved by the IT Director.&quot;,
+        &quot;Security. Lost devices must be reported within 24 hours.&quot;,
+    ],
+}
+
+def parties(cid):
+    m = re.search(r&#x27;entered into by (.+?) \(&quot;Customer&quot;\) and (.+?) \(&quot;Vendor&quot;\)&#x27;, contract(cid))
+    return (m.group(1), m.group(2)) if m else (&quot;?&quot;, &quot;?&quot;)
+
+DOCS = []
+for cid in ids():
+    cust, vend = parties(cid)
+    for s in sections(contract(cid)):
+        DOCS.append({&quot;id&quot;: f&quot;{cid}#{s[&#x27;id&#x27;]}&quot;, &quot;text&quot;: f&quot;Agreement between {cust} (Customer) and {vend} (Vendor), &quot;
+                                                       f&quot;section {s[&#x27;id&#x27;]} {s[&#x27;title&#x27;]}: {s[&#x27;text&#x27;]}&quot;})
+for title, paras in POLICIES.items():
+    for i, p in enumerate(paras):
+        DOCS.append({&quot;id&quot;: f&quot;{title}#{i + 1}&quot;, &quot;text&quot;: f&quot;{title}. {p}&quot;})
+
+tok = lambda s: re.findall(r&quot;\w+&quot;, s.lower())
+BM25 = BM25Okapi([tok(d[&quot;text&quot;]) for d in DOCS])
+
+def search(query, k=3):
+    &quot;&quot;&quot;The local search tool: BM25 over contract sections and policy paragraphs.&quot;&quot;&quot;
+    scores = BM25.get_scores(tok(query))
+    return [DOCS[i] for i in sorted(range(len(DOCS)), key=lambda i: -scores[i])[:k]]
+
+for d in search(&quot;Bayview Health Partners Brightline Data Corp monthly fee&quot;):
+    print(d[&quot;id&quot;], &quot;|&quot;, d[&quot;text&quot;][:110])
+bm25_ok = search(f&quot;{&#x27; &#x27;.join(parties(&#x27;msa_01&#x27;))} fees&quot;, k=3)[0][&quot;id&quot;].startswith(&quot;msa_01&quot;)</code></pre></div>
+<div class="nb-md"><h3>B2. Questions with known answers</h3>
+<p>Built from the labels with a seed. We only use customer/vendor pairs that appear in exactly one contract, so each question has one right answer.</p></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def approver(fee):
+    return &quot;Department Head&quot; if fee &lt; 5000 else (&quot;Finance Director&quot; if fee &lt;= 15000 else &quot;Chief Financial Officer&quot;)
+COUNSEL = {&quot;Delaware&quot;: &quot;Hale &amp; Ross&quot;, &quot;California&quot;: &quot;Pacific Ridge&quot;, &quot;Texas&quot;: &quot;Lone Star&quot;, &quot;Florida&quot;: &quot;Bayfront&quot;, &quot;New York&quot;: &quot;Hudson Street&quot;}
+
+L = labels()
+pair_count = defaultdict(int)
+for cid in ids():
+    pair_count[parties(cid)] += 1
+unique = [cid for cid in ids() if pair_count[parties(cid)] == 1]
+qrng = random.Random(7)
+picked = qrng.sample(unique, 6)
+QUESTIONS = []
+for i, cid in enumerate(picked):
+    cust, vend = parties(cid); terms = L[cid][&quot;terms&quot;]
+    if i % 3 == 0:
+        QUESTIONS.append((f&quot;Under our procurement policy, who must approve the agreement between {cust} and {vend}?&quot;, approver(terms[&quot;monthly_fee&quot;])))
+    elif i % 3 == 1:
+        QUESTIONS.append((f&quot;Which outside counsel firm handles disputes under the agreement between {cust} and {vend}?&quot;, COUNSEL[terms[&quot;governing_law&quot;]]))
+    else:
+        QUESTIONS.append((f&quot;How many days before the renewal date must the Contracts Desk send the non-renewal letter for the agreement between {cust} and {vend}?&quot;,
+                          str(terms[&quot;notice_days&quot;] + 15)))
+for q, a in QUESTIONS:
+    print(f&quot;- {q}  -&gt; gold: {a}&quot;)
+
+def words(s):
+    return re.findall(r&quot;[a-z0-9]+&quot;, (s or &quot;&quot;).lower())
+
+def is_correct(answer, gold):
+    &quot;&quot;&quot;Lenient grading: a number must appear; for names, every word of the gold name must appear.&quot;&quot;&quot;
+    if gold.isdigit():
+        return gold in re.findall(r&quot;\d+&quot;, (answer or &quot;&quot;).replace(&quot;,&quot;, &quot;&quot;))
+    return all(w in words(answer) for w in words(gold))
+
+def final_answer(text):
+    m = re.findall(r&quot;ANSWER:\s*(.+)&quot;, text or &quot;&quot;)
+    return m[-1].strip() if m else (text or &quot;&quot;).strip()[-200:]</code></pre></div>
+<div class="nb-md"><h3>B3. Baselines: no search, and naive RAG</h3></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def no_search(q):
+    return final_answer(ask(f&quot;{q}\nIf you are not sure, give your best guess. End with a line &#x27;ANSWER: &lt;short answer&gt;&#x27;.&quot;, max_tokens=300))
+
+def naive_rag(q, k=4):
+    ctx = &quot;\n\n&quot;.join(f&quot;[{d[&#x27;id&#x27;]}] {d[&#x27;text&#x27;]}&quot; for d in search(q, k=k))
+    return final_answer(ask(f&quot;Sources:\n{ctx}\n\nQuestion: {q}\nThink briefly, then end with a line &#x27;ANSWER: &lt;short answer&gt;&#x27;.&quot;, max_tokens=400))</code></pre></div>
+<div class="nb-md"><h3>B4. The Search-o1 loop</h3>
+<ol>
+<li>The model reasons. When it needs a fact it writes <code>&lt;search&gt;query&lt;/search&gt;</code>. We pass <code>stop=["&lt;/search&gt;"]</code> so generation pauses right there.</li>
+<li>We run the search tool.</li>
+<li><strong>Reason-in-Documents:</strong> a separate call reads the raw pages plus the reasoning so far and writes 1–3 sentences of useful facts.</li>
+<li>We paste those facts back inside <code>&lt;result&gt;...&lt;/result&gt;</code> and let the model continue. At most 3 searches.</li>
+</ol></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">S1_SYSTEM = (&quot;You answer questions about our company&#x27;s vendor agreements and internal policies. You do NOT know these facts yourself. &quot;
+             &quot;Think step by step. Whenever you need a fact, write a search query like this: &lt;search&gt;your query&lt;/search&gt; and then stop. &quot;
+             &quot;Search for one fact at a time, using the names in the question. The results will come back as &lt;result&gt;...&lt;/result&gt;. &quot;
+             &quot;When you know enough, finish with a line &#x27;ANSWER: &lt;short answer&gt;&#x27;.&quot;)
+
+from lal.llm import chat
+def ask_msgs(msgs, **kw):
+    return chat(msgs, max_tokens=400, **kw).content or &quot;&quot;
+
+def reason_in_documents(reasoning, query, docs):
+    pages = &quot;\n\n&quot;.join(f&quot;[{d[&#x27;id&#x27;]}] {d[&#x27;text&#x27;]}&quot; for d in docs)
+    return ask(f&quot;Reasoning so far:\n{reasoning[-1500:]}\n\nSearch query: {query}\n\nSearched pages:\n{pages}\n\n&quot;
+               &quot;Read the pages and write only the facts that help with the search query, in 1-3 sentences. &quot;
+               &quot;Copy names and numbers exactly. If nothing helps, write &#x27;No helpful information found.&#x27;&quot;, max_tokens=200).strip()
+
+def search_o1(q, max_searches=3, condense=True, verbose=False):
+    base = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: S1_SYSTEM}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: q}]
+    transcript, n_search = &quot;&quot;, 0
+    while True:
+        msgs = base + ([{&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: transcript},
+                        {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Continue your reasoning from where you stopped.&quot;}] if transcript else [])
+        out = ask_msgs(msgs, stop=[&quot;&lt;/search&gt;&quot;])
+        out = out.split(&quot;&lt;/search&gt;&quot;)[0]                    # in case the server ignores `stop`
+        i_s, i_a = out.find(&quot;&lt;search&gt;&quot;), out.find(&quot;ANSWER:&quot;)
+        transcript += (&quot;\n&quot; if transcript else &quot;&quot;) + out
+        if i_a != -1 and (i_s == -1 or i_a &lt; i_s):         # answered before (or without) asking for a search
+            break
+        if i_s == -1 or n_search &gt;= max_searches:          # no search and no answer, or out of budget: ask for the answer
+            transcript += &quot;\n&quot; + ask_msgs(base + [{&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: transcript},
+                                                  {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Give your final answer now as &#x27;ANSWER: &lt;short answer&gt;&#x27;.&quot;}])
+            break
+        query = out[i_s + len(&quot;&lt;search&gt;&quot;):].strip()[:200]
+        docs = search(query)
+        info = reason_in_documents(transcript, query, docs) if condense else &quot;\n&quot;.join(d[&quot;text&quot;] for d in docs)
+        transcript += f&quot;&lt;/search&gt;\n&lt;result&gt;{info}&lt;/result&gt;&quot;
+        n_search += 1
+        if verbose:
+            print(f&quot;  search {n_search}: {query!r}\n    -&gt; {info[:160]}&quot;)
+    return final_answer(transcript), n_search</code></pre></div>
+<div class="nb-md"><h3>B5. Score all three</h3></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 13</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">rows = []
+for qi, (q, gold) in enumerate(QUESTIONS):
+    a_none = no_search(q)
+    a_rag = naive_rag(q)
+    a_s1, n = search_o1(q, verbose=(qi == 0))               # print the searches for the first question
+    rows.append((is_correct(a_none, gold), is_correct(a_rag, gold), is_correct(a_s1, gold), n))
+    print(f&quot;gold {gold!r:24} | none {a_none[:30]!r:34} | rag {a_rag[:30]!r:34} | search-o1 ({n} searches) {a_s1[:30]!r}&quot;)
+acc = {name: sum(r[i] for r in rows) / len(rows) for i, name in enumerate([&quot;no search&quot;, &quot;naive RAG&quot;, &quot;Search-o1 style&quot;])}
+print({k: f&quot;{v:.0%}&quot; for k, v in acc.items()})</code></pre></div>
+<div class="nb-md"><p>What to notice: one retrieval with the whole question often brings back the contract <strong>or</strong> the policy, but not both. The agentic loop can search for each hop separately. The paper reports the same pattern on multi-hop QA: agentic search beat one-shot RAG, and adding Reason-in-Documents helped further. On a small model the loop can also fail by never searching, or by searching with vague words. Read the transcripts.</p></div>
+<div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 14</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;reference solutions pass their own hidden tests (the task set is sound)&quot;, ref_ok)
+check(&quot;a planted wrong program that passes the examples lands in a different cluster&quot;, planted_split)
+check(&quot;filter + cluster (K=1) is at least as good as random choice (K=1)&quot;, TABLE[1][&quot;filter + cluster&quot;] &gt;= TABLE[1][&quot;random&quot;] - 1e-9)
+check(&quot;BM25 finds the right contract from party names&quot;, bm25_ok)
+check(&quot;Search-o1 style beats no search on our questions&quot;, acc[&quot;Search-o1 style&quot;] &gt; acc[&quot;no search&quot;])</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Model-made test inputs.</strong> AlphaCode trained a separate model to write test inputs. Ask the model for 8 new inputs for <code>merge_intervals</code> (as a JSON list of argument lists), and cluster with those instead of our random generator. Do the clusters change?</li>
+<li><strong>Turn off Reason-in-Documents.</strong> Run <code>search_o1(q, condense=False)</code>, which pastes the raw pages back. Compare accuracy and the number of searches.</li>
+<li><strong>Scale the samples.</strong> Plot the filter + cluster solve rate (K=1) using the first 2, 4 and 6 samples per task. Does it rise as AlphaCode saw (roughly log-linear)?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 15</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: model-written test inputs for clustering (1 call)
+t = TASKS[1]
+raw = ask(f&quot;Write 8 varied test inputs for this Python function, including edge cases.\n{t[&#x27;spec&#x27;]}\n&quot;
+          f&quot;The function is called as {t[&#x27;fn&#x27;]}(intervals). Reply with only a JSON list where each item is a list of arguments, &quot;
+          &quot;for example [[[[1,2],[3,4]]], [[]]].&quot;, temperature=0.3, max_tokens=400)
+try:
+    model_inputs = json.loads(re.search(r&quot;\[.*\]&quot;, raw, flags=re.S).group(0))
+    model_inputs = [a for a in model_inputs if isinstance(a, list) and len(a) == 1][:8]
+except Exception:
+    model_inputs = []
+print(&quot;model inputs:&quot;, model_inputs)
+if model_inputs:
+    groups = defaultdict(list)
+    for r in RESULTS[1]:
+        if r[&quot;ex_ok&quot;]:
+            groups[tuple(run_outputs(r[&quot;code&quot;], t[&quot;fn&quot;], model_inputs))].append(r)
+    print(&quot;cluster sizes with random inputs:&quot;, [len(c) for c in clusters_of(RESULTS[1])],
+          &quot;| with model inputs:&quot;, sorted(map(len, groups.values()), reverse=True))
+# What to notice: as AlphaCode says, inputs don&#x27;t need answers, or even to be valid, to separate programs.
+# Edge-case inputs (empty list, touching intervals) are what split right from wrong.</code></pre></div><div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 16</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: raw pages instead of condensed facts (about 3-4 calls per question)
+raw_rows = [is_correct(search_o1(q, condense=False)[0], gold) for q, gold in QUESTIONS[:3]]
+cond_rows = [r[2] for r in rows[:3]]
+print(f&quot;first 3 questions | condensed: {sum(cond_rows)}/3 | raw pages: {sum(raw_rows)}/3&quot;)
+# What to notice: with three short pages the difference may be small. Search-o1&#x27;s motivation is long, noisy web pages,
+# where raw text pushes the reasoning off track. Try search(query, k=8) to see the effect grow.</code></pre></div><div class="code"><div class="cap"><span class="cell">a07_search_deep_research.ipynb · cell 17</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 3: solve rate as the sample budget grows (no new model calls; we reuse the samples)
+for n in (2, 4, 6):
+    solved = 0
+    for ti, rows_t in RESULTS.items():
+        cl = clusters_of(rows_t[:n])
+        solved += bool(cl) and cl[0][0][&quot;hidden_ok&quot;]
+    print(f&quot;{n} samples per task -&gt; filter + cluster K=1 solves {solved}/{len(RESULTS)}&quot;)
+# What to notice: more samples raise the chance a correct program exists AND make the correct cluster bigger.
+# AlphaCode needed millions of samples; AlphaCode 2 reached the same level with about 100, using a better model.</code></pre></div></details>
+<div class="pit"><strong>Traps</strong><ul><li>Passing the example tests is not being correct. Many wrong programs pass them, which is why AlphaCode needed clustering and hidden tests.</li><li>Random selection wastes your submission budget on programs that are written differently but behave the same.</li><li>Clustering inputs only need to separate programs. They do not need known answers, and even invalid inputs can help.</li><li>Naive RAG retrieves once with the whole question. For two-hop questions it often gets one hop and misses the other.</li><li>Pasting long raw search results into a reasoning chain can push it off track. Condense first.</li><li>A small model may never emit a search, or may search with vague words. Read the transcripts, not just the score.</li></ul></div>
+<div class="check"><h4>Check yourself</h4><details><summary>Why does AlphaCode pick from the largest cluster first?</summary><p>There are many ways to be wrong but correct programs tend to behave the same, so they gather in larger clusters.</p></details><details><summary>What did AlphaCode 2 add on top of filtering and clustering?</summary><p>A fine-tuned Gemini scoring model that picks the best sample in each of the 10 largest clusters.</p></details><details><summary>About how much did filtering with example tests remove in AlphaCode?</summary><p>About 99% of samples.</p></details><details><summary>What does Reason-in-Documents do?</summary><p>It reads the retrieved documents with the current reasoning and query, and returns only the relevant facts to insert into the reasoning chain.</p></details><details><summary>In our notebook, why can naive RAG fail on the approver question?</summary><p>The question needs the contract&#x27;s monthly fee and the procurement policy tiers; one retrieval with the whole question may bring back only one of them.</p></details></div>
+</div></section><nav class="pager"><a class="prev" href="a06.html"><small>← Previous</small>Open-ended evolution of self-improving agents</a><a class="next" href="a08.html"><small>Next →</small>Agentic frameworks for software engineering</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

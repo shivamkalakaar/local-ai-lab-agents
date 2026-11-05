@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Enhancing Mathematical Reasoning in LLMs through Reasoning Distillation, GRPO, and Multi-agent PRM Reranking · Agent Engineering School</title>
+<meta name="description" content="How a Stanford team made a smaller model great at hard math by copying a stronger model&#x27;s reasoning, training with rewards, and picking the best of several answers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP3</span></div><section class="mod" id="ap3" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP3</div><h2>Enhancing Mathematical Reasoning in LLMs through Reasoning Distillation, GRPO, and Multi-agent PRM Reranking</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap3_math_reasoning.ipynb">Open in Colab</a><button class="done-btn" data-done="ap3" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How a Stanford team made a smaller model great at hard math by copying a stronger model&#x27;s reasoning, training with rewards, and picking the best of several answers.</p><article class="lesson"><h2>The big idea</h2>
+<p>Hard math problems need long, careful reasoning. Big models can do it, but they use a lot of tokens (the small chunks of text a model reads and writes). Tokens cost time and money.</p>
+<p>Abhinav Agarwal, Shree Reddy, Carlo Baronio and Shubhra Mishra tackled this in their CS329A project (Winter 2025). They stacked three ideas on top of a Qwen2.5 model:</p>
+<ol>
+<li><strong>Distillation.</strong> A strong "teacher" model (DeepSeek R1) shows its full reasoning, and the smaller "student" learns to copy it. Like a junior lawyer learning by reading a senior partner's annotated memos.</li>
+<li><strong>GRPO</strong> (Group Relative Policy Optimization). The model writes several answers to the same problem, a reward scores them, and the model is nudged toward the answers that beat the group average. Like grading a team's drafts against each other.</li>
+<li><strong>Reranking.</strong> At test time, write several answers and let a reward model pick the best one.</li>
+</ol>
+<p>The surprise was where the gain came from. Most of it came from the first step: good examples from a stronger model.</p>
+<h2>Why it matters for us</h2>
+<p>A firm can do the same with its own contract reviews. A large local model writes careful reasoning for many clauses. A smaller, faster model learns from the best of those examples.</p>
+<ul>
+<li>Good training data matters more than clever training. Filter teacher examples with a checker, and check the steps, not just the final answer.</li>
+<li>A checker that scores each answer can beat a simple vote when the right answer is rare.</li>
+<li>Reward training mostly bought shorter answers here. Shorter answers mean faster reviews on the firm's own machines.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Build a big, clean dataset.</strong> They gathered 387K problems. About 15% of newly generated solutions were rejected by a GPT-4o-mini judge. This is rejection sampling: generate many, keep only the good ones.</p>
+</li>
+<li>
+<p><strong>Distill.</strong> Train the student on the teacher's full chain of thought (the written-out reasoning steps).</p>
+</li>
+<li>
+<p><strong>Train with GRPO.</strong> The reward was 1.0 for a correct answer plus 0.2 for the right format. They set the KL penalty to 0. The KL penalty normally keeps the model close to a frozen copy of itself, the reference model. Setting it to 0 means no reference model at all, which saves a whole model's worth of memory.</p>
+</li>
+<li>
+<p><strong>Rerank at test time.</strong> Several solvers write answers. A reward model picks the best.</p>
+</li>
+</ol>
+<p>Here is the ablation (turning parts on one at a time) on AIME'24, a hard math contest:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base model</td>
+<td>50.0%</td>
+</tr>
+<tr>
+<td>+ distillation</td>
+<td>72.1% (+22.1)</td>
+</tr>
+<tr>
+<td>+ GRPO</td>
+<td>76.7% (+4.6)</td>
+</tr>
+<tr>
+<td>+ reranking</td>
+<td>79.9% (+3.2)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The 32B GRPO model used 5,048 tokens per problem, against 32K for the baselines. Reward-model picking beat majority voting at every size. For example, Qwen2.5-Math-7B scored 70.0% with the reward model over 64 answers, against 43.3% by majority vote. One warning: after about 320 GRPO steps on the 7B model, answers got cut off, and they had to double the context window (how much text the model can handle at once) from 8,192 to 16,384 tokens.</p>
+<p>A note of care: AIME'24 has only 30 problems, so 79.9% is not a score you can get on one run. The paper doesn't explain it.</p>
+<h2>Worked example</h2>
+<p>Picture the firm's teacher model reviewing a fee clause. It writes: "Step 1: 12 months × $10,000 = $120,000. Step 2: cap is $150,000, which is above the limit." The final verdict might be right, but if a step's math is wrong, we don't want the student to learn it.</p>
+<p>Our notebook uses seeded word problems with exact answers, and a small code checker that recomputes every "a op b = c" in each step:</p>
+<pre><code class="language-python">print(step_scores(&quot;Step 1: 12 * 7 = 84\nStep 2: 84 - 9 = 76\nStep 3: 76 / 4 = 19\nANSWER: 19&quot;))
+</code></pre>
+<ul>
+<li>The input is a three-step solution.</li>
+<li>Step 1 is right: 12 × 7 is 84. Score 1.0.</li>
+<li>Step 2 is wrong: 84 − 9 is 75, not 76. Score 0.0.</li>
+<li>Step 3 is right as written: 76 ÷ 4 is 19. Score 1.0.</li>
+<li>The output is <code>[1.0, 0.0, 1.0]</code>.</li>
+</ul>
+<p>We use this checker twice.</p>
+<p>First, for distillation data. The teacher (llama3.1:8b) writes 2 answers per problem. We keep only answers with the right final number and no wrong step. Among those, we keep the shortest. The result is a ready-to-train file.</p>
+<p>Second, for reranking. The student (llama3.2:3b) writes 4 answers per test problem. A solution's score is its weakest step, the minimum. One bad step ruins the answer, just as one wrong number ruins a fee calculation. We compare five ways to choose: the first answer, a majority vote, the code checker, a model judge that names the first wrong step, and the oracle. The oracle asks "was any of the 4 right?" It is the ceiling for any picker.</p>
+<p>An optional part trains a tiny model (SmolLM2-135M) with GRPO, using the paper's 1.0 + 0.2 reward and a KL penalty of 0.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Spending effort on reward training first.</strong> Here distillation gave +22.1 points and GRPO gave +4.6. Get good examples first.</li>
+<li><strong>Checking only the final answer.</strong> A right answer reached through a wrong step teaches bad habits. Check every step.</li>
+<li><strong>Relying on majority vote for rare answers.</strong> If the right answer shows up once in four, a vote loses it. A step checker can still pick it.</li>
+<li><strong>Ignoring cut-off answers during training.</strong> Watch answer length. Raise the limit before truncation hurts accuracy.</li>
+<li><strong>Reading small benchmarks too precisely.</strong> With 30 problems, one question moves the score by 3.3 points.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Which stage gave the biggest gain in the ablation?</summary>
+<p>Distillation, which lifted the score from 50.0% to 72.1%. GRPO and reranking added smaller gains after that.</p>
+</details>
+<details>
+<summary>Why score a solution by its weakest step instead of the average?</summary>
+<p>One wrong step usually ruins the answer. An average lets a long solution with one bad step beat a short correct one.</p>
+</details>
+<details>
+<summary>What does setting the KL penalty to 0 save?</summary>
+<p>It removes the need for a frozen reference model during training, which saves a whole model&#x27;s memory.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the notebook to build the filtered distillation file and see how many teacher answers were rejected, including right answers with a wrong step. Then compare the five ways to pick among 4 student answers, and look at the gap between "first sample" and the oracle. Set <code>RUN_LONG = True</code> on a GPU to watch GRPO raise a tiny model's reward.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Winter 2025 · Abhinav Agarwal, Shree Reddy, Carlo Baronio, Shubhra Mishra</p>
+
+  <p class="src"><a href="https://cs329a.stanford.edu/winter2025projects/enhancing.pdf">Paper</a> · <a href="https://cs329a.stanford.edu/winter2025projects/enhancingposter.pdf">Poster</a></p>
+<div class="paper"><dl><dt>Problem</dt><dd>Olympiad-level math (the AIMO prize) needs long, consistent reasoning, and models spend many tokens getting there.</dd><dt>Method</dt><dd>A 387K-problem dataset (OpenR1-Math-220K 55%, 150K newly generated 37.5%, Bespoke-Stratos-17K 7.5%; a GPT-4o-mini judge rejected about 15% of generated solutions). Chain-of-thought distillation from DeepSeek R1 into Qwen2.5 with a KL + cross-entropy loss and a falling temperature. GRPO with KL penalty beta = 0 (no reference model), reward 1.0 for correctness + 0.2 for format, DeepSpeed ZeRO-3 and colocated vLLM, scaled to 32B. At test time, several solvers, self-verification, and a (preference) reward model reranks candidates.</dd><dt>Results</dt><dd>AIME&#x27;24: 32B GRPO model 76.7% with 5,048 tokens per problem vs. 32K for baselines (reported as a 6.3x reduction); 79.9% with multi-agent reranking over 4 passes. Ablation: base 50.0%, distillation only 72.1% (+22.1), + GRPO 76.7% (+4.6), + reranking 79.9% (+3.2). Baselines: Qwen2.5-32B Instruct 26.7%, Qwen2.5-Math-72B 30.0% (40.0% with tool-integrated reasoning), R1-Distill-Qwen-32B 73.3%. Qwen2.5-1.5B GRPO 10.0%, 7B GRPO 16.7%; their 7B pipeline 65.2% (5,137 tokens) vs. 58.7% baseline. 2.1x faster inference. Context window had to grow from 8,192 to 16,384 tokens after about 320 GRPO steps on 7B. Reward-model selection beat majority voting at every size (e.g., Qwen2.5-Math-7B 70.0% rm@64 vs. 43.3% maj@64). Note: AIME&#x27;24 has 30 problems, and 79.9% is not a multiple of 1/30; the paper does not explain this.</dd><dt>Lessons</dt><dd>Most of the gain came from distillation (good data from a stronger model), not RL; RL then mostly bought token efficiency. Filter distillation data with a checker, including the steps, not just the final answer. A verifier that scores candidates beats majority voting when the right answer is rare. Setting the KL penalty to 0 saves a whole model&#x27;s memory and worked here. Watch for truncated completions during RL.</dd><dt>Our rebuild</dt><dd>Seeded word problems from lal.tasks. Distillation data: llama3.1:8b samples 2 rationales per problem; we keep only those with the right answer and no wrong calculation, and choose the shortest, writing a ready-to-train SFT JSONL. Reranking: llama3.2:3b writes 4 solutions per test problem; we compare first sample, majority vote, a code step-checker used as a process reward (min over steps), an LLM judge that names the first wrong step, and the pass@4 oracle. Behind RUN_LONG: GRPO with TRL on SmolLM2-135M-Instruct using the paper&#x27;s 1.0 + 0.2 reward and beta = 0 (fp32 on T4), and SFT on the distilled file.</dd></dl></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap3_math_reasoning.ipynb" target="_blank" rel="noopener">ap3_math_reasoning.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="nb-md"><h3>The original project</h3>
+<p><strong>Enhancing Mathematical Reasoning in Large Language Models through Reasoning Distillation, GRPO, and Multi-agent PRM
+Reranking</strong> by Abhinav Agarwal, Shree Reddy, Carlo Baronio and Shubhra Mishra (Stanford CS329A, Winter 2025).
+<a href="https://cs329a.stanford.edu/winter2025projects/enhancing.pdf">Paper</a> · <a href="https://cs329a.stanford.edu/winter2025projects/enhancingposter.pdf">Poster</a> ·
+code: github.com/abhinav30219/math_reasoner</p>
+<p><strong>Problem.</strong> Olympiad-level math (the AIMO prize) needs long, consistent reasoning, and today's models spend a lot of
+tokens getting there.</p>
+<p><strong>Method.</strong>
+1. <strong>Data:</strong> 387K problems: OpenR1-Math-220K (55%), 150K newly generated (37.5%), Bespoke-Stratos-17K (7.5%).
+   A GPT-4o-mini judge plus format checks rejected about 15% of generated solutions.
+2. <strong>Distillation:</strong> DeepSeek R1 as teacher, Qwen2.5 as student, loss L = α·KL(teacher‖student) + (1−α)·CE, with
+   a temperature that starts high and drops, and extra weight on reasoning tokens.
+3. <strong>GRPO</strong> (Shao et al. 2024, <em>DeepSeekMath</em>): sample a group of answers per problem and use the group's average reward
+   as the baseline, so no separate value network is needed. Their key choice: <strong>KL penalty β = 0</strong>, so the reference
+   model can be dropped from memory. Reward = 1.0 for a correct answer + 0.2 for the right format.
+4. <strong>Multi-agent "PRM" reranking:</strong> several solvers with different settings, self-verification, then a reward model
+   ranks the candidates and the best one is kept. (In this paper PRM stands for <em>Preference</em> Reward Model.)</p>
+<p><strong>Key results (as reported, AIME'24).</strong>
+- 32B model after GRPO: <strong>76.7%</strong> with 5,048 tokens per problem, vs. 32K tokens for baselines (a "6.3× reduction").
+- With multi-agent reranking over 4 inference passes: <strong>79.9%</strong>.
+- Ablation: base model 50.0% → distillation only 72.1% (+22.1) → + GRPO 76.7% (+4.6) → + reranking 79.9% (+3.2).
+- Baselines: Qwen2.5-32B Instruct 26.7%, Qwen2.5-Math-72B 30.0% (40.0% with tool-integrated reasoning), R1-Distill-Qwen-32B 73.3%.
+- Scale: Qwen2.5-1.5B GRPO 10.0%, 7B GRPO 16.7%. Their 7B pipeline: 65.2% with 5,137 tokens vs. 58.7% baseline.
+- 2.1× faster inference. After about 320 GRPO steps on 7B, truncated answers hurt accuracy until they raised the
+  context window from 8,192 to 16,384 tokens.
+- Reward-model selection beat majority voting at every size (for example Qwen2.5-Math-7B: 70.0% rm@64 vs. 43.3% maj@64).</p>
+<p><strong>Read with care (our note).</strong> AIME'24 has 30 problems, so scores move in steps of 3.3 points. 79.9% is not a
+multiple of 1/30; it may be an average over runs, but the paper doesn't say. Also, some baselines (such as
+R1-Distill) are known to be reasoning models given a 32K budget, so the token comparison mixes model types.
+The poster adds a neat fact: with β = 0, one gradient step per batch and normalized advantages, the GRPO loss is
+always 0 while the gradient is not.</p>
+<p><strong>Our mini version.</strong> This repo does not use Qwen or DeepSeek models, so: <code>llama3.1:8b</code> is the teacher,
+<code>llama3.2:3b</code> is the student at test time, and <code>SmolLM2-135M-Instruct</code> is the model we train with GRPO (optional).
+Problems come from <code>lal.tasks</code> (generated with a seed), so every answer is exact.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import ast, json, random, re
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from typing import List
+from pydantic import BaseModel, Field
+from lal.llm import ask, structured
+from lal.checks import check, pass_at_k
+
+RUN_LONG = False          # True: also run the GRPO training (about 10 minutes on a T4)
+TEACHER, STUDENT = MODEL, &quot;llama3.2:3b&quot;           # MODEL is llama3.1:8b on a GPU runtime</code></pre></div>
+<div class="nb-md"><h3>1. Problems with exact answers</h3>
+<p>We reuse the repo's seeded word problems (<code>lal.tasks</code>): "easy" ones take 2 steps, "hard" ones 3–5 steps.
+Training (for the teacher) and test (for the student) mix both.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from lal.tasks import math_problems, extract_int
+to_pairs = lambda ps: [(p[&quot;question&quot;], p[&quot;answer&quot;]) for p in ps]
+TRAIN = to_pairs(math_problems(5, seed=31, difficulty=&quot;easy&quot;) + math_problems(5, seed=31, difficulty=&quot;hard&quot;))
+TEST = to_pairs(math_problems(3, seed=32, difficulty=&quot;easy&quot;) + math_problems(3, seed=32, difficulty=&quot;hard&quot;))
+for q, a in TRAIN[4:7]:
+    print(a, &quot;←&quot;, q)</code></pre></div>
+<div class="nb-md"><p>A <strong>step checker</strong> made of code: it recomputes every <code>a op b = c</code> it finds in a step. We use it twice:
+to filter teacher data, and later as a process reward for reranking.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def safe_eval(expr):
+    node = ast.parse(expr.replace(&quot;×&quot;, &quot;*&quot;).replace(&quot;÷&quot;, &quot;/&quot;).replace(&quot;−&quot;, &quot;-&quot;).strip(), mode=&quot;eval&quot;)
+    def ev(n):
+        if isinstance(n, ast.Expression): return ev(n.body)
+        if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)): return float(n.value)
+        if isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.USub): return -ev(n.operand)
+        if isinstance(n, ast.BinOp) and isinstance(n.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
+            a, b = ev(n.left), ev(n.right)
+            return {ast.Add: a + b, ast.Sub: a - b, ast.Mult: a * b, ast.Div: a / b if b else float(&quot;nan&quot;)}[type(n.op)]
+        raise ValueError(&quot;unsupported&quot;)
+    return ev(node)
+
+CALC = re.compile(r&quot;([\d\.\s\+\-\*/×÷\(\)]*\d[\d\.\s\+\-\*/×÷\(\)]*)=\s*(-?\d+(?:\.\d+)?)&quot;)
+
+def step_scores(solution):
+    &quot;&quot;&quot;One score per step: 1.0 if every calculation in it is right, 0.0 if any is wrong.&quot;&quot;&quot;
+    scores = []
+    for line in (solution or &quot;&quot;).replace(&quot;,&quot;, &quot;&quot;).replace(&quot;$&quot;, &quot;&quot;).splitlines():
+        if not re.match(r&quot;\s*\**step&quot;, line, re.I):
+            continue
+        ok = True
+        for left, right in CALC.findall(line):
+            if not re.search(r&quot;[\+\-\*/×÷]&quot;, left.strip().lstrip(&quot;-&quot;)):
+                continue                                   # &quot;x = 5&quot; is not a calculation
+            try:
+                ok &amp;= abs(safe_eval(left) - float(right)) &lt; 0.01
+            except Exception:
+                pass                                       # can&#x27;t parse: don&#x27;t punish
+        scores.append(1.0 if ok else 0.0)
+    return scores
+
+print(step_scores(&quot;Step 1: 12 * 7 = 84\nStep 2: 84 - 9 = 76\nStep 3: 76 / 4 = 19\nANSWER: 19&quot;))   # step 2 is wrong</code></pre></div>
+<div class="nb-md"><h3>2. Stage 1: reasoning distillation data</h3>
+<p>The real recipe trains the student on the teacher's <em>full reasoning</em>. The data step is what we can do here:
+sample 2 rationales per problem from the teacher, <strong>keep only the correct ones</strong> (rejection sampling, like the
+paper's ~15% reject rate). "Correct" means the right final answer <em>and</em> no wrong calculation in any step: a right
+answer reached through a wrong step teaches the student bad habits. Among the correct ones keep the <strong>shortest</strong>. That last step pushes toward the token
+efficiency the paper reports. The output is a ready-to-train SFT file (20 calls).</p></div>
+<div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">STEP_PROMPT = (&quot;Solve the problem step by step. Put each step on its own line as &#x27;Step k: ...&#x27; and write every &quot;
+               &quot;calculation as &#x27;a op b = c&#x27;. End with a line &#x27;ANSWER: &lt;integer&gt;&#x27;.\n\nProblem: {q}&quot;)
+
+def sample(q, model, temperature):
+    try:
+        return ask(STEP_PROMPT.format(q=q), model_name=model, temperature=temperature, max_tokens=500)
+    except Exception as e:
+        print(&quot;call failed:&quot;, e); return &quot;&quot;
+
+jobs = [(q, a) for q, a in TRAIN for _ in range(2)]
+with ThreadPoolExecutor(2) as ex:
+    teacher_out = list(ex.map(lambda qa: sample(qa[0], TEACHER, 0.7), jobs))
+
+by_q = {}
+for (q, a), out in zip(jobs, teacher_out):
+    by_q.setdefault(q, []).append((extract_int(out) == a, out))
+sft, lucky = [], 0
+for q, cands in by_q.items():
+    # Right answer AND no wrong calculation in any step (the step checker is defined in section 3).
+    lucky += sum(ok and 0.0 in step_scores(o) for ok, o in cands)
+    good = sorted((o for ok, o in cands if ok and 0.0 not in step_scores(o)), key=len)
+    if good:
+        sft.append({&quot;prompt&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: STEP_PROMPT.format(q=q)}],
+                    &quot;completion&quot;: [{&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: good[0].strip()}]})
+n_ok = sum(ok for c in by_q.values() for ok, _ in c)
+avg_all = sum(len(o) for o in teacher_out) / max(len(teacher_out), 1)
+avg_kept = sum(len(r[&quot;completion&quot;][0][&quot;content&quot;]) for r in sft) / max(len(sft), 1)
+print(f&quot;teacher correct: {n_ok}/{len(jobs)} (rejected {1 - n_ok / len(jobs):.0%})&quot;)
+print(f&quot;right answer but a wrong step inside (also rejected): {lucky}&quot;)
+print(f&quot;problems with at least one correct rationale: {len(sft)}/{len(TRAIN)}&quot;)
+print(f&quot;avg characters: all samples {avg_all:.0f} → kept (shortest correct) {avg_kept:.0f}&quot;)
+DATA = Path(&quot;cs329a_projects/ap3_distill.jsonl&quot;); DATA.parent.mkdir(exist_ok=True)
+DATA.write_text(&quot;\n&quot;.join(json.dumps(r) for r in sft))
+print(&quot;wrote&quot;, DATA, &quot;\n\nexample:\n&quot;, sft[0][&quot;completion&quot;][0][&quot;content&quot;][:400] if sft else &quot;(none)&quot;)</code></pre></div>
+<div class="nb-md"><h3>3. Stage 3: sample N answers, then rerank with step scores</h3>
+<p>The student (<code>llama3.2:3b</code>) writes N = 4 solutions per test problem (24 calls). We compare five ways to pick one:
+- <strong>first sample</strong>: what a single call gives you;
+- <strong>majority vote</strong> (self-consistency, Wang et al. 2023);
+- <strong>code step-checker</strong>: a process reward made by code. Every <code>a op b = c</code> in a step is recomputed; a step
+  scores 1 if all its calculations are right. A solution's score is its <strong>weakest step</strong> (min), as in
+  Lightman et al. 2023, <em>Let's Verify Step by Step</em>;
+- <strong>LLM judge</strong>: the 8B model reads all 4 solutions and names the first wrong step in each (1 call per problem);
+- <strong>oracle</strong> (pass@4): is any of the 4 right? This is the ceiling for any reranker.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">N = 4
+with ThreadPoolExecutor(2) as ex:
+    cand = list(ex.map(lambda qi: sample(TEST[qi[0]][0], STUDENT, 0.8), [(i, j) for i in range(len(TEST)) for j in range(N)]))
+CANDS = [cand[i * N:(i + 1) * N] for i in range(len(TEST))]</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class Verdict(BaseModel):
+    solution: int
+    first_wrong_step: int = Field(description=&quot;number of the first wrong step, or 0 if all steps are right&quot;)
+
+class Verdicts(BaseModel):
+    verdicts: List[Verdict]
+
+def llm_judge(q, sols):
+    text = &quot;\n\n&quot;.join(f&quot;=== Solution {i + 1} ===\n{s[:1200]}&quot; for i, s in enumerate(sols))
+    try:
+        v = structured(f&quot;Problem: {q}\n\n{text}\n\nCheck every step of every solution. For each solution, give the &quot;
+                       &quot;number of the first wrong step (0 if all steps are right).&quot;, Verdicts, model_name=TEACHER, max_tokens=400)
+        got = {x.solution: x.first_wrong_step for x in v.verdicts}
+    except Exception:
+        got = {}
+    return [1.0 if got.get(i + 1, 1) == 0 else 0.0 for i in range(len(sols))]
+
+with ThreadPoolExecutor(2) as ex:
+    JUDGE = list(ex.map(lambda i: llm_judge(TEST[i][0], CANDS[i]), range(len(TEST))))
+
+def pick(answers, scores):
+    &quot;&quot;&quot;Highest score wins; ties go to the most common answer among the tied.&quot;&quot;&quot;
+    best = max(scores)
+    tied = [a for a, s in zip(answers, scores) if s == best and a is not None]
+    return Counter(tied).most_common(1)[0][0] if tied else answers[0]
+
+def evaluate(cands, judge, agg=min):
+    res = Counter()
+    for (q, gold), sols, js in zip(TEST, cands, judge):
+        ans = [extract_int(s) for s in sols]
+        prm = [agg(step_scores(s)) if step_scores(s) else 0.5 for s in sols]
+        votes = Counter(a for a in ans if a is not None)
+        res[&quot;first sample&quot;] += ans[0] == gold
+        res[&quot;majority vote&quot;] += (votes.most_common(1)[0][0] if votes else None) == gold
+        res[&quot;code step-checker&quot;] += pick(ans, prm) == gold
+        res[&quot;LLM judge&quot;] += pick(ans, js) == gold
+        res[&quot;oracle (pass@N)&quot;] += gold in ans
+    return {k: v / len(TEST) for k, v in res.items()}
+
+ACC = evaluate(CANDS, JUDGE)
+for k, v in ACC.items():
+    print(f&quot;{k:18s} {v:.0%}&quot;)
+correct = [sum(extract_int(s) == g for s in sols) for (q, g), sols in zip(TEST, CANDS)]
+print(&quot;unbiased pass@1 over all samples:&quot;, f&quot;{sum(pass_at_k(N, c, 1) for c in correct) / len(TEST):.0%}&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>What to notice.</strong> The gap between <em>first sample</em> and <em>oracle</em> is the room a reranker has. Majority vote needs the
+right answer to be common; a step checker can rescue a right answer that appears only once. The paper's reranker
+added +3.2 points on top of a much stronger model; on easy problems with a weak model, the gap here can be bigger.</p></div>
+<div class="nb-md"><h3>4. Stage 2 (optional, <code>RUN_LONG</code>): GRPO on a tiny model</h3>
+<p>GRPO samples a <em>group</em> of answers per prompt (here 8), scores them, and pushes up the ones above the group average.
+We use the paper's reward weights (1.0 correct + 0.2 format) and its β = 0 (no KL penalty, no reference model).
+The task is easy on purpose (two-number sums) so a 135M model can visibly learn in a few minutes. The T4 has no
+bf16, so we train in fp32. TRL API checked against the current GRPOTrainer docs.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">SMALL = &quot;HuggingFaceTB/SmolLM2-135M-Instruct&quot;
+grng = random.Random(7)
+def sum_prompt():
+    a, b = grng.randint(10, 99), grng.randint(10, 99)
+    return {&quot;prompt&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;What is {a} + {b}? Reply with only the number inside &lt;answer&gt;&lt;/answer&gt;.&quot;}],
+            &quot;answer&quot;: str(a + b)}
+
+def _text(c):
+    return c[0][&quot;content&quot;] if isinstance(c, list) else str(c)
+
+def correctness_reward(completions, answer, **kwargs):
+    out = []
+    for c, a in zip(completions, answer):
+        m = re.search(r&quot;&lt;answer&gt;\s*(-?\d+)\s*&lt;/answer&gt;&quot;, _text(c))
+        out.append(1.0 if m and m.group(1) == a else 0.0)
+    return out
+
+def format_reward(completions, **kwargs):
+    return [0.2 if re.search(r&quot;&lt;answer&gt;.*?&lt;/answer&gt;&quot;, _text(c), re.S) else 0.0 for c in completions]
+
+print(correctness_reward([[{&quot;content&quot;: &quot;&lt;answer&gt;42&lt;/answer&gt;&quot;}]], [&quot;42&quot;]), format_reward([&quot;&lt;answer&gt;x&lt;/answer&gt;&quot;]))
+
+GRPO_LOG = {}
+if RUN_LONG:
+    import torch
+    from datasets import Dataset
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from trl import GRPOConfig, GRPOTrainer
+
+    train_ds = Dataset.from_list([sum_prompt() for _ in range(400)])
+    eval_rows = [sum_prompt() for _ in range(40)]
+    tok = AutoTokenizer.from_pretrained(SMALL); tok.padding_side = &quot;left&quot;
+
+    def mean_reward(model):
+        model.eval(); total = 0.0
+        for r in eval_rows:
+            text = tok.apply_chat_template(r[&quot;prompt&quot;], tokenize=False, add_generation_prompt=True)
+            ids = tok(text, return_tensors=&quot;pt&quot;).to(model.device)
+            with torch.no_grad():
+                out = model.generate(**ids, max_new_tokens=32, do_sample=False, pad_token_id=tok.eos_token_id)
+            comp = tok.decode(out[0][ids[&quot;input_ids&quot;].shape[1]:], skip_special_tokens=True)
+            total += correctness_reward([comp], [r[&quot;answer&quot;]])[0] + format_reward([comp])[0]
+        return total / len(eval_rows)
+
+    base = AutoModelForCausalLM.from_pretrained(SMALL, dtype=torch.float32).to(&quot;cuda&quot; if torch.cuda.is_available() else &quot;cpu&quot;)   # the config says bf16; a T4 needs fp32
+    GRPO_LOG[&quot;before&quot;] = mean_reward(base)
+    args = GRPOConfig(output_dir=&quot;/tmp/ap3_grpo&quot;, per_device_train_batch_size=16, num_generations=8,
+                      max_completion_length=48, learning_rate=1e-5, beta=0.0, max_steps=80, logging_steps=10,
+                      fp16=False, bf16=False, gradient_checkpointing=False, report_to=&quot;none&quot;, save_strategy=&quot;no&quot;)
+    trainer = GRPOTrainer(model=base, reward_funcs=[correctness_reward, format_reward], args=args,
+                          train_dataset=train_ds, processing_class=tok)
+    trainer.train()
+    GRPO_LOG[&quot;after&quot;] = mean_reward(trainer.model)
+    GRPO_LOG[&quot;history&quot;] = [{k: h[k] for k in h if k in (&quot;step&quot;, &quot;reward&quot;, &quot;loss&quot;, &quot;completions/mean_length&quot;)} for h in trainer.state.log_history]
+    for h in GRPO_LOG[&quot;history&quot;]:
+        print(h)
+    print(f&quot;mean reward (max 1.2): before {GRPO_LOG[&#x27;before&#x27;]:.2f} → after {GRPO_LOG[&#x27;after&#x27;]:.2f}&quot;)
+else:
+    print(&quot;RUN_LONG is False: skipping GRPO training.&quot;)</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;distillation kept only correct rationales&quot;, all(extract_int(r[&quot;completion&quot;][0][&quot;content&quot;]) == dict(TRAIN)[r[&quot;prompt&quot;][0][&quot;content&quot;].split(&quot;Problem: &quot;)[1]] for r in sft))
+check(&quot;the teacher got at least 3 of 10 problems right&quot;, len(sft) &gt;= 3)
+check(&quot;code step-checker catches a wrong step&quot;, step_scores(&quot;Step 1: 2 + 2 = 5&quot;) == [0.0] and step_scores(&quot;Step 1: 2 + 2 = 4&quot;) == [1.0])
+check(&quot;some reranker gets at least 2 of 6 test problems&quot;, max(ACC.values()) &gt;= 2 / 6)
+if RUN_LONG:
+    check(&quot;GRPO raised the mean reward&quot;, GRPO_LOG[&quot;after&quot;] &gt; GRPO_LOG[&quot;before&quot;])</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Fewer samples.</strong> Rerank using only the first 2 of the 4 candidates. How much of the gain is left? (No new calls.)</li>
+<li><strong>Min vs. mean.</strong> Score each solution by the <em>average</em> step score instead of the weakest step. Which picks better here, and why might min be safer?</li>
+<li><strong>Close the loop (RUN_LONG).</strong> Fine-tune <code>SmolLM2-135M-Instruct</code> on <code>ap3_distill.jsonl</code> with TRL's <code>SFTTrainer</code>,
+   then ask it one test problem. With 10 examples it won't get good at math; the point is to see the full pipeline run.</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 1. N = 2. Notice the oracle drops too: reranking can only pick from what was sampled.
+two = evaluate([c[:2] for c in CANDS], [j[:2] for j in JUDGE])
+for k in ACC:
+    print(f&quot;{k:18s} N=4 {ACC[k]:.0%}   N=2 {two[k]:.0%}&quot;)</code></pre></div><div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 2. Mean aggregation. Notice: mean lets a long solution with one wrong step outscore a short correct one;
+#    min treats any wrong step as fatal, which matches &quot;one wrong step ruins the answer&quot;.
+mean_acc = evaluate(CANDS, JUDGE, agg=lambda s: sum(s) / len(s))
+print(&quot;code step-checker  min:&quot;, f&quot;{ACC[&#x27;code step-checker&#x27;]:.0%}&quot;, &quot;  mean:&quot;, f&quot;{mean_acc[&#x27;code step-checker&#x27;]:.0%}&quot;)</code></pre></div><div class="code"><div class="cap"><span class="cell">ap3_math_reasoning.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 3. SFT on the distilled data (RUN_LONG only). prompt/completion conversational rows are supported by SFTTrainer.
+if RUN_LONG and sft:
+    from datasets import Dataset
+    from trl import SFTConfig, SFTTrainer
+    sft_trainer = SFTTrainer(model=SMALL, train_dataset=Dataset.from_list(sft),
+                             args=SFTConfig(output_dir=&quot;/tmp/ap3_sft&quot;, max_steps=30, per_device_train_batch_size=2,
+                                            learning_rate=2e-5, logging_steps=5, fp16=False, bf16=False,
+                                            report_to=&quot;none&quot;, save_strategy=&quot;no&quot;))
+    sft_trainer.train()
+    m, t = sft_trainer.model, sft_trainer.processing_class
+    text = t.apply_chat_template([{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: STEP_PROMPT.format(q=TEST[0][0])}], tokenize=False, add_generation_prompt=True)
+    ids = t(text, return_tensors=&quot;pt&quot;).to(m.device)
+    print(t.decode(m.generate(**ids, max_new_tokens=150, do_sample=False)[0][ids[&quot;input_ids&quot;].shape[1]:], skip_special_tokens=True))
+    print(&quot;gold:&quot;, TEST[0][1])
+else:
+    print(&quot;Set RUN_LONG = True to run the SFT step.&quot;)</code></pre></div></details>
+</div></section><nav class="pager"><a class="prev" href="ap2.html"><small>← Previous</small>PRIME: Planning with Reflective Iterative Multi-Agentic Exploration</a><a class="next" href="ap4.html"><small>Next →</small>Towards Effective Meta-Agents: Designing Agents that Design Agents (paper: Inefficiencies of Meta Agents for Agent Design)</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

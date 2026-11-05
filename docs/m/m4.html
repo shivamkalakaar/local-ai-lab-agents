@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Retrieval (RAG) · Agent Engineering School</title>
+<meta name="description" content="How to find the few passages a model needs from many documents, by searching two ways at once and checking every quote in code.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 04</span></div><section class="mod" id="m4" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 04</div><h2>Retrieval (RAG)</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/04_retrieval_rag.ipynb">Open in Colab</a><button class="done-btn" data-done="m4" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to find the few passages a model needs from many documents, by searching two ways at once and checking every quote in code.</p><article class="lesson"><h2>The big idea</h2>
+<p>Retrieval means finding the right few passages before the model answers. RAG (retrieval-augmented generation) is the name for "search first, then answer from what you found."</p>
+<p>Think of a law library. You don't hand a new associate every book and say "find the cap." You give them a good index. They pull the three pages that matter, read those, and answer. The model is the associate. Retrieval is the index.</p>
+<p>The default that works has a few parts. Split documents on their natural structure. Label each piece with where it came from. Search two ways: by exact words and by meaning. Merge the results. Then check every quote the model gives against the real text.</p>
+<h2>Why it matters for us</h2>
+<p>A firm has many contracts. They won't all fit on the model's desk at once, and small local models do worse with long prompts. Retrieval lets the model read only the clauses that matter.</p>
+<p>If all your documents are small, you may not need retrieval. The course's rule of thumb: under about 200K tokens of documents, put it all in the prompt and skip it. Above that, build the pipeline.</p>
+<p>Lawyers need answers they can trust. A citation that points to a real clause, checked by code, is what makes an answer usable. Everything here, including the search model, runs on the firm's own machine.</p>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Chunk on structure.</strong> A chunk is one piece of a document. For contracts, one section makes a natural chunk. Splitting on headings keeps each idea whole.</p>
+</li>
+<li>
+<p><strong>Add a context note.</strong> Put a one-line label at the top of each chunk, like "From msa_07, section 7 (Limitation of Liability)." The clause text alone never says which contract it came from. The label does. This idea is called contextual retrieval (from Anthropic).</p>
+</li>
+<li>
+<p><strong>Search by keywords.</strong> BM25 is a classic keyword search. It scores chunks by shared words. It is good at exact strings like "7.2(b)" or "msa_15".</p>
+</li>
+<li>
+<p><strong>Search by meaning.</strong> An embedding model turns text into a list of numbers that captures meaning. Similar meanings give similar numbers. This finds "limitation of liability" when the lawyer typed "cap on damages."</p>
+</li>
+<li>
+<p><strong>Merge with RRF.</strong> Reciprocal rank fusion combines two ranked lists. Each chunk gets points for ranking high in either list: 1 divided by (60 plus its rank). Add the points and sort.</p>
+</li>
+<li>
+<p><strong>Optionally rerank.</strong> Fetch a wide pool, then let a slower, more accurate model reorder it and keep the best few.</p>
+</li>
+<li>
+<p><strong>Check citations in code.</strong> The model must name its source chunk and give an exact quote. Code confirms the quote is really in that chunk.</p>
+</li>
+</ol>
+<pre><code>question --&gt; keyword search  --\
+                                 merge (RRF) --&gt; top chunks --&gt; model answers --&gt; code checks quote
+question --&gt; meaning search  --/
+</code></pre>
+<h2>Worked example</h2>
+<p>The notebook turns all 20 contracts into chunks, one per section. Each chunk gets its context note. It builds both indexes, then searches "msa_15 cap on damages." The top hit is section 7 of msa_15.</p>
+<p>Next it measures retrieval on its own. It uses recall@k: out of all test questions, how often was the right chunk in the top k results? The questions use different words from the contracts, like "how do we stop it renewing." The notebook prints recall@3 for keyword only, meaning only, and hybrid.</p>
+<p>Then it answers a real question with citations:</p>
+<pre><code class="language-python">hits = index.search(question, k=k)
+ctx = &quot;\n\n&quot;.join(f&quot;[{c['id']}] {c['text']}&quot; for c in hits)
+a = structured([... &quot;Answer only from the sources. Give the source id and an exact quote.&quot; ...], Answer)
+src = next((c for c in hits if c[&quot;id&quot;] == cid), None)
+a_ok = src is not None and quote_is_in_doc(a.quote, src[&quot;text&quot;])
+</code></pre>
+<ul>
+<li>The first line runs the hybrid search and keeps the top few chunks.</li>
+<li>The second line joins them into one block, each tagged with its ID like <code>[msa_20#7]</code>.</li>
+<li>The third line asks the model for an answer, a source ID and an exact quote, in a fixed shape.</li>
+<li>The fourth line finds the chunk the model named among the ones we gave it.</li>
+<li>The last line checks that the chunk exists and the quote really appears in it.</li>
+</ul>
+<p>For "What is the liability cap in msa_20?" you get the answer, the chunk ID, the quote, and "citation verified: True" or False.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Using meaning search alone.</strong> It misses exact strings like clause numbers and IDs. Use keyword search too.</li>
+<li><strong>Judging retrieval only by the final answer.</strong> If the answer is wrong, you can't tell which part failed. Measure recall@k separately.</li>
+<li><strong>Treating retrieved text as instructions.</strong> It is data. A contract could contain "ignore previous instructions."</li>
+<li><strong>Ignoring who may see what.</strong> Filter by client or matter during the search, not after.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>A lawyer asks &quot;what does 7.2(b) say?&quot; and meaning search returns the wrong clause. Why?</summary>
+<p>Embeddings capture meaning, not exact strings like &quot;7.2(b)&quot;. Keyword search finds it. That is why we search both ways.</p>
+</details>
+<details>
+<summary>Why add a context note to each chunk?</summary>
+<p>The clause text alone doesn&#x27;t say which contract or section it belongs to. The note carries that, which helps both kinds of search.</p>
+</details>
+<details>
+<summary>Why fetch a wide pool and then rerank, instead of fetching only a few?</summary>
+<p>Fast search is noisy. A wide pool makes sure the right passage is in there. The slower reranker then moves it to the top.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the recall@3 comparison and see how keyword, meaning and hybrid compare on your machine. Then run the solution that removes the context notes and watch what drops. Finally, check whether the RAG answer for msa_20 comes back with a verified citation.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">Lecture 3 · Lewis et al. (RAG) · DPR · ColBERT · Anthropic, "Contextual Retrieval"</p>
+  <p class="big">Retrieval finds the few passages the model needs. The default that works: search two ways (keywords and meaning), merge, rerank, and check every citation in code.</p>
+  <div class="terms"><h4>Key terms</h4><dl><div><dt>RAG</dt><dd>Retrieval-augmented generation: first find relevant passages, then have the model answer from them.<span class="from">Source: Lewis et al., &quot;Retrieval-Augmented Generation&quot;, NeurIPS (2020)</span></dd></div><div><dt>BM25</dt><dd>A classic keyword-matching score. Strong for exact strings such as clause numbers, IDs and names.<span class="from">Source: Lecture 3</span></dd></div><div><dt>Dense retrieval / embeddings</dt><dd>Turning text into vectors so passages with similar meaning are close together, even with different words.<span class="from">Source: Karpukhin et al., &quot;Dense Passage Retrieval&quot;, EMNLP (2020)</span></dd></div><div><dt>Reciprocal rank fusion (RRF)</dt><dd>Merging ranked lists by adding 1/(k + rank) for each list (k ≈ 60). Simple and robust for hybrid search.<span class="from">Source: Lecture 3</span></dd></div><div><dt>Reranker / late interaction</dt><dd>A slower model that scores (query, passage) pairs more carefully to reorder the top candidates. ColBERT does this efficiently by comparing token-level vectors.<span class="from">Source: Khattab &amp; Zaharia, &quot;ColBERT&quot;, SIGIR (2020)</span></dd></div><div><dt>Contextual retrieval</dt><dd>Prepending a short note to each chunk saying where it comes from before indexing. Failed retrievals dropped from 5.7% to 1.9% with reranking.<span class="from">Source: Anthropic, &quot;Contextual Retrieval&quot; (2024), cited in Lecture 3</span></dd></div><div><dt>Recall@k</dt><dd>Share of questions where the right passage is in the top k results. Measures retrieval on its own.<span class="from">Source: Lecture 3</span></dd></div></dl></div>
+  <h3>The decision</h3>
+  <ul>
+    <li><b>Under about 200K tokens of documents?</b> Put it all in the prompt and skip retrieval.</li>
+    <li><b>More than that?</b> Build the pipeline below.</li>
+  </ul>
+  <h3>The pipeline</h3>
+  <ol>
+    <li><b>Chunk on structure.</b> Split by headings or clauses first. Otherwise use 100–500 token chunks with 10–20% overlap.</li>
+    <li><b>Add context to each chunk.</b> Prepend a one-line note: "From the MSA with Acme, section 12, Limitation of Liability."</li>
+    <li><b>Search two ways.</b> Keyword search (BM25) catches exact strings like "12.3" or a lot number. Embedding search catches rewording like "cap on damages" vs. "limitation of liability."</li>
+    <li><b>Merge with reciprocal rank fusion</b> (RRF): score = Σ 1/(60 + rank).</li>
+    <li><b>Rerank.</b> Fetch about 150 candidates, rerank with a slower, more accurate model, and keep about 20.</li>
+    <li><b>Verify citations.</b> Every quote the model gives must appear in the source text, checked in code.</li>
+  </ol>
+  <div class="evidence">
+    <div class="ev"><div class="num">5.7% → 1.9%</div><p>Failed retrievals: plain chunks vs. contextual chunks with hybrid search and reranking (Anthropic).</p></div>
+    <div class="ev"><div class="num">10–20</div><p>Documents in the prompt beyond which accuracy stops improving; models also ignore the middle of long contexts (L4).</p></div>
+  </div>
+
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/04_retrieval_rag.ipynb" target="_blank" rel="noopener">04_retrieval_rag.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">04_retrieval_rag.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import re
+import numpy as np
+from rank_bm25 import BM25Okapi
+from sentence_transformers import SentenceTransformer
+from lal.data import contract, sections, ids, labels
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
+from lal.llm import structured
+from lal.checks import quote_is_in_doc, check</code></pre></div>
+<div class="nb-md"><h3>1. Chunk on structure, with context</h3>
+<p>Each chunk is one section of one contract. We prepend a short note saying where it came from (Anthropic's "contextual retrieval"), which helps both search methods.</p></div>
+<div class="code"><div class="cap"><span class="cell">04_retrieval_rag.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">chunks = []
+for cid in ids():
+    for s in sections(contract(cid)):
+        chunks.append({&quot;id&quot;: f&quot;{cid}#{s[&#x27;id&#x27;]}&quot;, &quot;contract&quot;: cid, &quot;section&quot;: s[&quot;id&quot;],
+                       &quot;context&quot;: f&quot;From {cid}, section {s[&#x27;id&#x27;]} ({s[&#x27;title&#x27;]}).&quot;, &quot;text&quot;: s[&quot;text&quot;]})
+print(len(chunks), &quot;chunks. Example:&quot;, chunks[6])</code></pre></div>
+<div class="nb-md"><h3>2. Two searches, merged with RRF</h3></div>
+<div class="code"><div class="cap"><span class="cell">04_retrieval_rag.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">embedder = SentenceTransformer(&quot;BAAI/bge-small-en-v1.5&quot;)      # small, local embedding model
+QUERY_PREFIX = &quot;Represent this sentence for searching relevant passages: &quot;   # what bge models expect on queries
+tok = lambda s: re.findall(r&quot;\w+&quot;, s.lower())                 # word tokens, so &quot;msa_15,&quot; matches &quot;msa_15&quot;
+
+class HybridIndex:
+    def __init__(self, chunks):
+        self.chunks = chunks
+        docs = [f&quot;{c[&#x27;context&#x27;]}\n{c[&#x27;text&#x27;]}&quot; for c in chunks]
+        self.bm25 = BM25Okapi([tok(d) for d in docs])
+        self.vecs = embedder.encode(docs, normalize_embeddings=True, show_progress_bar=False)
+
+    def keyword(self, q, n):
+        return list(np.argsort(-self.bm25.get_scores(tok(q)))[:n])
+
+    def semantic(self, q, n):
+        qv = embedder.encode([QUERY_PREFIX + q], normalize_embeddings=True)[0]
+        return list(np.argsort(-(self.vecs @ qv))[:n])
+
+    def search(self, q, k=5, pool=50, mode=&quot;hybrid&quot;, rrf_k=60):
+        if mode == &quot;keyword&quot;: return [self.chunks[i] for i in self.keyword(q, k)]
+        if mode == &quot;semantic&quot;: return [self.chunks[i] for i in self.semantic(q, k)]
+        scores = {}
+        for ranking in (self.keyword(q, pool), self.semantic(q, pool)):
+            for r, i in enumerate(ranking):
+                scores[i] = scores.get(i, 0) + 1 / (rrf_k + r + 1)
+        return [self.chunks[i] for i in sorted(scores, key=scores.get, reverse=True)[:k]]
+
+index = HybridIndex(chunks)
+for c in index.search(&quot;msa_15 cap on damages&quot;, k=3):
+    print(c[&quot;id&quot;], &quot;|&quot;, c[&quot;text&quot;][:80])</code></pre></div>
+<div class="nb-md"><h3>3. Measure retrieval on its own: recall@k</h3>
+<p>Did the right chunk come back? We test with questions that use different words from the contract ("cap on damages" vs. "limitation of liability"), and questions with exact IDs.</p></div>
+<div class="code"><div class="cap"><span class="cell">04_retrieval_rag.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">QUERIES = []
+for cid in ids()[:10]:
+    QUERIES += [(f&quot;{cid} cap on damages&quot;, f&quot;{cid}#7&quot;), (f&quot;which state&#x27;s law applies in {cid}&quot;, f&quot;{cid}#10&quot;),
+                (f&quot;{cid} how do we stop it renewing&quot;, f&quot;{cid}#4&quot;)]
+
+def recall_at_k(mode, k=3):
+    return sum(any(c[&quot;id&quot;] == gold for c in index.search(q, k=k, mode=mode)) for q, gold in QUERIES) / len(QUERIES)
+
+for mode in (&quot;keyword&quot;, &quot;semantic&quot;, &quot;hybrid&quot;):
+    print(f&quot;{mode:9} recall@3 = {recall_at_k(mode):.0%}&quot;)</code></pre></div>
+<div class="nb-md"><h3>4. Answer from retrieved chunks, with citations checked in code</h3></div>
+<div class="code"><div class="cap"><span class="cell">04_retrieval_rag.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">from pydantic import BaseModel
+class Answer(BaseModel):
+    answer: str
+    chunk_id: str
+    quote: str
+
+def rag(question, k=4):
+    hits = index.search(question, k=k)
+    ctx = &quot;\n\n&quot;.join(f&quot;[{c[&#x27;id&#x27;]}] {c[&#x27;text&#x27;]}&quot; for c in hits)
+    a = structured([{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;Answer only from the sources. Give the source id and an exact quote.&quot;},
+                    {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;Sources:\n{ctx}\n\nQuestion: {question}&quot;}], Answer)
+    cid = a.chunk_id.strip().strip(&quot;[]&quot;)                     # models often copy the brackets
+    src = next((c for c in hits if c[&quot;id&quot;] == cid), None)
+    a_ok = src is not None and quote_is_in_doc(a.quote, src[&quot;text&quot;])
+    return a, a_ok
+
+a, ok = rag(&quot;What is the liability cap in msa_20?&quot;)
+print(a.model_dump(), &quot;\ncitation verified:&quot;, ok)</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">04_retrieval_rag.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;hybrid recall@3 is at least as good as keyword-only&quot;, recall_at_k(&quot;hybrid&quot;) &gt;= recall_at_k(&quot;keyword&quot;))
+check(&quot;RAG answer cites a real quote&quot;, ok)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li>Remove the context note from each chunk and rerun recall@k. What drops?</li>
+<li>Add a reranker: <code>from sentence_transformers import CrossEncoder; CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")</code>, score the top 20, keep 4.</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">04_retrieval_rag.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: the same index WITHOUT the context note on each chunk
+plain_index = HybridIndex([{**c, &quot;context&quot;: &quot;&quot;} for c in chunks])
+def recall_with(idx, mode, k=3):
+    return sum(any(c[&quot;id&quot;] == gold for c in idx.search(q, k=k, mode=mode)) for q, gold in QUERIES) / len(QUERIES)
+print(f&quot;{&#x27;mode&#x27;:9} {&#x27;with context&#x27;:&gt;13} {&#x27;without&#x27;:&gt;8}&quot;)
+for mode in (&quot;keyword&quot;, &quot;semantic&quot;, &quot;hybrid&quot;):
+    print(f&quot;{mode:9} {recall_with(index, mode):&gt;13.0%} {recall_with(plain_index, mode):&gt;8.0%}&quot;)
+# What to notice: our queries name the contract (&quot;msa_07 cap on damages&quot;), but the chunk text alone never says which
+# contract it is from. The context note carries that, which is exactly why contextual retrieval helps.</code></pre></div><div class="code"><div class="cap"><span class="cell">04_retrieval_rag.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: add a reranker: fetch 20, rerank with a cross-encoder, keep the best
+from sentence_transformers import CrossEncoder
+reranker = CrossEncoder(&quot;cross-encoder/ms-marco-MiniLM-L-6-v2&quot;)
+def search_rerank(q, k=3, first=20):
+    cands = index.search(q, k=first)
+    scores = reranker.predict([(q, f&quot;{c[&#x27;context&#x27;]} {c[&#x27;text&#x27;]}&quot;) for c in cands])
+    return [c for _, c in sorted(zip(scores, cands), key=lambda x: -x[0])][:k]
+rr = sum(any(c[&quot;id&quot;] == gold for c in search_rerank(q)) for q, gold in QUERIES) / len(QUERIES)
+print(f&quot;hybrid recall@3 {recall_at_k(&#x27;hybrid&#x27;):.0%} -&gt; hybrid + rerank recall@3 {rr:.0%}&quot;)</code></pre></div></details>
+  <div class="pit"><strong>Traps</strong><ul>
+    <li>Embeddings only. They miss exact identifiers like clause numbers, IDs and lot numbers.</li>
+    <li>Judging retrieval by the final answer. Measure recall@k separately, or you can't tell which part failed.</li>
+    <li>Treating retrieved text as instructions. It is data. A contract can contain "ignore previous instructions".</li>
+    <li>Ignoring access rights. Filter by client or matter at search time, not after.</li>
+  </ul></div>
+  <div class="check"><h4>Check yourself</h4>
+    <details><summary>A lawyer asks "what does 7.2(b) say?" and the embedding search returns the wrong clause. Why?</summary><p>Embeddings capture meaning, not exact strings like "7.2(b)". Keyword search (BM25) finds it. That is why hybrid search is the default.</p></details>
+    <details><summary>Why fetch 150 and keep 20, instead of fetching 20?</summary><p>Fast first-stage search is noisy. A wide pool makes sure the right passage is in there, and the slower reranker puts it at the top.</p></details>
+  </div>
+</div></section><nav class="pager"><a class="prev" href="m3.html"><small>← Previous</small>Context engineering</a><a class="next" href="m5.html"><small>Next →</small>Tools and function calling</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

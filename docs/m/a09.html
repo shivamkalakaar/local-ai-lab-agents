@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Augmenting agents with memory · Agent Engineering School</title>
+<meta name="description" content="How to give an agent more memory than it can read at once. You&#x27;ll understand MemGPT&#x27;s paging, KV-cache reuse (CacheBlend, LMCache) and trained memories called Cartridges.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A09</span></div><section class="mod" id="a09" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A09</div><h2>Augmenting agents with memory</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a09_memory.ipynb">Open in Colab</a><button class="done-btn" data-done="a09" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>13 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to give an agent more memory than it can read at once. You&#x27;ll understand MemGPT&#x27;s paging, KV-cache reuse (CacheBlend, LMCache) and trained memories called Cartridges.</p><article class="lesson"><h2>The big idea</h2>
+<p>A model only sees its context window (the text it can read in one call). Everything else is invisible to it. And long contexts are slow and costly, because the model must read every word before it answers.</p>
+<p>Think of a lawyer with a small desk and a big filing room. Only a few pages fit on the desk. The rest live in the filing room. A good lawyer keeps sticky notes, fetches files when needed, and doesn't reread a contract from scratch every time someone asks a question about it.</p>
+<p>This lesson gives an agent that same kind of memory, at three layers. The agent can manage its own desk and filing room (MemGPT). The server can keep its work on text it already read (KV-cache reuse). Or we can study a big document once, ahead of time, and keep a compact memory of it (Cartridges).</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>A firm's local model may have a small window and a modest GPU (graphics chip). Its contract archive is far bigger than any window.</li>
+<li>The same playbook and the same contract get sent to the model again and again. Reusing work on that text is often the cheapest speed-up you can get, before buying more hardware.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>MemGPT: the agent manages its own memory</strong> (the MemGPT paper, 2023). It borrows an idea from computers, where fast RAM is small and the disk is big. Main context is what the model sees: fixed instructions, a small working context (a notepad the agent writes into), and a queue of recent messages. External context sits outside: every past message, plus a searchable store of documents. The agent moves things in and out by calling tools, like "search" and "save note". When the window is about 70% full, the system warns the agent to save what matters. When it is full, old messages drop off the desk but stay in storage. In the paper, GPT-4's accuracy at recalling facts from past chat sessions went from 32.1% to 92.5% with MemGPT.</p>
+</li>
+<li>
+<p><strong>KV cache, from zero.</strong> Before writing its first word, a model reads the whole prompt. This is called prefill. As it reads, it writes a kind of margin note for every word, at every layer of the network. These notes are called keys and values, and together they are the KV cache. Think of them as the model's highlighted, annotated copy of the text. Prefill takes longer for longer prompts. That delay is the time to first token: how long the user waits for the answer to start.</p>
+</li>
+<li>
+<p><strong>Prefix caching: reuse the annotated copy.</strong> If the next prompt starts with the exact same text, the server can reuse those notes and skip rereading. That is prefix caching. But it is all or nothing from the first change. Change one word at the very start and every note after it is useless. The model rereads everything.</p>
+</li>
+<li>
+<p><strong>CacheBlend: reuse chunks anywhere</strong> (the CacheBlend paper, 2024). In RAG (where retrieved documents are pasted into the prompt), each request glues together different chunks in a different order. Prefix caching misses. CacheBlend reuses each chunk's saved notes wherever it sits. It then recomputes only a small share of words, 15% per layer by default. It picks the words whose notes would change most because of the text before them. This cut the wait for the first token 2.2 to 3.3 times, with about the same quality. LMCache (2025), from the guest lecturer's group, is open-source software that stores these caches outside GPU memory and shares them across servers.</p>
+</li>
+<li>
+<p><strong>Cartridges: study once, answer many times</strong> (the Cartridges paper, 2025). Instead of rereading a huge corpus for every question, train a small KV cache for it ahead of time. Load that small "cartridge" at question time. The training recipe is self-study. The model asks itself varied questions about each chunk, like "summarize this" or "ask a question", and answers them with the chunk in view. The cartridge is then trained to make the model answer the same way without the chunk. The paper reports matching full-text quality with 38.6x less memory. Training on the raw text alone did not generalize well. The varied conversations are what made it work.</p>
+</li>
+</ol>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Layer</th>
+<th>Best when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MemGPT paging</td>
+<td>the agent</td>
+<td>many documents, agent picks what to read</td>
+</tr>
+<tr>
+<td>Prefix / KV caching</td>
+<td>the server</td>
+<td>the same long text is sent again and again</td>
+</tr>
+<tr>
+<td>Cartridges</td>
+<td>trained ahead</td>
+<td>one big corpus, asked thousands of times</td>
+</tr>
+</tbody>
+</table></div>
+<h2>Worked example</h2>
+<p>The firm asks: "What is the total monthly fee across these four vendor contracts?" The notebook's agent has a window of 2,500 characters. The four contracts together are about 7,000 characters. They don't fit.</p>
+<p>So the agent works like a lawyer at a small desk. It searches for contract one. The fee appears. It writes "Contract 1: fee X" in its working-context notepad. As it searches for contract two, the old search result falls off the desk. But the note stays. After four rounds it adds up its notes and answers.</p>
+<p>The weak spot: if the agent forgets to write a note, that fee is gone from view. The model, not the system, decides what to remember.</p>
+<p>Now the caching part. The notebook sends 8 contracts plus question A. That is slow, because nothing is cached. Then the same 8 contracts plus question B. That is much faster: the contracts' notes are reused. Then it changes one word at the start of the contracts. Slow again.</p>
+<p>The rule you can use today: put stable text first (instructions, the playbook, the contract), and the changing question last. Never put a timestamp at the top of a prompt.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>A timestamp, request ID or user name at the top of the prompt.</strong> It changes the first words, so the cache never hits.</li>
+<li><strong>Trusting the agent to save notes.</strong> It may skip one. Keep every message in storage and test what it can recall.</li>
+<li><strong>Training a compact memory on raw text alone.</strong> It memorizes but doesn't generalize. Use varied self-study questions.</li>
+<li><strong>Timing the first call after loading the model.</strong> Load time swamps everything. Warm up first.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Why does changing the first word of a long prompt make it slow again?</summary>
+<p>Prefix caching only reuses notes for an exact matching start. A change at the start breaks everything after it, so the whole prompt is read again.</p>
+</details>
+<details>
+<summary>In MemGPT, what survives when old messages drop out of the window?</summary>
+<p>The working-context notes, a running summary, and the full messages in storage, which the agent can search.</p>
+</details>
+<details>
+<summary>What does CacheBlend recompute, and why not nothing?</summary>
+<p>A small share of words whose notes change most because of earlier chunks. Recomputing nothing ignores how chunks affect each other, and quality drops.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the a09 notebook. Watch the MemGPT-style agent stay under its budget while using four contracts, then time cold, warm and changed-prefix requests. Finally, compare answers from compact "study notes" (a text stand-in for a cartridge) against the full document.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Lecture 14 (Nov 7), guest lecturer Junchen Jiang (LMCache, UChicago)</p>
+
+  <p class="big">A model only sees its context window, and long contexts are slow and costly. You can give an agent more memory at three layers: let the agent page facts in and out (MemGPT), let the server reuse work it already did on the same text (KV-cache reuse: CacheBlend, LMCache), or compress a corpus into a small trained memory ahead of time (Cartridges).</p>
+<div class="terms"><h4>Key terms</h4><dl><div><dt>Context window</dt><dd>The text a model can see in one call. Everything else is invisible to it.<span class="from">Source: general</span></dd></div><div><dt>Main context / external context</dt><dd>MemGPT&#x27;s split: what is in the prompt now vs what is stored outside and must be fetched with a function call.<span class="from">Source: Packer et al. 2023</span></dd></div><div><dt>Working context</dt><dd>A small, writable block of notes inside the prompt that survives when old messages are evicted.<span class="from">Source: Packer et al. 2023</span></dd></div><div><dt>Archival storage</dt><dd>A searchable store of documents outside the window; the agent pages results in.<span class="from">Source: Packer et al. 2023</span></dd></div><div><dt>KV cache</dt><dd>The key and value vectors a transformer computes for every prompt token at every layer. Reusing them skips re-reading that text.<span class="from">Source: general</span></dd></div><div><dt>Prefill</dt><dd>The step where the model reads the whole prompt before writing; its time grows with prompt length.<span class="from">Source: general</span></dd></div><div><dt>Time to first token (TTFT)</dt><dd>How long a user waits before the first word appears; dominated by prefill on long prompts.<span class="from">Source: Yao et al. 2024</span></dd></div><div><dt>Prefix caching</dt><dd>Reusing the KV cache when a new prompt starts with exactly the same text as an earlier one.<span class="from">Source: general</span></dd></div><div><dt>KV deviation</dt><dd>How much a token&#x27;s cached KV differs from what full recompute would give; CacheBlend recomputes the tokens with the largest deviation.<span class="from">Source: Yao et al. 2024</span></dd></div><div><dt>Cartridge</dt><dd>A small trained KV cache that stands in for a whole corpus at question time.<span class="from">Source: Eyuboglu et al. 2025</span></dd></div><div><dt>Self-study</dt><dd>Training data for a Cartridge: the model&#x27;s own synthetic conversations about chunks of the corpus.<span class="from">Source: Eyuboglu et al. 2025</span></dd></div><div><dt>Context distillation</dt><dd>Training the model-with-Cartridge to match the next-token probabilities of the model-with-full-text.<span class="from">Source: Eyuboglu et al. 2025</span></dd></div></dl></div>
+<h3>The papers</h3><div class="papers"><div class="paper"><h4><a href="https://arxiv.org/abs/2506.06266">Cartridges: Lightweight and general-purpose long context representations via self-study</a></h4><p class="by">Eyuboglu, Ehrlich, Arora, Guha, Zinsley, Liu, Tennien, Rudra, Zou, Mirhoseini, Ré · 2025</p><dl><dt>What</dt><dd>Train a small KV cache (a &#x27;Cartridge&#x27;) offline for each corpus and load it at question time instead of the whole corpus. Training on the raw text with next-token prediction generalized poorly, so they propose self-study: the model has synthetic conversations about chunks of the corpus (from generic seed prompts such as summarize, structure, ask a question), and the Cartridge is trained by context distillation to match the model&#x27;s next-token distributions when the chunk is in context.</dd><dt>Result</dt><dd>Matched in-context learning quality on long-context benchmarks with 38.6x less memory and 26.4x higher throughput. Extended effective context on MTOB from 128k to 484k tokens. Distillation beat next-token training on MTOB (chrF 24.9 to 33.5). Initializing from the first p corpus tokens beat random vectors on LongHealth (55.3% vs 29.9%). Prefix-tuning kept MMLU near 54.7 while a memory-matched LoRA fell to 45.3. Cartridges can be composed at inference without retraining.</dd><dt>Takeaway</dt><dd>If one large corpus (a contract archive, a codebase) is queried thousands of times, paying once to train a compact memory can beat re-reading it each time. The training data must be varied synthetic Q&amp;A, not the raw text.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2310.08560">MemGPT: Towards LLMs as Operating Systems</a></h4><p class="by">Packer, Wooders, Lin, Fang, Patil, Stoica, Gonzalez · 2023</p><dl><dt>What</dt><dd>Virtual context management modeled on an operating system&#x27;s memory hierarchy. Main context = read-only system instructions, a writable working context, and a FIFO message queue headed by a recursive summary. External context = recall storage (all messages) and archival storage (vector-searched text). The model moves data with function calls; results are paginated; a memory-pressure warning fires at about 70% of the window and about half the queue is evicted at 100%.</dd><dt>Result</dt><dd>Deep memory retrieval in multi-session chat: GPT-4 accuracy 32.1% without MemGPT vs 92.5% with it (GPT-4 Turbo 35.3% vs 93.4%; GPT-3.5 Turbo 38.7% vs 66.9%). On nested key-value retrieval, GPT-4 and GPT-4 Turbo alone fell to 0% by 3 nesting levels, while MemGPT with GPT-4 was unaffected by depth. On document QA, MemGPT&#x27;s accuracy stayed flat as more documents were retrieved, while fixed-context baselines were capped by the retriever.</dd><dt>Takeaway</dt><dd>Give the agent explicit memory tools (search, save a note) and a hard context budget, and keep every message in an append-only store. Check that the agent actually saves what it needs: the model decides what to remember.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2405.16444">CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion</a></h4><p class="by">Yao, Li, Liu, Ray, Cheng, Zhang, Du, Lu, Jiang · 2024</p><dl><dt>What</dt><dd>Prefix caching only helps when a request starts with exactly the same text, which RAG rarely does. CacheBlend reuses each retrieved chunk&#x27;s precomputed KV cache wherever it sits, and recomputes only a small share of tokens (15% per layer by default) chosen by KV deviation, the tokens whose KV values change most from cross-attention to earlier chunks. Recompute overlaps with loading caches from slower storage.</dd><dt>Result</dt><dd>Tested on Mistral-7B, Yi-34B and Llama-70B over 2WikiMQA, Musique, SAMSum and MultiNews. Versus full KV recompute: time to first token 2.2-3.3x lower and throughput 2.8-5x higher, with quality within 0.02 F1/Rouge-L. Recomputing 5-18% of tokens lost at most 0.002 F1/Rouge-L on Yi-34B. Full KV reuse without recompute was about as fast but lost 0.1-0.2 F1 on QA.</dd><dt>Takeaway</dt><dd>For RAG on your own GPUs, the prefill of retrieved chunks is the main latency cost. Cache chunk KV and use a serving stack that can blend it (LMCache with vLLM). Even without that, put stable text first so plain prefix caching hits.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2510.09665">LMCache: An Efficient KV Cache Layer for Enterprise-Scale LLM Inference (background reading, our pick)</a></h4><p class="by">Cheng, Liu, et al. (with Junchen Jiang) · 2025</p><dl><dt>What</dt><dd>The open-source KV cache layer from the guest lecturer&#x27;s group. It moves KV caches out of GPU memory into CPU, disk or network storage and shares them across vLLM/SGLang engines and queries, supporting both prefix reuse across queries and prefill-decode disaggregation. Not an assigned course paper; added because the guest lecture is about it.</dd><dt>Result</dt><dd>The authors report up to 15x higher throughput when combined with vLLM on workloads such as multi-round QA and document analysis, and observe that context truncation, common in industry, can cut prefix cache hit ratio by half.</dd><dt>Takeaway</dt><dd>If you self-host models for repeated document work, a KV cache layer is often the cheapest speed-up available, before buying more GPUs.</dd></dl></div></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a09_memory.ipynb" target="_blank" rel="noopener">a09_memory.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, re, time, math
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+from lal.llm import client, ask, chat
+from lal.data import contract, labels, ids, sections
+from lal.checks import check
+
+LAB = labels()</code></pre></div>
+<div class="nb-md"><h3>1. MemGPT: an agent that manages its own memory</h3>
+<p>MemGPT (Packer et al. 2023, <em>MemGPT: Towards LLMs as Operating Systems</em>) splits memory into tiers, like RAM and disk:
+- <strong>Main context</strong> (what the model sees): fixed system instructions, a small <strong>working context</strong> the agent writes notes into, and a <strong>FIFO queue</strong> (first in, first out) of recent messages.
+- <strong>External context</strong> (outside the window): <strong>recall storage</strong>, every message ever, and <strong>archival storage</strong>, a searchable store of documents.</p>
+<p>The agent moves data between tiers by calling functions. When the prompt reaches about 70% of the window, the system adds a "memory pressure" warning so the agent saves what matters. When it is full, old messages are evicted (they stay in recall storage). Search results come back in <strong>pages</strong>, so one search can never flood the window.</p>
+<p>First the pure-Python parts: an archival store with a small TF-IDF search (a word-overlap score that weights rare words more), and a main context with a character budget.</p></div>
+<div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def tokenize(s):
+    return re.findall(r&quot;[a-z0-9_]+&quot;, s.lower())
+
+class ArchivalStore:
+    &quot;&quot;&quot;Archival storage: text passages plus a tiny TF-IDF search. Results come back in pages.&quot;&quot;&quot;
+    def __init__(self, passages):
+        self.passages = passages
+        self.docs = [Counter(tokenize(p)) for p in passages]
+        df = Counter(w for d in self.docs for w in d)
+        self.idf = {w: math.log(1 + len(passages) / c) for w, c in df.items()}
+
+    def search(self, query, page=0, page_size=3):
+        q = set(tokenize(query))
+        named = {w for w in q if re.fullmatch(r&quot;msa_\d+&quot;, w)}      # a contract id in the query acts as a filter
+        scores = [(sum(d[w] * self.idf.get(w, 0) for w in q) / (1 + sum(d.values())) ** 0.5, i)
+                  for i, d in enumerate(self.docs) if not named or named &amp; set(d)]
+        ranked = [i for s, i in sorted(scores, reverse=True) if s &gt; 0]
+        hits = ranked[page * page_size:(page + 1) * page_size]
+        more = len(ranked) &gt; (page + 1) * page_size
+        out = &quot;\n&quot;.join(f&quot;- {self.passages[i]}&quot; for i in hits) or &quot;(no results)&quot;
+        return out + (f&quot;\n[page {page}; more results: call again with page={page + 1}]&quot; if more else f&quot;\n[page {page}; no more results]&quot;)
+
+# One passage per contract section, tagged with the contract id so the search can find it.
+PASSAGES = [f&quot;[{cid} section {s[&#x27;id&#x27;]} {s[&#x27;title&#x27;]}] {s[&#x27;text&#x27;]}&quot; for cid in ids() for s in sections(contract(cid))]
+store = ArchivalStore(PASSAGES)
+print(len(PASSAGES), &quot;passages in archival storage&quot;)
+print(store.search(&quot;msa_07 fees per month&quot;))</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class MainContext:
+    &quot;&quot;&quot;Main context = system prompt + working context + FIFO queue, kept under a character budget.
+    The queue holds &#x27;units&#x27; (one assistant turn plus its tool results), so we never split a tool call from its result.&quot;&quot;&quot;
+    def __init__(self, system, budget_chars=2500, warn_at=0.7):
+        self.system, self.budget, self.warn_at = system, budget_chars, warn_at
+        self.working = []          # notes the agent chose to keep (read/write via a tool)
+        self.queue = []            # list of units; each unit is a list of messages
+        self.recall = []           # recall storage: every message ever, never deleted
+        self.evicted = 0
+
+    def size(self):
+        return len(self.render_system()) + sum(len(json.dumps(m)) for u in self.queue for m in u)
+
+    def render_system(self):
+        notes = &quot;\n&quot;.join(f&quot;- {n}&quot; for n in self.working) or &quot;(empty)&quot;
+        return f&quot;{self.system}\n\nWORKING CONTEXT (your saved notes):\n{notes}&quot;
+
+    def add(self, unit):
+        self.queue.append(unit)
+        self.recall.extend(unit)
+        while self.size() &gt; self.budget and len(self.queue) &gt; 2:   # keep the task and the newest unit
+            self.queue.pop(1)                                      # queue[0] is the user&#x27;s task: never evicted
+            self.evicted += 1
+
+    def messages(self):
+        msgs = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: self.render_system()}]
+        msgs += [m for u in self.queue for m in u]
+        if self.evicted:
+            msgs.insert(2, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;[system note: {self.evicted} older steps were evicted to recall storage. Your notes are in WORKING CONTEXT.]&quot;})
+        if self.size() &gt; self.warn_at * self.budget:
+            msgs.append({&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;[system warning: memory pressure. Save any facts you still need with working_context_append now.]&quot;})
+        return msgs
+
+# Pure-Python test: fill the context past its budget and confirm it stays under budget.
+mc = MainContext(&quot;test&quot;, budget_chars=600)
+mc.add([{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;the task&quot;}])
+for i in range(10):
+    mc.add([{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;x&quot; * 100 + str(i)}])
+print(&quot;size&quot;, mc.size(), &quot;&lt;= budget&quot;, mc.budget, &quot;| evicted&quot;, mc.evicted, &quot;| recall keeps&quot;, len(mc.recall), &quot;messages&quot;)</code></pre></div>
+<div class="nb-md"><p>Now the agent. It has three tools: <code>archival_search</code>, <code>working_context_append</code> and <code>finish</code>. The task needs facts from four different contracts, but the window budget (2,500 characters, about 600 tokens) is far smaller than the four contracts together (about 7,000 characters). So the agent must search, write a note, and let old results be evicted.</p></div>
+<div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">TOOLS = [
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {&quot;name&quot;: &quot;archival_search&quot;,
+        &quot;description&quot;: &quot;Search archival storage (all contract sections). Include the contract id and topic in the query, e.g. &#x27;msa_07 fees&#x27;. Results are paged.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {&quot;query&quot;: {&quot;type&quot;: &quot;string&quot;}, &quot;page&quot;: {&quot;type&quot;: &quot;integer&quot;}}, &quot;required&quot;: [&quot;query&quot;]}}},
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {&quot;name&quot;: &quot;working_context_append&quot;,
+        &quot;description&quot;: &quot;Save one short fact to your working context so it survives eviction, e.g. &#x27;msa_07 fee = 4500&#x27;.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {&quot;fact&quot;: {&quot;type&quot;: &quot;string&quot;}}, &quot;required&quot;: [&quot;fact&quot;]}}},
+    {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {&quot;name&quot;: &quot;finish&quot;,
+        &quot;description&quot;: &quot;Give the final answer.&quot;,
+        &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {&quot;answer&quot;: {&quot;type&quot;: &quot;string&quot;}}, &quot;required&quot;: [&quot;answer&quot;]}}},
+]
+SYSTEM = (&quot;You are an agent with a small memory. Facts live in archival storage; search it one contract at a time. &quot;
+          &quot;After each search, save the key number with working_context_append, because old search results will be evicted. &quot;
+          &quot;When you have every fact, call finish.&quot;)
+
+def memgpt_agent(task, budget_chars=2500, max_steps=14, verbose=True):
+    ctx = MainContext(SYSTEM, budget_chars)
+    ctx.add([{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: task}])
+    peak = 0
+    for step in range(max_steps):
+        msgs = ctx.messages()
+        peak = max(peak, sum(len(json.dumps(m)) for m in msgs))
+        msg = chat(msgs, tools=TOOLS)
+        calls = msg.tool_calls or []
+        if not calls:                        # the model answered in plain text: treat it as final
+            return {&quot;answer&quot;: msg.content or &quot;&quot;, &quot;steps&quot;: step + 1, &quot;peak_chars&quot;: peak, &quot;notes&quot;: ctx.working, &quot;evicted&quot;: ctx.evicted}
+        unit = [{&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: msg.content or &quot;&quot;,
+                 &quot;tool_calls&quot;: [{&quot;id&quot;: c.id, &quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {&quot;name&quot;: c.function.name, &quot;arguments&quot;: c.function.arguments}} for c in calls]}]
+        for c in calls:
+            try:
+                args = json.loads(c.function.arguments or &quot;{}&quot;)
+            except Exception:
+                args = {}
+            name = c.function.name
+            if name == &quot;finish&quot;:
+                return {&quot;answer&quot;: str(args.get(&quot;answer&quot;, &quot;&quot;)), &quot;steps&quot;: step + 1, &quot;peak_chars&quot;: peak, &quot;notes&quot;: ctx.working, &quot;evicted&quot;: ctx.evicted}
+            if name == &quot;archival_search&quot;:
+                try:
+                    result = store.search(str(args.get(&quot;query&quot;, &quot;&quot;)), int(args.get(&quot;page&quot;, 0) or 0))
+                except Exception as e:
+                    result = f&quot;ERROR: {e}&quot;
+            elif name == &quot;working_context_append&quot;:
+                ctx.working.append(str(args.get(&quot;fact&quot;, &quot;&quot;))[:200])
+                result = &quot;saved&quot;
+            else:
+                result = f&quot;ERROR: unknown tool {name}&quot;
+            if verbose:
+                print(f&quot;  step {step+1}: {name}({c.function.arguments[:60]}) -&gt; {result[:70]!r}&quot;)
+            unit.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: c.id, &quot;content&quot;: result})
+        ctx.add(unit)
+    return {&quot;answer&quot;: &quot;STOPPED: step limit&quot;, &quot;steps&quot;: max_steps, &quot;peak_chars&quot;: peak, &quot;notes&quot;: ctx.working, &quot;evicted&quot;: ctx.evicted}
+
+def first_number(s):
+    m = re.findall(r&quot;\d[\d,]*&quot;, s or &quot;&quot;)
+    return int(m[-1].replace(&quot;,&quot;, &quot;&quot;)) if m else None
+
+TARGETS = [&quot;msa_03&quot;, &quot;msa_07&quot;, &quot;msa_12&quot;, &quot;msa_18&quot;]
+TRUTH = sum(LAB[c][&quot;terms&quot;][&quot;monthly_fee&quot;] for c in TARGETS)
+task = f&quot;What is the total monthly fee, in dollars, across contracts {&#x27;, &#x27;.join(TARGETS)}? Answer with one number.&quot;
+t0 = time.time()
+out = memgpt_agent(task)
+print(f&quot;\n{out[&#x27;steps&#x27;]} steps in {time.time()-t0:.0f}s | peak prompt {out[&#x27;peak_chars&#x27;]} chars | evicted {out[&#x27;evicted&#x27;]} units&quot;)
+print(&quot;notes:&quot;, out[&quot;notes&quot;])
+print(&quot;answer:&quot;, out[&quot;answer&quot;], &quot;| truth:&quot;, TRUTH)
+print(&quot;the 4 contracts in full would be&quot;, sum(len(contract(c)) for c in TARGETS), &quot;chars&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>What to notice:</strong> the prompt never grew past the budget, yet the agent used facts from four contracts. The working-context notes are what made that work: when a search result was evicted, the number survived as a note. The weak spot is also clear: if the agent forgets to save a note, the fact is gone from its view (it is still in recall storage, but only a search would bring it back).</p></div>
+<div class="nb-md"><h3>2. KV-cache reuse: why CacheBlend and LMCache matter</h3>
+<p>Before a model writes its first word it must read the whole prompt (the <strong>prefill</strong>). While reading, it builds a <strong>KV cache</strong>: key and value vectors for every token at every layer. Prefill time grows with prompt length, so a long prompt means a long wait for the first token (<strong>time to first token, TTFT</strong>).</p>
+<p>If the next request starts with the <em>exact same</em> text, the server can reuse the cached keys and values and skip that work. This is <strong>prefix caching</strong>. Ollama does it automatically within one model slot. We measure it:
+1. a long shared prefix (8 contracts) + question A (cold: nothing cached);
+2. the same prefix + question B (warm: the prefix is reused);
+3. one changed word at the <strong>start</strong> of the prefix + question A (everything after the change must be recomputed);
+4. one changed word at the <strong>end</strong> of the prefix + question A (most of the prefix is still reusable).</p>
+<p>Caveat: Ollama runs 2 slots here. If a request lands in the other slot, it will look "cold". Run the cell twice if the numbers look odd.</p></div>
+<div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def ttft(prompt, max_tokens=8):
+    &quot;&quot;&quot;Time to the first streamed token, in seconds.&quot;&quot;&quot;
+    t0 = time.time()
+    stream = client.chat.completions.create(model=MODEL, messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt}],
+                                            temperature=0, max_tokens=max_tokens, stream=True)
+    first = None
+    for chunk in stream:
+        if first is None and chunk.choices and (chunk.choices[0].delta.content or &quot;&quot;):
+            first = time.time() - t0
+    return first if first is not None else time.time() - t0
+
+DOCS = ids()[:8]
+PREFIX = &quot;\n\n&quot;.join(f&quot;=== {c} ===\n{contract(c)}&quot; for c in DOCS)
+QA = &quot;\n\nQuestion: What governing law does msa_03 use? Answer in one word.&quot;
+QB = &quot;\n\nQuestion: What is the monthly fee in msa_05? Answer with a number.&quot;
+ask(&quot;Say OK.&quot;, max_tokens=2)                      # load the model so loading time is not counted
+results = {}
+results[&quot;1 cold: new prefix&quot;] = ttft(PREFIX + QA)
+results[&quot;2 warm: same prefix, new question&quot;] = ttft(PREFIX + QB)
+results[&quot;3 changed first word of prefix&quot;] = ttft(&quot;NOTE. &quot; + PREFIX + QA)
+results[&quot;4 changed last part of prefix&quot;] = ttft(PREFIX + &quot;\n(end of documents)&quot; + QA)
+for k, v in results.items():
+    print(f&quot;{k:38} TTFT {v:5.2f}s&quot;)
+print(f&quot;prefix is about {len(PREFIX)//4} tokens&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>What to notice:</strong> the warm request should be much faster than the cold one, and changing the very first word should make it slow again. Prefix caching is all or nothing from the point of change: one new word at the start throws away the whole cache.</p>
+<p>That is the problem in RAG (retrieval-augmented generation), where each request glues together <em>different</em> retrieved chunks in a different order. Each chunk may have been seen before, but never with the same prefix, so prefix caching misses. <strong>CacheBlend</strong> (Yao et al. 2024, <em>CacheBlend: Fast LLM Serving for RAG with Cached Knowledge Fusion</em>) reuses each chunk's cached KV even when it is not at the start, and recomputes only a small share of tokens (15% per layer by default), the ones whose KV values would change most because of the text before them. It cut TTFT 2.2-3.3x versus full recompute with about the same quality. <strong>LMCache</strong> (Cheng et al. 2025, <em>LMCache: An Efficient KV Cache Layer for Enterprise-Scale LLM Inference</em>) is the open-source layer that stores these caches outside GPU memory (CPU, disk, network) and shares them across vLLM/SGLang engines and queries.</p>
+<p>Builder rule you can use today: <strong>put stable text first</strong> (system prompt, rules, documents) and changing text last (the question). Never put a timestamp at the top of a prompt.</p></div>
+<div class="nb-md"><h3>3. Cartridges: study the document once, answer many questions cheaply</h3>
+<p>Cartridges (Eyuboglu et al. 2025, <em>Cartridges: Lightweight and general-purpose long context representations via self-study</em>) train a <strong>small KV cache</strong> for one document collection, offline. At question time the model loads this small cache instead of the whole document. The training recipe is <strong>self-study</strong>:
+1. split the corpus into chunks;
+2. the model talks to itself about each chunk: one copy asks (from generic seed prompts like "summarize", "structure", "ask a question"), another answers with the chunk in view;
+3. train the small cache with <strong>context distillation</strong>: make the model <em>with the cartridge</em> produce the same next-token probabilities as the model <em>with the full chunk</em> in context.</p>
+<p>The paper reports matching in-context quality with 38.6x less memory and 26.4x higher throughput. Training a cartridge needs gradient access to the KV vectors, which Ollama does not give us. So we build a <strong>text analogy</strong>: self-study generates Q&amp;A, the Q&amp;A becomes compact "study notes", and we compare answering from notes vs from the full document. The real method trains vectors, not text.</p></div>
+<div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">CORPUS = ids()[6:12]                           # 6 contracts, mostly ones with issues
+FULL_DOC = &quot;\n\n&quot;.join(f&quot;=== {c} ===\n{contract(c)}&quot; for c in CORPUS)
+SEEDS = {&quot;structuring&quot;: &quot;List the key commercial terms of this contract as &#x27;term: value&#x27; lines (fees, term, renewal, notice, liability cap, governing law).&quot;,
+         &quot;question&quot;: &quot;Write 3 questions a lawyer would ask about this contract, each followed by its answer from the text.&quot;}
+
+def self_study(cid):
+    &quot;&quot;&quot;Self-study on one chunk: generic seed prompts, the chunk in view. Returns synthetic Q&amp;A text.&quot;&quot;&quot;
+    chunk = f&quot;=== {cid} ===\n{contract(cid)}&quot;
+    return cid, &quot;\n&quot;.join(ask(f&quot;{chunk}\n\n{p}&quot;, max_tokens=300) for p in SEEDS.values())
+
+with ThreadPoolExecutor(2) as ex:                # 6 contracts x 2 seeds = 12 calls
+    studied = dict(ex.map(self_study, CORPUS))
+
+notes = []
+for cid in CORPUS:                               # compress each chunk&#x27;s study output into a short card (6 calls)
+    card = ask(f&quot;Study notes for contract {cid}:\n{studied[cid]}\n\nCompress these into at most 6 short lines of the form &quot;
+               f&quot;&#x27;{cid} &lt;term&gt;: &lt;value&gt;&#x27;. Keep numbers and state names exact.&quot;, max_tokens=200)
+    notes.append(card.strip())
+CARTRIDGE = &quot;\n&quot;.join(notes)
+print(CARTRIDGE[:800])
+print(f&quot;\nfull document: {len(FULL_DOC)} chars | cartridge: {len(CARTRIDGE)} chars ({len(FULL_DOC)/max(len(CARTRIDGE),1):.1f}x smaller)&quot;)</code></pre></div>
+<div class="nb-md"><p>Now the test. The questions come from the labels, not from the study step, so the notes cannot "know" the questions in advance.</p></div>
+<div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">QS = ([(f&quot;What state&#x27;s law governs {c}? Answer with the state name only.&quot;, LAB[c][&quot;terms&quot;][&quot;governing_law&quot;].lower()) for c in CORPUS[:4]]
+      + [(f&quot;How many days&#x27; notice of non-renewal does {c} require? Answer with a number only.&quot;, str(LAB[c][&quot;terms&quot;][&quot;notice_days&quot;])) for c in CORPUS[2:]])
+print(len(QS), &quot;questions, e.g.&quot;, QS[0])
+
+def answer_with(context, q):
+    return ask(f&quot;{context}\n\n{q}&quot;, max_tokens=20).strip().lower()
+
+def grade(pred, gold):
+    words = re.sub(r&quot;[^a-z0-9 ]&quot;, &quot; &quot;, pred).split()
+    return gold in words if gold.isdigit() else gold in pred
+
+def run(context):
+    with ThreadPoolExecutor(2) as ex:
+        preds = list(ex.map(lambda qg: answer_with(context, qg[0]), QS))
+    return sum(grade(p, g) for p, (_, g) in zip(preds, QS)) / len(QS), preds
+
+acc_full, _ = run(FULL_DOC)                       # 8 calls
+acc_cart, preds_cart = run(CARTRIDGE)             # 8 calls
+print(f&quot;full document in context: {acc_full:.0%} | cartridge notes: {acc_cart:.0%} | size ratio {len(FULL_DOC)/max(len(CARTRIDGE),1):.1f}x&quot;)
+for (q, g), p in zip(QS, preds_cart):
+    print(f&quot;  {&#x27;ok &#x27; if grade(p, g) else &#x27;MISS&#x27;} {q[:55]:55} -&gt; {p[:25]!r} (truth {g})&quot;)</code></pre></div>
+<div class="nb-md"><p><strong>What to notice:</strong> the notes are several times smaller, and on facts that the generic seeds happened to cover, they do about as well. Facts that self-study never touched are simply missing. The paper saw the same thing in a sharper form: training on the raw text with plain next-token prediction memorized it but generalized poorly, and the varied synthetic conversations of self-study were what made cartridges work across question types. Composition also works there: two cartridges can be loaded together without retraining.</p>
+<p>When is each tool right?
+- <strong>MemGPT-style paging:</strong> many documents, the agent decides what to look at, and you want an audit trail of what it read.
+- <strong>Prefix / KV caching:</strong> the same long text is sent again and again (system prompt, playbook, a contract under review). Free speed-up; just keep stable text first.
+- <strong>Cartridges:</strong> one large corpus queried thousands of times (a codebase, a company's contract archive). Pay once to train, then serve cheaply.</p></div>
+<div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;archival search finds the right contract section&quot;, &quot;msa_07&quot; in store.search(&quot;msa_07 fees per month&quot;).split(&quot;\n&quot;)[0])
+check(&quot;main context stays under budget after eviction&quot;, mc.size() &lt;= mc.budget and mc.evicted &gt; 0 and len(mc.recall) == 11)
+check(&quot;MemGPT agent gets the total fee right&quot;, first_number(out[&quot;answer&quot;]) == TRUTH)
+check(&quot;warm prefix is faster than cold prefix&quot;, results[&quot;2 warm: same prefix, new question&quot;] &lt; results[&quot;1 cold: new prefix&quot;])
+check(&quot;cartridge is at least 2x smaller than the document&quot;, len(FULL_DOC) &gt;= 2 * len(CARTRIDGE))
+check(&quot;cartridge keeps at least half the accuracy of the full document&quot;, acc_cart &gt;= 0.5 * acc_full)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li>Shrink the MemGPT budget to 1,500 characters. Does the agent still get the right total? Look at how many units were evicted and whether its notes were complete.</li>
+<li>Move the question to the <em>start</em> of the prompt (question, then the 8 contracts) and re-time two different questions. What happens to the cache, and why?</li>
+<li>Add a third self-study seed ("summarize the risks for the customer") and re-run the cartridge test. Does broader self-study raise accuracy?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: a tighter budget
+small = memgpt_agent(task, budget_chars=1500, verbose=False)
+print(&quot;answer:&quot;, small[&quot;answer&quot;], &quot;| truth:&quot;, TRUTH, &quot;| evicted:&quot;, small[&quot;evicted&quot;], &quot;| notes:&quot;, small[&quot;notes&quot;])
+# Notice: with less room more units are evicted, so success depends entirely on whether the agent wrote each fee as a note.
+# This is the MemGPT trade-off: the model, not the system, decides what to remember.</code></pre></div><div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: question first breaks the prefix cache
+a = ttft(QA.strip() + &quot;\n\n&quot; + PREFIX)
+b = ttft(QB.strip() + &quot;\n\n&quot; + PREFIX)
+print(f&quot;question-first A: {a:.2f}s, question-first B: {b:.2f}s&quot;)
+# Notice: B is slow too. The prompts differ from the first token, so nothing can be reused.
+# CacheBlend&#x27;s idea is to reuse the documents&#x27; KV anyway, recomputing only the tokens that need it.</code></pre></div><div class="code"><div class="cap"><span class="cell">a09_memory.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 3: one more seed prompt (6 more calls for study, 6 for cards, 8 for the test)
+SEEDS[&quot;risks&quot;] = &quot;Summarize the risks of this contract for the customer, quoting the clause numbers and values.&quot;
+with ThreadPoolExecutor(2) as ex:
+    studied2 = dict(ex.map(self_study, CORPUS))
+CART2 = &quot;\n&quot;.join(ask(f&quot;Study notes for contract {c}:\n{studied2[c]}\n\nCompress into at most 6 short lines &#x27;{c} &lt;term&gt;: &lt;value&gt;&#x27;. Keep numbers and state names exact.&quot;, max_tokens=200).strip() for c in CORPUS)
+acc2, _ = run(CART2)
+print(f&quot;2 seeds: {acc_cart:.0%} | 3 seeds: {acc2:.0%} | cartridge sizes {len(CARTRIDGE)} vs {len(CART2)} chars&quot;)
+# Notice: more varied self-study usually covers more facts. The paper found the same: the diversity of the synthetic
+# conversations matters more than training on the raw text.</code></pre></div></details>
+<div class="pit"><strong>Traps</strong><ul><li>Putting a timestamp, request ID or user name at the top of the prompt. It changes the first tokens, so prefix caching never hits.</li><li>Trusting the agent to save notes. In MemGPT-style paging the model decides what to remember; if it skips a note, the fact is gone from view. Log everything and test recall.</li><li>Training a compact memory on the raw text with next-token prediction. Cartridges found it memorizes but does not generalize; the varied synthetic conversations are what make it work.</li><li>Measuring TTFT with the first call after loading the model. Load time swamps everything; warm up first.</li><li>Assuming two requests share a cache. Servers with several slots or replicas may route them apart; LMCache exists partly to share caches across engines.</li></ul></div>
+<div class="check"><h4>Check yourself</h4><details><summary>Why does changing the first word of a long prompt make it slow again?</summary><p>Prefix caching only reuses KV for an exact matching prefix; a change at the start invalidates everything after it, so the whole prompt is prefilled again.</p></details><details><summary>In MemGPT, what survives when old messages are evicted from the FIFO queue?</summary><p>The working context notes, a recursive summary, and the full messages in recall storage (retrievable by search).</p></details><details><summary>What does CacheBlend recompute, and why not nothing?</summary><p>A small share of tokens (15% per layer by default) with the highest KV deviation; reusing caches with no recompute ignores cross-attention between chunks and loses quality.</p></details><details><summary>How is a Cartridge trained?</summary><p>With self-study: the model generates synthetic conversations about corpus chunks, and a small KV cache is trained by context distillation to match the model&#x27;s outputs when the chunk is in context.</p></details><details><summary>Our notebook&#x27;s &#x27;cartridge&#x27; is text notes. What is the real one?</summary><p>A set of trainable key and value vectors (a prefix-tuning style KV cache), trained with gradients while the model weights stay frozen.</p></details></div>
+</div></section><nav class="pager"><a class="prev" href="a08.html"><small>← Previous</small>Agentic frameworks for software engineering</a><a class="next" href="a10.html"><small>Next →</small>Agentic evaluations and long-horizon tasks</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

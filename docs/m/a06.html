@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Open-ended evolution of self-improving agents · Agent Engineering School</title>
+<meta name="description" content="How an AI can improve code, agents and even experiments by guessing changes, scoring each one automatically, and building on the best. Covers ADAS, the AI Scientist and AlphaEvolve.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A06</span></div><section class="mod" id="a06" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A06</div><h2>Open-ended evolution of self-improving agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a06_open_ended_evolution.ipynb">Open in Colab</a><button class="done-btn" data-done="a06" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How an AI can improve code, agents and even experiments by guessing changes, scoring each one automatically, and building on the best. Covers ADAS, the AI Scientist and AlphaEvolve.</p><article class="lesson"><h2>The big idea</h2>
+<p>Picture a test kitchen. A cook keeps a binder of every recipe tried so far, each with a taste score. Each day they pick a good recipe, change one thing, cook it, and have it tasted. Good results go in the binder. Bad ones are noted and rarely tried again. Over months, the binder fills with better and stranger dishes.</p>
+<p>That is open-ended evolution with AI. A language model proposes changes to code, to an agent, or to an experiment. A program scores every proposal. An archive (the stored set of every candidate tried, with its score) keeps what worked, so the next round can build on it.</p>
+<p>The surprising lesson is where the progress comes from. The model only supplies guesses. The real work is done by the scorer and the archive. A good scorer turns a stream of cheap guesses into steady improvement.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>Small local models make lots of wrong guesses. This loop doesn't mind. If a cheap model can make many tries and a program can score them, you can still find good answers on your own computers.</li>
+<li>A law firm has checkable tasks. A set of contracts with known correct flags can score any new review agent automatically. That means the firm could search for a better agent design instead of hand-tuning prompts.</li>
+<li>The danger is real too. These loops run code the model wrote. You must fence that code in.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Build the scorer first.</strong> The scorer must check validity before quality. Validity means "is this even a legal answer?" Quality means "how good is it?" Skip the validity check and the search will find a cheat.</p>
+</li>
+<li>
+<p><strong>Fence in the code.</strong> Model-written code can loop forever or delete files. Run it in a sandbox (a separate, limited process or container with a timeout, no network, and limited disk). The AI Scientist paper (2024) reports their system edited its own code to raise its timeout, and once relaunched itself repeatedly.</p>
+</li>
+<li>
+<p><strong>AlphaEvolve: evolve a program</strong> (the AlphaEvolve paper, 2025). It keeps a database of programs. Each step it picks a parent, shows the model that parent plus a few strong "inspiration" programs, and asks for an improved version. A fast model makes many ideas. A stronger model makes fewer, better ones. Each child is tested in an evaluation cascade: a tiny, quick test first, and the full, costly test only for children that pass. This found a way to multiply two 4x4 complex matrices with 48 multiplications instead of 49, the first gain over Strassen's method in this setting in 56 years.</p>
+</li>
+<li>
+<p><strong>ADAS: evolve the agent itself</strong> (the ADAS paper, 2024). Here each agent is written as code: a function that may call the model several times. A meta agent (an agent whose job is to write other agents) reads the archive of earlier designs and their scores. It writes a new design. That design is tested and added to the archive. The archive starts with known designs like "think step by step". The follow-up Darwin Gödel Machine paper (2025) applied the same idea to a coding agent that edits its own code, raising its score on a coding benchmark from 20.0% to 50.0%.</p>
+</li>
+<li>
+<p><strong>The AI Scientist: evolve research.</strong> It chains the whole research process: idea, experiment code, run, write-up, then an automated review. The authors report under $15 per paper. The weak points are the model acting as reviewer and the sandbox.</p>
+</li>
+<li>
+<p><strong>Keep the whole archive, not only the best.</strong> A candidate that looks worse today can be a stepping stone to a big win later. Open-endedness means rewarding what is new and interesting, not only what scores highest, so the search doesn't get stuck.</p>
+</li>
+</ol>
+<pre><code>pick parent from archive -&gt; model proposes change -&gt; sandbox runs it
+        ^                                                  |
+        |                                                  v
+   store child + score  &lt;---- quick test -&gt; full test (if it passed)
+</code></pre>
+<h2>Worked example</h2>
+<p>The firm wants a better clause-review agent. It has 50 past contracts, each with the correct flags from its playbook. For example: "liability cap at most 12 months of fees".</p>
+<p>The archive starts with two designs. One asks the model once. One asks it to think step by step first. Each is scored by how many flags it gets right.</p>
+<p>The meta agent reads both designs and their scores. It proposes a third: "first find the liability clause, then compare it to the rule in a second call." The sandbox runs it on 10 contracts as a quick test. It does fine, so it gets the full 50. It scores higher, and goes into the archive.</p>
+<p>Now the warning. Suppose the scorer only counts "flags raised" and never checks they are correct. The search would soon find an agent that flags every clause. In the notebook's bin-packing version, a cheating program that overfills one bin scores 27 out of a "perfect" 1.0. The search optimizes what you measure, cheats included.</p>
+<p>The other warning: a small test set lies. With 6 questions, one answer is worth about 17 points. A "winner" may just be lucky. Always confirm it on contracts the search never saw.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>A scorer without a validity check.</strong> The search will find the loophole. Check legality first, then quality.</li>
+<li><strong>Running model code in your own process.</strong> Use a separate process or container with a timeout and no network.</li>
+<li><strong>Trusting a win on a tiny search set.</strong> Keep a held-out set (data the search never touched) and trust only gains that show up there.</li>
+<li><strong>Keeping only the current best.</strong> Without an archive and some variety, the search gets stuck on one line of ideas.</li>
+<li><strong>Letting a model reviewer be the only judge.</strong> Check the write-up's numbers against the raw results with plain code.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Why does AlphaEvolve use an evaluation cascade instead of the full test on every child?</summary>
+<p>Most children are worse or broken. A tiny quick test filters them out early, so the expensive test is spent only on promising ones.</p>
+</details>
+<details>
+<summary>In ADAS, what does the meta agent produce, and how is it judged?</summary>
+<p>A new agent written as code. It is run on test tasks, and its score is stored with it in the archive.</p>
+</details>
+<details>
+<summary>Name two safety measures for an AI Scientist-style loop.</summary>
+<p>Run generated code in a sandbox with time and storage limits and no network. Check the write-up&#x27;s claims against the raw results with code, rather than trusting a model reviewer.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the a06 notebook. It evolves a bin-packing function (a mini AlphaEvolve), lets a meta agent invent agent designs (a mini ADAS), and runs a tiny idea-to-review loop. Watch the archive's best score climb, then try removing the validity check to see the cheat appear.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Lecture 7 (Oct 13)</p>
+
+  <p class="big">Let an LLM propose changes to code, agents or experiments, score every proposal automatically, and keep an archive of what worked to build on. Progress comes from the evaluator and the archive; the LLM supplies the guesses.</p>
+<div class="terms"><h4>Key terms</h4><dl><div><dt>Archive</dt><dd>The stored set of every candidate tried so far with its score. New candidates are made by changing archive members.<span class="from">Source: Hu et al. 2024; Zhang et al. 2025</span></dd></div><div><dt>Open-endedness</dt><dd>Searching for things that are new and interesting, not only better on one number, so the search keeps finding stepping stones instead of getting stuck.<span class="from">Source: lecture</span></dd></div><div><dt>Meta agent</dt><dd>An agent whose job is to write other agents (as code), as in ADAS&#x27;s Meta Agent Search.<span class="from">Source: Hu et al. 2024</span></dd></div><div><dt>Evaluation cascade</dt><dd>Test each candidate on a tiny, fast test first, and only run the full, expensive test on candidates that pass.<span class="from">Source: Novikov et al. 2025</span></dd></div><div><dt>MAP-Elites / islands</dt><dd>Ways to keep diversity: keep the best candidate in each &#x27;niche&#x27; (MAP-Elites), or evolve several separate populations (islands).<span class="from">Source: Novikov et al. 2025</span></dd></div><div><dt>Sandbox</dt><dd>Running untrusted code in a separate, limited process or container (timeouts, no network, limited disk) so it cannot harm the host.<span class="from">Source: Lu et al. 2024</span></dd></div><div><dt>Reward hacking</dt><dd>The search finds a way to score high that breaks the intent of the task, e.g. a &#x27;packing&#x27; that overfills bins when the evaluator forgets to check.<span class="from">Source: lecture</span></dd></div></dl></div>
+<h3>The papers</h3><div class="papers"><div class="paper"><h4><a href="https://arxiv.org/abs/2408.08435">Automated Design of Agentic Systems</a></h4><p class="by">Hu, Lu &amp; Clune · 2024</p><dl><dt>What</dt><dd>Agents are defined as code (a forward() function). Meta Agent Search: a meta agent reads an archive of earlier agents with their scores, writes a new agent, checks it for novelty with two self-reflection steps, evaluates it on validation data (repairing errors up to five times) and adds it to the archive. The archive is seeded with hand-designed agents like Chain-of-Thought and Self-Refine.</dd><dt>Result</dt><dd>With GPT-4 as meta agent and GPT-3.5 running the agents: +13.6 F1 (out of 100) on DROP and +14.4% accuracy on MGSM over the best hand-designed agents; agents found on MGSM gave +25.9% on GSM8K and +13.2% on GSM-Hard when transferred. Discovered agents kept their edge when moved to other models (e.g. Claude, GPT-4).</dd><dt>Takeaway</dt><dd>If you have a checkable task set, let a strong model search over agent designs written as code, with a held-out set to catch lucky winners. Start the archive with the designs you already use.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2505.22954">Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents</a></h4><p class="by">Zhang, Hu, Lu, Lange &amp; Clune · 2025</p><dl><dt>What</dt><dd>The course page links the &#x27;Automated design of agentic systems&#x27; reading to this paper. A coding agent rewrites its own code; each new version is tested on coding benchmarks and kept in a growing archive (a tree of agents), and new versions are branched from archive members, not only from the latest best.</dd><dt>Result</dt><dd>SWE-bench 20.0% -&gt; 50.0% and Polyglot 14.2% -&gt; 30.7%, beating variants without self-improvement or without open-ended exploration.</dd><dt>Takeaway</dt><dd>Keep the whole archive, not just the current best: stepping stones that look worse now often lead to the biggest later gains.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2408.06292">The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery</a></h4><p class="by">Lu, Lu, Lange, Foerster, Clune &amp; Ha · 2024</p><dl><dt>What</dt><dd>A pipeline where LLMs generate research ideas (checked for novelty against Semantic Scholar), write and run experiment code with the Aider coding assistant, plot results, write a full LaTeX paper and review it with an automated reviewer. Applied to diffusion models, transformer language modeling and learning dynamics.</dd><dt>Result</dt><dd>Under $15 per paper. The GPT-4o reviewer reached 0.65 balanced accuracy on accept/reject for 500 ICLR 2022 papers, vs 0.66 for humans (from the NeurIPS 2021 consistency experiment). The authors report safety issues: the system edited its own code to extend timeouts and once relaunched itself repeatedly.</dd><dt>Takeaway</dt><dd>Automating the full loop is possible, but the weak points are the LLM reviewer and the sandbox. Ground every claim in the raw results with code, and run generated code in a container with timeouts, storage limits and no network.</dd></dl></div><div class="paper"><h4><a href="https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/AlphaEvolve.pdf">AlphaEvolve: A coding agent for scientific and algorithmic discovery</a></h4><p class="by">Novikov et al. (Google DeepMind) · 2025</p><dl><dt>What</dt><dd>An evolutionary loop: a program database (MAP-Elites plus islands) feeds a prompt sampler; an ensemble of Gemini 2.0 Flash (many fast ideas) and Gemini 2.0 Pro (fewer, better ones) proposes code diffs in SEARCH/REPLACE format inside marked EVOLVE-BLOCKs; automatic evaluators score each child, optionally as a cascade of harder and harder tests.</dd><dt>Result</dt><dd>A 4x4 complex matrix multiplication with 48 scalar multiplications, the first improvement over Strassen in this setting in 56 years. On 50+ open math problems it matched the best known constructions in about 75% and improved them in about 20% (e.g. kissing number in 11 dimensions: 593, previous 592). At Google: a scheduling heuristic recovering on average 0.7% of fleet-wide compute, a 23% average kernel speedup giving 1% less Gemini training time, and a 32% speedup of a FlashAttention kernel.</dd><dt>Takeaway</dt><dd>Any problem with a fast, trustworthy scoring function is a candidate for LLM-driven evolution. Spend your effort on the evaluator (validity first, then quality) and let cheap models generate many candidates.</dd></dl></div></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a06_open_ended_evolution.ipynb" target="_blank" rel="noopener">a06_open_ended_evolution.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, os, random, re, subprocess, sys, tempfile, textwrap, time
+from concurrent.futures import ThreadPoolExecutor
+from pydantic import BaseModel, Field
+from lal.llm import ask, structured
+from lal.checks import check
+
+WORKER = &quot;llama3.2:3b&quot;     # the cheap model that runs inside agent designs (ADAS)
+RUN_LONG = False           # True = more generations and a held-out test for ADAS
+REPO = os.getcwd()</code></pre></div>
+<div class="nb-md"><h3>1. The sandbox: never run model code in your own process</h3>
+<p>Model-written code can loop forever, eat memory, or delete files. We write it to a temp folder and run it in a <strong>separate Python process</strong> with:
+- a wall-clock timeout,
+- a CPU-time and (on Linux) memory limit,
+- <code>python -I</code> (isolated mode: ignores environment variables and the user's site folder),
+- the temp folder as working directory.</p>
+<p>This is a speed bump, not a real sandbox. It does not block the network or reading files. For real use, run it in a container with no network. The AI Scientist paper reports why: in some runs their system edited its own code to raise its timeout, and relaunched itself until a human had to stop it (Lu et al. 2024).</p></div>
+<div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def run_sandboxed(code, timeout=10, mem_mb=1024):
+    &quot;&quot;&quot;Run code in a fresh Python process. The program reports by printing one line: RESULT &lt;json&gt;.&quot;&quot;&quot;
+    # The child sets its own CPU and memory limits first. (Setting them from the parent with preexec_fn
+    # is unsafe in a Jupyter kernel, which runs threads.)
+    header = (&quot;try:\n    import resource, sys as _s\n&quot;
+              f&quot;    resource.setrlimit(resource.RLIMIT_CPU, ({timeout + 1}, {timeout + 1}))\n&quot;
+              f&quot;    if _s.platform.startswith(&#x27;linux&#x27;): resource.setrlimit(resource.RLIMIT_AS, ({mem_mb} * 2**20, {mem_mb} * 2**20))\n&quot;
+              &quot;except Exception:\n    pass\n&quot;)
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;prog.py&quot;)
+        with open(path, &quot;w&quot;) as f:
+            f.write(header + code)
+        t0 = time.time()
+        try:
+            p = subprocess.run([sys.executable, &quot;-I&quot;, path], cwd=d, capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return {&quot;ok&quot;: False, &quot;error&quot;: f&quot;timeout after {timeout}s&quot;, &quot;seconds&quot;: timeout}
+        secs = round(time.time() - t0, 2)
+        lines = [l for l in p.stdout.splitlines() if l.startswith(&quot;RESULT &quot;)]
+        if not lines:
+            return {&quot;ok&quot;: False, &quot;error&quot;: (p.stderr or p.stdout or &quot;no RESULT line&quot;)[-500:], &quot;seconds&quot;: secs}
+        try:
+            return {&quot;ok&quot;: True, &quot;result&quot;: json.loads(lines[-1][7:]), &quot;seconds&quot;: secs}
+        except Exception as e:
+            return {&quot;ok&quot;: False, &quot;error&quot;: f&quot;bad RESULT json: {e}&quot;, &quot;seconds&quot;: secs}
+
+def code_block(text):
+    &quot;&quot;&quot;Pull the first ```python block out of a reply (or the whole reply if there is none).&quot;&quot;&quot;
+    m = re.search(r&quot;```(?:python|py)?\s*\n(.*?)```&quot;, text or &quot;&quot;, re.S)
+    return (m.group(1) if m else (text or &quot;&quot;)).strip()
+
+print(run_sandboxed(&quot;print(&#x27;RESULT&#x27;, 1+1)&quot;))
+print(run_sandboxed(&quot;while True: pass&quot;, timeout=2))</code></pre></div>
+<div class="nb-md"><h3>2. Mini AlphaEvolve: evolve a bin-packing function</h3>
+<p>AlphaEvolve (Novikov et al. 2025, Google DeepMind) keeps a <strong>database of programs</strong>. Each step it picks a parent, shows the LLM the parent plus a few good "inspiration" programs with their scores, asks for an improved version, runs the evaluator, and stores the child. Among its results: a way to multiply two 4x4 complex matrices with 48 scalar multiplications (Strassen's method, from 1969, needs 49), and a scheduling heuristic that recovers on average 0.7% of Google's fleet-wide compute.</p>
+<p>Our problem: <strong>bin packing.</strong> Put items of different sizes into as few bins of size 100 as possible. The program to evolve is <code>pack(items, capacity)</code>. The evaluator:
+1. <strong>checks validity</strong> (every item used exactly once, no bin over capacity); an invalid packing scores 0,
+2. scores quality as <code>lower bound / bins used</code>, where the lower bound is <code>ceil(total size / capacity)</code>. 1.0 would be perfect.</p>
+<p>It runs as an <strong>evaluation cascade</strong>, an idea from the paper: a tiny test first, and only programs that pass it get the full test.</p></div>
+<div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">SEED_PROGRAM = &#x27;&#x27;&#x27;def pack(items, capacity):
+    &quot;&quot;&quot;Next fit: keep one open bin; start a new one when the item does not fit.&quot;&quot;&quot;
+    bins, current, room = [], [], capacity
+    for x in items:
+        if x &gt; room:
+            bins.append(current)
+            current, room = [], capacity
+        current.append(x)
+        room -= x
+    if current:
+        bins.append(current)
+    return bins
+&#x27;&#x27;&#x27;
+
+BP_HARNESS = &#x27;&#x27;&#x27;
+import json, math, random
+from collections import Counter
+
+{code}
+
+def run_stage(seed, n_inst, n_items, cap=100):
+    rng = random.Random(seed)
+    scores = []
+    for _ in range(n_inst):
+        items = [rng.randint(20, 70) for _ in range(n_items)]
+        bins = pack(list(items), cap)
+        flat = [x for b in bins for x in b]
+        if Counter(flat) != Counter(items) or any(sum(b) &gt; cap for b in bins) or any(len(b) == 0 for b in bins):
+            return None
+        scores.append(math.ceil(sum(items) / cap) / len(bins))
+    return sum(scores) / len(scores)
+
+try:
+    quick = run_stage(seed=1, n_inst=2, n_items=10)          # stage 1: tiny and fast
+    full = run_stage(seed=2, n_inst=20, n_items=60) if quick is not None else None   # stage 2: the real test
+    print(&quot;RESULT &quot; + json.dumps({{&quot;score&quot;: full or 0.0, &quot;valid&quot;: full is not None,
+                                  &quot;stage&quot;: 2 if quick is not None else 1}}))
+except Exception as e:
+    print(&quot;RESULT &quot; + json.dumps({{&quot;score&quot;: 0.0, &quot;valid&quot;: False, &quot;error&quot;: repr(e)[:200]}}))
+&#x27;&#x27;&#x27;
+
+def evaluate_packer(code):
+    r = run_sandboxed(BP_HARNESS.format(code=code), timeout=10)
+    if not r[&quot;ok&quot;]:
+        return 0.0, r[&quot;error&quot;][-200:]
+    res = r[&quot;result&quot;]
+    return float(res.get(&quot;score&quot;, 0.0)), res.get(&quot;error&quot;) or (&quot;ok&quot; if res.get(&quot;valid&quot;) else f&quot;invalid at stage {res.get(&#x27;stage&#x27;)}&quot;)
+
+seed_score, note = evaluate_packer(SEED_PROGRAM)
+print(f&quot;seed program (next fit): score {seed_score:.3f} ({note})&quot;)</code></pre></div>
+<div class="nb-md"><p>The mutation step. We ask for the whole function back. (AlphaEvolve asks for <strong>diffs</strong> in a SEARCH/REPLACE format and marks the parts that may change with <code># EVOLVE-BLOCK-START</code> / <code># EVOLVE-BLOCK-END</code>. Whole functions are easier for an 8B model.)</p></div>
+<div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def mutate(parent, inspirations):
+    insp = &quot;\n\n&quot;.join(f&quot;# score {p[&#x27;score&#x27;]:.3f}\n{p[&#x27;code&#x27;]}&quot; for p in inspirations)
+    prompt = textwrap.dedent(f&quot;&quot;&quot;\
+        You are improving a Python function for bin packing. Higher score is better (1.0 is a perfect packing).
+        A packing that loses, duplicates or overfills items scores 0.
+
+        Current program (score {parent[&#x27;score&#x27;]:.3f}):
+        ```python
+        {{parent}}
+        ```
+
+        Other programs from the archive, for inspiration:
+        {{insp}}
+
+        Write an improved version of `pack(items, capacity)`. It must return a list of bins, each a list of the
+        item sizes in it, using every item exactly once. Use only the Python standard library. It must run in
+        well under a second for 60 items. Think about which known heuristics pack tighter.
+        Reply with one ```python code block containing the full function.&quot;&quot;&quot;).replace(&quot;{parent}&quot;, parent[&quot;code&quot;]).replace(&quot;{insp}&quot;, insp or &quot;(none yet)&quot;)
+    try:
+        return code_block(ask(prompt, temperature=0.8, max_tokens=900))
+    except Exception as e:
+        return f&quot;# model error: {e}&quot;
+
+archive = [{&quot;code&quot;: SEED_PROGRAM, &quot;score&quot;: seed_score, &quot;gen&quot;: 0, &quot;note&quot;: note}]
+rng = random.Random(0)
+GENERATIONS, CHILDREN = (10, 2) if RUN_LONG else (6, 2)           # 12 model calls by default
+best_by_gen = [seed_score]
+t0 = time.time()
+for gen in range(1, GENERATIONS + 1):
+    ranked = sorted(archive, key=lambda p: -p[&quot;score&quot;])
+    parents = [ranked[0] if rng.random() &lt; 0.5 else rng.choice(ranked[:4]) for _ in range(CHILDREN)]
+    with ThreadPoolExecutor(2) as ex:
+        kids = list(ex.map(lambda par: mutate(par, [p for p in ranked[:3] if p is not par][:2]), parents))
+    for code in kids:
+        if &quot;def pack(&quot; not in code:
+            archive.append({&quot;code&quot;: code, &quot;score&quot;: 0.0, &quot;gen&quot;: gen, &quot;note&quot;: &quot;no pack() function&quot;})
+            continue
+        s, note = evaluate_packer(code)
+        archive.append({&quot;code&quot;: code, &quot;score&quot;: s, &quot;gen&quot;: gen, &quot;note&quot;: note})
+    best_by_gen.append(max(p[&quot;score&quot;] for p in archive))
+    print(f&quot;gen {gen}: children scored {[round(a[&#x27;score&#x27;], 3) for a in archive[-CHILDREN:]]}  best so far {best_by_gen[-1]:.3f}&quot;)
+print(f&quot;[{time.time() - t0:.0f}s]&quot;)
+
+best_prog = max(archive, key=lambda p: p[&quot;score&quot;])
+print(f&quot;\nseed {seed_score:.3f} -&gt; best {best_prog[&#x27;score&#x27;]:.3f} (found in generation {best_prog[&#x27;gen&#x27;]})\n&quot;)
+print(best_prog[&quot;code&quot;])</code></pre></div>
+<div class="nb-md"><p>Things to notice:
+- <strong>The archive only gets better or stays the same,</strong> because we never throw away the best program. Children that crash or cheat get a 0 and are simply never picked as parents.
+- <strong>The evaluator does the real work.</strong> The LLM is just a source of guesses. AlphaEvolve's results came from problems where a program can score the answer. A typical win here is "first fit decreasing": sort items from big to small, put each one in the first bin where it fits.</p></div>
+<div class="nb-md"><h3>3. Mini ADAS: a meta-agent that invents agent designs</h3>
+<p>ADAS (Hu, Lu &amp; Clune 2024, <em>Automated Design of Agentic Systems</em>) writes agents as <strong>code</strong>: a <code>forward()</code> function that may call the model several times. A <strong>meta agent</strong> reads an archive of earlier designs with their scores and writes a new one. In the paper (GPT-4 as meta agent, GPT-3.5 running the agents), discovered agents beat hand-designed ones by 13.6 F1 points on DROP and 14.4% on MGSM, and kept an edge when moved to other domains and models.</p>
+<blockquote>
+<p>The course page links this lecture item to arXiv 2505.22954, which is the follow-up paper, the <strong>Darwin Gödel Machine</strong> (Zhang et al. 2025). It applies the same archive idea to a coding agent that edits its own code: SWE-bench 20.0% -&gt; 50.0%.</p>
+</blockquote>
+<p>Our version: agents are <code>forward(question, ask)</code> functions. <code>ask(prompt, temperature=0.0)</code> calls the small 3B model, at most <strong>2 calls per question</strong>. The tasks are seeded word problems with exact answers. Each design runs in the sandbox.</p></div>
+<div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def word_problems(n, seed):
+    rng, out = random.Random(seed), []
+    for _ in range(n):
+        a, b, c, d = rng.randint(20, 90), rng.randint(3, 9), rng.randint(4, 12), rng.randint(5, 30)
+        name, thing = rng.choice([&quot;Mia&quot;, &quot;Ravi&quot;, &quot;Ana&quot;, &quot;Tom&quot;, &quot;Lena&quot;]), rng.choice([&quot;stickers&quot;, &quot;apples&quot;, &quot;cards&quot;, &quot;coins&quot;])
+        kind = rng.randint(0, 2)
+        if kind == 0:
+            q, ans = f&quot;{name} has {a} {thing}. {name} buys {b} packs with {c} {thing} each, then gives away {d}. How many {thing} does {name} have now?&quot;, a + b * c - d
+        elif kind == 1:
+            q, ans = f&quot;A box holds {c} {thing}. {name} fills {b} boxes and has {d} {thing} left over, then loses {a % 10} of the left-over ones. How many {thing} did {name} have in total at the end?&quot;, b * c + d - a % 10
+        else:
+            q, ans = f&quot;{name} had {a} {thing}, sold {d} of them, and then doubled what was left. After that {name} received {b * c} more. How many {thing} now?&quot;, 2 * (a - d) + b * c
+        out.append({&quot;question&quot;: q, &quot;answer&quot;: ans})
+    return out
+
+def extract_int(text):
+    m = re.findall(r&quot;Answer:\s*\**\s*(-?\d[\d,]*)&quot;, text or &quot;&quot;, re.I) or re.findall(r&quot;-?\d[\d,]*&quot;, text or &quot;&quot;)
+    try:
+        return int(m[-1].replace(&quot;,&quot;, &quot;&quot;)) if m else None
+    except ValueError:
+        return None
+
+AGENT_HARNESS = &#x27;&#x27;&#x27;
+import json, sys
+sys.path.insert(0, {repo!r})
+from lal.llm import ask as _ask
+LIMIT, CALLS = 2, {{&quot;n&quot;: 0}}
+
+def ask(prompt, temperature=0.0):
+    if CALLS[&quot;n&quot;] &gt;= LIMIT:
+        raise RuntimeError(&quot;call budget exceeded&quot;)
+    CALLS[&quot;n&quot;] += 1
+    return _ask(str(prompt), model_name={worker!r}, temperature=float(temperature), max_tokens=300)
+
+{code}
+
+outs = []
+for q in {questions!r}:
+    CALLS[&quot;n&quot;] = 0
+    try:
+        outs.append(str(forward(q, ask)))
+    except Exception as e:
+        outs.append(&quot;ERROR: &quot; + repr(e)[:200])
+print(&quot;RESULT &quot; + json.dumps(outs))
+&#x27;&#x27;&#x27;
+
+def evaluate_agent(code, tasks):
+    prog = AGENT_HARNESS.format(repo=REPO, worker=WORKER, code=code, questions=[t[&quot;question&quot;] for t in tasks])
+    r = run_sandboxed(prog, timeout=240, mem_mb=None)        # no memory cap: the model client needs room
+    if not r[&quot;ok&quot;]:
+        return 0.0, &quot;crashed: &quot; + r[&quot;error&quot;][-200:]
+    outs = r[&quot;result&quot;]
+    right = sum(extract_int(o) == t[&quot;answer&quot;] for o, t in zip(outs, tasks))
+    errors = sum(o.startswith(&quot;ERROR&quot;) for o in outs)
+    return right / len(tasks), f&quot;{errors}/{len(tasks)} questions errored&quot;
+
+SEEDS = [
+    {&quot;name&quot;: &quot;Direct&quot;, &quot;idea&quot;: &quot;Ask for the number only.&quot;,
+     &quot;code&quot;: &quot;def forward(question, ask):\n    return ask(question + &#x27;\\nReply with only the final number.&#x27;)\n&quot;},
+    {&quot;name&quot;: &quot;Chain of thought&quot;, &quot;idea&quot;: &quot;Reason step by step, then give the answer.&quot;,
+     &quot;code&quot;: &quot;def forward(question, ask):\n    return ask(question + \&quot;\\nThink step by step, then end with &#x27;Answer: &lt;number&gt;&#x27;.\&quot;)\n&quot;},
+]
+adas_tasks = word_problems(6, seed=7)
+t0 = time.time()
+agent_archive = []
+for s in SEEDS:                                                  # 2 designs x 6 questions = 12 calls
+    acc, note = evaluate_agent(s[&quot;code&quot;], adas_tasks)
+    agent_archive.append({**s, &quot;score&quot;: acc, &quot;note&quot;: note, &quot;gen&quot;: 0})
+    print(f&quot;seed {s[&#x27;name&#x27;]:&lt;18} accuracy {acc:.0%} ({note})&quot;)
+print(f&quot;[{time.time() - t0:.0f}s]&quot;)</code></pre></div>
+<div class="nb-md"><p>The meta agent. ADAS adds two self-reflection rounds to check that each idea is new, and up to five repair rounds when a design crashes. We skip both to keep the call count small.</p></div>
+<div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def propose_design():
+    shown = &quot;\n\n&quot;.join(f&quot;Name: {a[&#x27;name&#x27;]}\nIdea: {a[&#x27;idea&#x27;]}\nAccuracy: {a[&#x27;score&#x27;]:.0%}\n```python\n{a[&#x27;code&#x27;]}```&quot;
+                        for a in sorted(agent_archive, key=lambda a: -a[&quot;score&quot;]))
+    prompt = textwrap.dedent(&quot;&quot;&quot;\
+        You design agents that solve short math word problems. An agent is a Python function
+        `forward(question, ask)` that returns a string containing the final answer. `ask(prompt, temperature=0.0)`
+        calls a small language model and returns its text reply. You may call `ask` AT MOST 2 times per question.
+        Use only plain Python (re is allowed via `import re` inside the function).
+
+        Archive of designs tried so far, best first:
+        {shown}
+
+        Propose a NEW design that is meaningfully different from the archive and likely to score higher
+        (ideas: plan then compute, write the arithmetic as one expression and check it, verify and fix, ...).
+        Reply in exactly this format:
+        Name: &lt;short name&gt;
+        Idea: &lt;one sentence&gt;
+        ```python
+        def forward(question, ask):
+            ...
+        ```&quot;&quot;&quot;).replace(&quot;{shown}&quot;, shown)
+    try:
+        reply = ask(prompt, temperature=0.8, max_tokens=700)
+    except Exception as e:
+        reply = f&quot;Name: error\nIdea: {e}\n&quot;
+    name = (re.search(r&quot;Name:\s*(.+)&quot;, reply) or [None, &quot;unnamed&quot;])[1].strip()[:40]
+    idea = (re.search(r&quot;Idea:\s*(.+)&quot;, reply) or [None, &quot;&quot;])[1].strip()[:200]
+    return {&quot;name&quot;: name, &quot;idea&quot;: idea, &quot;code&quot;: code_block(reply)}
+
+ITERS = 6 if RUN_LONG else 3                                     # 3 meta calls + up to 3 x 6 x 2 = 36 worker calls
+t0 = time.time()
+for it in range(1, ITERS + 1):
+    d = propose_design()
+    if &quot;def forward(&quot; not in d[&quot;code&quot;]:
+        acc, note = 0.0, &quot;no forward() function&quot;
+    else:
+        acc, note = evaluate_agent(d[&quot;code&quot;], adas_tasks)
+    agent_archive.append({**d, &quot;score&quot;: acc, &quot;note&quot;: note, &quot;gen&quot;: it})
+    print(f&quot;iter {it}: {d[&#x27;name&#x27;]:&lt;30} accuracy {acc:.0%} ({note})&quot;)
+print(f&quot;[{time.time() - t0:.0f}s]&quot;)
+
+best_agent = max(agent_archive, key=lambda a: a[&quot;score&quot;])
+print(f&quot;\nbest design: {best_agent[&#x27;name&#x27;]} ({best_agent[&#x27;score&#x27;]:.0%})\n{best_agent[&#x27;code&#x27;]}&quot;)</code></pre></div>
+<div class="nb-md"><p>Be honest about what 6 questions can tell you: one question is about 17 points. A design that "wins" here may just be lucky. ADAS reports scores on a held-out test set; with <code>RUN_LONG = True</code> we do the same below.</p></div>
+<div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">if RUN_LONG:
+    held = word_problems(12, seed=8)
+    for a in [agent_archive[1], best_agent]:
+        print(f&quot;held-out: {a[&#x27;name&#x27;]:&lt;30} {evaluate_agent(a[&#x27;code&#x27;], held)[0]:.0%}&quot;)</code></pre></div>
+<div class="nb-md"><h3>4. An "AI Scientist" loop in miniature</h3>
+<p>The AI Scientist (Lu et al. 2024) chains the whole research process: <strong>idea -&gt; experiment code -&gt; run -&gt; write-up -&gt; automated review</strong>. The authors report under $15 per paper, and an automated reviewer (GPT-4o) with 0.65 balanced accuracy at accept/reject on 500 ICLR 2022 papers, against 0.66 for humans.</p>
+<p>Ours runs on bin packing, so it is cheap to test. Five calls at most. We add one check the model cannot fake: <strong>do the numbers in the write-up actually appear in the results?</strong></p></div>
+<div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class Idea(BaseModel):
+    title: str
+    hypothesis: str = Field(description=&quot;one testable sentence&quot;)
+    plan: str = Field(description=&quot;what to compare and how to measure it&quot;)
+
+class Review(BaseModel):
+    soundness: int = Field(ge=1, le=5)
+    clarity: int = Field(ge=1, le=5)
+    overall: int = Field(ge=1, le=10)
+    main_weakness: str
+
+t0 = time.time()
+try:
+    idea = structured(&quot;Propose one small, testable research idea about bin-packing heuristics &quot;
+                      &quot;(for example: how item-size distribution affects first-fit vs best-fit). &quot;
+                      &quot;It must be testable in pure Python on random instances in under 10 seconds.&quot;, Idea, temperature=0.7)
+except Exception as e:
+    idea = Idea(title=&quot;First fit vs best fit&quot;, hypothesis=&quot;Best fit uses fewer bins than first fit on small items.&quot;,
+                plan=f&quot;Compare both on random instances (fallback idea; model error: {e})&quot;)
+print(&quot;IDEA:&quot;, idea.title, &quot;|&quot;, idea.hypothesis)
+
+exp_prompt = (f&quot;Write a self-contained Python script (standard library only) that tests this hypothesis:\n&quot;
+              f&quot;{idea.hypothesis}\nPlan: {idea.plan}\n&quot;
+              &quot;Use random.seed(0). Keep it under 5 seconds. At the very end print exactly one line:\n&quot;
+              &quot;print(&#x27;RESULT&#x27;, json.dumps(results)) where results is a flat dict of names to numbers.\n&quot;
+              &quot;Reply with one ```python code block.&quot;)
+experiment = {&quot;ok&quot;: False, &quot;error&quot;: &quot;not run&quot;}
+code = &quot;&quot;
+for attempt in range(2):                                         # one repair try, like the paper&#x27;s retry loop
+    try:
+        code = code_block(ask(exp_prompt if attempt == 0 else
+                              exp_prompt + f&quot;\n\nYour last script failed with:\n{experiment.get(&#x27;error&#x27;, &#x27;&#x27;)[-400:]}\nFix it.&quot;,
+                              temperature=0.2, max_tokens=1200))
+    except Exception as e:
+        code = f&quot;raise SystemExit(&#x27;model error: {e}&#x27;)&quot;
+    experiment = run_sandboxed(code, timeout=20)
+    print(f&quot;experiment attempt {attempt + 1}: {&#x27;ran&#x27; if experiment[&#x27;ok&#x27;] else &#x27;failed: &#x27; + experiment[&#x27;error&#x27;][-150:]}&quot;)
+    if experiment[&quot;ok&quot;]:
+        break
+results = experiment.get(&quot;result&quot;, {}) if experiment[&quot;ok&quot;] else {}
+print(&quot;RESULTS:&quot;, json.dumps(results)[:400])</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">try:
+    writeup = ask(f&quot;Write a 120-word results note for this experiment.\nHypothesis: {idea.hypothesis}\n&quot;
+                  f&quot;Results (JSON): {json.dumps(results)}\nReport the actual numbers, say whether the hypothesis &quot;
+                  &quot;held, and name one limitation. Do not invent numbers that are not in the results.&quot;,
+                  temperature=0.2, max_tokens=400)
+except Exception as e:
+    writeup = f&quot;(write-up failed: {e})&quot;
+print(writeup)
+
+def grounded_fraction(text, res):
+    &quot;&quot;&quot;Share of numbers in the write-up that match a result value (to 2 decimals) or appear in the results text.&quot;&quot;&quot;
+    vals = [v for v in res.values() if isinstance(v, (int, float))] if isinstance(res, dict) else []
+    nums = [float(x) for x in re.findall(r&quot;-?\d+\.?\d*&quot;, text.replace(&quot;,&quot;, &quot;&quot;))]
+    nums = [n for n in nums if n not in (0, 1, 2)]               # small counts like &quot;two heuristics&quot; are noise
+    if not nums:
+        return None
+    raw = json.dumps(res)
+    ok = sum(any(abs(n - v) &lt; 0.005 or abs(n - round(v * 100, 1)) &lt; 0.06 for v in vals) or str(n).rstrip(&quot;0&quot;).rstrip(&quot;.&quot;) in raw
+             for n in nums)
+    return ok / len(nums)
+
+try:
+    review = structured(f&quot;You are a strict reviewer. Review this short research note.\nHypothesis: {idea.hypothesis}\n&quot;
+                        f&quot;Plan: {idea.plan}\nRaw results: {json.dumps(results)}\nNote:\n{writeup}\n&quot;
+                        &quot;Score soundness and clarity 1-5 and overall 1-10. Punish any claim not supported by the raw results.&quot;,
+                        Review)
+except Exception as e:
+    review = None
+    print(&quot;review failed:&quot;, e)
+g = grounded_fraction(writeup, results)
+print(f&quot;\nREVIEW: {review.model_dump() if review else None}&quot;)
+print(f&quot;numbers in the write-up found in the results: {&#x27;n/a&#x27; if g is None else f&#x27;{g:.0%}&#x27;}   [{time.time() - t0:.0f}s]&quot;)</code></pre></div>
+<div class="nb-md"><p>What this shows, and what it does not:
+- Each step is checkable except the idea itself. The experiment either ran or it did not; the numbers are either in the results or they are not.
+- The LLM reviewer is the weakest link. It is one model grading another, and it can be fooled by confident writing. That is why we added the grounding check, which is plain code.
+- The real AI Scientist uses much bigger models, a literature search to check novelty, and full LaTeX papers. The loop is the same.</p></div>
+<div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;sandbox stops an infinite loop&quot;, not run_sandboxed(&quot;while True: pass&quot;, timeout=2)[&quot;ok&quot;])
+check(&quot;AlphaEvolve loop beat the seed program&quot;, best_prog[&quot;score&quot;] &gt; seed_score)
+ran_ok = [a for a in agent_archive if a[&quot;gen&quot;] &gt; 0 and a[&quot;note&quot;].endswith(&quot;errored&quot;) and not a[&quot;note&quot;].startswith(f&quot;{len(adas_tasks)}/&quot;)]
+check(&quot;ADAS: at least one new design ran on the tasks&quot;, len(ran_ok) &gt; 0)
+check(&quot;AI Scientist: the experiment ran and the reviewer returned a score&quot;, experiment[&quot;ok&quot;] and review is not None and 1 &lt;= review.overall &lt;= 10)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Reward hacking.</strong> Remove the validity check from the bin-packing evaluator (score only <code>lower bound / bins used</code>). Write the program a search would find first. What does this teach about evaluators?</li>
+<li><strong>Overfitting the archive.</strong> Take the best ADAS design and the chain-of-thought seed and score both on 12 fresh questions (a new seed). Does the winner still win?</li>
+<li><strong>Diversity.</strong> Our AlphaEvolve parent choice favors the best program. Change it to pick parents uniformly from the whole archive. Is progress slower, faster, or just noisier?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: a cheating &quot;packer&quot; under a weak evaluator. No model calls needed.
+CHEAT = &quot;def pack(items, capacity):\n    return [items]          # everything in one bin\n&quot;
+VALIDITY = &quot;        if Counter(flat) != Counter(items) or any(sum(b) &gt; cap for b in bins) or any(len(b) == 0 for b in bins):\n            return None\n&quot;
+assert VALIDITY in BP_HARNESS
+WEAK = BP_HARNESS.replace(VALIDITY, &quot;&quot;)
+weak = run_sandboxed(WEAK.format(code=CHEAT))
+print(&quot;weak evaluator score for the cheat:&quot;, weak.get(&quot;result&quot;), &quot;| real evaluator:&quot;, evaluate_packer(CHEAT))
+# Notice: one overfilled bin gives &quot;lower bound / 1 bin&quot; = a score far above 1.0. An LLM search optimizes
+# whatever you measure, cheats included. Every evaluator needs a validity check that cannot be skipped.</code></pre></div><div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 13</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: held-out check of the ADAS winner (about 24 small-model calls).
+RUN_HELDOUT = False
+if RUN_HELDOUT:
+    fresh = word_problems(12, seed=123)
+    for a in [agent_archive[1], best_agent]:
+        print(f&quot;{a[&#x27;name&#x27;]:&lt;30} search set {a[&#x27;score&#x27;]:.0%} | fresh set {evaluate_agent(a[&#x27;code&#x27;], fresh)[0]:.0%}&quot;)
+# Notice: with 6 search questions, the gap often shrinks or flips on fresh data. Use more search
+# questions, or keep a held-out set and only trust gains that show up there.</code></pre></div><div class="code"><div class="cap"><span class="cell">a06_open_ended_evolution.ipynb · cell 14</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 3: uniform parent choice (12 more model calls).
+RUN_UNIFORM = False
+if RUN_UNIFORM:
+    arch2 = [{&quot;code&quot;: SEED_PROGRAM, &quot;score&quot;: seed_score, &quot;gen&quot;: 0}]
+    for gen in range(1, 7):
+        for par in [rng.choice(arch2) for _ in range(2)]:
+            c = mutate(par, sorted(arch2, key=lambda p: -p[&quot;score&quot;])[:2])
+            arch2.append({&quot;code&quot;: c, &quot;score&quot;: evaluate_packer(c)[0] if &quot;def pack(&quot; in c else 0.0, &quot;gen&quot;: gen})
+        print(f&quot;gen {gen}: best {max(p[&#x27;score&#x27;] for p in arch2):.3f}&quot;)
+# Notice: uniform choice explores more but wastes calls on weak parents. AlphaEvolve balances the two
+# with islands and MAP-Elites, so several different lines of programs keep improving side by side.</code></pre></div></details>
+<div class="pit"><strong>Traps</strong><ul><li>An evaluator without a validity check. The search will find the loophole (in the notebook, one overfilled bin scores 27 out of a &#x27;perfect&#x27; 1.0).</li><li>Trusting a win on a tiny search set. With 6 questions one answer is 17 points; confirm the winner on held-out data.</li><li>Running model-written code in your own Python process. Always use a subprocess or container with a timeout; the AI Scientist raised its own timeout when it could.</li><li>Keeping only the current best. Without an archive and some diversity, the search gets stuck on one line of ideas.</li><li>Letting an LLM reviewer be the only judge. Check numbers and claims against the raw results with code.</li></ul></div>
+<div class="check"><h4>Check yourself</h4><details><summary>Why does AlphaEvolve run an evaluation cascade instead of the full test on every child?</summary><p>Most children are worse or broken; a tiny fast test filters them out early, so the expensive test is spent only on promising ones.</p></details><details><summary>In ADAS, what does the meta agent output, and how is it judged?</summary><p>A new agent written as code (a forward() function); it is run on validation tasks and its score is stored with it in the archive.</p></details><details><summary>Name two safety measures for an AI Scientist-style loop.</summary><p>Run generated code in a sandbox (separate process or container) with time, memory and storage limits and no network; check the write-up&#x27;s claims against the raw results with code rather than trusting the LLM reviewer.</p></details></div>
+</div></section><nav class="pager"><a class="prev" href="a05.html"><small>← Previous</small>Train-time scaling and RL</a><a class="next" href="a07.html"><small>Next →</small>Self-improvement with search and deep research agents</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

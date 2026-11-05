@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ARCHON Augmented: Planning and Web-Enhanced Components · Agent Engineering School</title>
+<meta name="description" content="How a Stanford team added a planner and web search to a pipeline of model calls, and why search only helps when it finds the right pages.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP5</span></div><section class="mod" id="ap5" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP5</div><h2>ARCHON Augmented: Planning and Web-Enhanced Components</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap5_archon_augmented.ipynb">Open in Colab</a><button class="done-btn" data-done="ap5" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>11 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How a Stanford team added a planner and web search to a pipeline of model calls, and why search only helps when it finds the right pages.</p><article class="lesson"><h2>The big idea</h2>
+<p>One model call is often not your best answer. Archon (the Archon paper, 2024) stacks simple steps into a pipeline. Several models generate answers. A critic points out flaws. A ranker orders them. A fuser merges the best into one. A verifier checks the result.</p>
+<p>Megan Mou, Sherry Xie, Emily Zhang and Andrew Park extended Archon in their CS329A project, ARCHON Augmented (Winter 2025). Archon had only seven building blocks, no tools, and its strong results relied on models of about 70B parameters. They added three new blocks:</p>
+<ul>
+<li>A Planner at the front. It rephrases the question and writes a step-by-step plan for every later block.</li>
+<li>An Expander after each generator. It adds detail so the critic and ranker can judge each answer.</li>
+<li>A Web Search block. It writes search queries from the plan and passes the top 10 results per query to the generators.</li>
+</ul>
+<p>Think of a research desk at a newspaper. An editor plans the story. Researchers pull clippings. Several writers draft. A copy editor critiques, picks the best parts, and a fact-checker signs off. Every step can help. But if the researchers pull the wrong clippings, the story gets worse, not better.</p>
+<h2>Why it matters for us</h2>
+<p>A firm's contract review often needs outside facts: the client's past deals, the firm's precedent memos, the latest playbook. A local pipeline with search over the firm's own files is a natural fit.</p>
+<ul>
+<li>A planner is cheap and helped weaker open models catch up on following instructions. That is good news for firms running open models on their own computers.</li>
+<li>Search helps only when it finds the right documents. Noisy or look-alike pages can make answers worse.</li>
+<li>Each block costs model calls. Test each one on your own data and drop the ones that don't help.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Plan.</strong> The Planner rephrases the request and writes a short plan and search queries.</p>
+</li>
+<li>
+<p><strong>Search.</strong> The queries go to a search engine. The results become context for the next step.</p>
+</li>
+<li>
+<p><strong>Generate.</strong> Several models write candidate answers, using the plan and the pages.</p>
+</li>
+<li>
+<p><strong>Expand, critique, rank.</strong> The Expander fills in detail. The critic notes flaws. The ranker orders the candidates.</p>
+</li>
+<li>
+<p><strong>Fuse and verify.</strong> The fuser writes one answer from the best candidates. The verifier checks it is supported.</p>
+</li>
+<li>
+<p><strong>Ablate.</strong> Ablation means removing one block at a time to see what it adds. The team did this on two benchmarks.</p>
+</li>
+</ol>
+<p>Results on AlpacaEval (an instruction-following test scored by win rate against a reference model, adjusted for answer length), closed / mixed setups:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Setup</th>
+<th>Closed</th>
+<th>Mixed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Archon</td>
+<td>67.73%</td>
+<td>57.01%</td>
+</tr>
+<tr>
+<td>+ Planner</td>
+<td>69.62%</td>
+<td>67.06%</td>
+</tr>
+<tr>
+<td>+ Planner + Expander</td>
+<td>66.01%</td>
+<td>68.30%</td>
+</tr>
+<tr>
+<td>+ Planner + Search + Expander</td>
+<td>73.40%</td>
+<td>73.92%</td>
+</tr>
+</tbody>
+</table></div>
+<p>On Humanity's Last Exam (HLE, a very hard quiz; 453 questions scored), the best was Planner + Expander at 4.2% (19 of 453) in the closed setup. Plain Archon got 3.3%, and zero-shot GPT-4o got 3.1%. Here search hurt: results were often off-topic or full of page clutter. Also, these HLE gaps are a few questions out of 453, so they are within noise.</p>
+<h2>Worked example</h2>
+<p>Imagine the firm asks: "How many years passed between the client's first master agreement and its latest amendment?" The answer needs two documents and some arithmetic. A single search on the raw question may find only one of them.</p>
+<p>Our notebook builds this in miniature. The questions are about made-up towns, so no model can know the answers without searching. The "web" is 16 local pages: eight real town pages, three look-alike decoys ("New Velmora" with different numbers), and five clutter pages. Search uses BM25, a classic keyword ranking. Here is the full pipeline in the notebook:</p>
+<pre><code>question → Planner (plan + search queries) → Web search (BM25) → 3 Generators (8B, 8B, 3B)
+         → Critic + Ranker → Fuser → Verifier → answer          (7 model calls)
+</code></pre>
+<ul>
+<li>The Planner writes up to 3 queries, one per fact needed. That is how it finds both pages for a two-step question.</li>
+<li>BM25 returns the top 3 pages per query. Rare words count more, and long pages count less.</li>
+<li>Three generators write answers: two from llama3.1:8b and one from llama3.2:3b, a tiny mixed team.</li>
+<li>One call critiques and ranks all three.</li>
+<li>The fuser writes one final answer from the top two.</li>
+<li>The verifier asks whether the pages support it. If not, we fall back to the top-ranked candidate.</li>
+</ul>
+<p>We skip the Expander to save calls. The notebook compares four setups: a single call, a single call plus search (RAG, retrieval-augmented generation: fetch documents, then answer), planner plus search plus one generator, and the full pipeline. It reports accuracy and calls per question.</p>
+<p>For the firm, the decoy pages are the key lesson. "Acme Holdings" and "Acme Holdings UK" may have different contracts. If search pulls the wrong one, the pipeline confidently gives a wrong answer.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Assuming search always helps.</strong> On HLE it hurt. Check what the search actually returns before you trust it.</li>
+<li><strong>Adding blocks without testing each one.</strong> The Expander helped in one setup and hurt in another. Remove one block at a time and measure.</li>
+<li><strong>Reading tiny differences as wins.</strong> A gap of four questions out of 453 is noise.</li>
+<li><strong>Ignoring cost.</strong> The full pipeline uses 7 calls per question. If "planner plus search plus one generator" ties it with 2 calls, use that.</li>
+<li><strong>Forgetting look-alike documents.</strong> Similar names with different facts are where retrieval goes wrong. Test with decoys.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Why did web search hurt on Humanity&#x27;s Last Exam?</summary>
+<p>The results were often off-topic or full of page clutter. That confused the models instead of helping them.</p>
+</details>
+<details>
+<summary>What does the Planner add to the pipeline?</summary>
+<p>It rephrases the question and writes a step-by-step plan and search queries. Every later block uses that plan.</p>
+</details>
+<details>
+<summary>Why does the notebook use questions about made-up towns?</summary>
+<p>No model can know the answers, so search is truly needed. That makes the value of search easy to see.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the notebook to compare the four setups and look at accuracy next to calls per question. Read the retrieved page lists to see whether a decoy page sneaks in. Then use the solutions to score the pipeline without the fuser and verifier, and to test a noisier web.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Winter 2025 · Megan Mou, Sherry Xie, Emily Zhang, Andrew Park</p>
+
+  <p class="src"><a href="https://cs329a.stanford.edu/winter2025projects/archon.pdf">Paper</a> · <a href="https://cs329a.stanford.edu/winter2025projects/archonposter.pdf">Poster</a></p>
+<div class="paper"><dl><dt>Problem</dt><dd>Archon stacks inference-time techniques (generate, fuse, critique, rank, verify, unit tests) but has only seven building blocks, no tool use or web search, and its strong results relied on about 70B models.</dd><dt>Method</dt><dd>Three new blocks: a Planner at the front (rephrase + step-by-step plan passed to later blocks), an Expander after each generator (adds context so critics and rankers can judge), and a Web Search Tool Call (queries from the plan, top 10 Google results per query). Ablations on a closed-source configuration (GPT-4o generate/rank, Qwen2-72B critic/fuser) and an open-source ensemble, on a 500-question subset of Humanity&#x27;s Last Exam (453 scored) and AlpacaEval (length-controlled win rate).</dd><dt>Results</dt><dd>HLE (closed / open): ARCHON 3.3% / 3.3%; + Planner 3.3% / 2.6%; + Planner + Expander 4.2% (19/453) / 3.8% (17/453); + Planner + Tool Call + Expander 3.3% / 2.9%. Zero-shot GPT-4o 3.1%. AlpacaEval LC (closed / mixed): ARCHON 67.73% / 57.01%; + Planner 69.62% / 67.06%; + Planner + Expander 66.01% / 68.30%; + Planner + Tool Call + Expander 73.40% / 73.92%. Web search hurt on HLE because results were off-topic or cluttered.</dd><dt>Lessons</dt><dd>A planner at the front of a pipeline is cheap and helped weaker open models catch up on instruction following. Search helps only if retrieval is precise; noisy pages can make answers worse. The value of each block depends on the task, so ablate each one on your own data. Small differences on a hard benchmark (a few questions out of 453) are noise.</dd><dt>Our rebuild</dt><dd>Questions about made-up towns (so search is required) over 16 local &#x27;web pages&#x27;, including look-alike decoy pages and clutter, searched with a 15-line BM25. Compares a single call, single call + search (RAG), planner + search + 1 generator, and the full pipeline: planner (plan + queries) -&gt; BM25 search -&gt; 3 generators (8B, 8B, 3B) -&gt; critic + ranker -&gt; fuser -&gt; verifier with fallback. Reports accuracy and calls per question; solutions ablate the fuser/verifier for free, score each generator, and test a noisier web.</dd></dl></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap5_archon_augmented.ipynb" target="_blank" rel="noopener">ap5_archon_augmented.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="nb-md"><h3>The original project</h3>
+<p><strong>ARCHON Augmented: Planning and Web-Enhanced Components</strong> by Megan Mou, Sherry Xie, Emily Zhang and Andrew Park
+(Stanford CS329A, Winter 2025; the poster is titled <em>Multi-Component ARCHON</em>).
+<a href="https://cs329a.stanford.edu/winter2025projects/archon.pdf">Paper</a> · <a href="https://cs329a.stanford.edu/winter2025projects/archonposter.pdf">Poster</a> ·
+code: github.com/49emily/cs329a-archon</p>
+<p><strong>Background.</strong> Archon (Saad-Falcon et al. 2024, <em>Archon: An Architecture Search Framework for Inference-Time
+Techniques</em>) has seven building blocks: Generator, Fuser, Critic, Ranker, Verifier, Unit Test Generator, Unit Test
+Evaluator. It searches for the best way to stack them. Its strong results relied on models of about 70B parameters,
+and it had no tool use.</p>
+<p><strong>Method.</strong> Three new blocks:
+- <strong>Planner</strong> (first): rephrases the request and writes a step-by-step plan that is passed to every later block.
+- <strong>Expander</strong> (after each generator): adds context and detail to each candidate so critics and rankers can judge it.
+- <strong>Web Search Tool Call</strong> (after the planner): writes q search queries from the plan, calls the Google Search API,
+  and passes the top 10 results per query to the generators.</p>
+<p><strong>Setup.</strong> A closed-source configuration (GPT-4o generating and ranking, Qwen2-72B as critic and fuser) and an
+open-source one (an ensemble including Qwen2-72B, WizardLM-2 8x22B, Llama-3 70B, Mixtral 8x22B and others).
+Benchmarks: a 500-question subset of Humanity's Last Exam (HLE; 453 scored) and AlpacaEval (length-controlled win rate).</p>
+<p><strong>Key results (as reported).</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>HLE closed</th>
+<th>HLE open</th>
+<th>AlpacaEval LC closed</th>
+<th>AlpacaEval LC open/mixed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ARCHON</td>
+<td>3.3% (15/453)</td>
+<td>3.3% (15/453)</td>
+<td>67.73%</td>
+<td>57.01%</td>
+</tr>
+<tr>
+<td>Planner + ARCHON</td>
+<td>3.3% (15/453)</td>
+<td>2.6% (12/453)</td>
+<td>69.62%</td>
+<td>67.06%</td>
+</tr>
+<tr>
+<td>Planner + Expander + ARCHON</td>
+<td><strong>4.2%</strong> (19/453)</td>
+<td>3.8% (17/453)</td>
+<td>66.01%</td>
+<td>68.30%</td>
+</tr>
+<tr>
+<td>Planner + Tool Call + Expander + ARCHON</td>
+<td>3.3% (15/453)</td>
+<td>2.9% (13/453)</td>
+<td><strong>73.40%</strong></td>
+<td><strong>73.92%</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Zero-shot GPT-4o scored 3.1% on HLE. On AlpacaEval the new blocks, especially the Planner, lifted the open-source
+setup from more than 10 points behind to slightly ahead of closed-source. On HLE, web search <strong>hurt</strong>: results were
+often off-topic or full of page clutter, which confused the models.</p>
+<p><strong>Limitations they state.</strong> Reasoning stays the bottleneck; the Expander's value depends on the benchmark; the
+planner is not yet query-adaptive. (Our note: on HLE the differences are a few questions out of 453, so they are
+within noise.)</p>
+<p><strong>Our mini version.</strong> Questions about made-up towns that no model can know, so search is required. The "web" is
+16 local pages, including look-alike decoy pages, searched with BM25 (a classic keyword ranking). We skip the
+Expander to save calls. Generators mix <code>llama3.1:8b</code> and <code>llama3.2:3b</code>, a tiny "mixed-source" ensemble.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import math, random, re
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+from typing import List
+from pydantic import BaseModel, Field
+from lal.llm import ask, structured
+from lal.checks import check</code></pre></div>
+<div class="nb-md"><h3>1. A small made-up web</h3>
+<p>Eight towns, each with a founding year, a population, a river and a bridge. Three decoy pages describe "New ..."
+towns with different numbers, and five pages are pure clutter. All generated with a seed.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">rng = random.Random(5)
+NAMES = [&quot;Velmora&quot;, &quot;Ostrand&quot;, &quot;Brenhollow&quot;, &quot;Quillmarsh&quot;, &quot;Taversk&quot;, &quot;Lunegate&quot;, &quot;Corrowind&quot;, &quot;Ashby Vale&quot;]
+RIVERS = [&quot;Senn&quot;, &quot;Ilver&quot;, &quot;Draw&quot;, &quot;Morrow&quot;, &quot;Kesh&quot;, &quot;Tull&quot;, &quot;Avin&quot;, &quot;Pellam&quot;]
+BRIDGES = [&quot;Kestrel Bridge&quot;, &quot;Lantern Bridge&quot;, &quot;Old Mill Bridge&quot;, &quot;Heron Bridge&quot;, &quot;Copper Bridge&quot;, &quot;Saint Ide Bridge&quot;, &quot;Gull Bridge&quot;, &quot;Iron Fox Bridge&quot;]
+TOWNS = {}
+for n, r, b in zip(NAMES, RIVERS, BRIDGES):
+    y = rng.randint(1100, 1800)
+    TOWNS[n] = dict(founded=y, pop=rng.randint(3000, 95000), river=r, bridge=b, bridge_year=y + rng.randint(30, 300))
+
+FILLER = [&quot;The weekly market sells cheese, wool and honey.&quot;, &quot;Tourists often visit the old clock tower.&quot;,
+          &quot;The local football club plays in the regional league.&quot;, &quot;Summers are mild and winters are wet.&quot;,
+          &quot;A folk festival takes place every autumn.&quot;, &quot;The town hall was renovated recently.&quot;]
+
+def town_page(n, t):
+    return (f&quot;{n} is a town on the {t[&#x27;river&#x27;]} river. It was founded in {t[&#x27;founded&#x27;]}. Today it has a population of &quot;
+            f&quot;{t[&#x27;pop&#x27;]:,}. The {t[&#x27;bridge&#x27;]} in {n} was built in {t[&#x27;bridge_year&#x27;]}. &quot; + &quot; &quot;.join(rng.sample(FILLER, 3)))
+
+DOCS = [{&quot;title&quot;: n, &quot;text&quot;: town_page(n, t)} for n, t in TOWNS.items()]
+for n in rng.sample(NAMES, 3):                                    # decoys: similar names, different facts
+    fake = dict(TOWNS[n], founded=TOWNS[n][&quot;founded&quot;] + 400, pop=TOWNS[n][&quot;pop&quot;] // 3 + 1000)
+    DOCS.append({&quot;title&quot;: f&quot;New {n}&quot;, &quot;text&quot;: f&quot;New {n} is a newer settlement, not to be confused with {n}. It was founded in &quot;
+                 f&quot;{fake[&#x27;founded&#x27;]} and has a population of {fake[&#x27;pop&#x27;]:,}. &quot; + &quot; &quot;.join(rng.sample(FILLER, 2))})
+for i in range(5):
+    DOCS.append({&quot;title&quot;: f&quot;Travel blog {i + 1}&quot;, &quot;text&quot;: &quot; &quot;.join(rng.sample(FILLER, 4)) + f&quot; We loved our trip to {rng.choice(NAMES)}!&quot;})
+print(len(DOCS), &quot;pages. Example:\n&quot;, DOCS[0][&quot;text&quot;])</code></pre></div>
+<div class="nb-md"><p>Six questions. Most need two pages, and some need arithmetic on top.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">A, B, C, D = rng.sample(NAMES, 4)
+QS = [
+    (f&quot;How many years passed between the founding of {A} and the building of the {TOWNS[B][&#x27;bridge&#x27;]}?&quot;,
+     abs(TOWNS[B][&quot;bridge_year&quot;] - TOWNS[A][&quot;founded&quot;])),
+    (f&quot;What is the combined population of {A} and {C}?&quot;, TOWNS[A][&quot;pop&quot;] + TOWNS[C][&quot;pop&quot;]),
+    (f&quot;Which town has more people, {B} or {D}?&quot;, max((B, D), key=lambda n: TOWNS[n][&quot;pop&quot;])),
+    (f&quot;On which river is the town that has the {TOWNS[C][&#x27;bridge&#x27;]}?&quot;, TOWNS[C][&quot;river&quot;]),
+    (f&quot;How many more people live in {max((C, D), key=lambda n: TOWNS[n][&#x27;pop&#x27;])} than in {min((C, D), key=lambda n: TOWNS[n][&#x27;pop&#x27;])}?&quot;,
+     abs(TOWNS[C][&quot;pop&quot;] - TOWNS[D][&quot;pop&quot;])),
+    (f&quot;Which was founded first, {A} or {D}, and by how many years? Answer with the number of years.&quot;,
+     abs(TOWNS[A][&quot;founded&quot;] - TOWNS[D][&quot;founded&quot;])),
+]
+for q, a in QS:
+    print(a, &quot;←&quot;, q)
+
+def answer_of(text):
+    m = re.findall(r&quot;ANSWER:\s*(.+)&quot;, text or &quot;&quot;, re.I)
+    return m[-1].strip() if m else ((text or &quot;&quot;).strip().splitlines() or [&quot;&quot;])[-1]
+
+def is_right(got, gold):
+    got = (got or &quot;&quot;).replace(&quot;,&quot;, &quot;&quot;)
+    if isinstance(gold, int):
+        nums = re.findall(r&quot;-?\d+&quot;, got)
+        return bool(nums) and (int(nums[0]) == gold or int(nums[-1]) == gold)
+    pool = NAMES if gold in NAMES else RIVERS            # the FIRST name mentioned is the answer (&quot;Velmora (52,000 vs Ostrand&#x27;s 30,000)&quot;)
+    hits = sorted((got.lower().find(n.lower()), n) for n in pool if n.lower() in got.lower())
+    return bool(hits) and hits[0][1] == gold</code></pre></div>
+<div class="nb-md"><h3>2. The search tool: BM25 in 15 lines</h3>
+<p>BM25 scores a page by how often it contains the query words, with rare words counting more and long pages counting
+less (Robertson &amp; Zaragoza 2009). It is what many search engines started from.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def tokens(s):
+    return re.findall(r&quot;[a-z0-9]+&quot;, s.lower())
+
+class BM25:
+    def __init__(self, docs, k1=1.5, b=0.75):
+        self.docs, self.k1, self.b = docs, k1, b
+        self.tf = [Counter(tokens(d[&quot;title&quot;] + &quot; &quot; + d[&quot;text&quot;])) for d in docs]
+        self.len = [sum(t.values()) for t in self.tf]
+        self.avg = sum(self.len) / len(self.len)
+        df = Counter(w for t in self.tf for w in t)
+        self.idf = {w: math.log(1 + (len(docs) - n + 0.5) / (n + 0.5)) for w, n in df.items()}
+
+    def search(self, query, k=3):
+        q = tokens(query)
+        def score(i):
+            return sum(self.idf.get(w, 0) * self.tf[i][w] * (self.k1 + 1) /
+                       (self.tf[i][w] + self.k1 * (1 - self.b + self.b * self.len[i] / self.avg)) for w in q)
+        return [self.docs[i] for i in sorted(range(len(self.docs)), key=score, reverse=True)[:k]]
+
+WEB = BM25(DOCS)
+print([d[&quot;title&quot;] for d in WEB.search(f&quot;{A} founded&quot;)])
+
+def as_context(pages):
+    return &quot;\n\n&quot;.join(f&quot;[{d[&#x27;title&#x27;]}] {d[&#x27;text&#x27;]}&quot; for d in pages)</code></pre></div>
+<div class="nb-md"><h3>3. Two simple baselines</h3>
+<ul>
+<li><strong>Single call, no search:</strong> the model has to guess. Expect near 0, which proves the facts are really unknown.</li>
+<li><strong>Single call + search on the raw question:</strong> classic retrieval-augmented generation (RAG).</li>
+</ul></div>
+<div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">FMT = &quot;\nEnd with one line: ANSWER: &lt;short answer&gt;&quot;
+
+def single(q):
+    return {&quot;answer&quot;: answer_of(ask(q + FMT, max_tokens=300)), &quot;calls&quot;: 1}
+
+def single_rag(q):
+    ctx = as_context(WEB.search(q, k=3))
+    return {&quot;answer&quot;: answer_of(ask(f&quot;Web results:\n{ctx}\n\nQuestion: {q}\nUse only the web results.&quot; + FMT, max_tokens=400)), &quot;calls&quot;: 1}</code></pre></div>
+<div class="nb-md"><h3>4. The augmented Archon pipeline</h3>
+<pre><code>question → Planner (plan + search queries) → Web search (BM25) → 3 Generators (8B, 8B, 3B)
+         → Critic + Ranker → Fuser → Verifier → answer          (7 model calls)
+</code></pre>
+<p>If the verifier says the fused answer is not supported by the pages, we fall back to the top-ranked candidate.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class PlanOut(BaseModel):
+    rephrased: str
+    steps: List[str] = Field(max_length=5)
+    queries: List[str] = Field(description=&quot;1 to 3 short search queries&quot;, max_length=3)
+
+class Critique(BaseModel):
+    notes: List[str] = Field(description=&quot;one short critique per candidate, in order&quot;)
+    ranking: List[int] = Field(description=&quot;candidate numbers, best first&quot;)
+
+class Verdict(BaseModel):
+    supported: bool
+    reason: str
+
+def plan_and_search(q):
+    try:
+        p = structured(f&quot;Question: {q}\nRephrase the question, write a short plan, and write 1-3 web search queries &quot;
+                       &quot;that will find every fact the plan needs.&quot;, PlanOut, max_tokens=400)
+    except Exception:
+        p = PlanOut(rephrased=q, steps=[&quot;answer the question&quot;], queries=[q])
+    pages, seen = [], set()
+    for query in (p.queries or [q])[:3]:
+        for d in WEB.search(query, k=3):
+            if d[&quot;title&quot;] not in seen:
+                seen.add(d[&quot;title&quot;]); pages.append(d)
+    return p, pages[:6]
+
+def generate(q, plan, pages, model, temperature=0.7):
+    prompt = (f&quot;Web results:\n{as_context(pages)}\n\nQuestion: {q}\nPlan:\n&quot; + &quot;\n&quot;.join(f&quot;- {s}&quot; for s in plan.steps) +
+              &quot;\nFollow the plan. Use only the web results. Watch out for pages about similarly named places.&quot; + FMT)
+    try:
+        return ask(prompt, model_name=model, temperature=temperature, max_tokens=500)
+    except Exception:
+        return &quot;&quot;
+
+GENERATORS = [MODEL, MODEL, &quot;llama3.2:3b&quot;]          # MODEL is llama3.1:8b on a GPU runtime
+
+def archon(q):
+    plan, pages = plan_and_search(q)
+    cands = [generate(q, plan, pages, m) for m in GENERATORS]
+    listing = &quot;\n\n&quot;.join(f&quot;=== Candidate {i + 1} ===\n{c[-1200:]}&quot; for i, c in enumerate(cands))
+    try:
+        crit = structured(f&quot;Web results:\n{as_context(pages)}\n\nQuestion: {q}\n\n{listing}\n\nCritique each candidate &quot;
+                          &quot;(facts used, arithmetic) and rank them, best first.&quot;, Critique, max_tokens=500)
+        order = [i - 1 for i in crit.ranking if 1 &lt;= i &lt;= len(cands)]
+        order += [i for i in range(len(cands)) if i not in order]
+        notes = crit.notes
+    except Exception:
+        order, notes = list(range(len(cands))), []
+    top = order[:2]
+    try:
+        fused = ask(f&quot;Web results:\n{as_context(pages)}\n\nQuestion: {q}\n\nBest candidates:\n&quot; +
+                    &quot;\n\n&quot;.join(cands[i][-1200:] for i in top) + &quot;\n\nCritiques:\n&quot; + &quot;\n&quot;.join(notes[:3]) +
+                    &quot;\n\nWrite one final, correct answer. Fix any mistakes.&quot; + FMT, max_tokens=500)
+    except Exception:
+        fused = cands[order[0]]
+    final = answer_of(fused)
+    try:
+        v = structured(f&quot;Web results:\n{as_context(pages)}\n\nQuestion: {q}\nProposed answer: {final}\n&quot;
+                       &quot;Is this answer fully supported by the web results, with correct arithmetic?&quot;, Verdict, max_tokens=200)
+        ok = v.supported
+    except Exception:
+        ok = True
+    used = final if ok else answer_of(cands[order[0]])
+    return {&quot;answer&quot;: used, &quot;calls&quot;: 7, &quot;plan&quot;: plan, &quot;pages&quot;: [d[&quot;title&quot;] for d in pages],
+            &quot;cands&quot;: [answer_of(c) for c in cands], &quot;order&quot;: order, &quot;fused&quot;: final, &quot;verified&quot;: ok}
+
+def plan_search_single(q):
+    &quot;&quot;&quot;Ablation: planner + search, then one generator. Isolates the value of the generate/critique/fuse layers.&quot;&quot;&quot;
+    plan, pages = plan_and_search(q)
+    return {&quot;answer&quot;: answer_of(generate(q, plan, pages, MODEL, temperature=0)), &quot;calls&quot;: 2}</code></pre></div>
+<div class="nb-md"><h3>5. Run everything</h3>
+<p>At most 6 + 6 + 12 + 42 = 66 model calls.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def run(method):
+    with ThreadPoolExecutor(2) as ex:
+        return list(ex.map(method, [q for q, _ in QS]))
+
+RES = {&quot;single call&quot;: run(single), &quot;single + search&quot;: run(single_rag),
+       &quot;planner + search + 1 gen&quot;: run(plan_search_single), &quot;Archon augmented&quot;: run(archon)}
+print(f&quot;{&#x27;method&#x27;:26s} accuracy  calls/question&quot;)
+ACC = {}
+for name, rs in RES.items():
+    ACC[name] = sum(is_right(r[&quot;answer&quot;], gold) for r, (_, gold) in zip(rs, QS)) / len(QS)
+    print(f&quot;{name:26s} {ACC[name]:6.0%}    {sum(r[&#x27;calls&#x27;] for r in rs) / len(rs):.0f}&quot;)
+
+for r, (q, gold) in zip(RES[&quot;Archon augmented&quot;], QS):
+    print(f&quot;\nQ: {q}\n  gold {gold} | final {r[&#x27;answer&#x27;]} | candidates {r[&#x27;cands&#x27;]} | rank {r[&#x27;order&#x27;]} | verified {r[&#x27;verified&#x27;]}&quot;)
+    print(&quot;  queries:&quot;, r[&quot;plan&quot;].queries, &quot;→ pages:&quot;, r[&quot;pages&quot;])</code></pre></div>
+<div class="nb-md"><p><strong>What to notice.</strong> Search is what makes these questions answerable at all; the gap between the first two rows
+shows it. Planner-written queries usually find both pages a two-hop question needs, which a single raw-question
+search can miss. Whether the full stack beats "planner + search + 1 generator" is the interesting question: the
+extra 5 calls only pay off if the candidates disagree and the critic can tell which one is right. Look at the decoy
+pages in the retrieved lists: if a "New ..." page sneaks in, that is the HLE failure in miniature.</p></div>
+<div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;no-search baseline is near zero (facts are really unknown)&quot;, ACC[&quot;single call&quot;] &lt;= 2 / 6)
+check(&quot;search helps: single + search beats single call&quot;, ACC[&quot;single + search&quot;] &gt; ACC[&quot;single call&quot;])
+check(&quot;Archon pipeline answers at least 3 of 6&quot;, ACC[&quot;Archon augmented&quot;] &gt;= 3 / 6)
+check(&quot;BM25 finds the right town page first&quot;, WEB.search(f&quot;{A} founded population&quot;, k=1)[0][&quot;title&quot;] == A)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Is the fuser + verifier worth 2 calls?</strong> Using the saved results, score the pipeline as if it stopped after
+   ranking (answer = top-ranked candidate). No new calls.</li>
+<li><strong>Which generator is best?</strong> Score each generator's candidates on its own (8B #1, 8B #2, 3B). Does the ensemble
+   beat its best member? No new calls.</li>
+<li><strong>A noisier web.</strong> Add 10 more decoy pages ("Old Velmora", "Velmora Station", ...) with wrong numbers, rebuild
+   the index, and rerun Archon on 2 questions. Does search start to hurt, as it did on HLE?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 1. Stop after the ranker. Notice: if this matches the full pipeline, the fuser and verifier are cost without value
+#    here; that is exactly the kind of ablation the paper ran for each new block.
+rank_only = sum(is_right(r[&quot;cands&quot;][r[&quot;order&quot;][0]], gold) for r, (_, gold) in zip(RES[&quot;Archon augmented&quot;], QS)) / len(QS)
+print(f&quot;rank only {rank_only:.0%}   full pipeline {ACC[&#x27;Archon augmented&#x27;]:.0%}&quot;)</code></pre></div><div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 2. Each generator alone, and the best-of-3 oracle. The ensemble can only beat its best member if the
+#    ranker picks well; the oracle shows the ceiling.
+for i, m in enumerate(GENERATORS):
+    acc_i = sum(is_right(r[&quot;cands&quot;][i], gold) for r, (_, gold) in zip(RES[&quot;Archon augmented&quot;], QS)) / len(QS)
+    print(f&quot;generator {i + 1} ({m}): {acc_i:.0%}&quot;)
+oracle = sum(any(is_right(c, gold) for c in r[&quot;cands&quot;]) for r, (_, gold) in zip(RES[&quot;Archon augmented&quot;], QS)) / len(QS)
+print(f&quot;any candidate right (oracle): {oracle:.0%}&quot;)</code></pre></div><div class="code"><div class="cap"><span class="cell">ap5_archon_augmented.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># 3. A noisier web (14 calls). Notice whether the planner&#x27;s queries now return decoys first.
+noise = []
+for n in NAMES[:5]:
+    for prefix in (&quot;Old&quot;, &quot;Upper&quot;):
+        t = TOWNS[n]
+        noise.append({&quot;title&quot;: f&quot;{prefix} {n}&quot;, &quot;text&quot;: f&quot;{prefix} {n} is near {n}. It was founded in {t[&#x27;founded&#x27;] - 50} and has a &quot;
+                      f&quot;population of {t[&#x27;pop&#x27;] + 777:,}. The {t[&#x27;bridge&#x27;]} replica in {prefix} {n} was built in {t[&#x27;bridge_year&#x27;] + 9}.&quot;})
+clean_web = WEB
+WEB = BM25(DOCS + noise)
+noisy = [archon(q) for q, _ in QS[:2]]
+WEB = clean_web
+for r, (q, gold) in zip(noisy, QS[:2]):
+    print(f&quot;gold {gold} | noisy-web answer {r[&#x27;answer&#x27;]} | pages {r[&#x27;pages&#x27;]}&quot;)</code></pre></div></details>
+</div></section><nav class="pager"><a class="prev" href="ap4.html"><small>← Previous</small>Towards Effective Meta-Agents: Designing Agents that Design Agents (paper: Inefficiencies of Meta Agents for Agent Design)</a><a class="next" href="glossary.html"><small>Next →</small>Glossary</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

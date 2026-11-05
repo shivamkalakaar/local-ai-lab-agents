@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agentic frameworks for software engineering · Agent Engineering School</title>
+<meta name="description" content="Why code is the easiest place for agents to improve themselves. You&#x27;ll see how CodeMonkeys picks the best of many bug fixes and how KernelBench grades faster code.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A08</span></div><section class="mod" id="a08" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A08</div><h2>Agentic frameworks for software engineering</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a08_agentic_swe.ipynb">Open in Colab</a><button class="done-btn" data-done="a08" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Why code is the easiest place for agents to improve themselves. You&#x27;ll see how CodeMonkeys picks the best of many bug fixes and how KernelBench grades faster code.</p><article class="lesson"><h2>The big idea</h2>
+<p>Most work is hard to grade. Was this memo good? People disagree. Code is different. The computer grades it for you. Tests pass or fail. The program runs faster or slower.</p>
+<p>That makes software the friendliest place for an agent to improve itself. Try many fixes. Let tests pick the winner. Give the agent clear feedback from the system, not just a bare score.</p>
+<p>Think of a mechanic with a test track. They can try three repairs, drive each car around the track, and keep the one that runs best. No one has to argue about which repair "feels" right.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>A firm's own software, like a script that pulls clauses out of contracts, has bugs. A local agent can try several fixes overnight and let tests choose.</li>
+<li>Small local models make more mistakes per try. That's fine if a cheap, exact check can sort good tries from bad ones.</li>
+<li>How you show results to the agent matters a lot. Clear feedback can beat a bigger model. That is good news for anyone running small models on their own machines.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Split the job into three parts</strong> (the CodeMonkeys paper, 2025). CodeMonkeys fixes real bugs from GitHub (a site where code projects live). Step one is context: find the files that matter. Step two is generation: run 10 attempts in parallel. Each attempt writes a code edit and a test script, then improves it using the results of running it. Step three is selection: choose one edit.</p>
+</li>
+<li>
+<p><strong>Measure two numbers, not one.</strong> Coverage is the share of problems where at least one attempt was correct. Score is the share where the attempt you picked was correct. The gap between them is the selection problem. CodeMonkeys reached 69.8% coverage but a final score of 57.4%. Some right answers were made but not chosen.</p>
+</li>
+<li>
+<p><strong>Pick with test votes, then a judge.</strong> Run every model-written test on every edit. Each edit gets one vote per test it passes. Keep the top 3 by votes. Then let a model look at those 3 and choose. A surprising finding: a model judge looking at the whole pool did worse than plain voting. With the top-3 short list first, it did better.</p>
+</li>
+<li>
+<p><strong>Grade speed and correctness together</strong> (the KernelBench paper, 2025). KernelBench asks a model to rewrite 250 programs as faster code for a GPU (a graphics chip used for AI math). Each rewrite is checked against the original on 5 random inputs, and both are timed. The score is fast_p: the share of tasks where the new code is correct and more than p times faster. So fast_1 means "correct and faster than the original". One-shot, the best models matched the original in fewer than 20% of cases.</p>
+</li>
+<li>
+<p><strong>Give useful feedback.</strong> A profiler is a tool that reports which parts of a program use the most time. When KernelBench fed models real run results and profiler output over 10 rounds, one strong model went from 36% to 72% on fast_1 for the middle level. Most of that gain came from fixing errors, not from clever speedups.</p>
+</li>
+<li>
+<p><strong>Design what the agent sees</strong> (the agent-system interfaces paper, 2024). This paper built two things. A small, narrow language for the agent to write in, which hides messy low-level code. And AutoGuide, a step that turns raw error messages and timings into plain advice. With this, an AI optimizer beat a classic tuning tool within 10 tries.</p>
+</li>
+</ol>
+<pre><code>issue -&gt; 10 attempts (edit + test each) -&gt; run all tests on all edits
+      -&gt; top 3 by votes -&gt; model judge picks 1 -&gt; submit
+</code></pre>
+<h2>Worked example</h2>
+<p>The firm has a script that finds the liability cap in a contract and checks it against the playbook rule: "at most 12 months of fees". A bug report comes in. "Caps written as 'twelve (12) months' are missed."</p>
+<p>Generation: the agent makes four attempts. Each returns a fixed file and a short test.</p>
+<p>Filter the tests first. A good test must fail on the old, buggy code. Otherwise it doesn't reproduce the bug. Drop any test that already passes on the original.</p>
+<p>Voting: run the surviving tests on all four edits. Edit A passes 3 tests. Edit B passes 3. Edit C passes 1. Edit D crashes. Keep the top 3: A, B, C.</p>
+<p>Judge: the model reads the three diffs (the lines each edit changed) and picks A, because B also changes unrelated code.</p>
+<p>Grading: a hidden test the agent never saw confirms whether A truly fixes the bug. That tells us both coverage (did any edit work?) and score (did the chosen one work?).</p>
+<p>Every run happens in a fresh folder, in a separate process, with a time limit. Model-written code never runs inside your own program.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Confusing coverage with score.</strong> More attempts raise coverage, but can make choosing harder. Measure both.</li>
+<li><strong>Trusting model-written tests blindly.</strong> They can be wrong. Drop tests that pass on the buggy code, and never rely on one test alone.</li>
+<li><strong>Checking speed on a single input.</strong> The agent can game it, for example code that only works for the timing input. Check correctness on several random inputs.</li>
+<li><strong>Picking the wrong bar for "fast".</strong> Beating a slow Python loop is easy. Beating already-tuned code is hard. Choose p to fit your starting point.</li>
+<li><strong>Trusting one timing run.</strong> Timing is noisy. Take the best of several runs.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>What are CodeMonkeys&#x27; three steps?</summary>
+<p>Context (find the relevant files), generation (make many edits and tests), and selection (choose one edit).</p>
+</details>
+<details>
+<summary>What does fast_1 measure?</summary>
+<p>The share of tasks where the new code is both correct and faster than the original.</p>
+</details>
+<details>
+<summary>Why filter to a top-3 short list before asking a model judge?</summary>
+<p>In CodeMonkeys, a judge looking at the whole pool did worse than plain test voting. Cutting the pool first with cheap votes let the judge do better.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the a08 notebook. Part A fixes four tiny buggy repos with parallel attempts, model-written tests, votes and a judge, and reports coverage against score. Part B speeds up slow NumPy functions, measures fast_p, and compares plain scores with profiler feedback.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Lecture 13 (Nov 3)</p>
+
+  <p class="big">Code is the easiest place to self-improve because the computer grades the work: tests pass or fail, and code runs faster or slower. Sample many attempts, let tests (even model-written ones) pick the winner, and give the agent clear feedback from the system, such as a profiler, instead of a bare number.</p>
+<div class="terms"><h4>Key terms</h4><dl><div><dt>Coverage</dt><dd>Fraction of problems where at least one generated attempt is correct; the best any selector can do.<span class="from">Source: Ehrlich et al. 2025</span></dd></div><div><dt>Serial vs parallel test-time compute</dt><dd>Serial: more turns of fixing one attempt. Parallel: more independent attempts.<span class="from">Source: Ehrlich et al. 2025</span></dd></div><div><dt>Test-based voting</dt><dd>Run every model-written test on every candidate edit; the edit that passes the most tests wins.<span class="from">Source: Ehrlich et al. 2025</span></dd></div><div><dt>fast_p</dt><dd>Fraction of tasks where the new code is correct AND more than p times faster than the reference; fast_0 is plain correctness.<span class="from">Source: Ouyang et al. 2025</span></dd></div><div><dt>Agent-system interface</dt><dd>The layer between the agent and the system: what actions the agent can write and what feedback it gets back.<span class="from">Source: Wei et al. 2024</span></dd></div><div><dt>AutoGuide</dt><dd>A step that turns raw system output (errors, timings) into plain explanations and suggested changes for the agent.<span class="from">Source: Wei et al. 2024</span></dd></div><div><dt>Profiler</dt><dd>A tool that reports which functions used the most time; Python&#x27;s built-in one is cProfile.<span class="from">Source: Python standard library</span></dd></div></dl></div>
+<h3>The papers</h3><div class="papers"><div class="paper"><h4><a href="https://arxiv.org/abs/2501.14723">CodeMonkeys: Scaling Test-Time Compute for Software Engineering</a></h4><p class="by">Ehrlich, Brown, Juravsky et al. · 2025</p><dl><dt>What</dt><dd>A SWE-bench system in three steps: find relevant files (a cheap model scans every file), generate 10 parallel multi-turn attempts that each write a code edit and a test script and iterate on execution feedback, then select by running all model-written tests on all edits, keeping the top 3 by votes, and letting a model (which can write more tests) choose.</dd><dt>Result</dt><dd>57.4% of SWE-bench Verified resolved for about 2,300 USD, with 69.8% coverage (some attempt was correct). Selecting over an ensemble of edits from top leaderboard submissions reached 66.2%, above the best single member (62.8%). Different splits between serial and parallel compute often gave similar coverage. Model selection without the top-3 vote filter did worse than plain voting; with the filter it did better.</dd><dt>Takeaway</dt><dd>Treat generation and selection as separate problems and measure both (coverage vs final score). Cheap test-based voting to cut the pool, then a model judge on the short list, closes much of the gap.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2502.10517">KernelBench: Can LLMs Write Efficient GPU Kernels?</a></h4><p class="by">Ouyang, Guo et al. · 2025</p><dl><dt>What</dt><dd>250 PyTorch workloads in three levels. The model rewrites each as faster GPU code. Outputs are compared with the reference on 5 random inputs and both are timed. The metric fast_p is the fraction of tasks that are correct and faster than the reference by more than a factor p.</dd><dt>Result</dt><dd>One-shot, frontier reasoning models matched the PyTorch baseline in fewer than 20% of cases. With execution and profiler feedback over 10 refinement turns, the paper reports fast_1 rising from 12%, 36% and 12% to 43%, 72% and 18% across the three levels (the paper&#x27;s Table 1 lists 2% as the Level 3 starting value; its introduction says 12%); the headline case is DeepSeek-R1 on Level 2, from 36% to 72%. Execution feedback mostly fixed execution errors; functional correctness stayed hard.</dd><dt>Takeaway</dt><dd>Grade speed and correctness together with one number (fast_p), check on several random inputs, and feed the model real execution and profiling output each turn.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2410.15625">Improving Parallel Program Performance with LLM Optimizers via Agent-System Interfaces</a></h4><p class="by">Wei, Nie et al. · 2024</p><dl><dt>What</dt><dd>An LLM optimizer (via the Trace framework, with GPT-4o) writes mappers that decide where tasks and data go in parallel programs. The agent-system interface has a small domain-specific language that hides low-level C++ and defines the search space, and AutoGuide, which turns raw execution output into explanations and suggested changes.</dd><dt>Result</dt><dd>Within 10 iterations it beat OpenTuner run for 1000 iterations, by 3.8x. Its mappers beat expert-written ones by up to 1.34x across nine benchmarks, cutting tuning from days to minutes. The DSL gave much higher code-generation success than raw C++.</dd><dt>Takeaway</dt><dd>Design what the agent sees and writes. A narrow action language plus feedback that explains errors and suggests fixes can matter more than a bigger model or more iterations.</dd></dl></div></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a08_agentic_swe.ipynb" target="_blank" rel="noopener">a08_agentic_swe.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import cProfile, difflib, json, os, re, shutil, subprocess, sys, tempfile, textwrap
+from concurrent.futures import ThreadPoolExecutor
+from lal.llm import ask, chat
+from lal.checks import pass_at_k, check
+
+WORK = tempfile.mkdtemp(prefix=&quot;a08_&quot;)
+
+def extract_code(text):
+    &quot;&quot;&quot;Take the longest ```python block from a reply, or the whole reply if there is none.&quot;&quot;&quot;
+    blocks = re.findall(r&quot;```(?:python|py)?\s*\n(.*?)```&quot;, text or &quot;&quot;, flags=re.S)
+    return max(blocks, key=len) if blocks else (text or &quot;&quot;)</code></pre></div>
+<div class="nb-md"><h3>Part A · CodeMonkeys at small scale</h3>
+<p>CodeMonkeys (Ehrlich, Brown, Juravsky et al. 2025, <em>CodeMonkeys: Scaling Test-Time Compute for Software Engineering</em>) solves real GitHub issues in three steps:
+1. <strong>Context:</strong> find the files that matter.
+2. <strong>Generation:</strong> run many attempts in parallel. Each attempt writes an edit <strong>and</strong> a test script.
+3. <strong>Selection:</strong> run every model-written test on every edit, keep the top 3 edits by votes, and let a model pick among them.</p>
+<p>Two numbers matter. <strong>Coverage:</strong> did <em>any</em> attempt fix the bug? <strong>Score:</strong> did the one we <em>picked</em> fix it? The gap between them is the selection problem.</p>
+<h3>A1. Four tiny buggy repos</h3>
+<p>Each has one file, an issue written like a bug report, and a <strong>hidden</strong> test (like SWE-bench's tests). The model never sees the hidden test. We also keep a reference fix, only to prove each task is sound.</p></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">REPOS = [
+    dict(name=&quot;textstats&quot;, file=&quot;textstats.py&quot;,
+         code=&#x27;&#x27;&#x27;def word_count(text):
+    &quot;&quot;&quot;Number of words. Words are separated by any whitespace.&quot;&quot;&quot;
+    return len(text.split(&quot; &quot;))
+
+
+def char_count(text, ignore_spaces=False):
+    if ignore_spaces:
+        return len(text.replace(&quot; &quot;, &quot;&quot;))
+    return len(text)
+&#x27;&#x27;&#x27;,
+         issue=&quot;word_count gives wrong numbers. word_count(&#x27;hello  world&#x27;) returns 3 and word_count(&#x27;a\\nb&#x27;) returns 1. &quot;
+               &quot;Both should be 2. Also word_count(&#x27;&#x27;) should be 0.&quot;,
+         fix=(&quot;return len(text.split(\&quot; \&quot;))&quot;, &quot;return len(text.split())&quot;),
+         test=&#x27;&#x27;&#x27;from textstats import word_count, char_count
+assert word_count(&quot;hello  world&quot;) == 2
+assert word_count(&quot;a\\nb&quot;) == 2
+assert word_count(&quot;&quot;) == 0
+assert word_count(&quot;  lead and trail  &quot;) == 3
+assert word_count(&quot;one&quot;) == 1
+assert char_count(&quot;a b&quot;) == 3 and char_count(&quot;a b&quot;, ignore_spaces=True) == 2
+&#x27;&#x27;&#x27;),
+    dict(name=&quot;late_fee&quot;, file=&quot;late_fee.py&quot;,
+         code=&#x27;&#x27;&#x27;GRACE_DAYS = 5
+DAILY_RATE = 0.01
+MAX_FRACTION = 0.10
+
+
+def late_fee(amount, days_late):
+    &quot;&quot;&quot;Fee for paying an invoice late.
+    No fee within the grace period (up to and including GRACE_DAYS days late).
+    After that, DAILY_RATE of the amount for each day beyond the grace period,
+    capped at MAX_FRACTION of the amount. Rounded to cents.&quot;&quot;&quot;
+    if days_late &lt; GRACE_DAYS:
+        return 0.0
+    fee = amount * DAILY_RATE * days_late
+    return round(fee, 2)
+&#x27;&#x27;&#x27;,
+         issue=&quot;late_fee(1000, 5) returns 50.0, but 5 days late is still inside the grace period, so it should be 0.0. &quot;
+               &quot;late_fee(1000, 8) returns 80.0 but should be 30.0 (only the 3 days after the grace period count). &quot;
+               &quot;And late_fee(1000, 40) returns 400.0 even though the docstring says the fee is capped at 10% of the amount.&quot;,
+         fix=(&quot;    if days_late &lt; GRACE_DAYS:\n        return 0.0\n    fee = amount * DAILY_RATE * days_late\n&quot;,
+              &quot;    if days_late &lt;= GRACE_DAYS:\n        return 0.0\n    fee = min(amount * DAILY_RATE * (days_late - GRACE_DAYS), amount * MAX_FRACTION)\n&quot;),
+         test=&#x27;&#x27;&#x27;from late_fee import late_fee
+close = lambda a, b: abs(a - b) &lt; 1e-6
+assert close(late_fee(1000, 5), 0.0)
+assert close(late_fee(1000, 0), 0.0)
+assert close(late_fee(1000, 6), 10.0)
+assert close(late_fee(1000, 8), 30.0)
+assert close(late_fee(1000, 40), 100.0)
+assert close(late_fee(200, 7), 4.0)
+&#x27;&#x27;&#x27;),
+    dict(name=&quot;dates_util&quot;, file=&quot;dates_util.py&quot;,
+         code=&#x27;&#x27;&#x27;from datetime import date
+
+
+def add_months(d, n):
+    &quot;&quot;&quot;Return the date n months after d (n may be negative).
+    If that day does not exist in the target month, use the last day of that month.&quot;&quot;&quot;
+    month = d.month - 1 + n
+    year = d.year + month // 12
+    month = month % 12 + 1
+    return date(year, month, d.day)
+&#x27;&#x27;&#x27;,
+         issue=&quot;add_months(date(2027, 1, 31), 1) crashes with &#x27;ValueError: day is out of range for month&#x27;. &quot;
+               &quot;It should return date(2027, 2, 28). In a leap year, add_months(date(2028, 1, 31), 1) should return date(2028, 2, 29).&quot;,
+         fix=(&quot;    return date(year, month, d.day)\n&quot;,
+              &quot;    import calendar\n    return date(year, month, min(d.day, calendar.monthrange(year, month)[1]))\n&quot;),
+         test=&#x27;&#x27;&#x27;from datetime import date
+from dates_util import add_months
+assert add_months(date(2027, 1, 31), 1) == date(2027, 2, 28)
+assert add_months(date(2028, 1, 31), 1) == date(2028, 2, 29)
+assert add_months(date(2027, 5, 31), 1) == date(2027, 6, 30)
+assert add_months(date(2027, 12, 31), 2) == date(2028, 2, 29)
+assert add_months(date(2027, 3, 15), -2) == date(2027, 1, 15)
+assert add_months(date(2027, 1, 10), 12) == date(2028, 1, 10)
+&#x27;&#x27;&#x27;),
+    dict(name=&quot;lru&quot;, file=&quot;lru.py&quot;,
+         code=&#x27;&#x27;&#x27;from collections import OrderedDict
+
+
+class LRUCache:
+    &quot;&quot;&quot;Keeps at most `capacity` items. When full, it evicts the least recently USED item.
+    Reading a key with get() counts as using it.&quot;&quot;&quot;
+
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.data = OrderedDict()
+
+    def get(self, key, default=None):
+        return self.data.get(key, default)
+
+    def put(self, key, value):
+        if key in self.data:
+            self.data.move_to_end(key)
+        self.data[key] = value
+        if len(self.data) &gt; self.capacity:
+            self.data.popitem(last=False)
+&#x27;&#x27;&#x27;,
+         issue=&quot;Keys I just read still get evicted. c = LRUCache(2); c.put(&#x27;a&#x27;, 1); c.put(&#x27;b&#x27;, 2); c.get(&#x27;a&#x27;); c.put(&#x27;c&#x27;, 3). &quot;
+               &quot;Now &#x27;a&#x27; is gone, but &#x27;b&#x27; is the least recently used key and should be the one evicted.&quot;,
+         fix=(&quot;        return self.data.get(key, default)\n&quot;,
+              &quot;        if key not in self.data:\n            return default\n        self.data.move_to_end(key)\n        return self.data[key]\n&quot;),
+         test=&#x27;&#x27;&#x27;from lru import LRUCache
+c = LRUCache(2)
+c.put(&quot;a&quot;, 1); c.put(&quot;b&quot;, 2)
+assert c.get(&quot;a&quot;) == 1
+c.put(&quot;c&quot;, 3)
+assert c.get(&quot;b&quot;) is None and c.get(&quot;a&quot;) == 1 and c.get(&quot;c&quot;) == 3
+assert c.get(&quot;zzz&quot;, &quot;missing&quot;) == &quot;missing&quot;
+d = LRUCache(1); d.put(&quot;x&quot;, 1); d.put(&quot;y&quot;, 2)
+assert d.get(&quot;x&quot;) is None and d.get(&quot;y&quot;) == 2
+e = LRUCache(2); e.put(&quot;a&quot;, 1); e.put(&quot;b&quot;, 2); e.put(&quot;a&quot;, 10); e.put(&quot;c&quot;, 3)
+assert e.get(&quot;a&quot;) == 10 and e.get(&quot;b&quot;) is None
+&#x27;&#x27;&#x27;),
+]
+for r in REPOS:
+    assert r[&quot;fix&quot;][0] in r[&quot;code&quot;], r[&quot;name&quot;]
+    r[&quot;fixed&quot;] = r[&quot;code&quot;].replace(*r[&quot;fix&quot;])
+print(REPOS[0][&quot;issue&quot;])</code></pre></div>
+<div class="nb-md"><h3>A2. Run a test against a version of the file, safely</h3>
+<p>Every run gets a <strong>fresh folder</strong> with the file and one test script, in a separate process with a timeout. Exit code 0 means pass.</p></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def run_test(repo, file_code, test_code, timeout=10):
+    d = tempfile.mkdtemp(dir=WORK)
+    open(os.path.join(d, repo[&quot;file&quot;]), &quot;w&quot;).write(file_code)
+    open(os.path.join(d, &quot;test_run.py&quot;), &quot;w&quot;).write(test_code)
+    try:
+        out = subprocess.run([sys.executable, &quot;test_run.py&quot;], cwd=d, capture_output=True, text=True, timeout=timeout)
+        ok, msg = out.returncode == 0, (out.stderr or out.stdout).strip()[-300:]
+    except subprocess.TimeoutExpired:
+        ok, msg = False, &quot;TIMEOUT&quot;
+    shutil.rmtree(d, ignore_errors=True)
+    return ok, msg
+
+# Prove each task is sound: the hidden test FAILS on the buggy code and PASSES on the reference fix.
+sound = {r[&quot;name&quot;]: (not run_test(r, r[&quot;code&quot;], r[&quot;test&quot;])[0], run_test(r, r[&quot;fixed&quot;], r[&quot;test&quot;])[0]) for r in REPOS}
+print(&quot;(fails on bug, passes on fix):&quot;, sound)</code></pre></div>
+<div class="nb-md"><h3>A3. Generation: 4 edits per repo, in parallel</h3>
+<p>Each attempt sees the issue and the file and returns the whole fixed file. 16 calls, 2 at a time.</p></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">N_EDITS = 4
+
+def edit_prompt(r):
+    return (f&quot;You are fixing a bug in a small Python repository.\n\nIssue:\n{r[&#x27;issue&#x27;]}\n\nFile `{r[&#x27;file&#x27;]}`:\n```python\n{r[&#x27;code&#x27;]}```\n\n&quot;
+            &quot;Rewrite the file so the issue is fixed. Keep the same function and class names. &quot;
+            &quot;Return the complete fixed file in one ```python block.&quot;)
+
+def gen_edit(r):
+    return extract_code(ask(edit_prompt(r), temperature=0.8, max_tokens=900))
+
+jobs = [ri for ri in range(len(REPOS)) for _ in range(N_EDITS)]
+with ThreadPoolExecutor(2) as ex:
+    edits = list(ex.map(lambda ri: gen_edit(REPOS[ri]), jobs))
+EDITS = {ri: [e for j, e in zip(jobs, edits) if j == ri] for ri in range(len(REPOS))}
+
+# Ground truth, for grading only: does each edit pass the hidden test?
+HIDDEN = {ri: [run_test(REPOS[ri], e, REPOS[ri][&quot;test&quot;])[0] for e in EDITS[ri]] for ri in EDITS}
+for ri, oks in HIDDEN.items():
+    print(f&quot;{REPOS[ri][&#x27;name&#x27;]:11} edits passing the hidden test: {oks}&quot;)</code></pre></div>
+<div class="nb-md"><h3>A4. Coverage grows with the number of samples</h3>
+<p>Coverage@k is the chance that at least one of k attempts is correct. We estimate it with the unbiased pass@k formula. Large Language Monkeys (Brown et al. 2024) found coverage often grows roughly log-linearly with samples; CodeMonkeys reached 69.8% coverage on SWE-bench Verified.</p></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">COVERAGE = {}
+for k in range(1, N_EDITS + 1):
+    COVERAGE[k] = sum(pass_at_k(N_EDITS, sum(oks), k) for oks in HIDDEN.values()) / len(HIDDEN)
+    print(f&quot;coverage@{k}: {COVERAGE[k]:.0%}  &quot; + &quot;#&quot; * round(40 * COVERAGE[k]))</code></pre></div>
+<div class="nb-md"><h3>A5. The model writes its own tests</h3>
+<p>We ask for 3 short test scripts per repo (12 calls). A useful test must <strong>fail on the buggy code</strong>; otherwise it doesn't reproduce the issue. We drop tests that pass on the original file (our own filter, in the spirit of CodeMonkeys running tests before and after an edit).</p></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">N_TESTS = 3
+
+def test_prompt(r):
+    module = r[&quot;file&quot;][:-3]
+    return (f&quot;Issue:\n{r[&#x27;issue&#x27;]}\n\nFile `{r[&#x27;file&#x27;]}`:\n```python\n{r[&#x27;code&#x27;]}```\n\n&quot;
+            f&quot;Write a short Python test script that does `from {module} import ...` and uses plain assert statements to check &quot;
+            &quot;the behavior the issue asks for. It must FAIL on the current buggy code and PASS once the bug is fixed. &quot;
+            &quot;No test framework, no explanation. Return only code in one ```python block.&quot;)
+
+tjobs = [ri for ri in range(len(REPOS)) for _ in range(N_TESTS)]
+with ThreadPoolExecutor(2) as ex:
+    tests = list(ex.map(lambda ri: extract_code(ask(test_prompt(REPOS[ri]), temperature=0.8, max_tokens=500)), tjobs))
+GEN_TESTS = {}
+for ri in range(len(REPOS)):
+    mine = [t for j, t in zip(tjobs, tests) if j == ri]
+    GEN_TESTS[ri] = [t for t in mine if not run_test(REPOS[ri], REPOS[ri][&quot;code&quot;], t)[0]]   # keep tests that fail on the bug
+    print(f&quot;{REPOS[ri][&#x27;name&#x27;]:11} model tests kept: {len(GEN_TESTS[ri])}/{len(mine)}&quot;)</code></pre></div>
+<div class="nb-md"><h3>A6. Selection: test votes, then a model judge</h3>
+<ul>
+<li><strong>Votes:</strong> each edit scores one point per model test it passes.</li>
+<li><strong>Top-3 + judge:</strong> keep the 3 best by votes and show their diffs to the model, which picks one. CodeMonkeys found that the model judge did worse than plain voting <em>without</em> the top-3 filter, and better <em>with</em> it.</li>
+</ul></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def votes(ri):
+    return [sum(run_test(REPOS[ri], e, t)[0] for t in GEN_TESTS[ri]) for e in EDITS[ri]]
+
+def diff(a, b):
+    return &quot;&quot;.join(difflib.unified_diff(a.splitlines(True), b.splitlines(True), &quot;before&quot;, &quot;after&quot;, n=1))[:1500]
+
+def judge(ri, idxs):
+    r = REPOS[ri]
+    cands = &quot;\n\n&quot;.join(f&quot;Candidate {n + 1}:\n```diff\n{diff(r[&#x27;code&#x27;], EDITS[ri][i])}```&quot; for n, i in enumerate(idxs))
+    reply = ask(f&quot;Issue:\n{r[&#x27;issue&#x27;]}\n\nThese are candidate fixes as diffs:\n\n{cands}\n\n&quot;
+                f&quot;Which candidate fixes the issue correctly without breaking anything else? Reply with only the number (1-{len(idxs)}).&quot;,
+                max_tokens=20)
+    m = re.search(r&quot;\d+&quot;, reply or &quot;&quot;)
+    n = int(m.group(0)) - 1 if m else 0
+    return idxs[n] if 0 &lt;= n &lt; len(idxs) else idxs[0]
+
+SEL = {}
+for ri in range(len(REPOS)):
+    v = votes(ri)
+    order = sorted(range(len(v)), key=lambda i: -v[i])          # stable: ties keep the sampling order
+    top3 = order[:3]
+    distinct = len({EDITS[ri][i] for i in top3}) &gt; 1
+    SEL[ri] = {&quot;votes&quot;: order[0], &quot;votes + judge&quot;: judge(ri, top3) if distinct else order[0]}
+    print(f&quot;{REPOS[ri][&#x27;name&#x27;]:11} votes {v} | vote pick {order[0]} | judge pick {SEL[ri][&#x27;votes + judge&#x27;]}&quot;)
+
+scores = {&quot;random&quot;: sum(sum(o) / len(o) for o in HIDDEN.values()) / len(HIDDEN)}
+for m in (&quot;votes&quot;, &quot;votes + judge&quot;):
+    scores[m] = sum(HIDDEN[ri][SEL[ri][m]] for ri in SEL) / len(SEL)
+scores[&quot;oracle (coverage)&quot;] = COVERAGE[N_EDITS]
+for m, s in scores.items():
+    print(f&quot;{m:18} {s:.0%}&quot;)</code></pre></div>
+<div class="nb-md"><h3>Part B · KernelBench at CPU scale</h3>
+<p>KernelBench (Ouyang, Guo et al. 2025, <em>KernelBench: Can LLMs Write Efficient GPU Kernels?</em>) asks a model to rewrite a PyTorch program as faster GPU code. It checks the output against the reference on 5 random inputs and times both. Its metric is</p>
+<p>$$\text{fast}_p = \frac{1}{N}\sum_i \mathbf{1}[\text{correct}_i \wedge \text{speedup}_i &gt; p]$$</p>
+<p>so <code>fast_0</code> is just the correctness rate, and <code>fast_1</code> means "correct <strong>and</strong> faster than the reference".</p>
+<p>We have no GPU budget, so we do the same thing with slow Python/NumPy functions on the CPU.</p>
+<h3>B1. Four slow functions</h3></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">KTASKS = [
+    dict(fn=&quot;pairwise_dist&quot;, ref=&#x27;&#x27;&#x27;import numpy as np
+
+def pairwise_dist(X, Y):
+    &quot;&quot;&quot;Euclidean distance between every row of X (n, d) and every row of Y (m, d). Returns (n, m).&quot;&quot;&quot;
+    n, m = X.shape[0], Y.shape[0]
+    out = np.zeros((n, m))
+    for i in range(n):
+        for j in range(m):
+            out[i, j] = np.sqrt(np.sum((X[i] - Y[j]) ** 2))
+    return out
+&#x27;&#x27;&#x27;, gen=&#x27;&#x27;&#x27;def make_inputs(rng, big, case):
+    n, m, d = (150, 150, 8) if big else (int(rng.integers(1, 30)), int(rng.integers(1, 30)), int(rng.integers(1, 6)))
+    return (rng.normal(size=(n, d)), rng.normal(size=(m, d)))
+&#x27;&#x27;&#x27;),
+    dict(fn=&quot;moving_average&quot;, ref=&#x27;&#x27;&#x27;import numpy as np
+
+def moving_average(x, w):
+    &quot;&quot;&quot;Mean of every window of length w in the 1-D array x. Returns len(x) - w + 1 values.&quot;&quot;&quot;
+    out = np.empty(len(x) - w + 1)
+    for i in range(len(out)):
+        out[i] = x[i:i + w].mean()
+    return out
+&#x27;&#x27;&#x27;, gen=&#x27;&#x27;&#x27;def make_inputs(rng, big, case):
+    n = 40000 if big else int(rng.integers(1, 200))
+    w = 25 if big else [1, n, int(rng.integers(1, n + 1)), int(rng.integers(1, n + 1)), 1][case]
+    return (rng.normal(size=n) * 10, w)
+&#x27;&#x27;&#x27;),
+    dict(fn=&quot;softmax_rows&quot;, ref=&#x27;&#x27;&#x27;import math
+import numpy as np
+
+def softmax_rows(M):
+    &quot;&quot;&quot;Softmax of each row of the 2-D array M.&quot;&quot;&quot;
+    out = np.empty(M.shape, dtype=float)
+    for i in range(M.shape[0]):
+        row = M[i]
+        m = max(row)
+        e = [math.exp(v - m) for v in row]
+        s = sum(e)
+        for j in range(len(row)):
+            out[i, j] = e[j] / s
+    return out
+&#x27;&#x27;&#x27;, gen=&#x27;&#x27;&#x27;def make_inputs(rng, big, case):
+    r, c = (500, 300) if big else (int(rng.integers(1, 20)), int(rng.integers(1, 30)))
+    scale = [1, 5, 50, 400, 900][case % 5]          # large values break a softmax that skips the max-subtraction
+    return (rng.normal(size=(r, c)) * scale,)
+&#x27;&#x27;&#x27;),
+    dict(fn=&quot;user_scores&quot;, ref=&#x27;&#x27;&#x27;import numpy as np
+
+def clean(amounts):
+    return np.clip(amounts, 0, None)
+
+def per_user_totals(user_ids, amounts, n_users):
+    totals = np.zeros(n_users)
+    for u, x in zip(user_ids, amounts):
+        totals[u] += x
+    return totals
+
+def normalize(totals):
+    return totals / (totals.max() + 1e-9)
+
+def user_scores(user_ids, amounts, n_users):
+    &quot;&quot;&quot;Total positive spend per user, scaled so the top user is about 1.&quot;&quot;&quot;
+    return normalize(per_user_totals(user_ids, clean(amounts), n_users))
+&#x27;&#x27;&#x27;, gen=&#x27;&#x27;&#x27;def make_inputs(rng, big, case):
+    n_users = 1000 if big else int(rng.integers(1, 20))
+    n = 200000 if big else int(rng.integers(1, 300))
+    return (rng.integers(0, n_users, size=n), rng.normal(size=n) * 50, n_users)
+&#x27;&#x27;&#x27;),
+]
+print([t[&quot;fn&quot;] for t in KTASKS])</code></pre></div>
+<div class="nb-md"><h3>B2. The evaluator: correctness on 5 random inputs, then timing</h3>
+<p>All of this runs in a subprocess with a timeout. Correctness uses <code>np.allclose</code> (relative 1e-5, absolute 1e-6) and requires the same shape. Timing takes the best of 3 runs on one large input. The profiler mode runs <code>cProfile</code> on the large input and returns the functions that used the most time.</p></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">KB_RUNNER = r&#x27;&#x27;&#x27;
+import copy, cProfile, json, os, pstats, sys, time, traceback
+import numpy as np
+mode, fn, ref_path, cand_path, gen_path = sys.argv[1:6]
+def load(path):
+    ns = {}
+    exec(compile(open(path).read(), os.path.basename(path), &quot;exec&quot;), ns)
+    return ns
+gen = load(gen_path)[&quot;make_inputs&quot;]
+ref = load(ref_path)[fn]
+res = {&quot;correct&quot;: False, &quot;speedup&quot;: 0.0, &quot;error&quot;: None, &quot;detail&quot;: None}
+try:
+    cand = load(cand_path)[fn]
+    if mode == &quot;profile&quot;:
+        args = gen(np.random.default_rng(123), True, 0)
+        prof = cProfile.Profile(); prof.enable(); cand(*args); prof.disable()
+        st = pstats.Stats(prof).stats
+        total = sum(v[2] for v in st.values()) or 1e-9
+        rows = sorted(((k[2] if k[0] != &quot;~&quot; else &quot;builtin &quot; + k[2], os.path.basename(k[0]), v[1], v[2], v[3])
+                       for k, v in st.items() if &quot;disable&quot; not in k[2]),
+                      key=lambda r: -r[3])[:8]
+        print(json.dumps({&quot;total&quot;: total, &quot;rows&quot;: rows})); sys.exit(0)
+    for case in range(5):
+        args = gen(np.random.default_rng(case), False, case)
+        want, got = ref(*copy.deepcopy(args)), np.asarray(cand(*copy.deepcopy(args)), dtype=float)
+        want = np.asarray(want, dtype=float)
+        if got.shape != want.shape:
+            res[&quot;detail&quot;] = f&quot;case {case}: shape {got.shape}, expected {want.shape}&quot;; break
+        if not np.allclose(got, want, rtol=1e-5, atol=1e-6):
+            bad = ~np.isfinite(got)
+            res[&quot;detail&quot;] = (f&quot;case {case}: {int(bad.sum())} non-finite values (inf/nan)&quot; if bad.any() else
+                             f&quot;case {case}: max abs error {float(np.max(np.abs(got - want))):.3g}&quot;)
+            break
+    else:
+        args = gen(np.random.default_rng(123), True, 0)
+        def best(f):
+            ts = []
+            for _ in range(3):
+                t0 = time.perf_counter(); out = f(*copy.deepcopy(args)); ts.append(time.perf_counter() - t0)
+            return min(ts), out
+        t_ref, want = best(ref)
+        t_new, got = best(cand)
+        if np.asarray(got).shape == np.asarray(want).shape and np.allclose(got, want, rtol=1e-5, atol=1e-6):
+            res.update(correct=True, speedup=t_ref / max(t_new, 1e-9), t_ref=t_ref, t_new=t_new)
+        else:
+            res[&quot;detail&quot;] = &quot;wrong values on the large input&quot;
+except Exception as e:
+    res[&quot;error&quot;] = traceback.format_exc().strip().splitlines()[-1][:300]
+print(json.dumps(res))
+&#x27;&#x27;&#x27;
+RUNNER_PATH = os.path.join(WORK, &quot;kb_runner.py&quot;)
+open(RUNNER_PATH, &quot;w&quot;).write(KB_RUNNER)
+
+def kb_run(task, cand_code, mode=&quot;eval&quot;, timeout=90):
+    d = tempfile.mkdtemp(dir=WORK)
+    paths = {}
+    for name, src in ((&quot;ref&quot;, task[&quot;ref&quot;]), (&quot;cand&quot;, cand_code), (&quot;gen&quot;, task[&quot;gen&quot;])):
+        paths[name] = os.path.join(d, f&quot;{name}.py&quot;)
+        open(paths[name], &quot;w&quot;).write(src)
+    out = None
+    try:
+        out = subprocess.run([sys.executable, &quot;-I&quot;, RUNNER_PATH, mode, task[&quot;fn&quot;], paths[&quot;ref&quot;], paths[&quot;cand&quot;], paths[&quot;gen&quot;]],
+                             capture_output=True, text=True, timeout=timeout)
+        return json.loads(out.stdout.strip().splitlines()[-1])
+    except subprocess.TimeoutExpired:
+        return {&quot;correct&quot;: False, &quot;speedup&quot;: 0.0, &quot;error&quot;: f&quot;timed out after {timeout}s&quot;, &quot;detail&quot;: None}
+    except Exception:
+        return {&quot;correct&quot;: False, &quot;speedup&quot;: 0.0, &quot;error&quot;: &quot;runner failed: &quot; + ((out.stderr or &quot;&quot;)[-200:] if out else &quot;&quot;), &quot;detail&quot;: None}
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+def fast_p(results, p):
+    return sum(r[&quot;correct&quot;] and r[&quot;speedup&quot;] &gt; p for r in results) / len(results)
+
+# Test the evaluator before trusting it: the reference vs itself, a known-wrong version, a known-fast version.
+self_check = kb_run(KTASKS[0], KTASKS[0][&quot;ref&quot;])
+naive_softmax = &quot;import numpy as np\ndef softmax_rows(M):\n    e = np.exp(M)\n    return e / e.sum(axis=1, keepdims=True)\n&quot;
+wrong_check = kb_run(KTASKS[2], naive_softmax)
+fast_users = (&quot;import numpy as np\ndef user_scores(user_ids, amounts, n_users):\n&quot;
+              &quot;    t = np.bincount(user_ids, weights=np.clip(amounts, 0, None), minlength=n_users)\n    return t / (t.max() + 1e-9)\n&quot;)
+fast_check = kb_run(KTASKS[3], fast_users)
+print(&quot;reference vs itself:&quot;, self_check)
+print(&quot;softmax without max-subtraction:&quot;, wrong_check)
+print(&quot;bincount version of user_scores:&quot;, fast_check)</code></pre></div>
+<div class="nb-md"><h3>B3. The agent-system interface: scalar feedback vs. a profiler</h3>
+<p>Wei, Nie et al. (2024/2025, <em>Improving Parallel Program Performance with LLM Optimizers via Agent-System Interfaces</em>) found that what the optimizer <strong>sees</strong> matters as much as the model. Their interface had two parts: a small language that limits what the agent can write, and <strong>AutoGuide</strong>, which turns raw system output into plain advice. With it, an LLM optimizer beat OpenTuner (which only gets a number) within 10 iterations.</p>
+<p>We compare two interfaces, 3 turns each (an attempt, then 2 rounds of feedback):
+- <strong>Scalar:</strong> the agent sees only "correct? speedup?", like a classic autotuner.
+- <strong>Profiler + guide:</strong> the agent also gets a <code>cProfile</code> table of the reference up front, and after each attempt a plain-language reading of the result: the error explained, which test case failed and how, and where its own code spends time.</p></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def profile_text(task, code):
+    p = kb_run(task, code, mode=&quot;profile&quot;)
+    if &quot;rows&quot; not in p:
+        return f&quot;(profiler failed: {p.get(&#x27;error&#x27;)})&quot;, None
+    lines = [f&quot;{&#x27;function&#x27;:40} {&#x27;calls&#x27;:&gt;8} {&#x27;own time s&#x27;:&gt;10} {&#x27;with callees s&#x27;:&gt;14}&quot;]
+    lines += [f&quot;{f[:40]:40} {n:&gt;8} {tt:&gt;10.4f} {ct:&gt;14.4f}&quot; for f, _, n, tt, ct in p[&quot;rows&quot;]]
+    hot = p[&quot;rows&quot;][0]
+    return &quot;\n&quot;.join(lines), (hot[0], hot[3] / p[&quot;total&quot;], hot[2])
+
+def guide(task, code, r):
+    &quot;&quot;&quot;A tiny AutoGuide: turn raw results into actionable advice.&quot;&quot;&quot;
+    if r.get(&quot;error&quot;):
+        return f&quot;Your code crashed: {r[&#x27;error&#x27;]}. Fix this error first and keep the same function name.&quot;
+    if not r[&quot;correct&quot;]:
+        return (f&quot;Your code returns wrong results: {r[&#x27;detail&#x27;]}. Compare with the reference on that kind of input &quot;
+                &quot;(edge cases, very large or very small values, window sizes, shapes).&quot;)
+    table, hot = profile_text(task, code)
+    tip = (f&quot;Hot spot: `{hot[0]}` takes {hot[1]:.0%} of the time ({hot[2]} calls). If it loops over array elements in Python, &quot;
+           &quot;replace the loop with whole-array NumPy operations.&quot; if hot else &quot;&quot;)
+    return f&quot;Correct. Speedup {r[&#x27;speedup&#x27;]:.2f}x over the reference.\nProfile of your version:\n{table}\n{tip}&quot;
+
+def scalar_feedback(task, code, r):
+    return f&quot;Result: correct={r[&#x27;correct&#x27;]}, speedup={r[&#x27;speedup&#x27;]:.2f}x.&quot;
+
+def optimize(task, interface, turns=3):
+    intro = (f&quot;Here is a slow Python function:\n```python\n{task[&#x27;ref&#x27;]}```\n&quot;
+             f&quot;Write a faster version with the SAME function name `{task[&#x27;fn&#x27;]}` and the same arguments. Use NumPy. &quot;
+             &quot;It must return the same values (within 1e-6) for any valid input. Return the complete code in one ```python block.&quot;)
+    if interface == &quot;profiler&quot;:
+        intro += &quot;\n\nProfiler output for the reference on a large input:\n&quot; + profile_text(task, task[&quot;ref&quot;])[0]
+    msgs, best, history = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: intro}], {&quot;correct&quot;: False, &quot;speedup&quot;: 0.0}, []
+    for turn in range(turns):
+        reply = chat(msgs, temperature=0.3, max_tokens=900).content or &quot;&quot;
+        code = extract_code(reply)
+        r = kb_run(task, code)
+        if r[&quot;correct&quot;] and r[&quot;speedup&quot;] &gt; best[&quot;speedup&quot;]:
+            best = r
+        history.append(dict(best))                                # best-so-far after each turn
+        if r[&quot;correct&quot;] and r[&quot;speedup&quot;] &gt;= 20:                    # good enough: save calls
+            history += [dict(best)] * (turns - turn - 1)
+            break
+        fb = guide(task, code, r) if interface == &quot;profiler&quot; else scalar_feedback(task, code, r)
+        msgs += [{&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: reply}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: fb + &quot;\nWrite an improved version. Return the complete code in one ```python block.&quot;}]
+    return history
+
+RUNS = {}
+for interface in (&quot;scalar&quot;, &quot;profiler&quot;):
+    RUNS[interface] = [optimize(t, interface) for t in KTASKS]     # up to 4 tasks x 3 turns = 12 calls per interface
+    for t, h in zip(KTASKS, RUNS[interface]):
+        print(f&quot;{interface:8} {t[&#x27;fn&#x27;]:15} best speedup by turn: {[round(x[&#x27;speedup&#x27;], 1) if x[&#x27;correct&#x27;] else &#x27;x&#x27; for x in h]}&quot;)</code></pre></div>
+<div class="nb-md"><h3>B4. fast_p, one-shot and after feedback</h3></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">print(f&quot;{&#x27;interface&#x27;:10} {&#x27;turns&#x27;:&gt;5} {&#x27;fast_0&#x27;:&gt;7} {&#x27;fast_1&#x27;:&gt;7} {&#x27;fast_2&#x27;:&gt;7} {&#x27;fast_10&#x27;:&gt;8}&quot;)
+FAST = {}
+for interface, runs in RUNS.items():
+    for n in (1, 3):
+        res = [h[min(n, len(h)) - 1] for h in runs]
+        FAST[(interface, n)] = {p: fast_p(res, p) for p in (0, 1, 2, 10)}
+        print(f&quot;{interface:10} {n:&gt;5} &quot; + &quot; &quot;.join(f&quot;{FAST[(interface, n)][p]:&gt;7.0%}&quot; for p in (0, 1, 2)) + f&quot; {FAST[(interface, n)][10]:&gt;8.0%}&quot;)</code></pre></div>
+<div class="nb-md"><p>What to notice: <code>fast_p</code> drops as <code>p</code> rises, the same shape as in KernelBench. Feedback turns usually help most by <strong>fixing wrong answers</strong> (KernelBench saw the same: execution feedback mostly fixed errors). Whether the profiler beats scalar feedback on 4 tasks is noisy; on <code>user_scores</code> the profiler points straight at <code>per_user_totals</code>, which is where the paper's "interpret the raw output" idea pays off.</p></div>
+<div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 13</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;each repo task is sound (hidden test fails on the bug, passes on the fix)&quot;, all(a and b for a, b in sound.values()))
+check(&quot;evaluator: the reference matches itself&quot;, self_check[&quot;correct&quot;])
+check(&quot;evaluator: softmax without max-subtraction is caught as wrong&quot;, not wrong_check[&quot;correct&quot;])
+check(&quot;evaluator: a vectorized version is correct and faster&quot;, fast_check[&quot;correct&quot;] and fast_check[&quot;speedup&quot;] &gt; 1)
+check(&quot;at least one sampled edit fixes at least one repo (coverage &gt; 0)&quot;, COVERAGE[N_EDITS] &gt; 0)
+check(&quot;test-vote selection is at least as good as picking at random&quot;, scores[&quot;votes&quot;] &gt;= scores[&quot;random&quot;] - 1e-9)
+check(&quot;the optimizer produced at least one correct, faster function&quot;, max(FAST[(i, 3)][1] for i in RUNS) &gt; 0)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Serial compute.</strong> CodeMonkeys let each attempt see test results and try again. Add one feedback round to <code>gen_edit</code>: run the attempt against its own model test, and if it fails, send the error back and ask for a new file. Does coverage@1 rise?</li>
+<li><strong>Sharper fast_p.</strong> Rerun B4 with <code>p = 5</code>. Which tasks still count? Why is a 1.0x threshold too easy for NumPy rewrites of Python loops (but hard on KernelBench, where the baseline is already optimized PyTorch)?</li>
+<li><strong>A gaming check.</strong> Write a "fast" <code>moving_average</code> that is only correct when <code>w == 25</code> (the size used for timing). Does our evaluator catch it? What does this say about checking on several random inputs?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 14</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: one round of execution feedback per attempt (up to 4 more calls; we try the first edit of each repo)
+def gen_edit_with_feedback(ri, first):
+    r = REPOS[ri]
+    if not GEN_TESTS[ri]:
+        return first
+    ok, msg = run_test(r, first, GEN_TESTS[ri][0])
+    if ok:
+        return first
+    reply = ask(edit_prompt(r) + f&quot;\n\nYour previous attempt:\n```python\n{first}```\nfailed this test:\n```python\n{GEN_TESTS[ri][0]}```\n&quot;
+                f&quot;Error:\n{msg}\nNote the test itself may be wrong. Return the complete fixed file in one ```python block.&quot;,
+                temperature=0.3, max_tokens=900)
+    return extract_code(reply)
+before = sum(HIDDEN[ri][0] for ri in HIDDEN)
+after = sum(run_test(REPOS[ri], gen_edit_with_feedback(ri, EDITS[ri][0]), REPOS[ri][&quot;test&quot;])[0] for ri in HIDDEN)
+print(f&quot;first attempt fixes {before}/{len(HIDDEN)} repos; after one feedback round: {after}/{len(HIDDEN)}&quot;)
+# What to notice: model tests can be wrong, so feedback from them can also mislead. CodeMonkeys found that spending
+# compute on more serial iterations or more parallel samples often gave similar coverage for the same cost.</code></pre></div><div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 15</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: a higher speedup threshold (no new model calls)
+for interface, runs in RUNS.items():
+    res = [h[-1] for h in runs]
+    print(interface, &quot;fast_5:&quot;, f&quot;{fast_p(res, 5):.0%}&quot;, [(t[&quot;fn&quot;], round(r[&quot;speedup&quot;], 1)) for t, r in zip(KTASKS, res) if r[&quot;correct&quot;]])
+# What to notice: replacing a Python loop with one NumPy call often gives 10-100x, so p=1 is easy here.
+# KernelBench&#x27;s baseline is PyTorch&#x27;s own tuned kernels, so even p=1 is hard: one-shot, the best models matched PyTorch in under 20% of cases.</code></pre></div><div class="code"><div class="cap"><span class="cell">a08_agentic_swe.ipynb · cell 16</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 3: a version that only works for the timing input&#x27;s window size
+cheat = (&quot;import numpy as np\ndef moving_average(x, w):\n    k = np.ones(25) / 25\n    return np.convolve(x, k, mode=&#x27;valid&#x27;)\n&quot;)
+print(kb_run(KTASKS[1], cheat))
+# What to notice: it fails on the random small cases (other window sizes), so it scores as incorrect.
+# If we had only checked the timing input, it would have looked perfect. Always check on varied random inputs.</code></pre></div></details>
+<div class="pit"><strong>Traps</strong><ul><li>High coverage is not a high score. More parallel samples can make selection harder.</li><li>Model-written tests can be wrong. Drop tests that already pass on the buggy code, and don&#x27;t trust a single test.</li><li>A model judge on the whole pool can do worse than plain voting; filter to a short list first.</li><li>Checking speed on one input invites gaming. Check correctness on several random inputs, including edge cases like large values.</li><li>A speedup threshold of 1x is easy when the baseline is a Python loop and hard when the baseline is already tuned. Pick p for your baseline.</li><li>Timing is noisy. Take the best of several runs and keep timing in a separate process.</li><li>Never run model-written code in your own process. Use a subprocess with a timeout and a fresh folder.</li></ul></div>
+<div class="check"><h4>Check yourself</h4><details><summary>What are CodeMonkeys&#x27; three subtasks?</summary><p>Context (find relevant files), generation (sample edits and tests), and selection (choose one edit).</p></details><details><summary>How does CodeMonkeys select an edit?</summary><p>It runs model-written tests on all edits, keeps the top 3 by votes, and a model picks among them, optionally writing more tests.</p></details><details><summary>What does fast_1 measure?</summary><p>The fraction of tasks where the generated code is correct and faster than the reference.</p></details><details><summary>What did profiler and execution feedback do for DeepSeek-R1 on KernelBench Level 2?</summary><p>Raised fast_1 from 36% to 72% over 10 turns of refinement.</p></details><details><summary>What are the two parts of the agent-system interface in Wei et al.?</summary><p>A domain-specific language for mappers, and AutoGuide, which turns raw execution output into actionable feedback.</p></details></div>
+</div></section><nav class="pager"><a class="prev" href="a07.html"><small>← Previous</small>Self-improvement with search and deep research agents</a><a class="next" href="a09.html"><small>Next →</small>Augmenting agents with memory</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

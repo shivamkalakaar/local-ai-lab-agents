@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Design patterns · Agent Engineering School</title>
+<meta name="description" content="The handful of standard shapes most AI systems take, from simple chains to checker loops, and how to pick the simplest one that works.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 06</span></div><section class="mod" id="m6" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 06</div><h2>Design patterns</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/06_design_patterns.ipynb">Open in Colab</a><button class="done-btn" data-done="m6" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>13 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">The handful of standard shapes most AI systems take, from simple chains to checker loops, and how to pick the simplest one that works.</p><article class="lesson"><h2>The big idea</h2>
+<p>Most AI systems are built from a few standard shapes. Learn them, and you can sketch almost any system on a napkin.</p>
+<p>Think of a kitchen. There are a few ways to run it. One cook does steps in order. A host sends each order to the right station. Several cooks work on different dishes at once. A head chef tastes each plate and sends it back if it's wrong. You choose based on the menu, not on what looks fancy.</p>
+<p>The five workflow shapes are chaining, routing, parallel, orchestrator-workers, and generator plus checker. On top of these sit a few agent shapes. The rule is always the same. Start with the simplest one that works. Add more only when your tests show it helps.</p>
+<h2>Why it matters for us</h2>
+<p>Contract review has known steps, so most of it fits simple shapes. A chain extracts the cap, checks it, then drafts a fix. Parallel checks each playbook rule at once.</p>
+<p>Simple shapes suit small local models. Each step asks the model one narrow question. Code handles the rest. Fewer open choices means fewer chances to drift.</p>
+<p>One finding matters a lot. Asking a model "is this good?" with no outside signal does not help. It even made GPT-4-class models worse (course Lecture 6). Checkers should be real checks: code, rules, or tools.</p>
+<h2>How it works, step by step</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Shape</th>
+<th>What it does</th>
+<th>Contract example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chaining</td>
+<td>Fixed steps, with checks between them</td>
+<td>Extract cap, then check it, then draft a fix</td>
+</tr>
+<tr>
+<td>Routing</td>
+<td>Sort the input, send it to the right handler</td>
+<td>Easy clause to code, hard one to the model</td>
+</tr>
+<tr>
+<td>Parallel</td>
+<td>Run independent checks at once</td>
+<td>Check all four playbook rules together</td>
+</tr>
+<tr>
+<td>Orchestrator-workers</td>
+<td>A model splits the job and hands out parts</td>
+<td>Review a pile of unknown documents</td>
+</tr>
+<tr>
+<td>Generator + checker</td>
+<td>Draft, check, revise in a loop</td>
+<td>Draft a redline, check it meets 12 months</td>
+</tr>
+</tbody>
+</table></div>
+<p>And the agent shapes:</p>
+<ol>
+<li><strong>ReAct.</strong> Think, act, look at the result, repeat. This is the basic agent loop from module 01 (the ReAct paper, 2023).</li>
+<li><strong>Reflexion.</strong> After a clear failure, like a failed test, write a short lesson and retry with it.</li>
+<li><strong>CodeAct.</strong> Instead of one tool call per turn, the model writes a small Python program that does several steps at once. Good when a task needs loops over data.</li>
+<li><strong>Plan then execute.</strong> One call writes the full plan. Then code runs each step. The course reports about 40 to 60% fewer tokens. This turns agent work back into a workflow.</li>
+</ol>
+<h2>Worked example</h2>
+<p><strong>Chaining.</strong> The notebook finds the liability section. The model pulls out the cap and quotes the sentence. Then two code gates run:</p>
+<pre><code class="language-python">if not quote_is_in_doc(cap.quote, contract(cid)):
+    return {&quot;status&quot;: &quot;HOLD&quot;, &quot;why&quot;: &quot;quote not found in contract&quot;}
+ok = cap.months is not None and cap.months &lt;= PB[&quot;max_cap_months&quot;]
+return {&quot;status&quot;: &quot;OK&quot; if ok else &quot;ISSUE&quot;, &quot;months&quot;: cap.months}
+</code></pre>
+<ul>
+<li>The first line checks the model's quote is really in the contract.</li>
+<li>If not, the contract goes on HOLD. A person looks at it. We don't guess.</li>
+<li>The third line applies the playbook rule in code. No cap, or a cap over 12 months, is not OK.</li>
+<li>The last line returns OK or ISSUE, plus the number.</li>
+</ul>
+<p>On msa_07, which has a 24-month cap, the result is ISSUE.</p>
+<p><strong>Routing.</strong> For governing law, a simple text pattern looks for "State of ...". If it matches, code answers with no model call. Only odd cases go to the model.</p>
+<p><strong>Parallel.</strong> The four playbook rules don't depend on each other. The notebook checks them for msa_15 at the same time, each asking the model "PASS or FAIL?" for one clause.</p>
+<p><strong>Generator + checker.</strong> The model rewrites msa_08's cap clause. Code then reads the new text, finds every "N months," and checks the largest is at most 12. If not, it sends back specific feedback, like "the text says 24 months; the playbook max is 12." Note that code checks the text itself, not the model's own claim about it.</p>
+<p><strong>CodeAct.</strong> Asked which contracts use Texas, Florida or New York law, the model writes a short program that loops over all contracts. The notebook runs it in a limited space, a toy sandbox (a fenced-off area for running untrusted code).</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>A checker that is just the same model asking "is this good?"</strong> Without an outside signal it burns tokens. Use code or rules.</li>
+<li><strong>Orchestrator-workers for known steps.</strong> If you can list the steps, write a chain.</li>
+<li><strong>Starting complex.</strong> Begin with a chain. Add routing, parallel or loops only when tests show a gain.</li>
+<li><strong>Checking the model's claim instead of its output.</strong> Read the draft text yourself, in code.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>When does a generator plus checker loop help?</summary>
+<p>When the feedback can be stated clearly, something can give it reliably (tests, rules, a tool-using critic), and the generator can act on it.</p>
+</details>
+<details>
+<summary>How does plan then execute help a small local model?</summary>
+<p>It makes one planning call, then runs simple fixed steps. Fewer open decisions means fewer chances to drift, and it uses fewer tokens.</p>
+</details>
+<details>
+<summary>Why does the chain put a contract on HOLD instead of guessing?</summary>
+<p>Because the model&#x27;s quote wasn&#x27;t found in the contract. That is a sign the answer may be wrong, so a person should look.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the chain on msa_01, msa_07 and msa_16 and compare with the printed truth. Then run the redline loop and see how many rounds it takes. In the solutions, compare how many known-bad drafts the model checker approves versus the code checker.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">Lecture 6 · Anthropic, "Building Effective Agents" · ReAct · Reflexion · CodeAct · ReWOO</p>
+  <p class="big">Five workflow patterns and four agent patterns cover almost everything. Start with the simplest one that works and add complexity only when your eval shows it helps.</p>
+  <div class="terms"><h4>Key terms</h4><dl><div><dt>Prompt chaining</dt><dd>Fixed sequence of calls, each using the previous output, with checks between steps.<span class="from">Source: Anthropic, &quot;Building Effective Agents&quot; (2024)</span></dd></div><div><dt>Routing</dt><dd>Classify the input first and send it to the best prompt, model or code path; easy cases can go to a cheaper path.<span class="from">Source: Anthropic (2024); Lecture 6</span></dd></div><div><dt>Orchestrator–workers</dt><dd>An LLM breaks a task into subtasks at run time and delegates them, then combines results.<span class="from">Source: Anthropic (2024)</span></dd></div><div><dt>Evaluator–optimizer</dt><dd>A generator and a checker in a loop. Works only when feedback is clear, reliable and actionable.<span class="from">Source: Anthropic (2024); Lecture 6</span></dd></div><div><dt>Reflexion</dt><dd>After a failure with an outside signal, the agent writes a short lesson and retries with it in context.<span class="from">Source: Shinn et al., &quot;Reflexion&quot;, NeurIPS (2023)</span></dd></div><div><dt>CodeAct</dt><dd>The agent&#x27;s actions are small programs instead of JSON tool calls, which handle loops and data better.<span class="from">Source: Wang et al., &quot;Executable Code Actions Elicit Better LLM Agents&quot;, ICML (2024)</span></dd></div><div><dt>ReWOO (plan then execute)</dt><dd>Plan all steps in one call, then execute them without re-asking the model each step; fewer tokens.<span class="from">Source: Xu et al., ReWOO (2023), cited in Lecture 6</span></dd></div></dl></div>
+  <h3>Five workflow patterns</h3>
+  <div class="tbl"><table>
+    <tr><th>Pattern</th><th>What it does</th><th>Use when</th><th>Contract-review example</th></tr>
+    <tr><td>Chaining</td><td>Fixed steps, each feeding the next, with checks between</td><td>Task splits cleanly into steps</td><td>Extract → check → draft</td></tr>
+    <tr><td>Routing</td><td>Classify input, send to the right prompt or model</td><td>Inputs fall into types; easy ones can go to a cheap model</td><td>NDA → small model; complex MSA → bigger model</td></tr>
+    <tr><td>Parallel</td><td>Independent checks at once, or the same check several times then vote</td><td>Separate aspects, or you want confidence</td><td>Check liability, IP and termination clauses in parallel</td></tr>
+    <tr><td>Orchestrator–workers</td><td>An LLM splits the job at runtime and delegates</td><td>You can't predict the subtasks</td><td>Review a data room with unknown documents</td></tr>
+    <tr><td>Generator + checker</td><td>Draft, critique, revise in a loop</td><td>Feedback is clear and something can give it reliably</td><td>Draft a redline, check it against the playbook, revise</td></tr>
+  </table></div>
+  <h3>Four agent patterns</h3>
+  <ul>
+    <li><b>ReAct</b>: think, act, observe, repeat. The default agent loop.</li>
+    <li><b>Reflexion</b>: after a failure with an outside signal (a failing test), write a short lesson and retry with it. It added about 8 points over replaying raw history.</li>
+    <li><b>CodeAct</b>: the model writes code as its action instead of JSON tool calls. Up to 20% higher success with fewer turns across 17 models, when tasks involve loops or data handling.</li>
+    <li><b>Plan then execute (ReWOO)</b>: plan all steps first, then run them. About 40–60% fewer tokens. This turns agent work back into a workflow.</li>
+  </ul>
+  <div class="evidence">
+    <div class="ev"><div class="num">~75 vs ~67</div><p>F1 for a critic that used tools (search, code) vs. one that didn't (CRITIC, L6).</p></div>
+    <div class="ev"><div class="num">Hurts</div><p>Self-correction without an outside signal made even GPT-4-class models worse (L6 p.41).</p></div>
+  </div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/06_design_patterns.ipynb" target="_blank" rel="noopener">06_design_patterns.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">06_design_patterns.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import re, time
+from concurrent.futures import ThreadPoolExecutor
+from pydantic import BaseModel
+from typing import Literal
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
+from lal.llm import ask, structured
+from lal.data import contract, sections, labels, playbook, ids
+from lal.checks import quote_is_in_doc, check
+
+PB = playbook()
+def section(cid, word):
+    return next(s for s in sections(contract(cid)) if word in s[&quot;title&quot;])</code></pre></div>
+<div class="nb-md"><h3>1. Chaining: fixed steps with checks between them</h3></div>
+<div class="code"><div class="cap"><span class="cell">06_design_patterns.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class Cap(BaseModel):
+    months: int | None
+    quote: str
+
+def chain(cid):
+    s = section(cid, &quot;Liability&quot;)
+    cap = structured(f&quot;{s[&#x27;text&#x27;]}\n\nExtract the cap in months of fees (null if unlimited) and quote the sentence.&quot;, Cap)   # step 1: LLM
+    if not quote_is_in_doc(cap.quote, contract(cid)):                                                                     # gate: code
+        return {&quot;status&quot;: &quot;HOLD&quot;, &quot;why&quot;: &quot;quote not found in contract&quot;}
+    ok = cap.months is not None and cap.months &lt;= PB[&quot;max_cap_months&quot;]                                                    # step 2: rule in code
+    return {&quot;status&quot;: &quot;OK&quot; if ok else &quot;ISSUE&quot;, &quot;months&quot;: cap.months}
+
+for cid in [&quot;msa_01&quot;, &quot;msa_07&quot;, &quot;msa_16&quot;]:
+    print(cid, chain(cid), &quot;| truth:&quot;, labels()[cid][&quot;terms&quot;][&quot;liability_cap_months&quot;])</code></pre></div>
+<div class="nb-md"><h3>2. Routing: classify first, then send to the right handler</h3>
+<p>Easy inputs can go to a cheaper path. Here a cheap regex check handles most cases and the model handles the rest.</p></div>
+<div class="code"><div class="cap"><span class="cell">06_design_patterns.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def route_law(cid):
+    text = section(cid, &quot;Governing&quot;)[&quot;text&quot;]
+    m = re.search(r&quot;State of (\w+(?: \w+)?)&quot;, text)
+    if m:                                         # easy case: code handles it, no model call
+        return m.group(1).split(&quot;,&quot;)[0], &quot;code&quot;
+    return ask(f&quot;{text}\nWhich US state&#x27;s law governs? State name only.&quot;).strip(), &quot;model&quot;
+
+for cid in [&quot;msa_03&quot;, &quot;msa_09&quot;, &quot;msa_15&quot;]:
+    print(cid, route_law(cid))</code></pre></div>
+<div class="nb-md"><h3>3. Parallel: independent checks at the same time</h3>
+<p>Separate checks don't depend on each other, so run them together. Ollama runs them in parallel when <code>OLLAMA_NUM_PARALLEL</code> &gt; 1 (our setup sets 2); otherwise they queue.</p></div>
+<div class="code"><div class="cap"><span class="cell">06_design_patterns.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def check_rule(args):
+    cid, rule = args
+    word = {&quot;liability_cap&quot;: &quot;Liability&quot;, &quot;governing_law&quot;: &quot;Governing&quot;, &quot;auto_renewal&quot;: &quot;Renewal&quot;, &quot;termination_notice&quot;: &quot;Renewal&quot;}[rule]
+    verdict = ask(f&quot;Playbook rule: {PB[&#x27;rules&#x27;][rule]}\n\nClause: {section(cid, word)[&#x27;text&#x27;]}\n\n&quot;
+                  f&quot;Does the clause follow the rule? Answer PASS or FAIL only.&quot;).strip().upper()
+    return rule, &quot;FAIL&quot; if &quot;FAIL&quot; in verdict else &quot;PASS&quot;
+
+cid = &quot;msa_15&quot;
+t0 = time.time()
+with ThreadPoolExecutor(4) as ex:
+    results = list(ex.map(check_rule, [(cid, r) for r in PB[&quot;rules&quot;]]))
+print(results, f&quot;{time.time()-t0:.1f}s&quot;)
+print(&quot;truth issues:&quot;, [i[&quot;rule&quot;] for i in labels()[cid][&quot;issues&quot;]])</code></pre></div>
+<div class="nb-md"><h3>4. Generator + checker: draft, check with real checks, revise</h3>
+<p>The checker is code first. Asking the same model "is this good?" without an outside signal doesn't help; the course showed it can make results worse.</p></div>
+<div class="code"><div class="cap"><span class="cell">06_design_patterns.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">class Redline(BaseModel):
+    new_text: str
+    months: int
+
+def draft_redline(cid, rounds=3):
+    clause = section(cid, &quot;Liability&quot;)[&quot;text&quot;]
+    feedback = &quot;&quot;
+    for r in range(rounds):
+        d = structured(f&quot;Rewrite this clause so the liability cap meets the playbook: {PB[&#x27;rules&#x27;][&#x27;liability_cap&#x27;]}\n&quot;
+                       f&quot;Clause: {clause}\n{feedback}\nReturn the new clause text and the cap in months.&quot;, Redline)
+        problems = []
+        stated = [int(n) for n in re.findall(r&quot;(\d+)\)? months&quot;, d.new_text)]       # check the TEXT, not the model&#x27;s own claim
+        if not stated: problems.append(&quot;the new text doesn&#x27;t state the cap as a number of months, like &#x27;twelve (12) months&#x27;&quot;)
+        elif max(stated) &gt; PB[&quot;max_cap_months&quot;]: problems.append(f&quot;the text says {max(stated)} months; the playbook max is {PB[&#x27;max_cap_months&#x27;]}&quot;)
+        if not problems:
+            return d, r + 1
+        feedback = &quot;Fix these problems: &quot; + &quot;; &quot;.join(problems)
+    return d, rounds
+
+d, n = draft_redline(&quot;msa_08&quot;)
+print(f&quot;after {n} round(s):&quot;, d.new_text)</code></pre></div>
+<div class="nb-md"><h3>5. ReAct vs code-as-action (CodeAct)</h3>
+<p>Instead of one JSON tool call per turn, the model writes a small Python snippet that does several steps at once. Fewer turns when a task needs loops. We run the code in a restricted namespace (a toy sandbox; real systems use containers).</p></div>
+<div class="code"><div class="cap"><span class="cell">06_design_patterns.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def code_act(question):
+    code = ask(&quot;You can use these Python functions: contract(cid) -&gt; str, ids() -&gt; list of ids, &quot;
+               &quot;sections(text) -&gt; list of {&#x27;id&#x27;,&#x27;title&#x27;,&#x27;text&#x27;}.\n&quot;
+               f&quot;Write Python that computes the answer and stores it in a variable named result. Question: {question}\n&quot;
+               &quot;Reply with only the code, no explanation, no backticks.&quot;)
+    code = re.sub(r&quot;^```\w*|```$&quot;, &quot;&quot;, code.strip(), flags=re.M).strip()
+    import builtins
+    safe = {k: getattr(builtins, k) for k in (&quot;len&quot;, &quot;range&quot;, &quot;sorted&quot;, &quot;any&quot;, &quot;all&quot;, &quot;str&quot;, &quot;int&quot;, &quot;list&quot;, &quot;set&quot;, &quot;dict&quot;,
+                                              &quot;enumerate&quot;, &quot;zip&quot;, &quot;min&quot;, &quot;max&quot;, &quot;print&quot;, &quot;isinstance&quot;)}
+    g = {&quot;__builtins__&quot;: safe, &quot;contract&quot;: contract, &quot;ids&quot;: ids, &quot;sections&quot;: sections, &quot;re&quot;: re}   # one namespace, so generators and defs see the helpers
+    try:
+        exec(code, g)
+        return g.get(&quot;result&quot;), code
+    except Exception as e:
+        return f&quot;ERROR {e}&quot;, code
+
+result, code = code_act(&quot;Which contract ids are governed by Texas, Florida or New York law?&quot;)
+print(code, &quot;\n-&gt;&quot;, result)
+print(&quot;truth:&quot;, [c for c, l in labels().items() if l[&quot;terms&quot;][&quot;governing_law&quot;] in (&quot;Texas&quot;, &quot;Florida&quot;, &quot;New York&quot;)])</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">06_design_patterns.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;chain flags the 24-month cap in msa_07&quot;, chain(&quot;msa_07&quot;)[&quot;status&quot;] == &quot;ISSUE&quot;)
+check(&quot;redline text meets the playbook&quot;, bool(re.findall(r&quot;(\d+)\)? months&quot;, d.new_text)) and max(int(n) for n in re.findall(r&quot;(\d+)\)? months&quot;, d.new_text)) &lt;= PB[&quot;max_cap_months&quot;])</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li>Add a sixth pattern, <strong>plan then execute</strong>: one call writes a list of checks, then code runs each check.</li>
+<li>Replace the code checker in step 4 with "ask the model if the draft is good". Compare how often it catches a 24-month cap.</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">06_design_patterns.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: plan then execute. One call writes the plan; code runs every step.
+class Plan(BaseModel):
+    checks: list[Literal[&quot;liability_cap&quot;, &quot;governing_law&quot;, &quot;auto_renewal&quot;, &quot;termination_notice&quot;]]
+
+import json
+plan = structured(f&quot;You will review a vendor services agreement against these playbook rules: {json.dumps(PB[&#x27;rules&#x27;])}.\n&quot;
+                  &quot;Return the list of rule checks to run.&quot;, Plan)
+print(&quot;plan:&quot;, plan.checks)
+results = [check_rule((&quot;msa_15&quot;, r)) for r in dict.fromkeys(plan.checks)]       # code executes the plan
+print(&quot;results:&quot;, results, &quot;| truth:&quot;, [i[&quot;rule&quot;] for i in labels()[&quot;msa_15&quot;][&quot;issues&quot;]])</code></pre></div><div class="code"><div class="cap"><span class="cell">06_design_patterns.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: &quot;ask the model if it&#x27;s good&quot; vs a code checker, on drafts we KNOW are bad (cap &gt; 12 months)
+bad_drafts = [
+    &quot;Each party&#x27;s total liability shall not exceed the fees paid in the twenty-four (24) months preceding the claim.&quot;,
+    &quot;Liability is capped at fees paid during the 18 months before the claim, a market-standard position.&quot;,
+    &quot;Total liability shall not exceed three (3) years of fees.&quot;,
+]
+def llm_checker(text):
+    v = ask(f&quot;Playbook: the cap must not exceed fees paid in the prior 12 months.\nClause: {text}\n&quot;
+            &quot;Does the clause meet the playbook? Answer YES or NO only.&quot;).strip().upper()
+    return v.startswith(&quot;YES&quot;)
+def code_checker(text):
+    months = [int(n) for n in re.findall(r&quot;(\d+)\)? months&quot;, text)]
+    years = [int(n) * 12 for n in re.findall(r&quot;(\d+)\)? years&quot;, text)]
+    vals = months + years
+    return bool(vals) and max(vals) &lt;= 12
+print(&quot;LLM checker wrongly approved:&quot;, sum(llm_checker(t) for t in bad_drafts), &quot;of&quot;, len(bad_drafts))
+print(&quot;code checker wrongly approved:&quot;, sum(code_checker(t) for t in bad_drafts), &quot;of&quot;, len(bad_drafts))</code></pre></div></details>
+  <div class="pit"><strong>Traps</strong><ul>
+    <li>A generator–checker loop where the checker is the same model asked "is this good?". Without an outside signal it just burns tokens.</li>
+    <li>Using orchestrator–workers for work whose steps you already know.</li>
+  </ul></div>
+  <div class="check"><h4>Check yourself</h4>
+    <details><summary>What are the conditions for a generator + checker loop to help?</summary><p>The feedback can be stated clearly, something can give it reliably (tests, rules, a tool-using critic), and the generator can act on it.</p></details>
+    <details><summary>How does "plan then execute" help a small local model?</summary><p>One planning call, then simple fixed steps. Fewer open-ended decisions means fewer chances for a weak model to drift, and it uses 40–60% fewer tokens.</p></details>
+  </div>
+</div></section><nav class="pager"><a class="prev" href="m5.html"><small>← Previous</small>Tools and function calling</a><a class="next" href="m7.html"><small>Next →</small>Frameworks and harnesses</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Learning from feedback with tools and code · Agent Engineering School</title>
+<meta name="description" content="See how a model gets better when the world answers back: test results, tool lookups and a written rulebook, and how those loops become training data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A03</span></div><section class="mod" id="a03" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A03</div><h2>Learning from feedback with tools and code</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a03_feedback_tools_code.ipynb">Open in Colab</a><button class="done-btn" data-done="a03" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">See how a model gets better when the world answers back: test results, tool lookups and a written rulebook, and how those loops become training data.</p><article class="lesson"><h2>The big idea</h2>
+<p>A model guessing alone repeats its own mistakes. It gets better when something outside it answers back. That outside signal is called feedback.</p>
+<p>Think of a new associate. Left alone, they guess. Give them the case file to look things up, a checklist of the firm's standards, and a partner who returns marked-up drafts. Now they improve fast.</p>
+<p>This module covers three kinds of feedback. Test results for code the model writes. Tool results while it works through a question. And a short written rulebook it uses to critique and fix its own answers. Last, we turn those fixes into training data.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>Feedback from tools and tests is something you can check. The model's own "looks good to me" is not. A firm should trust the first, not the second.</li>
+<li>Contract facts should come from the contract, not the model's memory. A tool that reads the clause removes made-up facts.</li>
+<li>Every loop you log is future training data. A firm with its own computers can later use it to tune its own model.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Think, act, observe (ReAct).</strong> The ReAct paper (2022) has the model write a Thought, then an Action (a tool call, like a search), then read the Observation (the tool's result). It repeats until it answers. On a question-answering set, the authors studied failures. Made-up facts caused 56% of failures for plain step-by-step reasoning, and 0% for ReAct, which looked facts up. ReAct's own failures were mostly reasoning errors, like repeating the same step.</p>
+</li>
+<li>
+<p><strong>Execution feedback (RLEF).</strong> The RLEF paper (2024) makes code writing a conversation. The model writes code, sees results on public tests (visible tests), and tries again, up to 3 times. The final grade uses private tests (hidden tests it never sees). That stops it from passing only the tests it was shown. A key finding: untrained models barely used the feedback. An 8B model scored 11.8% in one go and 10.5% with feedback. After training on this loop with reinforcement learning (learning from rewards), it reached 16.0%. The 70B model reached 40.1%.</p>
+</li>
+<li>
+<p><strong>The fair baseline.</strong> A repair loop is not free accuracy. Compare it with simply trying again from scratch, with the same number of calls and no feedback. If the loop doesn't win, the model isn't really reading the feedback.</p>
+</li>
+<li>
+<p><strong>A written rulebook (Constitutional AI).</strong> The Constitutional AI paper (2022) replaced most human labels with a short list of principles, called a constitution. The model answers, critiques its answer against one principle, then revises. The paper used 16 principles and 4 critique-revise rounds per prompt.</p>
+</li>
+<li>
+<p><strong>From revisions to training data.</strong> Each draft and its revision form a preference pair: a prompt, a chosen answer (the revision) and a rejected answer (the draft). In the paper's second phase, an AI picks the better of two answers. Those picks train a reward model. This is called RLAIF, reinforcement learning from AI feedback. The paper also warned of over-training: answers became preachy and full of boilerplate.</p>
+</li>
+</ol>
+<pre><code>draft --&gt; critique (one rule) --&gt; revision
+  |                                  |
+  +--- rejected            chosen ---+   = one preference pair
+</code></pre>
+<h2>Worked example</h2>
+<p>The firm's constitution for contract answers has four rules:</p>
+<pre><code class="language-python">CONSTITUTION = [
+    &quot;Cite the clause number (like 7.1) for every claim about the contract.&quot;,
+    &quot;Judge the contract ONLY against the firm playbook rules given. ...&quot;,
+    &quot;Name every playbook rule the contract breaks, and say clearly whether the contract can be signed as written.&quot;,
+    &quot;Be short and plain: at most 6 sentences, no legal jargon.&quot;,
+]
+</code></pre>
+<p>In plain words: each line is one rule the answer must follow. Cite clauses. Stick to the playbook. Name every broken rule and give a verdict. Keep it short.</p>
+<p>Now the loop on contract msa_15, which breaks two playbook rules.</p>
+<ul>
+<li><strong>In:</strong> the playbook, the contract, and the question "Can we sign this as written?"</li>
+<li><strong>Draft:</strong> the model answers briefly. Say it mentions one problem but cites no clause.</li>
+<li><strong>Critique:</strong> we pick one rule at random, say "cite the clause number." The model lists what's missing.</li>
+<li><strong>Revision:</strong> the model rewrites the answer to follow all four rules.</li>
+<li><strong>Code check:</strong> code counts real clause numbers cited, flags made-up ones, checks the issue clauses are covered, and looks for a clear verdict.</li>
+<li><strong>Out:</strong> a (draft, revision) pair, plus scores for both.</li>
+</ul>
+<p>If the code scores the draft higher, we don't assume the revision is better. We flip or drop the pair.</p>
+<p>ReAct works the same way on the dollar cap. The model reads the section list, reads the liability clause, reads the fee clause, then calls a calculator. Every fact comes from the contract.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Calling a repair loop a win without a baseline.</strong> Compare against fresh tries with the same number of calls.</li>
+<li><strong>Grading on the same tests you showed the model.</strong> A fix can pass visible tests and fail hidden ones. Keep a held-out set.</li>
+<li><strong>Trusting the model's own opinion of its work.</strong> Use outside signals: tests, tool results, code checks.</li>
+<li><strong>Assuming every revision is better.</strong> Score drafts and revisions with the same checks. Drop or flip pairs where the revision lost.</li>
+<li><strong>Ignoring position bias.</strong> AI judges often prefer whichever answer comes first. Shuffle the order.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>In RLEF, why are the private tests kept hidden from the model?</summary>
+<p>So the final grade measures real correctness. If the model saw the grading tests, it could pass them without solving the task.</p>
+</details>
+<details>
+<summary>ReAct scored slightly below plain reasoning on one question set. Why does the paper still favor it?</summary>
+<p>Its answers are grounded in looked-up facts. Made-up facts caused none of its failures, against 56% for plain reasoning.</p>
+</details>
+<details>
+<summary>How does a critique-and-revise step become training data?</summary>
+<p>The draft becomes the rejected answer and the revision the chosen one. These pairs train a reward model or a direct preference update.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the feedback loop and compare it with the fair baseline: same budget, fresh tries, no feedback. Then watch a ReAct run and note where each fact came from. Finally, compare the code scores of drafts and revisions in the Constitutional AI section.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A Lecture 4 (Oct 3)</p>
+
+  <p class="big">A model improves when the world answers back: tool results, test results, or a written set of rules. Use outside signals you can check, not the model&#x27;s own opinion of itself, and log every loop so it can become training data later.</p>
+<div class="terms"><h4>Key terms</h4><dl><div><dt>ReAct</dt><dd>A loop of Thought, Action (tool call) and Observation (tool result), repeated until the agent answers.<span class="from">Source: Yao et al. 2022</span></dd></div><div><dt>Execution feedback</dt><dd>The results of running code (which tests failed, errors, timeouts) shown back to the model so it can fix the code.<span class="from">Source: Gehring et al. 2024</span></dd></div><div><dt>Public vs private tests</dt><dd>Public tests are visible and give feedback during the loop; private tests are hidden and decide the final grade, so the model cannot overfit to them.<span class="from">Source: Gehring et al. 2024</span></dd></div><div><dt>Constitution</dt><dd>A short list of written principles that an AI uses to critique and revise answers, replacing most human labels.<span class="from">Source: Bai et al. 2022</span></dd></div><div><dt>Critique-and-revise</dt><dd>The model reviews its own answer against one principle, writes a critique, then rewrites the answer to fix it.<span class="from">Source: Bai et al. 2022</span></dd></div><div><dt>RLAIF</dt><dd>Reinforcement learning from AI feedback: an AI, not a person, picks the better of two answers, and those picks train the reward model.<span class="from">Source: Bai et al. 2022</span></dd></div><div><dt>Preference pair</dt><dd>A training example with a prompt, a chosen answer and a rejected answer; the input format for reward models and DPO.<span class="from">Source: Inferred: standard format used with RLAIF/RLHF data</span></dd></div></dl></div>
+<h3>The papers</h3><div class="papers"><div class="paper"><h4><a href="https://arxiv.org/abs/2210.03629">ReAct: Synergizing Reasoning and Acting in Language Models</a></h4><p class="by">Yao et al. · 2022</p><dl><dt>What</dt><dd>The model writes a Thought, then an Action (a tool call such as a Wikipedia search), then reads the Observation, and repeats. They prompt PaLM-540B with a few example trajectories and compare against reasoning-only (chain-of-thought) and acting-only prompts on HotpotQA, FEVER, ALFWorld and WebShop.</dd><dt>Result</dt><dd>FEVER accuracy 60.9 vs 56.3 for chain-of-thought; on HotpotQA ReAct alone was slightly behind (27.4 vs 29.4 EM), but combining ReAct with self-consistent CoT gave the best prompting results (35.1 EM HotpotQA, 64.6 FEVER). In a manual study of HotpotQA failures, hallucination caused 56% of CoT failures and 0% of ReAct failures, while 47% of ReAct failures were reasoning errors such as repeating steps. ALFWorld success rose by an absolute 34% and WebShop by 10% over imitation and RL baselines, with only one or two in-context examples.</dd><dt>Takeaway</dt><dd>Give agents tools for facts and let them write a short reason before each action. Watch for loops (the same action again and again) and add a fallback to plain reasoning when the agent runs out of steps.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2410.02089">RLEF: Grounding Code LLMs in Execution Feedback with Reinforcement Learning</a></h4><p class="by">Gehring et al. · 2024</p><dl><dt>What</dt><dd>Code generation becomes a multi-turn episode: the model writes code, sees results on the public tests, and tries again (up to 3 attempts). The final reward is +1 if hidden private tests pass and -1 otherwise, and the model is trained with PPO. Starting models are Llama 3.1 8B and 70B Instruct.</dd><dt>Result</dt><dd>On CodeContests (test set, 3 attempts), 8B went from 10.5% to 16.0% and 70B from 27.5% to 40.1% solve rate. Before training the models barely used feedback: 8B scored 11.8% single-turn vs 10.5% multi-turn. With random feedback from an unrelated problem, the trained models got much worse, showing they really read the feedback. The trained 70B beat AlphaCodium (GPT-4) with far fewer samples.</dd><dt>Takeaway</dt><dd>A repair loop with test feedback is not free accuracy: measure it against simply sampling again with the same budget. If the loop doesn&#x27;t win, log the episodes; they are exactly the data needed to train a model that does use feedback.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2212.08073">Constitutional AI: Harmlessness from AI Feedback</a></h4><p class="by">Bai et al. · 2022</p><dl><dt>What</dt><dd>Humans write only a short list of principles (the constitution). Phase 1: the model answers red-team prompts, critiques its answer against a randomly sampled principle, and revises; a model is fine-tuned on the revisions (SL-CAI). Phase 2 (RLAIF): a model compares pairs of answers using a principle, those AI preferences train a preference model, and RL optimizes against it.</dd><dt>Result</dt><dd>They wrote 16 principles and sampled 4 critique-revision rounds per red-team prompt (182,831 red-team prompts in total, plus helpfulness data). RL-CAI models were rated by crowdworkers as significantly more harmless than RLHF and SL-CAI models, while engaging with harmful requests by explaining objections instead of being evasive. Turning the AI judge&#x27;s probabilities into soft labels clamped to 40-60% worked better than hard labels when the judge used chain-of-thought. Over-training led to Goodharting: preachy boilerplate in many answers.</dd><dt>Takeaway</dt><dd>Write your quality bar down as short, checkable rules. Use them to critique and revise outputs, and keep (draft, revision) pairs as preference data. Where a rule can be checked in code (citations exist, verdict present), check it in code instead of trusting the AI judge.</dd></dl></div></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a03_feedback_tools_code.ipynb" target="_blank" rel="noopener">a03_feedback_tools_code.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, random, re, time
+from concurrent.futures import ThreadPoolExecutor
+from lal.llm import ask
+from lal.data import contract, clauses, sections, labels, playbook
+from lal.codetasks import tasks, task, run_tests, extract_code, run_python
+from lal.checks import check
+
+CALLS = [0]                                   # count model calls; this notebook aims for about 60-80
+def llm(prompt, **kw):
+    CALLS[0] += 1
+    try:
+        return ask(prompt, **kw)
+    except Exception as e:                    # a server hiccup should not kill the whole notebook
+        return f&quot;ERROR: {e}&quot;
+
+TASKS = tasks()
+print(len(TASKS), &quot;coding tasks:&quot;, [t[&quot;id&quot;] for t in TASKS])
+print(&quot;\nExample prompt:\n&quot; + TASKS[4][&quot;prompt&quot;])</code></pre></div>
+<div class="nb-md"><h3>1. A grader the model cannot argue with</h3>
+<p>Each task has a reference solution and hidden unit tests (some generated with a fixed seed). <code>run_tests</code> runs code in a
+<strong>separate Python process with a timeout</strong>, so a bad or endless program cannot hurt the notebook. It returns
+<code>(passed, total, feedback)</code>, and the feedback is short text we can show the model.</p></div>
+<div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">t = task(&quot;second_largest&quot;)
+print(&quot;reference:&quot;, run_tests(t[&quot;reference&quot;], t)[:2])
+buggy = &quot;def second_largest(nums):\n    return sorted(nums)[-2]\n&quot;
+p, n, fb = run_tests(buggy, t)
+print(&quot;buggy:&quot;, p, &quot;/&quot;, n)
+print(fb)
+print(&quot;endless loop:&quot;, run_tests(&quot;def second_largest(nums):\n    while True: pass\n&quot;, t, timeout=2))</code></pre></div>
+<div class="nb-md"><h3>2. Execution feedback, at inference time (the idea behind RLEF)</h3>
+<p><strong>RLEF</strong> (Gehring et al. 2024, <em>RLEF: Grounding Code LLMs in Execution Feedback with Reinforcement Learning</em>) sets code
+writing up as a conversation: the model writes code, sees the results on the <strong>public</strong> tests, and tries again, up to 3
+attempts. Grading uses <strong>private</strong> tests it never sees. Their key finding: off-the-shelf Llama 3.1 Instruct models barely use
+the feedback (8B went from 11.8% single-turn to 10.5% multi-turn on CodeContests). After RL training on this loop, the 8B
+model reached 16.0% and the 70B reached 40.1%.</p>
+<p>We can't run RL here, but we can run the same loop and measure it. Our prompt examples are too few to catch bugs, so we give
+the loop a <strong>dev set</strong>: the prompt examples plus half of the hidden tests. We grade on <strong>all</strong> tests and also report the
+<strong>held-out</strong> half separately. If a fix only passes the tests it was shown, the held-out number tells us.</p></div>
+<div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def split(t):
+    hidden = t[&quot;tests&quot;][len(t[&quot;public_tests&quot;]):]
+    dev = dict(t, public_tests=t[&quot;public_tests&quot;] + hidden[::2])          # what the loop may see
+    held = dict(t, tests=t[&quot;public_tests&quot;] + hidden[1::2])               # never shown to the model
+    return dev, held
+
+SYSTEM = &quot;You write correct, simple Python. Reply with one ```python code block containing the function, and nothing else.&quot;
+
+def solve_with_feedback(t, max_turns=3, temperature=0):
+    &quot;&quot;&quot;Turn 1 is a normal one-shot attempt. Later turns see the dev-test failures.&quot;&quot;&quot;
+    dev, held = split(t)
+    history, code, log = t[&quot;prompt&quot;], &quot;&quot;, []
+    for turn in range(1, max_turns + 1):
+        reply = llm(history, system=SYSTEM, temperature=temperature, max_tokens=700)
+        code = extract_code(reply)
+        dp, dn, fb = run_tests(code, dev, public=True)                    # feedback signal
+        ap, an, _ = run_tests(code, t)                                    # grade: all tests
+        log.append({&quot;turn&quot;: turn, &quot;dev_ok&quot;: dp == dn, &quot;all_ok&quot;: ap == an, &quot;held_ok&quot;: run_tests(code, held)[0] == len(held[&quot;tests&quot;])})
+        if dp == dn:                                                      # stop when the visible tests pass (as in RLEF)
+            break
+        history = (f&quot;{t[&#x27;prompt&#x27;]}\n\nYour previous attempt:\n```python\n{code}```\n&quot;
+                   f&quot;Running it on tests gave:\n{fb}\nFix the code. Give it another try.&quot;)
+    return code, log
+
+t0 = time.time()
+with ThreadPoolExecutor(2) as ex:
+    fb_runs = dict(zip([t[&quot;id&quot;] for t in TASKS], ex.map(solve_with_feedback, TASKS)))
+print(f&quot;{time.time()-t0:.0f}s, {CALLS[0]} calls so far&quot;)
+for tid, (_, log) in fb_runs.items():
+    print(f&quot;{tid:18s}&quot;, &quot; -&gt; &quot;.join((&quot;PASS&quot; if r[&quot;all_ok&quot;] else &quot;fail&quot;) for r in log))</code></pre></div>
+<div class="nb-md"><p>Pass rate <strong>after each turn</strong>: a task counts as solved at turn k if its last attempt up to turn k passes all tests.</p></div>
+<div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def pass_by_turn(runs, max_turns=3):
+    out = []
+    for k in range(1, max_turns + 1):
+        solved = sum((log[min(k, len(log)) - 1][&quot;all_ok&quot;]) for _, log in runs.values())
+        out.append(solved / len(runs))
+    return out
+
+fb_curve = pass_by_turn(fb_runs)
+for k, r in enumerate(fb_curve, 1):
+    print(f&quot;after turn {k}: {r:.0%} of tasks pass all tests&quot;)
+fixed = [tid for tid, (_, log) in fb_runs.items() if len(log) &gt; 1]
+print(&quot;tasks that needed feedback:&quot;, fixed)
+print(&quot;of the final answers, how many pass the held-out half:&quot;,
+      sum(log[-1][&quot;held_ok&quot;] for _, log in fb_runs.values()), &quot;/&quot;, len(fb_runs))</code></pre></div>
+<div class="nb-md"><h3>The fair baseline: same budget, no feedback</h3>
+<p>RLEF compares against <strong>independent sampling</strong>: just try again from scratch, at a higher temperature, without showing the
+errors. If feedback doesn't beat this, the model is not really using the feedback. We give each task that failed turn 1
+the same extra attempts, with the dev tests picking which attempt to keep.</p></div>
+<div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def resample(t, extra=2):
+    dev, _ = split(t)
+    for i in range(extra):
+        code = extract_code(llm(t[&quot;prompt&quot;], system=SYSTEM, temperature=0.8, max_tokens=700))
+        if run_tests(code, dev, public=True)[0] == len(dev[&quot;public_tests&quot;]):
+            break
+    return run_tests(code, t)[0] == len(t[&quot;tests&quot;])
+
+failed_first = [t for t in TASKS if not fb_runs[t[&quot;id&quot;]][1][0][&quot;all_ok&quot;]]
+with ThreadPoolExecutor(2) as ex:
+    rs = list(ex.map(resample, failed_first))
+first_turn = sum(log[0][&quot;all_ok&quot;] for _, log in fb_runs.values())
+print(f&quot;turn 1 (shared):            {first_turn}/{len(TASKS)}&quot;)
+print(f&quot;+ 2 turns with feedback:     {sum(log[-1][&#x27;all_ok&#x27;] for _, log in fb_runs.values())}/{len(TASKS)}&quot;)
+print(f&quot;+ 2 fresh samples, no feedback: {first_turn + sum(rs)}/{len(TASKS)}&quot;)
+print(CALLS[0], &quot;calls so far&quot;)</code></pre></div>
+<div class="nb-md"><p>On 10 small tasks the gap is noisy, so read it as a sign, not proof. RLEF's point is that the gap is small for untrained
+models and grows after RL on exactly this loop. To train, you would log these episodes: (prompt, attempts, feedback,
+final reward = all private tests pass).</p></div>
+<div class="nb-md"><h3>3. ReAct: think, act, observe</h3>
+<p><strong>ReAct</strong> (Yao et al. 2022, <em>ReAct: Synergizing Reasoning and Acting in Language Models</em>) has the model write a <strong>Thought</strong>,
+then an <strong>Action</strong> (a tool call), then read the <strong>Observation</strong> (the tool result), and repeat. On HotpotQA, chain-of-thought
+answers were wrong because of made-up facts in 56% of the failures the authors studied, against 0% for ReAct, which looks facts up.</p>
+<p>Our task needs two lookups and one multiplication: the <strong>dollar</strong> liability cap = cap months × monthly fee. Tools: read the
+section list, read a clause, and a calculator that runs in a subprocess.</p></div>
+<div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def tool_sections(cid):
+    try:
+        return &quot;; &quot;.join(f&quot;{s[&#x27;id&#x27;]}. {s[&#x27;title&#x27;]}&quot; for s in sections(contract(cid)))
+    except Exception:
+        return f&quot;ERROR: unknown contract id {cid!r}&quot;
+
+def tool_clause(cid, num):
+    try:
+        cl = clauses(contract(cid))
+    except Exception:
+        return f&quot;ERROR: unknown contract id {cid!r}&quot;
+    return cl.get(num.strip(), f&quot;NOT FOUND. Valid clauses: {&#x27;, &#x27;.join(cl)}&quot;)
+
+def tool_calc(expr):
+    if not re.fullmatch(r&quot;[\d\s+\-*/().,]+&quot;, expr):                         # numbers and operators only
+        return &quot;ERROR: calculator accepts only numbers and + - * / ( )&quot;
+    out, err = run_python(f&quot;print({expr.replace(&#x27;,&#x27;, &#x27;&#x27;)})&quot;, timeout=3)       # still in a subprocess
+    return out.strip() or f&quot;ERROR: {err.strip()[-200:]}&quot;
+
+REACT = &quot;&quot;&quot;Answer the question by thinking step by step and using tools. Use EXACTLY this format, one step per reply:
+Thought: &lt;your reasoning&gt;
+Action: &lt;one of: sections[contract_id] | clause[contract_id, clause_number] | calculate[expression] | finish[answer]&gt;
+
+Tools:
+- sections[msa_01] lists the section headings.
+- clause[msa_01, 2.1] returns the text of clause 2.1.
+- calculate[12 * 4500] does arithmetic.
+- finish[54000] gives the final answer (a plain number).
+&quot;&quot;&quot;
+
+def react(question, max_steps=5, verbose=True):
+    transcript = f&quot;{REACT}\nQuestion: {question}\n&quot;
+    for step in range(max_steps):
+        reply = llm(transcript, temperature=0, max_tokens=250, stop=[&quot;Observation:&quot;])
+        m = re.search(r&quot;Action:\s*(\w+)\[(.*?)\]&quot;, reply, flags=re.S)
+        thought = (re.search(r&quot;Thought:\s*(.*)&quot;, reply) or re.search(r&quot;(.*)&quot;, reply)).group(1)[:120]
+        if not m:
+            obs = &quot;FORMAT ERROR: end with a line &#x27;Action: tool[arguments]&#x27;.&quot;
+        else:
+            name, arg = m.group(1).lower(), m.group(2)
+            if name == &quot;finish&quot;:
+                if verbose: print(f&quot;  {step+1}. finish[{arg}]&quot;)
+                return arg, step + 1
+            parts = [a.strip(&quot; &#x27;\&quot;&quot;) for a in arg.split(&quot;,&quot;, 1)]
+            obs = {&quot;sections&quot;: lambda: tool_sections(parts[0]),
+                   &quot;clause&quot;: lambda: tool_clause(parts[0], parts[1]) if len(parts) == 2 else &quot;ERROR: use clause[contract_id, number]&quot;,
+                   &quot;calculate&quot;: lambda: tool_calc(arg)}.get(name, lambda: f&quot;ERROR: unknown tool {name}&quot;)()
+        if verbose: print(f&quot;  {step+1}. {thought} | {m.group(0) if m else &#x27;??&#x27;} -&gt; {str(obs)[:80]}&quot;)
+        transcript += reply.strip() + f&quot;\nObservation: {obs}\n&quot;
+    return None, max_steps
+
+def to_number(s):
+    try:
+        return float(re.sub(r&quot;[^\d.]&quot;, &quot;&quot;, str(s).split()[0] if s else &quot;&quot;) or &quot;nan&quot;)
+    except Exception:
+        return float(&quot;nan&quot;)
+
+L = labels()
+react_ids = [&quot;msa_07&quot;, &quot;msa_08&quot;, &quot;msa_20&quot;]
+react_results = {}
+for cid in react_ids:
+    truth = L[cid][&quot;terms&quot;][&quot;liability_cap_months&quot;] * L[cid][&quot;terms&quot;][&quot;monthly_fee&quot;]
+    print(f&quot;{cid} (truth ${truth:,})&quot;)
+    ans, steps = react(f&quot;In contract {cid}, what is the liability cap in dollars? &quot;
+                       &quot;(The cap is a number of months of fees; multiply by the monthly fee.)&quot;)
+    react_results[cid] = to_number(ans) == truth
+    print(&quot;  -&gt;&quot;, ans, &quot;| correct:&quot;, react_results[cid])
+print(CALLS[0], &quot;calls so far&quot;)</code></pre></div>
+<div class="nb-md"><p>Notice where each fact came from: the clause text, not the model's memory. When a step fails (wrong clause number, bad
+format), the error comes back as an observation and the model can recover. That is "learning from feedback" inside one episode.</p></div>
+<div class="nb-md"><h3>4. Constitutional AI: critique and revise against written rules</h3>
+<p><strong>Constitutional AI</strong> (Bai et al. 2022, <em>Constitutional AI: Harmlessness from AI Feedback</em>) replaces most human labels
+with a short list of principles. Phase 1 (supervised): the model answers, <strong>critiques</strong> its answer against a randomly picked
+principle, and <strong>revises</strong>. The paper used 16 principles and 4 critique-revision rounds per prompt, then fine-tuned on the
+revisions. Phase 2 (RLAIF): a model compares two answers using a principle; those AI preferences train a reward model.</p>
+<p>Our constitution is for contract-review answers. Each rule is also something code can partly check.</p></div>
+<div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">PB = playbook()
+CONSTITUTION = [
+    &quot;Cite the clause number (like 7.1) for every claim about the contract.&quot;,
+    &quot;Judge the contract ONLY against the firm playbook rules given. Do not give legal advice beyond the playbook; &quot;
+    &quot;for anything else, say the team should ask counsel.&quot;,
+    &quot;Name every playbook rule the contract breaks, and say clearly whether the contract can be signed as written.&quot;,
+    &quot;Be short and plain: at most 6 sentences, no legal jargon.&quot;,
+]
+
+def contract_question(cid):
+    return (f&quot;Firm playbook rules: {json.dumps(PB[&#x27;rules&#x27;])}\n\nContract {cid}:\n{contract(cid)}\n\n&quot;
+            &quot;Question from the business team: can we sign this contract as written? What needs to change?&quot;)
+
+def critique_revise(cid, rng):
+    q = contract_question(cid)
+    draft = llm(q + &quot;\nAnswer briefly.&quot;, temperature=0.7, max_tokens=300)           # a typical first answer
+    principle = rng.choice(CONSTITUTION)                                              # CAI samples one principle per step
+    critique = llm(f&quot;{q}\n\nAnswer to review:\n{draft}\n\nPrinciple: {principle}\n&quot;
+                   &quot;Critique the answer ONLY against this principle. List concrete problems, or say &#x27;No problems&#x27;.&quot;,
+                   max_tokens=250)
+    revision = llm(f&quot;{q}\n\nOriginal answer:\n{draft}\n\nCritique:\n{critique}\n\n&quot;
+                   f&quot;Rewrite the answer so it follows every rule below and fixes the critique.\nRules:\n- &quot;
+                   + &quot;\n- &quot;.join(CONSTITUTION) + &quot;\nReturn only the new answer.&quot;, max_tokens=300)
+    return {&quot;cid&quot;: cid, &quot;principle&quot;: principle, &quot;draft&quot;: draft, &quot;critique&quot;: critique, &quot;revision&quot;: revision}
+
+def score(answer, cid):
+    &quot;&quot;&quot;Code checks for the constitution: real citations, issue clauses cited, a clear verdict.&quot;&quot;&quot;
+    cited = set(re.findall(r&quot;\b(\d{1,2}\.\d)\b&quot;, answer))
+    valid = set(clauses(contract(cid)))
+    issue_clauses = {i[&quot;clause&quot;] for i in L[cid][&quot;issues&quot;]}
+    return {&quot;cites&quot;: len(cited &amp; valid),
+            &quot;bad_cites&quot;: len(cited - valid),
+            &quot;issue_recall&quot;: len(cited &amp; issue_clauses) / max(1, len(issue_clauses)),
+            &quot;verdict&quot;: bool(re.search(r&quot;\b(cannot|can&#x27;t|should not|not be signed|do not sign|don&#x27;t sign|not sign)\b&quot;, answer, re.I))}
+
+cai_ids = [&quot;msa_15&quot;, &quot;msa_17&quot;, &quot;msa_20&quot;]            # each breaks two playbook rules
+rng = random.Random(0)
+cai = [critique_revise(cid, rng) for cid in cai_ids]
+for r in cai:
+    r[&quot;s_draft&quot;], r[&quot;s_rev&quot;] = score(r[&quot;draft&quot;], r[&quot;cid&quot;]), score(r[&quot;revision&quot;], r[&quot;cid&quot;])
+    print(f&quot;=== {r[&#x27;cid&#x27;]} | principle: {r[&#x27;principle&#x27;][:60]}...&quot;)
+    print(&quot;DRAFT:&quot;, r[&quot;draft&quot;][:400].replace(&quot;\n&quot;, &quot; &quot;), &quot;\n  &quot;, r[&quot;s_draft&quot;])
+    print(&quot;REVISED:&quot;, r[&quot;revision&quot;][:400].replace(&quot;\n&quot;, &quot; &quot;), &quot;\n  &quot;, r[&quot;s_rev&quot;], &quot;\n&quot;)
+print(CALLS[0], &quot;calls so far&quot;)</code></pre></div>
+<div class="nb-md"><h3>5. From revisions to preference data (RLAIF)</h3>
+<p>Each (draft, revision) pair is a training example: <em>chosen</em> = revision, <em>rejected</em> = draft. In CAI's phase 2, a model is shown
+two answers and a principle and picks the better one; the paper turned the model's probabilities into soft labels and found
+clamping them to 40-60% worked best when the judge reasoned step by step first. We ask our model to judge, <strong>shuffle the
+order</strong> so position bias can't fake agreement, and compare its pick with our code score.</p></div>
+<div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def code_total(s):
+    return s[&quot;cites&quot;] - 2 * s[&quot;bad_cites&quot;] + 3 * s[&quot;issue_recall&quot;] + s[&quot;verdict&quot;]
+
+def ai_judge(r, rng):
+    a, b, flipped = r[&quot;draft&quot;], r[&quot;revision&quot;], False
+    if rng.random() &lt; 0.5:
+        a, b, flipped = b, a, True
+    principle = &quot;Which answer better follows these rules? &quot; + &quot; &quot;.join(CONSTITUTION)
+    v = llm(f&quot;{contract_question(r[&#x27;cid&#x27;])}\n\nAnswer (A):\n{a}\n\nAnswer (B):\n{b}\n\n{principle}\n&quot;
+            &quot;Think in one or two sentences, then end with exactly &#x27;Choice: A&#x27; or &#x27;Choice: B&#x27;.&quot;, max_tokens=200)
+    m = re.findall(r&quot;Choice:\s*\(?([AB])&quot;, v)
+    pick = m[-1] if m else None
+    if pick is None:
+        return None
+    return (pick == &quot;A&quot;) == flipped          # True if the judge prefers the revision
+
+pairs = []
+for r in cai:
+    prefers_rev = ai_judge(r, rng)
+    code_prefers_rev = code_total(r[&quot;s_rev&quot;]) &gt;= code_total(r[&quot;s_draft&quot;])
+    pairs.append({&quot;prompt&quot;: contract_question(r[&quot;cid&quot;]), &quot;chosen&quot;: r[&quot;revision&quot;], &quot;rejected&quot;: r[&quot;draft&quot;],
+                  &quot;principle&quot;: r[&quot;principle&quot;], &quot;ai_prefers_revision&quot;: prefers_rev, &quot;code_prefers_revision&quot;: code_prefers_rev})
+    print(r[&quot;cid&quot;], &quot;| AI judge prefers revision:&quot;, prefers_rev, &quot;| code score prefers revision:&quot;, code_prefers_rev)
+print(f&quot;\n{len(pairs)} preference pairs built. Total model calls: {CALLS[0]}&quot;)</code></pre></div>
+<div class="nb-md"><p>A real pipeline would keep only pairs where the AI judge and the code checks agree, then train with DPO or a reward model
+plus RL. The constitution is the only human input, which makes it cheap to change: edit a rule, regenerate the data.</p></div>
+<div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">n_turn1, n_final = fb_curve[0], fb_curve[-1]
+check(&quot;code grader: reference passes, buggy fails&quot;, run_tests(task(&quot;second_largest&quot;)[&quot;reference&quot;], task(&quot;second_largest&quot;))[0] == 11 and run_tests(buggy, task(&quot;second_largest&quot;))[0] &lt; 11)
+check(&quot;feedback loop solves at least half the tasks&quot;, n_final &gt;= 0.5)
+n_all = sum(log[-1][&quot;all_ok&quot;] for _, log in fb_runs.values())
+n_dev = sum(log[-1][&quot;dev_ok&quot;] for _, log in fb_runs.values())
+check(&quot;passing the dev tests mostly means passing all tests (fixes generalize)&quot;, n_all &gt;= 0.7 * n_dev)
+check(&quot;ReAct gets at least one dollar cap right with tools&quot;, sum(react_results.values()) &gt;= 1)
+check(&quot;revisions cite real clauses at least as often as drafts&quot;,
+      sum(r[&quot;s_rev&quot;][&quot;cites&quot;] &gt; 0 for r in cai) &gt;= sum(r[&quot;s_draft&quot;][&quot;cites&quot;] &gt; 0 for r in cai))</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li><strong>Is the model reading the feedback?</strong> RLEF tested this by sending <em>random</em> feedback. Re-run the feedback loop on the tasks
+   that failed turn 1, but replace the failure details with only "Some tests failed." Does the pass rate drop?</li>
+<li><strong>Act without thinking.</strong> Change the ReAct prompt so the model must skip the <code>Thought:</code> line (the paper's "Act" baseline) and
+   run it on one contract. Does it still find both clauses?</li>
+<li><strong>Data, not just demos.</strong> Write the preference pairs to <code>cai_pairs.jsonl</code> in the <code>{"prompt","chosen","rejected"}</code> format that
+   TRL's DPO trainer reads, keeping only pairs where the AI judge and the code score agree.</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 11</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: same loop, but the feedback hides WHICH tests failed and why.
+def solve_blind(t, max_turns=3):
+    dev, _ = split(t)
+    history = t[&quot;prompt&quot;]
+    for turn in range(1, max_turns + 1):
+        code = extract_code(llm(history, system=SYSTEM, temperature=0, max_tokens=700))
+        if run_tests(code, dev, public=True)[0] == len(dev[&quot;public_tests&quot;]):
+            break
+        history = f&quot;{t[&#x27;prompt&#x27;]}\n\nYour previous attempt:\n```python\n{code}```\nSome tests failed. Give it another try.&quot;
+    return run_tests(code, t)[0] == len(t[&quot;tests&quot;])
+
+retry = failed_first[:3]                       # small budget: at most 3 tasks x 3 calls
+blind = [solve_blind(t) for t in retry]
+full = [fb_runs[t[&quot;id&quot;]][1][-1][&quot;all_ok&quot;] for t in retry]
+print(&quot;solved with detailed feedback:&quot;, sum(full), &quot;| with &#x27;some tests failed&#x27;:&quot;, sum(blind), &quot;| of&quot;, len(retry))
+# Notice: at temperature 0 with a vague message, the model often repeats its old code (RLEF saw this too in untrained models).</code></pre></div><div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 12</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: Act-only, no thoughts.
+ACT = REACT.replace(&quot;Thought: &lt;your reasoning&gt;\n&quot;, &quot;&quot;).replace(&quot;thinking step by step and using tools&quot;, &quot;using tools. Do not explain&quot;)
+REACT_SAVED, REACT = REACT, ACT
+ans, steps = react(&quot;In contract msa_08, what is the liability cap in dollars? (Cap months times the monthly fee.)&quot;)
+REACT = REACT_SAVED
+print(&quot;Act-only answer:&quot;, ans, &quot;| truth:&quot;, L[&quot;msa_08&quot;][&quot;terms&quot;][&quot;liability_cap_months&quot;] * L[&quot;msa_08&quot;][&quot;terms&quot;][&quot;monthly_fee&quot;])
+# Notice: without a thought step, small models more often finish after one lookup, or forget to multiply.</code></pre></div><div class="code"><div class="cap"><span class="cell">a03_feedback_tools_code.ipynb · cell 13</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 3: keep only pairs where the AI judge and the code checks agree, then write DPO-format JSONL.
+keep = [p for p in pairs if p[&quot;ai_prefers_revision&quot;] is not None and p[&quot;ai_prefers_revision&quot;] == p[&quot;code_prefers_revision&quot;]]
+with open(&quot;cai_pairs.jsonl&quot;, &quot;w&quot;) as f:
+    for p in keep:
+        chosen, rejected = (p[&quot;chosen&quot;], p[&quot;rejected&quot;]) if p[&quot;ai_prefers_revision&quot;] else (p[&quot;rejected&quot;], p[&quot;chosen&quot;])
+        f.write(json.dumps({&quot;prompt&quot;: p[&quot;prompt&quot;], &quot;chosen&quot;: chosen, &quot;rejected&quot;: rejected}) + &quot;\n&quot;)
+print(f&quot;kept {len(keep)} of {len(pairs)} pairs -&gt; cai_pairs.jsonl&quot;)
+# Notice: when both judges prefer the DRAFT, we flip chosen/rejected. A revision is not automatically better.
+print(&quot;total model calls in this notebook:&quot;, CALLS[0])</code></pre></div></details>
+<div class="pit"><strong>Traps</strong><ul><li>Calling a repair loop a win without a baseline. Compare against fresh samples with the same number of calls; RLEF found untrained models barely beat it.</li><li>Showing the model the same tests you grade on. Fixes can pass the visible tests and still fail hidden ones; keep a held-out set.</li><li>Trusting the model&#x27;s own &#x27;looks good to me&#x27;. Use outside signals: tests, tool results, code checks.</li><li>Assuming every revision is better. Score drafts and revisions with the same checks, and flip or drop pairs where the revision lost.</li><li>Ignoring position bias in AI judges. Shuffle which answer is A and which is B.</li><li>Over-optimizing against an AI reward. CAI saw Goodharting: preachy boilerplate added to most answers.</li></ul></div>
+<div class="check"><h4>Check yourself</h4><details><summary>In RLEF, why are the private tests kept hidden from the model?</summary><p>So the final reward measures real correctness. If the model saw the grading tests, it could pass them without solving the task (overfit to the feedback).</p></details><details><summary>On HotpotQA, ReAct alone scored slightly below chain-of-thought. Why does the paper still favor it?</summary><p>Its answers are grounded: hallucination caused 0% of its failures vs 56% for CoT. Combining ReAct with CoT-SC gave the best scores (35.1 EM).</p></details><details><summary>How does a Constitutional AI critique-and-revise step become training data?</summary><p>The original answer is the rejected example and the revision is the chosen one. These pairs (or AI-judged comparisons) train a preference model or a DPO update.</p></details></div>
+</div></section><nav class="pager"><a class="prev" href="a02.html"><small>← Previous</small>Robust verification</a><a class="next" href="a04.html"><small>Next →</small>Multi-step reasoning and planning</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Data and flywheels · Agent Engineering School</title>
+<meta name="description" content="How every run and every lawyer&#x27;s correction becomes data. Make test cases with known answers, log what happens, and turn fixes into tests today and training data later.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 12</span></div><section class="mod" id="m12" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 12</div><h2>Data and flywheels</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/12_data_flywheel.ipynb">Open in Colab</a><button class="done-btn" data-done="m12" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>11 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How every run and every lawyer&#x27;s correction becomes data. Make test cases with known answers, log what happens, and turn fixes into tests today and training data later.</p><article class="lesson"><h2>The big idea</h2>
+<p>Every time the agent runs, something useful happens. It gets a contract right, or it gets one wrong and a lawyer fixes it. If you write that down, it becomes data. If you don't, it's gone.</p>
+<p>Think of a restaurant kitchen. A good chef keeps notes: which dish came back, why, and what fixed it. Those notes train the next cook. Over time the kitchen gets better because it remembers its own mistakes.</p>
+<p>This lesson covers two habits. First, make test cases where you already know the answer, by planting problems on purpose. Second, build a flywheel: a loop where use creates records, records improve tests and training, and a better system gets more use.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>Firms rarely have hundreds of labeled contracts ready to go. Planting known problems in clean contracts gives us labeled cases cheaply.</li>
+<li>A local system logs everything on the firm's own disk. That log is the audit trail and the future training set, and it never leaves the building.</li>
+<li>Each lawyer edit is free expert labeling. Capturing it with a reason is how the system improves month by month.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Plant known faults.</strong> Take a clean contract. Use code to change one clause so it breaks a rule. For example, change a 12-month liability cap to 48 months. Now the right answer is known by construction. This idea comes from the SWE-smith paper (2025), which planted known bugs into working code. Each of its synthetic tasks cost about 2.5 cents.</p>
+</li>
+<li>
+<p><strong>Log every run as a trace.</strong> A trace is the full record of one run: the input, the prompt, the model name, the output, and the time taken. Traces show what really happened, not what you hoped happened.</p>
+</li>
+<li>
+<p><strong>Turn corrections into tests at once.</strong> When a lawyer fixes a miss, store the input, the wrong answer, the right answer and the reason. Add it to a regression set right away. A regression set is a list of past mistakes you rerun after every change, to make sure they stay fixed.</p>
+</li>
+<li>
+<p><strong>Build training data by rejection sampling.</strong> Let the model try each case. Keep only the answers a checker accepts, and throw away the rest. What's left is clean data to fine-tune on later.</p>
+</li>
+<li>
+<p><strong>Batch into releases, and protect the eval.</strong> Gather corrections into a training set for the next release. Never train on the held-out eval set, or your test scores become meaningless.</p>
+</li>
+</ol>
+<pre><code>use -&gt; traces + corrections -&gt; tests now, training later -&gt; better system -&gt; more use
+</code></pre>
+<h2>Worked example</h2>
+<p>The firm's rules: liability cap at most 12 months of fees, governing law California or Delaware, renewals at most 1 year, notice at least 30 days.</p>
+<p>The notebook defines four ways to break a clean contract:</p>
+<pre><code class="language-python">FAULTS = {
+    &quot;liability_cap&quot;:      lambda t: re.sub(r&quot;IN THE 12 MONTHS&quot;, &quot;IN THE FORTY-EIGHT (48) MONTHS&quot;, t),
+    &quot;governing_law&quot;:      lambda t: re.sub(r&quot;State of (California|Delaware)&quot;, &quot;State of Nevada&quot;, t),
+    &quot;auto_renewal&quot;:       lambda t: t.replace(&quot;successive one (1) year&quot;, &quot;successive four (4) year&quot;),
+    &quot;termination_notice&quot;: lambda t: re.sub(r&quot;at least [\w\s()]+? days'&quot;, &quot;at least seven (7) days'&quot;, t),
+}
+</code></pre>
+<p>Line by line: each line is one fault, named after the rule it breaks. The liability line swaps a 12-month cap for 48 months. The law line swaps California or Delaware for Nevada. The renewal line changes a one-year renewal to four years. The notice line changes any notice period to seven days. Each is a simple find-and-replace, so we know exactly what we broke.</p>
+<p>The notebook picks one or two faults at random for each case. From the clean contracts it builds 30 new cases, each with a known list of issues. Then the reviewer runs on them, and every call is written to a traces file.</p>
+<p>Where the reviewer misses a planted fault, or flags something that isn't there, the case goes into the regression file. Finally, the notebook runs the reviewer on 10 more cases, up to two tries each. It keeps only answers that exactly match the known issues, and writes them in the standard chat format that fine-tuning tools read.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Theorizing instead of reading.</strong> Don't guess why the agent fails. Read 50–100 real outputs with the customer and write down the failures in plain words.</li>
+<li><strong>Using only synthetic cases.</strong> A model can look great on cases built from your own templates and still fail on real documents. Keep real contracts in every eval and training set.</li>
+<li><strong>Rewarding "the reviewer approved it".</strong> The model learns to look right rather than be right. Reward correct answers, checked against known labels.</li>
+<li><strong>Vague quality scores.</strong> A pass or fail per criterion beats a 1–5 "quality" rating. It is clearer and people agree on it more.</li>
+<li><strong>Auto-reusing stored examples without filtering.</strong> One bad example, pulled into future prompts, quietly poisons later runs.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>Where does a lawyer&#x27;s correction go, in order?</summary>
+<p>It is logged with the reason, added as a test case, used as a retrieved example right away, and included in the next training batch. It never goes into the held-out eval.</p>
+</details>
+<details>
+<summary>Why are planted faults useful?</summary>
+<p>We changed the contract ourselves, so we know the right answer without paying a lawyer to label it. That gives many labeled cases cheaply.</p>
+</details>
+<details>
+<summary>What is rejection sampling?</summary>
+<p>Let the model try several times and keep only the answers a checker accepts. The kept answers become clean training data.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the Module 12 notebook and look at the first synthetic case to see the planted lines. Check how many misses went into the regression file and how many of 10 cases were kept for fine-tuning. In the exercises, add a new fault type and mix real and synthetic cases in one eval.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">Lecture 11 · Shankar, "Data Flywheels" · "Who Validates the Validators?" · SWE-smith · LIMA</p>
+  <p class="big">Every run, every human correction and every failure is data. Store it with the reason, and it becomes a test today, an example tomorrow, and training data next month.</p>
+  <div class="terms"><h4>Key terms</h4><dl><div><dt>Trace / trajectory</dt><dd>The full record of a run: inputs, prompts, model outputs, tool calls, results and timings.<span class="from">Source: Lecture 11</span></dd></div><div><dt>Data flywheel</dt><dd>Usage produces traces and corrections, which improve evals and training data, which improve the system, which earns more usage.<span class="from">Source: Shankar, &quot;Data Flywheels for LLM Applications&quot; (2024)</span></dd></div><div><dt>Synthetic task generation</dt><dd>Creating labeled cases by injecting known faults into real or clean data, so the answer is known by construction.<span class="from">Source: Yang et al., &quot;SWE-smith&quot;, NeurIPS D&amp;B (2025)</span></dd></div><div><dt>Rejection sampling</dt><dd>Generate several outputs and keep only those a checker accepts, to build clean training data.<span class="from">Source: Lecture 9 and 11</span></dd></div><div><dt>Criteria drift</dt><dd>Graders&#x27; standards change as they see more outputs; evaluation criteria must be revisited.<span class="from">Source: Shankar et al., &quot;Who Validates the Validators?&quot;, UIST (2024)</span></dd></div><div><dt>Less is more</dt><dd>A small set of diverse, high-quality examples can align a strong model.<span class="from">Source: Zhou et al., &quot;LIMA&quot;, NeurIPS (2023)</span></dd></div></dl></div>
+  <h3>Three kinds of agent data</h3>
+  <ul>
+    <li><b>Traces</b>: the full record of each run: inputs, model calls, tool calls, outputs.</li>
+    <li><b>Demonstrations</b>: correct examples, from experts or from a teacher model whose output passed the checker.</li>
+    <li><b>Feedback</b>: corrections and ratings from people. Binary pass/fail per criterion beats a 1–5 "quality" score.</li>
+  </ul>
+  <h3>The flywheel</h3>
+  <ol>
+    <li>Read 50–100 real outputs with the customer. Write down failures in plain words.</li>
+    <li>Turn each failure type into a binary check, in code where possible.</li>
+    <li>Align any LLM judge to about 16+ human-graded examples. Expect your criteria to change as you grade.</li>
+    <li>Log every correction with its reason. Use it right away as a test case and as a retrieved example.</li>
+    <li>Batch corrections into a training set for the next release. Never train on the held-out eval.</li>
+  </ol>
+  <div class="evidence">
+    <div class="ev"><div class="num">1,000</div><p>Carefully chosen examples were enough to align a strong model (LIMA). Diversity beats volume.</p></div>
+    <div class="ev"><div class="num">2.5¢</div><p>Cost per synthetic task in SWE-smith, which injects known bugs into working code.</p></div>
+  </div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/12_data_flywheel.ipynb" target="_blank" rel="noopener">12_data_flywheel.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">12_data_flywheel.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, random, re, time
+from pathlib import Path
+# lal.llm = the OpenAI client pointed at the local Ollama server, http://localhost:11434/v1 (see notebook 00)
+from lal.llm import client
+from lal.data import contract, labels, playbook
+from lal.checks import check</code></pre></div>
+<div class="nb-md"><h3>1. Inject faults into a clean contract</h3></div>
+<div class="code"><div class="cap"><span class="cell">12_data_flywheel.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">FAULTS = {
+    &quot;liability_cap&quot;:      lambda t: re.sub(r&quot;IN THE 12 MONTHS&quot;, &quot;IN THE FORTY-EIGHT (48) MONTHS&quot;, t),
+    &quot;governing_law&quot;:      lambda t: re.sub(r&quot;State of (California|Delaware)&quot;, &quot;State of Nevada&quot;, t),
+    &quot;auto_renewal&quot;:       lambda t: t.replace(&quot;successive one (1) year&quot;, &quot;successive four (4) year&quot;),
+    &quot;termination_notice&quot;: lambda t: re.sub(r&quot;at least [\w\s()]+? days&#x27;&quot;, &quot;at least seven (7) days&#x27;&quot;, t),
+}
+
+def make_case(clean_id, rng):
+    text = contract(clean_id)
+    picked = rng.sample(list(FAULTS), rng.choice([1, 2]))
+    for f in picked:
+        new = FAULTS[f](text)
+        assert new != text, f&quot;fault {f} did not apply&quot;
+        text = new
+    return {&quot;text&quot;: text, &quot;issues&quot;: sorted(picked), &quot;source&quot;: clean_id}
+
+rng = random.Random(7)
+clean = [c for c, l in labels().items() if not l[&quot;issues&quot;]]
+synthetic = [make_case(rng.choice(clean), rng) for _ in range(30)]
+print(len(synthetic), &quot;new labeled cases from&quot;, len(clean), &quot;clean contracts&quot;)
+print(synthetic[0][&quot;issues&quot;], &quot;\n&quot;, [l for l in synthetic[0][&quot;text&quot;].splitlines() if &quot;Nevada&quot; in l or &quot;(4) year&quot; in l or &quot;(48)&quot; in l or &quot;(7) days&quot; in l])</code></pre></div>
+<div class="nb-md"><h3>2. Log every run as a trace</h3>
+<p>A trace is the full record: input hash, prompt, model, output, time. Traces are your audit trail and your future training data.</p></div>
+<div class="code"><div class="cap"><span class="cell">12_data_flywheel.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">TRACES = Path(&quot;traces.jsonl&quot;); TRACES.unlink(missing_ok=True)
+import hashlib
+def traced_call(task, prompt, **kw):
+    t0 = time.time()
+    r = client.chat.completions.create(model=MODEL, messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt}], temperature=0, **kw)
+    out = r.choices[0].message.content
+    rec = {&quot;task&quot;: task, &quot;model&quot;: MODEL, &quot;input_sha&quot;: hashlib.sha256(prompt.encode()).hexdigest()[:12],
+           &quot;prompt&quot;: prompt, &quot;output&quot;: out, &quot;secs&quot;: round(time.time() - t0, 2), &quot;tokens&quot;: r.usage.total_tokens}
+    with open(TRACES, &quot;a&quot;) as f: f.write(json.dumps(rec) + &quot;\n&quot;)
+    return out
+
+PB = playbook()
+def review(text):
+    &quot;&quot;&quot;Structured answer (a list of rule names), and the call is still traced.&quot;&quot;&quot;
+    from lal.llm import structured
+    from pydantic import BaseModel
+    class Review(BaseModel):
+        broken_rules: list[str]
+    prompt = (f&quot;Rules (name: rule): {json.dumps(PB[&#x27;rules&#x27;])}\n\nContract:\n{text}\n\n&quot;
+              &quot;List the names of the rules this contract breaks. Empty list if none.&quot;)
+    t0 = time.time()
+    r = structured(prompt, Review)
+    with open(TRACES, &quot;a&quot;) as f:
+        f.write(json.dumps({&quot;task&quot;: &quot;review&quot;, &quot;model&quot;: MODEL, &quot;input_sha&quot;: hashlib.sha256(prompt.encode()).hexdigest()[:12],
+                            &quot;prompt&quot;: prompt, &quot;output&quot;: r.model_dump(), &quot;secs&quot;: round(time.time() - t0, 2)}) + &quot;\n&quot;)
+    return sorted(x for x in set(r.broken_rules) if x in PB[&quot;rules&quot;])
+
+results = [(c[&quot;issues&quot;], review(c[&quot;text&quot;])) for c in synthetic[:6]]
+for gold, pred in results: print(&quot;truth&quot;, gold, &quot;| model&quot;, pred)
+print(sum(1 for _ in open(TRACES)), &quot;traces logged&quot;)</code></pre></div>
+<div class="nb-md"><h3>3. Corrections become tests immediately</h3>
+<p>When a reviewer fixes a miss, we store input, wrong output, right output and the reason. It goes into a regression set straight away, and later into a training set (never into the held-out eval).</p></div>
+<div class="code"><div class="cap"><span class="cell">12_data_flywheel.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">REGRESSION = Path(&quot;regression.jsonl&quot;); REGRESSION.unlink(missing_ok=True)
+misses = [(c, pred) for c, (gold, pred) in zip(synthetic[:6], results) if pred != gold]
+for case, pred in misses:
+    rec = {&quot;text&quot;: case[&quot;text&quot;], &quot;model_said&quot;: pred, &quot;correct&quot;: case[&quot;issues&quot;], &quot;reason&quot;: &quot;planted fault missed or false flag&quot;}
+    with open(REGRESSION, &quot;a&quot;) as f: f.write(json.dumps(rec) + &quot;\n&quot;)
+print(len(misses), &quot;misses saved as regression tests&quot;)</code></pre></div>
+<div class="nb-md"><h3>4. Build a fine-tuning set by rejection sampling</h3>
+<p>Keep only outputs that pass the checker. This JSONL file is the standard chat format that TRL or Unsloth fine-tune on.</p></div>
+<div class="code"><div class="cap"><span class="cell">12_data_flywheel.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">sft = []
+for c in synthetic[6:16]:
+    for _ in range(2):                                          # up to 2 tries per case
+        pred = review(c[&quot;text&quot;])
+        if pred == c[&quot;issues&quot;]:                                 # the checker: matches the known answer
+            sft.append({&quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;Review against the playbook:\n{c[&#x27;text&#x27;]}&quot;},
+                                     {&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: &quot;, &quot;.join(pred) or &quot;none&quot;}]})
+            break
+Path(&quot;sft_train.jsonl&quot;).write_text(&quot;&quot;.join(json.dumps(x) + &quot;\n&quot; for x in sft))
+print(f&quot;kept {len(sft)} of 10 cases for fine-tuning (only checker-approved outputs)&quot;)</code></pre></div>
+<div class="code"><div class="cap"><span class="cell">12_data_flywheel.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;30 synthetic cases built with known labels&quot;, len(synthetic) == 30)
+check(&quot;at least 6 traces were logged&quot;, sum(1 for _ in open(TRACES)) &gt;= 6)</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li>Add a new fault type (for example, cure period shorter than 10 days) and a playbook rule for it.</li>
+<li>Mix 50% synthetic and 50% real cases into one eval. Why does the course warn against synthetic-only data?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">12_data_flywheel.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: a new fault type (short cure period) plus a playbook rule for it
+FAULTS[&quot;cure_period&quot;] = lambda t: re.sub(r&quot;uncured \w+(?: \(\d+\))? days&quot;, &quot;uncured five (5) days&quot;, t)
+PB[&quot;rules&quot;][&quot;cure_period&quot;] = &quot;The cure period for material breach must be at least 10 days.&quot;
+assert FAULTS[&quot;cure_period&quot;](contract(&quot;msa_01&quot;)) != contract(&quot;msa_01&quot;)
+cure_cases = [{&quot;text&quot;: FAULTS[&quot;cure_period&quot;](contract(c)), &quot;issues&quot;: [&quot;cure_period&quot;]} for c in clean[:4]]
+for c in cure_cases:
+    print(&quot;truth&quot;, c[&quot;issues&quot;], &quot;| model&quot;, review(c[&quot;text&quot;]))</code></pre></div><div class="code"><div class="cap"><span class="cell">12_data_flywheel.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: one eval that mixes real and synthetic cases, scored per group
+real = [{&quot;text&quot;: contract(c), &quot;issues&quot;: sorted(i[&quot;rule&quot;] for i in labels()[c][&quot;issues&quot;])} for c in list(labels())[::3][:6]]
+mixed = [(&quot;real&quot;, c) for c in real] + [(&quot;synthetic&quot;, c) for c in synthetic[16:22]]
+score_by = {&quot;real&quot;: [], &quot;synthetic&quot;: []}
+for group, c in mixed:
+    score_by[group].append(review(c[&quot;text&quot;]) == c[&quot;issues&quot;])
+for g, xs in score_by.items():
+    print(f&quot;{g:9} exact {sum(xs)}/{len(xs)}&quot;)
+# If a model only ever sees cases built from your own templates, it can look great on them and still fail on
+# real documents. Keep real cases in every eval and in training data.</code></pre></div></details>
+  <div class="pit"><strong>Traps</strong><ul>
+    <li>Theorizing about failures instead of reading outputs.</li>
+    <li>Rewarding "the reviewer approved it". The model learns to look right, not be right.</li>
+    <li>Auto-retrieving stored examples without filtering. A bad example poisons future runs.</li>
+  </ul></div>
+  <div class="check"><h4>Check yourself</h4>
+    <details><summary>Where does a lawyer's correction go, in order?</summary><p>Logged with the reason → added as a test case → used as a retrieved example right away → included in the next training batch, never in the held-out eval.</p></details>
+  </div>
+</div></section><nav class="pager"><a class="prev" href="m11.html"><small>← Previous</small>Optimization: prompts, then weights</a><a class="next" href="m13.html"><small>Next →</small>Safety and guardrails</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

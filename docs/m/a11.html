@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guest lectures and reasoning frontiers · Agent Engineering School</title>
+<meta name="description" content="The reasoning tricks behind today&#x27;s models, tried on a small local one. You&#x27;ll understand chain of thought, self-consistency, least-to-most, CoT-decoding, and where the guest talks…">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-manual — sticky module rail on the left, one long reading column, code and "check yourself" blocks inline */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#17202a; --muted:#56626f; --line:#d9dee4;
+  --accent:#0d6e6a; --accent-soft:#e1f0ef; --mark:#f6dc6b; --warn:#a4421d; --warn-soft:#fbeae2;
+  --code-bg:#0f1720; --code-fg:#dde5ec; --c-key:#7fd1c9; --c-str:#f1d38a; --c-com:#7d8b99; --c-num:#f0a07a; --c-fn:#a9c7ff;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --paper:#151d24; --ink:#e4eaef; --muted:#97a4b0; --line:#28343e;
+  --accent:#5cc2bb; --accent-soft:#16302f; --mark:#6b5a12; --warn:#f0a07a; --warn-soft:#3a2219;
+  --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+/* rail */
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+.brand{font:800 22px/1.1 var(--f-display);letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.progress{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:5px 8px;border-radius:6px;line-height:1.35}
+.rail a:hover{background:var(--accent-soft)}
+.rail a .n{font:500 11px var(--f-mono);color:var(--muted);min-width:20px}
+.rail a.done .n::before{content:"✓ ";color:var(--accent)}
+.rail .part{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 8px 4px}
+/* main */
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+h1{font:800 clamp(34px,5vw,54px)/1.02 var(--f-display);letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance;max-width:16ch}
+.lede{font-size:19px;max-width:62ch;color:var(--ink);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px}
+.thesis{margin:24px 0 0;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:72ch}
+.thesis b{background:linear-gradient(transparent 60%, var(--mark) 60%)}
+section.mod{padding:44px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.mod-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.mod-num{font:500 13px var(--f-mono);color:var(--accent)}
+h2{font:700 clamp(26px,3.4vw,34px)/1.12 var(--f-display);letter-spacing:-.015em;margin:4px 0 6px;text-wrap:balance}
+.src{font-size:13px;color:var(--muted);margin:0 0 18px}
+h3{font:700 19px/1.3 var(--f-display);margin:28px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+.big{font-size:18px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:68ch;margin:6px 0 18px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.ev .num{font:700 26px/1.1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.ev p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.pit{background:var(--warn-soft);border-radius:10px;padding:12px 18px;margin:16px 0;max-width:72ch}
+.pit strong{color:var(--warn)}
+.pit ul{margin:6px 0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.r{font-variant-numeric:tabular-nums}
+/* code */
+.code{position:relative;margin:14px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #22303c;font:500 12px var(--f-mono);color:#93a3b2}
+.code button{font:500 12px var(--f-mono);background:#1c2834;color:#dde5ec;border:1px solid #2c3c4a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.code button:hover{background:#263544}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font:13.5px/1.55 var(--f-mono);color:var(--code-fg)}
+pre code{font:inherit;background:none;padding:0}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--c-key)}
+.hljs-string,.hljs-subst{color:var(--c-str)}
+.hljs-comment{color:var(--c-com);font-style:italic}
+.hljs-number{color:var(--c-num)}
+.hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--c-fn)}
+.hljs-attr,.hljs-params,.hljs-meta{color:#c9d6e2}
+/* check yourself */
+.check{margin:22px 0 10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 18px 10px;max-width:74ch}
+.check h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:12px 0 4px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 2px;color:var(--muted)}
+.try{margin:16px 0;padding:14px 18px;border:1.5px dashed var(--accent);border-radius:10px;max-width:74ch}
+.try b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.colab-btn{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--paper);background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none;white-space:nowrap}
+.colab-btn:hover{background:var(--accent);border-color:var(--accent)}
+.colab-btn::before{content:"▶";font-size:10px}
+.colab-fallback{flex-basis:100%;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.colab-fallback code{font-size:11.5px}
+.runbox{margin:18px 0 0;padding:16px 20px;border:1.5px solid var(--accent);border-radius:10px;max-width:72ch;background:var(--accent-soft)}
+.runbox p{margin:6px 0}
+.done-btn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--f-body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.done-btn[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.done-btn:hover{border-color:var(--accent)}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink);overflow-x:auto}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px}
+.gloss div{min-width:0}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+footer{color:var(--muted);font-size:13px;padding-top:28px}
+@media (max-width:880px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:8px}
+  nav.rail{position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .rail ol.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .rail .part{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+
+.terms{margin:6px 0 22px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:76ch}
+.terms h4,.nbhead h4{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:2px 0 8px}
+.terms dl{margin:0;display:grid;gap:8px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--ink)}
+.terms .from{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.nbhead{margin:30px 0 6px;padding:14px 18px;border-left:4px solid var(--ink);background:var(--paper);border-radius:0 10px 10px 0;max-width:76ch}
+.nbhead p{margin:4px 0}
+.nb-md{max-width:72ch}
+.nb-md h3{margin:26px 0 6px}
+.nb-md h4{font:700 16px/1.3 var(--f-display);margin:18px 0 6px}
+.nb-md pre{background:var(--code-bg);border-radius:10px}
+.nb-md table{min-width:0}
+details.solutions{margin:18px 0;border:1.5px solid var(--accent);border-radius:10px;padding:8px 16px;background:var(--paper)}
+details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);padding:4px 0}
+.code .cap .cell{color:#c7d3de}
+
+.part-banner{margin:56px 0 0;padding:26px 24px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.part-banner h2{color:var(--paper);margin:4px 0 8px}
+.part-banner p{color:var(--paper);opacity:.9;margin:6px 0;max-width:70ch}
+.part-banner a{color:var(--paper)}
+.papers{display:grid;gap:12px;margin:12px 0 18px}
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:80ch}
+.paper h4{font:700 16px/1.35 var(--f-display);margin:0 0 2px}
+.paper .by{font-size:13px;color:var(--muted);margin:0 0 8px}
+.paper dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px}
+.paper dt{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding-top:3px}
+.paper dd{margin:0}
+
+.wrap.single{grid-template-columns:250px minmax(0,1fr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
+.topbar a{text-decoration:none}
+.crumbs{color:var(--muted)}
+.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
+.lesson p,.lesson li{max-width:70ch}
+.lesson pre{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13.5px/1.5 var(--f-mono);color:var(--ink)}
+.lesson pre code{background:none;padding:0}
+.lesson table{min-width:0;font-size:15px}
+.lesson .tbl{max-width:72ch}
+.lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
+.lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
+.deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
+.deeper>h2.deeper-title{font:800 26px/1.2 var(--f-display);margin:18px 0 4px}
+.deeper>p.deeper-sub{color:var(--muted);margin:0 0 10px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 10px}
+.pager a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.pager .next{text-align:right;grid-column:2}
+.cards-group{margin:30px 0 8px}
+.cards-group h3{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px}
+.part-title{font:800 clamp(24px,3vw,30px)/1.15 var(--f-display);margin:46px 0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);min-width:0;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .num{font:500 12px var(--f-mono);color:var(--accent)}
+.card .t{font:700 18px/1.25 var(--f-display)}
+.card .s{font-size:14.5px;color:var(--muted);line-height:1.5}
+.card .go{margin-top:auto;padding-top:6px;font:600 13px var(--f-body);color:var(--accent)}
+.card.done .num::after{content:" · done ✓"}
+.howto{max-width:72ch;margin:22px 0 0;padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.howto ol{margin:6px 0 0}
+</style>
+</head>
+<body data-total="34">
+<div class="wrap"><nav class="rail" aria-label="Modules">
+  <p class="brand"><a href="../index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>
+  <p class="brand-sub">From Stanford CS329Z, for the Local AI Lab team</p>
+  <div class="progress" id="progLabel"></div>
+  <div class="bar"><i id="progBar"></i></div>
+  <ol class="list" id="toc">
+    <li class="part">Basics</li>
+    <li><a href="m0.html" data-mod-link="m0"><span class="n">00</span>Start here</a></li>
+    <li><a href="m1.html" data-mod-link="m1"><span class="n">01</span>What an agent is</a></li>
+    <li><a href="m2.html" data-mod-link="m2"><span class="n">02</span>LLMs for builders</a></li>
+    <li><a href="m3.html" data-mod-link="m3"><span class="n">03</span>Context engineering</a></li>
+    <li class="part">Building blocks</li>
+    <li><a href="m4.html" data-mod-link="m4"><span class="n">04</span>Retrieval (RAG)</a></li>
+    <li><a href="m5.html" data-mod-link="m5"><span class="n">05</span>Tools</a></li>
+    <li><a href="m6.html" data-mod-link="m6"><span class="n">06</span>Design patterns</a></li>
+    <li><a href="m7.html" data-mod-link="m7"><span class="n">07</span>Frameworks and harnesses</a></li>
+    <li><a href="m8.html" data-mod-link="m8"><span class="n">08</span>Memory</a></li>
+    <li><a href="m9.html" data-mod-link="m9"><span class="n">09</span>Multi-agent systems</a></li>
+    <li class="part">Make it good</li>
+    <li><a href="m10.html" data-mod-link="m10"><span class="n">10</span>Evaluation</a></li>
+    <li><a href="m11.html" data-mod-link="m11"><span class="n">11</span>Optimization</a></li>
+    <li><a href="m12.html" data-mod-link="m12"><span class="n">12</span>Data and flywheels</a></li>
+    <li><a href="m13.html" data-mod-link="m13"><span class="n">13</span>Safety</a></li>
+    <li><a href="m14.html" data-mod-link="m14"><span class="n">14</span>Long-running agents</a></li>
+    <li class="part">Put it together</li>
+    <li><a href="m15.html" data-mod-link="m15"><span class="n">15</span>Capstone: contract review</a></li>
+    <li class="part">Projects</li>
+    <li><a href="p1.html" data-mod-link="p1"><span class="n">P1</span>Build your own harness</a></li>
+    <li><a href="p2.html" data-mod-link="p2"><span class="n">P2</span>Build an eval task</a></li>
+    <li class="part">Part 2 · Self-improving agents</li>
+    <li><a href="part2-lessons.html" data-mod-link="part2-lessons"><span class="n">★</span>What this means</a></li>
+    <li><a href="a01.html" data-mod-link="a01"><span class="n">A01</span>Test-time compute scaling</a></li>
+    <li><a href="a02.html" data-mod-link="a02"><span class="n">A02</span>Robust verification</a></li>
+    <li><a href="a03.html" data-mod-link="a03"><span class="n">A03</span>Learning from feedback with tools and code</a></li>
+    <li><a href="a04.html" data-mod-link="a04"><span class="n">A04</span>Multi-step reasoning and planning</a></li>
+    <li><a href="a05.html" data-mod-link="a05"><span class="n">A05</span>Train-time scaling and RL</a></li>
+    <li><a href="a06.html" data-mod-link="a06"><span class="n">A06</span>Open-ended evolution of self-improving agents</a></li>
+    <li><a href="a07.html" data-mod-link="a07"><span class="n">A07</span>Self-improvement with search and deep research agents</a></li>
+    <li><a href="a08.html" data-mod-link="a08"><span class="n">A08</span>Agentic frameworks for software engineering</a></li>
+    <li><a href="a09.html" data-mod-link="a09"><span class="n">A09</span>Augmenting agents with memory</a></li>
+    <li><a href="a10.html" data-mod-link="a10"><span class="n">A10</span>Agentic evaluations and long-horizon tasks</a></li>
+    <li><a href="a11.html" data-mod-link="a11" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">A11</span>Guest lectures and reasoning frontiers</a></li>
+    <li class="part">Part 2 · Past projects</li>
+    <li><a href="ap1.html" data-mod-link="ap1"><span class="n">AP1</span>AppBench</a></li>
+    <li><a href="ap2.html" data-mod-link="ap2"><span class="n">AP2</span>PRIME</a></li>
+    <li><a href="ap3.html" data-mod-link="ap3"><span class="n">AP3</span>Math reasoning (distillation, GRPO)</a></li>
+    <li><a href="ap4.html" data-mod-link="ap4"><span class="n">AP4</span>Towards Effective Meta-Agents</a></li>
+    <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
+    <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
+  </ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A11</span></div><section class="mod" id="a11" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A11</div><h2>Guest lectures and reasoning frontiers</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a11_guest_lectures.ipynb">Open in Colab</a><button class="done-btn" data-done="a11" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">The reasoning tricks behind today&#x27;s models, tried on a small local one. You&#x27;ll understand chain of thought, self-consistency, least-to-most, CoT-decoding, and where the guest talks…</p><article class="lesson"><h2>The big idea</h2>
+<p>The guest talks in this course trace one arc. Models learned to reason step by step. Then to sample many answers and vote. Then to learn from rewards a program can check. Now they act in software and in the physical world.</p>
+<p>The heart of it is simple. Think of a junior associate asked a tricky question. If you demand a one-word answer on the spot, they guess. If you let them write out their steps, they do better. If you ask five associates separately and they mostly agree, you can trust the answer more. If they disagree, you send it to a partner.</p>
+<p>One note: the course assigned no papers for these talks. Every reading on this page is our pick of the speaker's best-known public work, not the course's list.</p>
+<h2>Why it matters for us</h2>
+<ul>
+<li>These tricks need no training. They work on any local model today, with just prompts and a few extra calls.</li>
+<li>Voting gives you a free confidence score. That tells the firm which contract answers can go straight through and which need a lawyer's eyes.</li>
+<li>The big math wins came from rewards a program could check exactly. The firm's labeled contracts are that kind of check, at small scale.</li>
+</ul>
+<h2>How it works, step by step</h2>
+<ol>
+<li>
+<p><strong>Chain of thought: show your work</strong> (the Chain-of-Thought paper, 2022). Chain of thought (CoT) means the model writes its reasoning steps before the final answer. With eight worked examples, a very large model reached the best score at the time on grade-school math problems. Today's chat models are trained to do this, so "think step by step" is usually enough. The gain grows with model size. Tiny models can write steps that look right but aren't.</p>
+</li>
+<li>
+<p><strong>Self-consistency: ask several times, take the majority</strong> (the Self-Consistency paper, 2022). Sample several reasoning paths with some randomness (a temperature above 0, a setting that makes answers vary). Take the most common final answer. Why does it work? There are many paths to the right answer, but wrong answers tend to scatter. The paper reports a gain of 17.9% over single-chain CoT on grade-school math. The share of samples that agree is the agreement rate, a cheap confidence score.</p>
+</li>
+<li>
+<p><strong>Least-to-most: split the problem first</strong> (the Least-to-Most paper, 2022). First ask the model to break the problem into easier sub-questions. Then solve them in order, feeding each answer into the next. This helps most when the real problem is harder than the examples. On one test of following longer instructions, it reached at least 99%, against 16% for plain CoT.</p>
+</li>
+<li>
+<p><strong>CoT-decoding: reasoning without a prompt</strong> (the CoT-decoding paper, 2024). Normally a model uses greedy decoding: it always picks the single most likely next word. CoT-decoding branches instead. At the first word of the answer, it tries the top 10 alternatives and continues each one greedily. Some branches jump to a number. Others start "First..." and reason their way there. The branch whose answer the model is most confident about wins. On one 7B base model, math accuracy went from 9.9% with greedy decoding to 25.1%. The reasoning was in the model all along. Greedy decoding just hid it.</p>
+</li>
+<li>
+<p><strong>Checkable rewards beat clever prompts</strong> (Thang Luong's talk). AlphaGeometry (2024) paired a language model that suggests extra lines or points with an exact logic engine that does the proof. It solved 25 of 30 olympiad geometry problems. AlphaProof (2024) used reinforcement learning (learning by trial and reward) in Lean, a language whose proofs a computer can check exactly. It scored 28 of 42 at the 2024 math olympiad, but some problems took up to three days. In 2025, Gemini Deep Think scored 35 of 42 in plain language within the 4.5-hour limit, using "parallel thinking" (exploring several solutions at once).</p>
+</li>
+<li>
+<p><strong>The other talks, in one line each.</strong> Post-training (everything after the first big training run, like instruction tuning and RL) turns a text predictor into an agent (Melvin Johnson). An agent can improve from its own past attempts, if it can see them (Misha Laskin's Algorithm Distillation paper, 2022). The same recipe works for robots: start from a big pretrained model, add images and actions, then fine-tune (Danny Driess's PaLM-E and π0 papers).</p>
+</li>
+</ol>
+<h2>Worked example</h2>
+<p>The firm asks its local model: "This contract's monthly fee is X and the liability cap is Y. Is the cap within 12 months of fees?" It is a two-step problem: multiply, then compare.</p>
+<p><strong>Direct answer.</strong> "Answer yes or no only." The model has no room to work it out. It guesses.</p>
+<p><strong>Chain of thought.</strong> "Think step by step." It computes 12 times the fee, compares it to the cap, then answers.</p>
+<p><strong>Self-consistency.</strong> Ask the same question five times. The notebook does exactly this on math problems:</p>
+<pre><code class="language-python">K = 5
+votes = [Counter(a for a in s if a is not None).most_common(1) for s in samples]
+sc = [v[0][0] if v else None for v in votes]
+agree = [v[0][1] / K if v else 0 for v in votes]
+</code></pre>
+<ul>
+<li>Line 1 sets the number of samples per question to 5.</li>
+<li>Line 2 counts the answers for each question, skipping blanks, and finds the most common one.</li>
+<li>Line 3 takes that most common answer as the final vote.</li>
+<li>Line 4 computes agreement: how many of the 5 samples matched the vote.</li>
+</ul>
+<p><strong>The business use.</strong> If 5 of 5 agree, let it through. If only 2 of 5 agree, send it to a lawyer. You trade some review work for much higher accuracy on what passes unreviewed. But beware: agreement measures consistency, not truth. A model can be wrong the same way every time.</p>
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Forcing a short answer on a multi-step problem.</strong> "Only the number" removes the reasoning the model needs.</li>
+<li><strong>Reading high agreement as truth.</strong> Voting can't fix a mistake the model makes every time.</li>
+<li><strong>Expecting big CoT gains from tiny models.</strong> The gain grows with size. Check a sample of the steps.</li>
+<li><strong>Copying the olympiad recipe without a checker.</strong> RL worked there because answers could be verified exactly.</li>
+</ul>
+<h2>Check your understanding</h2>
+<div class="check">
+<details>
+<summary>How is self-consistency different from CoT-decoding?</summary>
+<p>Self-consistency samples whole reasoning paths from a step-by-step prompt and votes. CoT-decoding uses no prompt, branches only on the first word, continues greedily, and picks the most confident answer.</p>
+</details>
+<details>
+<summary>Why does least-to-most help on problems harder than the examples?</summary>
+<p>It breaks the problem into easier pieces the model can handle. Earlier answers feed later ones, so the model never has to solve the whole thing at once.</p>
+</details>
+<details>
+<summary>What made reinforcement learning work for AlphaProof?</summary>
+<p>Lean, a proof language a computer can check exactly. That gave a reliable reward.</p>
+</details>
+</div>
+<h2>Try it in Colab</h2>
+<p>Run the a11 notebook. It compares direct answers with chain of thought on six hard math problems, then runs self-consistency with five samples, least-to-most, and an approximate CoT-decoding. Look at the agreement column: low-agreement answers are the ones to send for review.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+  
+  <p class="src">CS329A guest lectures: Lecture 9 (Oct 20) Melvin Johnson, 15 (Nov 10) Denny Zhou, 16 (Nov 14) Thang Luong, 18 (Nov 21) Misha Laskin, 19 (Dec 1) Danny Driess; Lecture 20 (Dec 5) Future research areas</p>
+
+  <p class="big">The guest talks trace one arc: models that reason step by step, sample and vote, learn from checkable rewards, and act in software and the physical world. The course assigned no papers for these talks, so every reading here is our pick of the speaker&#x27;s best-known public work on the talk&#x27;s topic, not the course&#x27;s reading list.</p>
+<div class="terms"><h4>Key terms</h4><dl><div><dt>Chain of thought (CoT)</dt><dd>The model writes its reasoning steps before the final answer.<span class="from">Source: Wei et al. 2022</span></dd></div><div><dt>Self-consistency</dt><dd>Sample several reasoning paths and take the majority answer.<span class="from">Source: Wang et al. 2022</span></dd></div><div><dt>Agreement rate</dt><dd>The share of samples that match the majority answer; a cheap confidence score.<span class="from">Source: Wang et al. 2022</span></dd></div><div><dt>Least-to-most prompting</dt><dd>Decompose into easier sub-questions, then solve them in order using earlier answers.<span class="from">Source: Zhou et al. 2022</span></dd></div><div><dt>Greedy decoding</dt><dd>Always picking the single most likely next token.<span class="from">Source: general</span></dd></div><div><dt>CoT-decoding</dt><dd>Branch on the top-k first tokens, continue each greedily, and pick by answer confidence.<span class="from">Source: Wang and Zhou 2024</span></dd></div><div><dt>Answer confidence (Δ)</dt><dd>Average gap between the top-1 and top-2 token probabilities over the answer&#x27;s tokens.<span class="from">Source: Wang and Zhou 2024</span></dd></div><div><dt>Post-training</dt><dd>Everything after pre-training (instruction tuning, preference tuning, RL) that makes a model helpful and agentic.<span class="from">Source: general</span></dd></div><div><dt>Formal proof / Lean</dt><dd>A proof written in a language a computer can check exactly; Lean is one such language.<span class="from">Source: DeepMind 2024</span></dd></div><div><dt>Parallel thinking</dt><dd>Exploring and combining several candidate solutions at once instead of one chain.<span class="from">Source: DeepMind 2025</span></dd></div><div><dt>Vision-language-action (VLA) model</dt><dd>A model that takes images and text and outputs robot actions.<span class="from">Source: Black et al. 2024</span></dd></div><div><dt>Algorithm distillation</dt><dd>Training a sequence model on an RL algorithm&#x27;s learning histories so it learns to improve in context.<span class="from">Source: Laskin et al. 2022</span></dd></div></dl></div>
+<h3>The papers</h3><div class="papers"><div class="paper"><h4><a href="https://arxiv.org/abs/2201.11903">Chain-of-Thought Prompting Elicits Reasoning in Large Language Models (our pick for Denny Zhou&#x27;s talk)</a></h4><p class="by">Wei, Wang, Schuurmans, Bosma, Ichter, Xia, Chi, Le, Zhou · 2022</p><dl><dt>What</dt><dd>Prompting with a few worked examples that show intermediate reasoning steps, tested on three large models across arithmetic, commonsense and symbolic reasoning.</dd><dt>Result</dt><dd>A 540B model with eight chain-of-thought examples reached state-of-the-art accuracy on GSM8K, beating a fine-tuned GPT-3 with a verifier.</dd><dt>Takeaway</dt><dd>Let the model show its work before the answer on multi-step tasks; then grade only the final answer with code.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2203.11171">Self-Consistency Improves Chain of Thought Reasoning in Language Models (our pick for Denny Zhou&#x27;s talk)</a></h4><p class="by">Wang, Wei, Schuurmans, Le, Chi, Narang, Chowdhery, Zhou · 2022</p><dl><dt>What</dt><dd>Sample several diverse reasoning paths instead of one greedy path and take the most consistent final answer.</dd><dt>Result</dt><dd>Over chain-of-thought: GSM8K +17.9%, SVAMP +11.0%, AQuA +12.2%, StrategyQA +6.4%, ARC-challenge +3.9%.</dd><dt>Takeaway</dt><dd>Majority voting is a cheap accuracy boost, and the agreement rate is a free confidence score you can use to route low-agreement answers to a person.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2205.10625">Least-to-Most Prompting Enables Complex Reasoning in Large Language Models (our pick for Denny Zhou&#x27;s talk)</a></h4><p class="by">Zhou, Schärli, Hou, Wei, Scales, Wang, Schuurmans, Cui, Bousquet, Le, Chi · 2022</p><dl><dt>What</dt><dd>Two stages: decompose a problem into simpler sub-problems, then solve them in order, feeding each answer into the next. Aimed at problems harder than the prompt examples.</dd><dt>Result</dt><dd>On SCAN with code-davinci-002 and 14 examples: at least 99% accuracy on every split, including the length split, vs 16% for chain-of-thought.</dd><dt>Takeaway</dt><dd>When tasks are longer than your examples, have the agent write a plan of sub-tasks first and execute them one by one.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2402.10200">Chain-of-Thought Reasoning Without Prompting (our pick for Denny Zhou&#x27;s talk)</a></h4><p class="by">Wang, Zhou · 2024</p><dl><dt>What</dt><dd>Instead of greedy decoding, branch on the top-k alternatives for the first token (k = 10 by default), continue each greedily, and rank paths by answer confidence: the average gap between top-1 and top-2 token probabilities over the answer tokens.</dd><dt>Result</dt><dd>Mistral-7B (pre-trained) on GSM8K: greedy 9.9%, self-consistency without a CoT prompt 12.9%, CoT-decoding 25.1%. PaLM-2 Large: 34.8% greedy to 63.2%. Instruction-tuned Mistral-7B also improved (31.2% to 38.2%).</dd><dt>Takeaway</dt><dd>Reasoning paths often exist inside a model even when greedy decoding misses them; answer-token confidence is a useful signal for picking among candidates.</dd></dl></div><div class="paper"><h4><a href="https://www.nature.com/articles/s41586-023-06747-5">Solving olympiad geometry without human demonstrations (AlphaGeometry; our pick for Thang Luong&#x27;s talk)</a></h4><p class="by">Trinh, Wu, Le, He, Luong · 2024</p><dl><dt>What</dt><dd>A neural language model proposes auxiliary constructions and a symbolic deduction engine does rigorous proofs, trained on 100 million synthetic theorems and proofs with no human demonstrations.</dd><dt>Result</dt><dd>Solved 25 of 30 recent olympiad geometry problems (IMO-AG-30); the previous best method solved 10, and an average human gold medalist about 25.9.</dd><dt>Takeaway</dt><dd>Pair a creative model with an exact checker, and generate your own training data when human data is scarce.</dd></dl></div><div class="paper"><h4><a href="https://deepmind.google/discover/blog/ai-solves-imo-problems-at-silver-medal-level/">AI achieves silver-medal standard solving International Mathematical Olympiad problems (AlphaProof + AlphaGeometry 2 blog; our pick)</a></h4><p class="by">Google DeepMind · 2024</p><dl><dt>What</dt><dd>AlphaProof couples a pre-trained language model with AlphaZero-style reinforcement learning in the Lean proof language, trained on about a million problems auto-formalized by Gemini. AlphaGeometry 2 handled geometry.</dd><dt>Result</dt><dd>28 of 42 points at IMO 2024 (4 of 6 problems), silver level; some problems took up to three days. AlphaGeometry 2 solved 83% of IMO geometry problems from the past 25 years (predecessor 53%).</dd><dt>Takeaway</dt><dd>Reinforcement learning works best when a machine can check the answer exactly; formal verifiers are such checkers.</dd></dl></div><div class="paper"><h4><a href="https://deepmind.google/discover/blog/advanced-version-of-gemini-with-deep-think-officially-achieves-gold-medal-standard-at-the-international-mathematical-olympiad/">Advanced version of Gemini with Deep Think officially achieves gold-medal standard at the IMO (blog; our pick)</a></h4><p class="by">Google DeepMind · 2025</p><dl><dt>What</dt><dd>A Gemini model reasoning end to end in natural language, with &#x27;parallel thinking&#x27; over several candidate solutions and new reinforcement-learning techniques for multi-step reasoning and proofs.</dd><dt>Result</dt><dd>35 of 42 points at IMO 2025 (5 of 6 problems), gold level, within the 4.5-hour limit, graded by IMO coordinators.</dd><dt>Takeaway</dt><dd>Parallel exploration plus RL on hard, checkable problems moved a general model past a specialized formal system in one year.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/1611.04558">Google&#x27;s Multilingual Neural Machine Translation System: Enabling Zero-Shot Translation (our pick for Melvin Johnson&#x27;s talk)</a></h4><p class="by">Johnson, Schuster, Le, Krikun, Wu, Chen, Thorat, Viégas, Wattenberg, Corrado, Hughes, Dean · 2017</p><dl><dt>What</dt><dd>One translation model for many languages, with only a target-language token added to the input and no extra parameters. Background for the speaker, who now leads Gemini post-training (per his site); for his post-training work see the Gemini report (arXiv 2312.11805), where he is an author.</dd><dt>Result</dt><dd>Matched state-of-the-art English to French and beat it for English to German on WMT&#x27;14; translated between language pairs never seen together in training (zero-shot).</dd><dt>Takeaway</dt><dd>A single general model with the right training signal can replace many special-purpose ones; post-training is where that signal is added.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2210.14215">In-context Reinforcement Learning with Algorithm Distillation (our pick for Misha Laskin&#x27;s talk)</a></h4><p class="by">Laskin, Wang, Oh, Parisotto, Spencer, Steigerwald, Strouse, Hansen, Filos, Brooks, Gazeau, Sahni, Singh, Mnih · 2022</p><dl><dt>What</dt><dd>Train a causal transformer on the learning histories of an RL algorithm, so it learns to improve its policy in context, with no weight updates. Laskin later co-founded Reflection AI (March 2025), which focuses on autonomous coding agents.</dd><dt>Result</dt><dd>Improved its policy entirely in context in sparse-reward, combinatorial and pixel-based environments, and learned a more data-efficient RL algorithm than the one that generated its data.</dd><dt>Takeaway</dt><dd>An agent can learn from its own experience inside the context window if it sees its past attempts and outcomes; keep those histories.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2303.03378">PaLM-E: An Embodied Multimodal Language Model (our pick for Danny Driess&#x27;s talk)</a></h4><p class="by">Driess, Xia, Sajjadi, Lynch, Chowdhery, Ichter, et al. · 2023</p><dl><dt>What</dt><dd>Feed images and robot state directly into a pre-trained language model as &#x27;multimodal sentences&#x27;, trained end to end for robot planning, visual question answering and captioning.</dd><dt>Result</dt><dd>The largest model, PaLM-E-562B, reached state-of-the-art on OK-VQA and kept its general language skills; joint training on internet-scale data helped robot tasks.</dd><dt>Takeaway</dt><dd>Reuse a big pre-trained model for a new input type rather than training a specialist from scratch.</dd></dl></div><div class="paper"><h4><a href="https://arxiv.org/abs/2410.24164">π0: A Vision-Language-Action Flow Model for General Robot Control (our pick for Danny Driess&#x27;s talk)</a></h4><p class="by">Black, Brown, Driess, Esmail, Equi, Finn, et al. (Physical Intelligence) · 2024</p><dl><dt>What</dt><dd>A flow-matching action model built on a pre-trained vision-language model, trained on data from many robot types (single-arm, dual-arm, mobile).</dd><dt>Result</dt><dd>Evaluated zero-shot after pre-training, on following language instructions, and on learning new skills by fine-tuning, on tasks such as laundry folding, table cleaning and box assembly. (We did not extract per-task numbers.)</dd><dt>Takeaway</dt><dd>The recipe from language agents carries over to robots: broad pre-training, then fine-tuning on high-quality task data.</dd></dl></div></div>
+<div class="nbhead"><h4>The code, cell by cell</h4><p>Everything below is exactly what runs in <a href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a11_guest_lectures.ipynb" target="_blank" rel="noopener">a11_guest_lectures.ipynb</a>, in the same order. The notebook starts with the shared setup cell (shown in Module 00), then these cells.</p></div>
+<div class="code"><div class="cap"><span class="cell">a11_guest_lectures.ipynb · cell 2</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">import json, re, time
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+import httpx
+from lal.llm import ask
+from lal.tasks import math_problems, extract_int
+from lal.checks import check
+
+PROBS = math_problems(6, seed=11, difficulty=&quot;hard&quot;)      # 3-5 step word problems with exact answers
+print(PROBS[0][&quot;question&quot;], &quot;-&gt;&quot;, PROBS[0][&quot;answer&quot;])
+
+def acc(preds):
+    return sum(p == q[&quot;answer&quot;] for p, q in zip(preds, PROBS)) / len(PROBS)
+
+def pmap(fn, xs):
+    with ThreadPoolExecutor(2) as ex:
+        return list(ex.map(fn, xs))</code></pre></div>
+<div class="nb-md"><h3>1. Direct answer vs chain of thought (Denny Zhou, Lecture 15)</h3>
+<p><strong>Chain-of-thought (CoT) prompting</strong> (Wei et al. 2022, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</em>): let the model write its steps before the answer. With eight worked examples, a 540B model reached state-of-the-art on GSM8K grade-school math, beating a fine-tuned GPT-3 with a verifier. Today's chat models are trained to reason this way, so a plain "think step by step" is usually enough. We compare that with forcing the answer right away.</p></div>
+<div class="code"><div class="cap"><span class="cell">a11_guest_lectures.ipynb · cell 3</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">DIRECT = &quot;{q}\nReply with only the final number, no words, no working. Format: ANSWER: &lt;number&gt;&quot;
+COT = &quot;{q}\nThink step by step, showing each calculation. Then end with: ANSWER: &lt;number&gt;&quot;
+
+direct = pmap(lambda q: extract_int(ask(DIRECT.format(q=q[&quot;question&quot;]), max_tokens=15)), PROBS)        # 6 calls
+cot = pmap(lambda q: extract_int(ask(COT.format(q=q[&quot;question&quot;]), max_tokens=500)), PROBS)             # 6 calls
+print(f&quot;direct: {acc(direct):.0%} | chain of thought: {acc(cot):.0%}&quot;)
+for q, d, c in zip(PROBS, direct, cot):
+    print(f&quot;  truth {q[&#x27;answer&#x27;]:5} | direct {d} | cot {c}&quot;)</code></pre></div>
+<div class="nb-md"><h3>2. Self-consistency: sample several chains, take the majority</h3>
+<p><strong>Self-consistency</strong> (Wang et al. 2022, <em>Self-Consistency Improves Chain of Thought Reasoning in Language Models</em>): sample several reasoning paths at a temperature above 0 and take the most common final answer. A hard problem has many paths to the right answer but the wrong answers tend to scatter. They report gains over single-chain CoT of +17.9% on GSM8K, +11.0% on SVAMP and +12.2% on AQuA. How often the samples agree is also a free <strong>confidence</strong> score.</p></div>
+<div class="code"><div class="cap"><span class="cell">a11_guest_lectures.ipynb · cell 4</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">K = 5
+def sample_answers(q):
+    return [extract_int(ask(COT.format(q=q[&quot;question&quot;]), temperature=0.7, max_tokens=500)) for _ in range(K)]
+
+samples = pmap(sample_answers, PROBS)                                                                   # 30 calls
+votes = [Counter(a for a in s if a is not None).most_common(1) for s in samples]
+sc = [v[0][0] if v else None for v in votes]
+agree = [v[0][1] / K if v else 0 for v in votes]
+print(f&quot;single CoT: {acc(cot):.0%} | self-consistency@{K}: {acc(sc):.0%}&quot;)
+for q, s, a, v in zip(PROBS, samples, agree, sc):
+    print(f&quot;  truth {q[&#x27;answer&#x27;]:5} | samples {s} | vote {v} | agreement {a:.0%} | {&#x27;right&#x27; if v == q[&#x27;answer&#x27;] else &#x27;wrong&#x27;}&quot;)</code></pre></div>
+<div class="nb-md"><p>Look at the agreement column: when most samples agree, the majority is usually right. That is how you decide, in production, which answers to send to a person for review.</p></div>
+<div class="nb-md"><h3>3. Least-to-most: split the problem, then solve the parts in order</h3>
+<p><strong>Least-to-most prompting</strong> (Zhou et al. 2022, <em>Least-to-Most Prompting Enables Complex Reasoning in Large Language Models</em>): first ask the model to break the problem into simpler sub-questions, then solve them in order, each answer feeding the next. CoT struggles when test problems are harder than the examples; least-to-most reached at least 99% on every split of the SCAN benchmark with 14 examples, versus 16% for CoT.</p>
+<p>The paper solves each sub-question in its own call. To save calls we do it in two: one call to decompose, one to solve all sub-questions in order.</p></div>
+<div class="code"><div class="cap"><span class="cell">a11_guest_lectures.ipynb · cell 5</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">def least_to_most(q):
+    subs = ask(f&quot;{q[&#x27;question&#x27;]}\n\nDo not solve it yet. List the simpler sub-questions, in order, that you need to answer to solve this. &quot;
+               &quot;One per line, at most 5.&quot;, max_tokens=200)
+    solved = ask(f&quot;Problem: {q[&#x27;question&#x27;]}\n\nSub-questions:\n{subs}\n\nAnswer each sub-question in order, using earlier answers. &quot;
+                 &quot;Then end with: ANSWER: &lt;number&gt;&quot;, max_tokens=600)
+    return extract_int(solved), subs
+
+l2m_out = pmap(least_to_most, PROBS)                                                                   # 12 calls
+l2m = [a for a, _ in l2m_out]
+print(f&quot;least-to-most: {acc(l2m):.0%}&quot;)
+print(&quot;example decomposition:\n&quot; + l2m_out[0][1][:400])</code></pre></div>
+<div class="nb-md"><h3>4. CoT-decoding: reasoning without a prompt</h3>
+<p><strong>CoT-decoding</strong> (Wang and Zhou 2024, <em>Chain-of-Thought Reasoning Without Prompting</em>) shows that a model often "knows" how to reason, but greedy decoding hides it. Give the plain format <code>Q: ... A:</code> with no instructions. At the <strong>first</strong> answer token, branch on the top-k alternatives (k = 10 in the paper), then continue each branch greedily. Branches that contain reasoning tend to end in an answer the model is more <strong>confident</strong> about. They measure confidence as Δ: the average gap between the top-1 and top-2 token probabilities over the answer's tokens. On GSM8K, Mistral-7B (pre-trained) went from 9.9% with greedy decoding to 25.1% with CoT-decoding.</p>
+<p>We need the raw text-completion endpoint for this, so we call Ollama's own API (<code>/api/generate</code> with <code>raw: true</code>, which skips the chat template). If your Ollama returns token log-probabilities, we take the real top-k first tokens and compute Δ. If not, we <strong>approximate</strong>: sample several different first tokens at a high temperature, and use agreement between branches as the confidence instead of Δ.</p></div>
+<div class="code"><div class="cap"><span class="cell">a11_guest_lectures.ipynb · cell 6</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">OLLAMA = &quot;http://localhost:11434&quot;
+
+def generate(prompt, num_predict, temperature=0.0, seed=0, logprobs=False):
+    body = {&quot;model&quot;: MODEL, &quot;prompt&quot;: prompt, &quot;raw&quot;: True, &quot;stream&quot;: False,
+            &quot;options&quot;: {&quot;temperature&quot;: temperature, &quot;num_predict&quot;: num_predict, &quot;seed&quot;: seed, &quot;stop&quot;: [&quot;\nQ:&quot;]}}
+    if logprobs:
+        body.update({&quot;logprobs&quot;: True, &quot;top_logprobs&quot;: 5})
+    r = httpx.post(f&quot;{OLLAMA}/api/generate&quot;, json=body, timeout=180)
+    r.raise_for_status()
+    return r.json()
+
+def first_tokens(prompt, k=5):
+    &quot;&quot;&quot;Top-k first tokens: from log-probs if the server gives them, else by sampling.&quot;&quot;&quot;
+    try:
+        lp = generate(prompt, 1, logprobs=True).get(&quot;logprobs&quot;) or []
+        tops = [t.get(&quot;token&quot;, &quot;&quot;) for t in (lp[0].get(&quot;top_logprobs&quot;) or [])] if lp else []
+        if len(tops) &gt;= 2:
+            return tops[:k], True
+    except Exception as e:
+        print(&quot;log-probs not available:&quot;, type(e).__name__)
+    seen = []
+    for s in range(2 * k):                         # sample until we have k different first tokens (cheap 1-token calls)
+        tok = generate(prompt, 1, temperature=1.2, seed=s).get(&quot;response&quot;, &quot;&quot;)
+        if tok not in seen:
+            seen.append(tok)
+        if len(seen) == k:
+            break
+    return seen, False
+
+def delta(lp_list, text):
+    &quot;&quot;&quot;Average top-1 minus top-2 probability over the tokens of the last number in the text (the paper&#x27;s Δ).&quot;&quot;&quot;
+    import math
+    nums = re.findall(r&quot;-?\d[\d,]*&quot;, text)
+    if not nums or not lp_list:
+        return None
+    target, gaps, built = nums[-1], [], &quot;&quot;
+    for t in reversed(lp_list):                    # walk back from the end until we have covered the answer tokens
+        tok = t.get(&quot;token&quot;, &quot;&quot;)
+        built = tok + built
+        tops = sorted((math.exp(x.get(&quot;logprob&quot;, -99)) for x in (t.get(&quot;top_logprobs&quot;) or [])), reverse=True) + [0, 0]
+        if any(ch.isdigit() for ch in tok):
+            gaps.append(tops[0] - tops[1])
+        if target in built and gaps:
+            break
+    return sum(gaps) / len(gaps) if gaps else None
+
+def cot_decode(q, k=5):
+    prompt = f&quot;Q: {q[&#x27;question&#x27;]}\nA:&quot;
+    toks, have_lp = first_tokens(prompt, k)
+    branches = []
+    for tok in toks:
+        out = generate(prompt + tok, 250, logprobs=have_lp)
+        text = tok + out.get(&quot;response&quot;, &quot;&quot;)
+        branches.append({&quot;first&quot;: tok, &quot;answer&quot;: extract_int(text), &quot;text&quot;: text,
+                         &quot;delta&quot;: delta(out.get(&quot;logprobs&quot;) or [], text) if have_lp else None})
+    counts = Counter(b[&quot;answer&quot;] for b in branches if b[&quot;answer&quot;] is not None)
+    for b in branches:
+        b[&quot;agreement&quot;] = counts.get(b[&quot;answer&quot;], 0) / len(branches)
+    # Pick the answer: by summed Δ if we have it (the paper&#x27;s weighted aggregation), else by agreement.
+    score = Counter()
+    for b in branches:
+        if b[&quot;answer&quot;] is not None:
+            score[b[&quot;answer&quot;]] += b[&quot;delta&quot;] if b[&quot;delta&quot;] is not None else 1
+    return branches, (score.most_common(1)[0][0] if score else None), have_lp
+
+try:
+    cd_results = []
+    for q in PROBS[:1]:                                                                                 # about 20 short calls
+        branches, pick, have_lp = cot_decode(q)
+        greedy = branches[0][&quot;answer&quot;] if have_lp else extract_int(generate(f&quot;Q: {q[&#x27;question&#x27;]}\nA:&quot;, 250).get(&quot;response&quot;, &quot;&quot;))
+        cd_results.append((q[&quot;answer&quot;], greedy, pick))
+        print(f&quot;\ntruth {q[&#x27;answer&#x27;]} | greedy {greedy} | CoT-decoding pick {pick} | real log-probs: {have_lp}&quot;)
+        for b in branches:
+            d = f&quot;{b[&#x27;delta&#x27;]:.2f}&quot; if b[&quot;delta&quot;] is not None else &quot;n/a&quot;
+            print(f&quot;  first token {b[&#x27;first&#x27;]!r:10} -&gt; answer {b[&#x27;answer&#x27;]} | Δ {d} | agreement {b[&#x27;agreement&#x27;]:.0%} | {b[&#x27;text&#x27;][:70]!r}&quot;)
+except Exception as e:
+    cd_results = []
+    print(&quot;Skipped CoT-decoding (needs Ollama&#x27;s /api/generate):&quot;, type(e).__name__, e)</code></pre></div>
+<div class="nb-md"><p><strong>What to notice:</strong> some first tokens start the answer right away ("12"), others start a sentence ("First", "The") and lead into worked steps. Our model is instruction-tuned, so it often reasons anyway; the effect is biggest on pre-trained (base) models, which is what the paper studied. The paper also found instruction-tuned Mistral-7B still gained (31.2% to 38.2% on GSM8K).</p></div>
+<div class="nb-md"><h3>5. The other talks, in short (readings are our picks)</h3>
+<p><strong>Melvin Johnson (Google DeepMind), Lecture 9: "Evolution of Post-training from Chatbots to Agents."</strong> His personal site describes him as leading Gemini post-training. Post-training is everything after pre-training: instruction tuning, preference tuning, and reinforcement learning, which together turn a text predictor into a helpful chat model and now into an agent that plans and calls tools. Readings we chose: the Gemini 1.0 report (Gemini Team 2023, <em>Gemini: A Family of Highly Capable Multimodal Models</em>), where he is an author and which describes the post-training stages; and his best-known earlier paper (Johnson et al. 2017, <em>Google's Multilingual Neural Machine Translation System</em>), where one model handles many languages with only a target-language token added, and can translate between pairs it never saw together ("zero-shot translation"). The lesson that carries over: one general model plus the right training signal beats many special-purpose models.</p>
+<p><strong>Thang Luong (Google DeepMind), Lecture 16: "Towards AI Superhuman Reasoning: AlphaProof, AlphaGeometry and Gemini IMO Gold."</strong>
+- <em>AlphaGeometry</em> (Trinh et al. 2024, <em>Solving olympiad geometry without human demonstrations</em>, Nature): a language model proposes helpful extra constructions (a new point or line) and a symbolic engine does the rigorous deduction. Trained on 100 million synthetic theorems and proofs, with no human demonstrations. It solved 25 of 30 olympiad geometry problems; the previous best method solved 10, and an average gold medalist about 25.9.
+- <em>AlphaProof + AlphaGeometry 2</em> (DeepMind blog, July 2024): reinforcement learning in the formal proof language Lean, on about a million problems auto-translated from natural language. Together they scored 28 of 42 at IMO 2024 (4 of 6 problems), silver-medal level, but some problems took up to three days.
+- <em>Gemini Deep Think</em> (DeepMind blog, July 2025): 35 of 42 at IMO 2025 (5 of 6 problems), gold-medal level, end to end in natural language within the 4.5-hour limit, using "parallel thinking" (exploring several solution paths at once) and new RL techniques.
+The arc: from a verifier-backed narrow system to a general model that reasons in plain language. A <strong>checkable reward</strong> (a proof checker, a unit test, our contract labels) is what made the RL work.</p>
+<p><strong>Misha Laskin (Reflection AI), Lecture 18: "Building Agentic Systems for Autonomy: Lessons and Open Questions."</strong> Laskin co-founded Reflection AI in March 2025 after DeepMind work on RL and Gemini; its stated bet is that solving autonomous coding leads toward broader superintelligence. Its first product, Asimov, reads code plus team documents and messages to answer how a codebase works (as reported in July 2025). Reading we chose: his earlier paper (Laskin et al. 2022, <em>In-context Reinforcement Learning with Algorithm Distillation</em>), which trains a transformer on the learning histories of an RL algorithm; the model then improves its policy <em>in context</em>, with no weight updates. That is a clean early version of this course's theme: an agent that gets better from its own experience.</p>
+<p><strong>Danny Driess (Physical Intelligence), Lecture 19: "Multimodal AI Agents in Robotics."</strong> Readings we chose: <em>PaLM-E</em> (Driess et al. 2023, <em>PaLM-E: An Embodied Multimodal Language Model</em>), which feeds images and robot state straight into a language model as "multimodal sentences"; the largest version (562B parameters) did robot planning and reached state-of-the-art on the OK-VQA visual question benchmark. And <em>π0</em> (Black et al. 2024, <em>π0: A Vision-Language-Action Flow Model for General Robot Control</em>), co-authored by Driess: a vision-language model extended with a flow-matching "action expert" that outputs smooth robot motions, trained on many robot types, doing tasks like folding laundry and assembling boxes. The pattern from the rest of the course holds: start from a pre-trained model, add the new input and output types, and fine-tune for the task.</p>
+<p><strong>Lecture 20: Future research areas.</strong> No readings were listed; this paragraph is our synthesis of open problems that run through the course, not the lecture's content: (1) rewards for work that has no unit test (most business work); (2) long-horizon reliability, since METR's 80% horizons are several times shorter than its 50% ones; (3) memory that stays correct over months; (4) cheaper inference so that search, voting and self-checking are affordable; (5) evaluations that keep up with models (live benchmarks like DeepScholar-Bench).</p></div>
+<div class="code"><div class="cap"><span class="cell">a11_guest_lectures.ipynb · cell 7</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python">check(&quot;chain of thought is at least as accurate as direct answers&quot;, acc(cot) &gt;= acc(direct))
+check(&quot;chain of thought solves at least half the problems&quot;, acc(cot) &gt;= 0.5)
+check(&quot;self-consistency is not worse than single CoT by more than one problem&quot;, acc(sc) &gt;= acc(cot) - 1 / len(PROBS))
+hi = [p == q[&quot;answer&quot;] for a, p, q in zip(agree, sc, PROBS) if a &gt;= 0.6]
+lo = [p == q[&quot;answer&quot;] for a, p, q in zip(agree, sc, PROBS) if a &lt; 0.6]
+check(&quot;high-agreement answers are at least as accurate as low-agreement ones&quot;,
+      not hi or not lo or sum(hi) / len(hi) &gt;= sum(lo) / len(lo))
+check(&quot;least-to-most returns a number for most problems&quot;, sum(a is not None for a in l2m) &gt;= len(PROBS) - 1)
+check(&quot;CoT-decoding ran and produced a pick&quot;, bool(cd_results) and all(p is not None for _, _, p in cd_results))</code></pre></div>
+<div class="nb-md"><h3>Your turn</h3>
+<ol>
+<li>Raise self-consistency to K = 9 on the two problems with the lowest agreement. Does the majority change? Does agreement go up?</li>
+<li>Run the direct vs CoT comparison with <code>llama3.2:3b</code>. Is the gain from CoT bigger or smaller for the smaller model?</li>
+<li>Use self-consistency agreement as a gate: send any answer with agreement below 60% to "human review". What share goes to review, and what is the accuracy of the rest?</li>
+</ol></div>
+<details class="solutions"><summary>Show worked solutions (try the exercises first)</summary><div class="code"><div class="cap"><span class="cell">a11_guest_lectures.ipynb · cell 8</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 1: more samples on the least certain problems (2 x 9 = 18 calls)
+low = sorted(range(len(PROBS)), key=lambda i: agree[i])[:2]
+for i in low:
+    more = [extract_int(ask(COT.format(q=PROBS[i][&quot;question&quot;]), temperature=0.7, max_tokens=500)) for _ in range(9)]
+    top = Counter(a for a in more if a is not None).most_common(1)
+    print(f&quot;truth {PROBS[i][&#x27;answer&#x27;]} | K=5 vote {sc[i]} ({agree[i]:.0%}) | K=9 vote {top[0][0] if top else None} ({top[0][1]/9 if top else 0:.0%})&quot;)
+# Notice: more samples make the vote more stable, but if the model is wrong in the same way each time,
+# voting cannot fix it. Agreement measures consistency, not truth.</code></pre></div><div class="code"><div class="cap"><span class="cell">a11_guest_lectures.ipynb · cell 9</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 2: a smaller model (12 calls)
+d3 = pmap(lambda q: extract_int(ask(DIRECT.format(q=q[&quot;question&quot;]), model_name=&quot;llama3.2:3b&quot;, max_tokens=15)), PROBS)
+c3 = pmap(lambda q: extract_int(ask(COT.format(q=q[&quot;question&quot;]), model_name=&quot;llama3.2:3b&quot;, max_tokens=500)), PROBS)
+print(f&quot;3B direct {acc(d3):.0%} -&gt; CoT {acc(c3):.0%} | 8B direct {acc(direct):.0%} -&gt; CoT {acc(cot):.0%}&quot;)
+# Notice: the CoT paper found the gain grows with model size; very small models can write steps that look
+# right but are wrong. On a tiny sample like ours, expect noise.</code></pre></div><div class="code"><div class="cap"><span class="cell">a11_guest_lectures.ipynb · cell 10</span><button type="button" class="copy">Copy</button></div><pre><code class="language-python"># Solution 3: agreement as a review gate (no new calls)
+auto = [i for i in range(len(PROBS)) if agree[i] &gt;= 0.6]
+print(f&quot;sent to review: {1 - len(auto)/len(PROBS):.0%} | accuracy of auto-approved: &quot;
+      f&quot;{(sum(sc[i] == PROBS[i][&#x27;answer&#x27;] for i in auto) / len(auto)) if auto else float(&#x27;nan&#x27;):.0%}&quot;)
+# Notice: this is the business use of self-consistency. You trade some review work for much higher accuracy
+# on what you let through without a person.</code></pre></div></details>
+<div class="pit"><strong>Traps</strong><ul><li>Treating these readings as the course&#x27;s. CS329A listed no papers for the guest lectures; we chose them.</li><li>Forcing a short answer on a multi-step problem. Asking for &#x27;only the number&#x27; removes the reasoning the model needs.</li><li>Reading high agreement as truth. Self-consistency measures consistency; a model can be wrong the same way every time.</li><li>Running CoT-decoding through the chat endpoint. It needs raw completion and ideally token log-probs; without them our notebook approximates confidence by agreement.</li><li>Expecting a big CoT gain on tiny models. The CoT paper found the gain grows with model size; small models can write plausible but wrong steps.</li><li>Copying the IMO recipe without a checker. RL on reasoning worked because proofs and answers could be verified exactly.</li></ul></div>
+<div class="check"><h4>Check yourself</h4><details><summary>What is the difference between self-consistency and CoT-decoding?</summary><p>Self-consistency samples whole reasoning paths from a CoT prompt and votes; CoT-decoding uses no prompt, branches only on the first token&#x27;s top-k alternatives, continues greedily, and picks by answer confidence.</p></details><details><summary>Why does least-to-most help on problems harder than the examples?</summary><p>Breaking the problem into easier sub-problems solved in order lets the model handle each piece at the difficulty it can manage, with earlier answers feeding later ones.</p></details><details><summary>What changed between the 2024 IMO silver and the 2025 IMO gold?</summary><p>2024 used formal Lean proofs and took up to three days (28/42); 2025 Gemini Deep Think worked end to end in natural language within 4.5 hours (35/42).</p></details><details><summary>What made RL work in AlphaProof?</summary><p>A formal checker (Lean) that verifies proofs exactly, giving a reliable reward.</p></details><details><summary>Were the readings for these talks assigned by the course?</summary><p>No. The course listed only titles and speakers; these are our picks of each speaker&#x27;s public work.</p></details></div>
+</div></section><nav class="pager"><a class="prev" href="a10.html"><small>← Previous</small>Agentic evaluations and long-horizon tasks</a><a class="next" href="ap1.html"><small>Next →</small>AppBench: Benchmarking AI-Generated Web Applications</a></nav></main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) document.querySelectorAll(".code pre code").forEach(function(el){ hljs.highlightElement(el); });
+  document.querySelectorAll(".code").forEach(function(box){
+    var btn = box.querySelector(".copy"), code = box.querySelector("code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function(){
+      function ok(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+      function fb(){ var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(code.innerText).then(ok, fb); } catch (e) { fb(); }
+    });
+  });
+  var KEY = "agent-school-done", done = {}, TOTAL = +document.body.dataset.total || 1;
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function render(){
+    var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+    document.querySelectorAll(".done-btn").forEach(function(b){
+      var on = !!done[b.dataset.done];
+      b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "Done ✓" : "Mark done";
+    });
+    document.querySelectorAll("[data-mod-link]").forEach(function(a){ a.classList.toggle("done", !!done[a.dataset.modLink]); });
+    var l = document.getElementById("progLabel"), bar = document.getElementById("progBar");
+    if (l) l.textContent = Math.min(n, TOTAL) + " of " + TOTAL + " modules done";
+    if (bar) bar.style.width = (100 * Math.min(n, TOTAL) / TOTAL) + "%";
+  }
+  document.querySelectorAll(".done-btn").forEach(function(b){
+    b.addEventListener("click", function(){ done[b.dataset.done] = !done[b.dataset.done]; save(); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>
