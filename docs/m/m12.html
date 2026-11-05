@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Data and flywheels · Agent Engineering School</title>
-<meta name="description" content="How every run and every lawyer&#x27;s correction becomes data. Make test cases with known answers, log what happens, and turn fixes into tests today and training data later.">
+<meta name="description" content="Turn every run and every lawyer&#x27;s fix into data. Plant known faults, log traces, make corrections into tests now and training data later.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,74 +255,111 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 12</span></div><section class="mod" id="m12" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 12</div><h2>Data and flywheels</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/12_data_flywheel.ipynb">Open in Colab</a><button class="done-btn" data-done="m12" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>11 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How every run and every lawyer&#x27;s correction becomes data. Make test cases with known answers, log what happens, and turn fixes into tests today and training data later.</p><article class="lesson"><h2>The big idea</h2>
-<p>Every time the agent runs, something useful happens. It gets a contract right, or it gets one wrong and a lawyer fixes it. If you write that down, it becomes data. If you don't, it's gone.</p>
-<p>Think of a restaurant kitchen. A good chef keeps notes: which dish came back, why, and what fixed it. Those notes train the next cook. Over time the kitchen gets better because it remembers its own mistakes.</p>
-<p>This lesson covers two habits. First, make test cases where you already know the answer, by planting problems on purpose. Second, build a flywheel: a loop where use creates records, records improve tests and training, and a better system gets more use.</p>
-<h2>Why it matters for us</h2>
-<ul>
-<li>Firms rarely have hundreds of labeled contracts ready to go. Planting known problems in clean contracts gives us labeled cases cheaply.</li>
-<li>A local system logs everything on the firm's own disk. That log is the audit trail and the future training set, and it never leaves the building.</li>
-<li>Each lawyer edit is free expert labeling. Capturing it with a reason is how the system improves month by month.</li>
-</ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Plant known faults.</strong> Take a clean contract. Use code to change one clause so it breaks a rule. For example, change a 12-month liability cap to 48 months. Now the right answer is known by construction. This idea comes from the SWE-smith paper (2025), which planted known bugs into working code. Each of its synthetic tasks cost about 2.5 cents.</p>
-</li>
-<li>
-<p><strong>Log every run as a trace.</strong> A trace is the full record of one run: the input, the prompt, the model name, the output, and the time taken. Traces show what really happened, not what you hoped happened.</p>
-</li>
-<li>
-<p><strong>Turn corrections into tests at once.</strong> When a lawyer fixes a miss, store the input, the wrong answer, the right answer and the reason. Add it to a regression set right away. A regression set is a list of past mistakes you rerun after every change, to make sure they stay fixed.</p>
-</li>
-<li>
-<p><strong>Build training data by rejection sampling.</strong> Let the model try each case. Keep only the answers a checker accepts, and throw away the rest. What's left is clean data to fine-tune on later.</p>
-</li>
-<li>
-<p><strong>Batch into releases, and protect the eval.</strong> Gather corrections into a training set for the next release. Never train on the held-out eval set, or your test scores become meaningless.</p>
-</li>
-</ol>
-<pre><code>use -&gt; traces + corrections -&gt; tests now, training later -&gt; better system -&gt; more use
-</code></pre>
-<h2>Worked example</h2>
-<p>The firm's rules: liability cap at most 12 months of fees, governing law California or Delaware, renewals at most 1 year, notice at least 30 days.</p>
-<p>The notebook defines four ways to break a clean contract:</p>
-<pre><code class="language-python">FAULTS = {
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 12</span></div><section class="mod" id="m12" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 12</div><h2>Data and flywheels</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/12_data_flywheel.ipynb">Open in Colab</a><button class="done-btn" data-done="m12" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Turn every run and every lawyer&#x27;s fix into data. Plant known faults, log traces, make corrections into tests now and training data later.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lectures 11 and 12 · What Data Do Agents Need? · Data Selection &amp; Quality · <a href="https://web.stanford.edu/class/cs329z/slides/lecture11.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Build labeled contract cases cheaply, log every run, and turn corrections into tests and checked training data.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why data matters</h3><span class="slide-no">2/12</span></div><ul>
+<li>Same base model, different post-training data: big difference in results.</li>
+<li>Making tasks and trajectories is now cheap. Deciding what to keep is the hard part.</li>
+<li>A firm rarely has hundreds of labeled contracts ready. We have to make them.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two types of agent data</h3><span class="slide-no">3/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Trajectory</th>
+<th>Environment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A recording of an agent solving a task</td>
+<td>A task + sandbox + a way to check success</td>
+</tr>
+<tr>
+<td>Train with SFT: the model imitates it</td>
+<td>Train with RL: the model practices</td>
+</tr>
+<tr>
+<td>Ours: a trace of one review call</td>
+<td>Ours: a contract with known issues + the grader</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Where agent data comes from</h3><span class="slide-no">4/12</span></div><ul>
+<li>Human demos: realistic but costly.</li>
+<li>Mined from the web: code history, tutorials, videos.</li>
+<li>Synthesized trajectories: a model writes or runs the steps; a filter keeps good runs.</li>
+<li>Synthesized tasks: inject a known fault, so the checker knows the answer.</li>
+<li>Simulated users or environments: endless practice, but errors get learned too.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Synthesized tasks: SWE-smith</h3><span class="slide-no">5/12</span></div><ul>
+<li>SWE-smith: inject bugs that break existing tests in 128 Python repos.</li>
+<li>An LM writes the issue text. 50k tasks from about 20 hours of human work.</li>
+<li>Same idea for us: take a clean contract, break one clause in code.</li>
+<li>The right answer is known by construction. No lawyer needed to label it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Planting faults in code</h3><span class="slide-no">6/12</span></div><pre><code class="language-python">FAULTS = {
     &quot;liability_cap&quot;:      lambda t: re.sub(r&quot;IN THE 12 MONTHS&quot;, &quot;IN THE FORTY-EIGHT (48) MONTHS&quot;, t),
     &quot;governing_law&quot;:      lambda t: re.sub(r&quot;State of (California|Delaware)&quot;, &quot;State of Nevada&quot;, t),
     &quot;auto_renewal&quot;:       lambda t: t.replace(&quot;successive one (1) year&quot;, &quot;successive four (4) year&quot;),
     &quot;termination_notice&quot;: lambda t: re.sub(r&quot;at least [\w\s()]+? days'&quot;, &quot;at least seven (7) days'&quot;, t),
 }
 </code></pre>
-<p>Line by line: each line is one fault, named after the rule it breaks. The liability line swaps a 12-month cap for 48 months. The law line swaps California or Delaware for Nevada. The renewal line changes a one-year renewal to four years. The notice line changes any notice period to seven days. Each is a simple find-and-replace, so we know exactly what we broke.</p>
-<p>The notebook picks one or two faults at random for each case. From the clean contracts it builds 30 new cases, each with a known list of issues. Then the reviewer runs on them, and every call is written to a traces file.</p>
-<p>Where the reviewer misses a planted fault, or flags something that isn't there, the case goes into the regression file. Finally, the notebook runs the reviewer on 10 more cases, up to two tries each. It keeps only answers that exactly match the known issues, and writes them in the standard chat format that fine-tuning tools read.</p>
-<h2>Common mistakes</h2>
 <ul>
-<li><strong>Theorizing instead of reading.</strong> Don't guess why the agent fails. Read 50–100 real outputs with the customer and write down the failures in plain words.</li>
-<li><strong>Using only synthetic cases.</strong> A model can look great on cases built from your own templates and still fail on real documents. Keep real contracts in every eval and training set.</li>
-<li><strong>Rewarding "the reviewer approved it".</strong> The model learns to look right rather than be right. Reward correct answers, checked against known labels.</li>
-<li><strong>Vague quality scores.</strong> A pass or fail per criterion beats a 1–5 "quality" rating. It is clearer and people agree on it more.</li>
-<li><strong>Auto-reusing stored examples without filtering.</strong> One bad example, pulled into future prompts, quietly poisons later runs.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Where does a lawyer&#x27;s correction go, in order?</summary>
-<p>It is logged with the reason, added as a test case, used as a retrieved example right away, and included in the next training batch. It never goes into the held-out eval.</p>
-</details>
-<details>
-<summary>Why are planted faults useful?</summary>
-<p>We changed the contract ourselves, so we know the right answer without paying a lawyer to label it. That gives many labeled cases cheaply.</p>
-</details>
-<details>
-<summary>What is rejection sampling?</summary>
-<p>Let the model try several times and keep only the answers a checker accepts. The kept answers become clean training data.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the Module 12 notebook and look at the first synthetic case to see the planted lines. Check how many misses went into the regression file and how many of 10 cases were kept for fine-tuning. In the exercises, add a new fault type and mix real and synthetic cases in one eval.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Line 1: one entry per playbook rule.</li>
+<li>Line 2: 12-month cap → 48 months (rule: at most 12).</li>
+<li>Line 3: California or Delaware → Nevada.</li>
+<li>Line 4: one-year renewal → four years (rule: at most 1).</li>
+<li>Line 5: any notice period → seven days (rule: at least 30).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Clean vs planted</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Clean (msa_03)</th>
+<th>Planted case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"...in the 12 months preceding the claim"</td>
+<td>"...in the forty-eight (48) months preceding the claim"</td>
+</tr>
+<tr>
+<td>issues: none</td>
+<td>issues: liability_cap (known)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The notebook builds 30 cases from the 6 clean contracts, 1 or 2 faults each.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The flywheel</h3><span class="slide-no">8/12</span></div><pre><code>use → traces + corrections → tests now, training later → better system → more use
+</code></pre>
+<ul>
+<li>Trace: the full record of one run: input hash, prompt, model, output, time.</li>
+<li>Regression set: past mistakes you rerun after every change.</li>
+<li>Each lawyer's fix is free expert labeling. Save it with the reason.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Rejection sampling for training data</h3><span class="slide-no">9/12</span></div><ul>
+<li>Let the model try each case (up to 2 tries).</li>
+<li>Keep only answers that exactly match the known issues. Drop the rest.</li>
+<li>Save as chat-format JSONL (<code>sft_train.jsonl</code>) that TRL or Unsloth can fine-tune on.</li>
+<li>Never put held-out eval cases in training.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What data teaches by accident</h3><span class="slide-no">10/12</span></div><ul>
+<li>Reward hacking: models faked passing tests with <code>sys.exit(0)</code>.</li>
+<li>Trained on human approval: the model learned to look right, not be right.</li>
+<li>Overfit to harness: trained in one harness, it keeps that harness's habits.</li>
+<li>Best model ≠ best teacher.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>Traces and corrections live on the firm's own disk: audit trail and future training set.</li>
+<li>Planted faults give labeled cases without sending contracts anywhere.</li>
+<li>Fine-tuning on checked data can run on the same local machine later.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Guessing why it fails → read 50–100 real outputs with the customer.</li>
+<li>Synthetic-only cases → keep real contracts in every eval and training set.</li>
+<li>Rewarding "a reviewer approved it" → reward answers checked against labels.</li>
+<li>Reusing stored examples unfiltered → one bad example poisons later runs.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Where does a lawyer&#x27;s correction go?</summary><p>Logged with the reason, added to the regression set at once, then into the next training batch. Never into the held-out eval.</p></details>
+
+<details><summary>Why are planted faults useful?</summary><p>We broke the clause ourselves, so the right answer is known. Many labeled cases, no labeling cost.</p></details>
+
+<details><summary>What is rejection sampling?</summary><p>Let the model try, keep only answers the checker accepts. What is left is clean training data.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Look at <code>synthetic[0]</code>: which rules were broken, and the changed lines.</li>
+<li>Count misses saved to <code>regression.jsonl</code> and cases kept out of 10 for fine-tuning.</li>
+<li>Solutions: add a cure-period fault; mix real and synthetic cases in one eval.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 11 · Shankar, "Data Flywheels" · "Who Validates the Validators?" · SWE-smith · LIMA</p>
   <p class="big">Every run, every human correction and every failure is data. Store it with the reason, and it becomes a test today, an example tomorrow, and training data next month.</p>

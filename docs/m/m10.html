@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Evaluation · Agent Engineering School</title>
-<meta name="description" content="How to build a test set that tells you the truth about an agent. Grade with code, test the test itself, and measure whether the agent is right every time.">
+<meta name="description" content="Build the test set before the agent. Grade with code, test the test itself, and measure whether the agent is right every time.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,89 +255,143 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 10</span></div><section class="mod" id="m10" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 10</div><h2>Evaluation</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/10_evaluation.ipynb">Open in Colab</a><button class="done-btn" data-done="m10" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to build a test set that tells you the truth about an agent. Grade with code, test the test itself, and measure whether the agent is right every time.</p><article class="lesson"><h2>The big idea</h2>
-<p>An eval (short for evaluation) is a test set for your agent. It is a list of tasks with known right answers and a way to grade the agent's work.</p>
-<p>Think of a bar exam. Before you let a new lawyer loose on clients, you test them on questions where the answers are known. You also make sure the exam itself is fair. A question nobody can answer, or one anyone can pass by guessing, tells you nothing.</p>
-<p>The key habit is this: build the eval before the agent. Without it, you can't tell whether a change helped. You can't tell whether a cheap local model is good enough. And you have nothing honest to tell a customer.</p>
-<h2>Why it matters for us</h2>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 10</span></div><section class="mod" id="m10" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 10</div><h2>Evaluation</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/10_evaluation.ipynb">Open in Colab</a><button class="done-btn" data-done="m10" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Build the test set before the agent. Grade with code, test the test itself, and measure whether the agent is right every time.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lectures 10 and 13 · Evaluating Agents (Terminal-Bench, Harbor) · Benchmark Design · <a href="https://web.stanford.edu/class/cs329z/slides/lecture13.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Build an eval for contract review: four task parts, a code grader, sanity checks, and a consistency score.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why evals first</h3><span class="slide-no">2/12</span></div><ul>
+<li>Before: code is the source of truth. Now: evals are the source of truth.</li>
+<li>Agents are stochastic: the same input can give different outputs.</li>
+<li>Without an eval you can't tell if a change helped, or if a local model is good enough.</li>
+<li>Goodhart's law: when a measure becomes a target, it stops being a good measure.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Definitions</h3><span class="slide-no">3/12</span></div><ul>
+<li>Task: one test with defined inputs and success criteria.</li>
+<li>Trial: one attempt at a task.</li>
+<li>Verifier (grader): the logic that scores the agent's work.</li>
+<li>Trajectory (trace): the full record of one trial.</li>
+<li>Agent harness: the code that lets a model act as an agent (prompts, tools, limits).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The four parts of a task</h3><span class="slide-no">4/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Terminal-Bench</th>
+<th>Our contract eval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Request</td>
+<td><code>instruction.md</code>: "output a STEP file..."</td>
+<td>"List the rules this contract breaks."</td>
+</tr>
+<tr>
+<td>Environment</td>
+<td><code>Dockerfile</code> with the input files</td>
+<td>20 frozen contracts + playbook</td>
+</tr>
+<tr>
+<td>Stopping rule</td>
+<td>turn / time / cost budget</td>
+<td>one call per contract</td>
+</tr>
+<tr>
+<td>Scorer</td>
+<td><code>test_outputs.py</code> asserts</td>
+<td>code compares to <code>labels.jsonl</code></td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li>Our pitch to a firm is "a model on your own computers is good enough for this work." Only an eval can prove that.</li>
-<li>Legal work repeats. A reviewer that is right on most runs but wrong on some will feel unreliable. We need a number for consistency, not only an average.</li>
-<li>A good eval lets us compare models fairly. Swap the model, keep everything else the same, and rerun.</li>
+<li>Score the final result, not the steps taken.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Grade with code: precision and recall</h3><span class="slide-no">5/12</span></div><ul>
+<li>Precision: of the issues flagged, how many are real.</li>
+<li>Recall: of the real issues, how many were flagged.</li>
+<li>Recall alone rewards flagging everything. Precision alone rewards flagging nothing.</li>
+<li>Clean contracts (msa_01 to msa_06 have no issues) punish false flags.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Test the eval itself</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Fake agent</th>
+<th>Returns</th>
+<th>Must score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Oracle</td>
+<td>The true answers</td>
+<td>100% exact. If not, the grader is broken</td>
+</tr>
+<tr>
+<td>Do nothing</td>
+<td>Empty list</td>
+<td>Low recall</td>
+</tr>
+<tr>
+<td>Flag everything</td>
+<td>All four rules</td>
+<td>Low precision (under 50%)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Tasks are software. Software has bugs. Run these before trusting any score.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Consistency: pass@k vs pass^k</h3><span class="slide-no">7/12</span></div><ul>
+<li>pass@k: right on at least one of k tries. Fits a person picking the best draft.</li>
+<li>pass^k: right on all k tries. Fits repeated legal work.</li>
+<li>The gap between them is inconsistency.</li>
+<li>At 75% per try, pass^3 is only about 42%.</li>
+<li>The notebook: 10 contracts × 3 runs at temperature 0.3, each with a 95% confidence interval.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LLM judge, only for open-ended parts</h3><span class="slide-no">8/12</span></div><ul>
+<li>LLM judge: a model that grades another model's output, e.g. a redline's quality.</li>
+<li>Known biases: favors length, its own style, the first answer shown.</li>
+<li>Give it an expert reference. Ask twice with the order swapped.</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li><strong>Define the four parts of each task.</strong></li>
-<li>Request: the instruction, written the way real users write it.</li>
-<li>Environment: the documents and tools, frozen so they don't change between runs.</li>
-<li>Stopping rule: time and token limits (a token is roughly a word piece).</li>
-<li>
-<p>Scorer: how you decide right or wrong. Check the final result, not the steps taken.</p>
-</li>
-<li>
-<p><strong>Grade with code wherever you can.</strong> Code is exact and never in a mood. For contract review, compare the list of broken rules the agent found to the true list. Use two numbers:</p>
-</li>
-<li>Precision: of the issues the agent flagged, how many were real.</li>
-<li>
-<p>Recall: of the real issues, how many the agent flagged.
-   You need both. Recall alone rewards flagging everything. Precision alone rewards flagging nothing.</p>
-</li>
-<li>
-<p><strong>Test the eval itself.</strong> Run three fake agents first:</p>
-</li>
-<li>The oracle, which returns the true answers. It must score 100%. If not, your grader is broken.</li>
-<li>Do nothing. It must score low on recall.</li>
-<li>
-<p>Flag everything. It must score low on precision. Clean contracts in the set make sure of that.</p>
-</li>
-<li>
-<p><strong>Run each task several times.</strong> Models give slightly different answers each run, especially at higher temperature (a setting that adds randomness). Then report two numbers:</p>
-</li>
-<li>pass@k: right on at least one of k tries. Fits when a person picks the best of several drafts.</li>
-<li>
-<p>pass^k: right on all k tries. Fits repeated business work, where it must be right every time.
-   The gap between them is inconsistency. At 75% per try, pass^3 is only about 42%.</p>
-</li>
-<li>
-<p><strong>Use an LLM judge only for open-ended parts.</strong> An LLM judge is a model that grades another model's output, for example the quality of a rewritten clause. Judges have known biases. They favor whichever answer comes first, and longer answers. So give the judge an expert reference answer, and ask twice with the order swapped.</p>
-</li>
-</ol>
-<h2>Worked example</h2>
-<p>The firm's rules: liability cap at most 12 months of fees, governing law California or Delaware, renewals at most 1 year, notice at least 30 days. The eval has 20 contracts with known issues, including clean ones.</p>
-<p>First, the notebook tests the eval with the three fake agents. The oracle scores 100%. Flag-everything scores low on precision. Good: the eval can tell them apart.</p>
-<p>Then the real reviewer runs 3 times per contract at temperature 0.3. The notebook prints the average, pass@3 and pass^3, each with a confidence interval (a range showing how sure we are, given only a handful of contracts).</p>
-<p>For redlines, the judge sees an expert rewrite and two candidates. One caps liability at 12 months. The other says 24 months and adds a long sales pitch. The judge is asked twice, in both orders:</p>
-<pre><code class="language-python">f = re.sub(r&quot;[^A-Z]&quot;, &quot;&quot;, ask(JUDGE.format(ref=ref, a=x, b=y)).upper())[:1]
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Candidate x</th>
+<th>Candidate y</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"...capped at fees paid during the 12 months before the claim."</td>
+<td>"...24 months before the claim, which is a commercially reasonable and widely accepted market standard."</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Order swap in code</h3><span class="slide-no">9/12</span></div><pre><code class="language-python">f = re.sub(r&quot;[^A-Z]&quot;, &quot;&quot;, ask(JUDGE.format(ref=ref, a=x, b=y)).upper())[:1]
 s = re.sub(r&quot;[^A-Z]&quot;, &quot;&quot;, ask(JUDGE.format(ref=ref, a=y, b=x)).upper())[:1]
 if f == &quot;A&quot; and s == &quot;B&quot;: return &quot;x wins&quot;
 if f == &quot;B&quot; and s == &quot;A&quot;: return &quot;y wins&quot;
 </code></pre>
-<p>Line by line: the first line asks the judge with x in slot A, and keeps just the first letter of the answer. The second line asks again with the order swapped. The third line says x wins only if the judge picked x both times, once as A and once as B. The fourth line is the same for y. Any other result is a tie. If the judge picked "A" both times, it was choosing by position, not quality.</p>
-<h2>Common mistakes</h2>
 <ul>
-<li><strong>Tuning on the test set.</strong> If you tweak prompts while watching the test scores, the score stops meaning anything. Keep 20–30% of tasks hidden until the end.</li>
-<li><strong>Comparing models in different harnesses.</strong> The harness is the code around the model: prompts, tools, limits. Change it and you are measuring the harness, not the model.</li>
-<li><strong>Claiming a win inside the error bars.</strong> With about 100 documents, expect scores to wobble by 5–10 points. If two results overlap, say "tied".</li>
-<li><strong>No clean cases.</strong> Without contracts that have no issues, a model that flags everything looks great.</li>
-<li><strong>Not reading failures.</strong> Look at 10–20 failures per model. If every model misses the same item, suspect the label, not the model.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>A model scores 90% on average but 60% on pass^3. What does that tell a law firm?</summary>
-<p>It is right most of the time on any single run, but inconsistent. On many contracts at least one of three runs gets it wrong, and lawyers will feel that.</p>
-</details>
-<details>
-<summary>Why should the oracle score 100% before you trust an eval?</summary>
-<p>The oracle returns the true answers. If it can&#x27;t score 100%, the grader or the labels are broken, and every other score is suspect.</p>
-</details>
-<details>
-<summary>Why ask an LLM judge twice with the order swapped?</summary>
-<p>Judges tend to favor whichever answer comes first. Only a verdict that holds in both orders reflects quality rather than position.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the Module 10 notebook and look at the three fake-agent rows first, then the real reviewer's average, pass@3 and pass^3. In the exercises, write a "cheat" reviewer that always flags the two most common rules, and see whether precision catches it.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Line 1: ask with x in slot A; keep the first letter.</li>
+<li>Line 2: ask again with the order swapped.</li>
+<li>Line 3: x wins only if picked in both positions.</li>
+<li>Line 4: same for y. Anything else is a tie; "A" twice means position bias.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A trustworthy score</h3><span class="slide-no">10/12</span></div><ul>
+<li>Fair: same harness, budget and settings for every model compared.</li>
+<li>Reproducible: pin the model, harness and data versions.</li>
+<li>Transparent: report runs, error bars, cost. With about 100 documents, expect ±5–10 points.</li>
+<li>Honest: never tune on the test set. Keep 20–30% hidden until the end.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>"A model on your own machine is good enough" is a claim only an eval can prove.</li>
+<li>Swap the local model, keep the harness, rerun. That is a fair comparison.</li>
+<li>Report pass^k, not just the average. Lawyers feel inconsistency.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Tuning on the test set → keep a hidden split.</li>
+<li>Comparing models in different harnesses → you are measuring the harness.</li>
+<li>Claiming a win inside the error bars → say "tied".</li>
+<li>No clean cases → flag-everything looks great.</li>
+<li>Not reading failures → read 10–20. If every model misses one item, suspect the label.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A model averages 90% but scores 60% on pass^3. What does that tell a firm?</summary><p>It is usually right on a single run, but inconsistent. On many contracts at least one of three runs is wrong.</p></details>
+
+<details><summary>Why must the oracle score 100% before you trust an eval?</summary><p>It returns the true answers. If it scores less, the grader or labels are broken.</p></details>
+
+<details><summary>Why ask an LLM judge twice with the order swapped?</summary><p>Judges favor the first answer. Only a verdict that holds in both orders reflects quality.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Read the three fake-agent rows first, then the reviewer's average, pass@3 and pass^3.</li>
+<li>Run Solution 1: the cheat reviewer. See precision and exact-match expose it.</li>
+<li>Run Solution 2: pass^5 at temperature 0 vs 0.7.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 10 (Terminal-Bench guest lecture) · Anthropic, "Demystifying Evals" · Zhu et al. agentic benchmark checklist · Zheng et al., LLM-as-a-Judge · tinyBenchmarks · τ-bench</p>
   <p class="big">Build the eval before the agent. It is the only way to know whether a change helped, whether a cheap local model is good enough, and what to tell a customer.</p>

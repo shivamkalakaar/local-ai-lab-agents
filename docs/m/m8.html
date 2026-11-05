@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Memory · Agent Engineering School</title>
-<meta name="description" content="How an agent can remember lessons from past corrections without quietly changing its own rules. Keep memory in plain files, cite the evidence, and let a person approve.">
+<meta name="description" content="Let an agent learn from a partner&#x27;s corrections. Plain files, a cited lesson, a person&#x27;s approval, and a version number on every run.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,20 +255,14 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 08</span></div><section class="mod" id="m8" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 08</div><h2>Memory</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/08_memory.ipynb">Open in Colab</a><button class="done-btn" data-done="m8" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>10 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How an agent can remember lessons from past corrections without quietly changing its own rules. Keep memory in plain files, cite the evidence, and let a person approve.</p><article class="lesson"><h2>The big idea</h2>
-<p>A language model forgets everything when a conversation ends. Memory is how we let an agent carry lessons from one job to the next.</p>
-<p>Think of a new associate at a law firm. Each time a partner corrects her, she writes it in a notebook. After a few corrections on the same point, she drafts a rule: "This client is fine with New York law." She shows the rule to the partner before she starts using it.</p>
-<p>That is the whole idea of this lesson. The agent keeps a log of what happened. It proposes lessons, and each lesson points to the log entries behind it. A person approves each lesson. Memory is saved in numbered versions, so nothing is ever silently overwritten.</p>
-<p>The fancy part is not needed. In the course's benchmarks, plain files and plain search did better than dedicated memory products.</p>
-<h2>Why it matters for us</h2>
-<ul>
-<li>Law firms must explain their decisions. If an agent changes what it remembers on its own, nobody can say why it flagged a clause last March. Versioned, approved memory fixes that.</li>
-<li>Lessons are often client-specific. "Northwind accepts New York law" must never leak into a review for another client.</li>
-<li>Plain files fit a firm's own computers. There is no extra service to run, and everything stays on the box.</li>
-</ul>
-<h2>How it works, step by step</h2>
-<p>The CoALA paper (2024) splits agent memory into four types. Here they are in law-firm terms.</p>
-<div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 08</span></div><section class="mod" id="m8" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 08</div><h2>Memory</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/08_memory.ipynb">Open in Colab</a><button class="done-btn" data-done="m8" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Let an agent learn from a partner&#x27;s corrections. Plain files, a cited lesson, a person&#x27;s approval, and a version number on every run.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 7 · Agent Memory Architectures · <a href="https://web.stanford.edu/class/cs329z/slides/lecture07.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Build memory that learns from corrections, cites its evidence, waits for approval, and never silently changes.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Problems without memory</h3><span class="slide-no">2/12</span></div><ul>
+<li>Loss of procedure: you teach the agent the task again every time.</li>
+<li>Loss of knowledge: facts, rules and preferences are lost between sessions.</li>
+<li>Loss of progress: in long sessions the agent forgets earlier goals and instructions.</li>
+<li>For us: the partner corrects the same New York law flag on every Northwind contract.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Types of agent memory (CoALA)</h3><span class="slide-no">3/12</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Type</th>
@@ -269,74 +274,126 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <tbody>
 <tr>
 <td>Working</td>
-<td>What the model is reading right now</td>
+<td>What the model sees now (the context window)</td>
 <td>The contract under review</td>
 <td>The agent</td>
 </tr>
 <tr>
 <td>Episodic</td>
-<td>What happened</td>
-<td>"Partner changed our flag on clause 10.1"</td>
+<td>Raw logs of what happened</td>
+<td>"Partner changed our flag on 10.1"</td>
 <td>Append-only log</td>
 </tr>
 <tr>
 <td>Semantic</td>
-<td>Lessons and facts</td>
+<td>Facts and preferences</td>
 <td>"This client accepts New York law"</td>
 <td>Agent proposes, person approves</td>
 </tr>
 <tr>
 <td>Procedural</td>
-<td>How to work</td>
+<td>Skills: how to do the task</td>
 <td>Prompts, checklists</td>
 <td>Change control only</td>
 </tr>
 </tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Parametric vs context memory</h3><span class="slide-no">4/12</span></div><ul>
+<li>Parametric: built into the model weights. Changed only by fine-tuning.</li>
+<li>Context: added to the prompt when needed (retrieved facts, skills, past conversations).</li>
+<li>This module uses context memory only. The local model stays the same.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Key questions: what, when, how</h3><span class="slide-no">5/12</span></div><ul>
+<li>What to store: facts, procedures, conversation progress.</li>
+<li>When to store or retrieve: agent tools (on demand), background workers, events.</li>
+<li>How to store: filesystem, database (vector search, SQLite, BM25), knowledge graph.</li>
+<li>Filesystem: every memory is a file. <code>grep</code> and <code>ls</code> are the memory tools.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four memory patterns from the lecture</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Example system</th>
+<th>Idea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Learn procedures from experience</td>
+<td>Voyager, AWM, skill files</td>
+<td>Save what worked, reuse it</td>
+</tr>
+<tr>
+<td>Tiered memory</td>
+<td>MemGPT, MemoryOS</td>
+<td>Short-term vs long-term stores</td>
+</tr>
+<tr>
+<td>Reflective consolidation</td>
+<td>Reflexion, Generative Agents</td>
+<td>Reflect before storing</td>
+</tr>
+<tr>
+<td>Memory maintenance</td>
+<td>Mem0, A-Mem, sleep-time compute</td>
+<td>Add, update, delete old memories</td>
+</tr>
+</tbody>
 </table></div>
-<ol>
-<li><strong>Log every correction.</strong> Episodic memory (a record of events) goes in an append-only file. Append-only means you can add lines but never edit or delete old ones. Each record says who corrected what, and why.</li>
-<li><strong>Propose a lesson with evidence.</strong> Semantic memory (general lessons) is written by the agent only as a proposal. The proposal must list the IDs of the corrections that support it. No evidence, no proposal.</li>
-<li><strong>A person approves.</strong> Once approved, the lesson is saved as a new version file: v1, v2, v3. Old versions stay on disk.</li>
-<li><strong>Use lessons, scoped to one client.</strong> When the agent reviews for Northwind, it loads only Northwind's lessons.</li>
-<li><strong>Record the version on every run.</strong> Each review notes which memory version it used. Later you can replay the exact decision.</li>
-</ol>
-<p>Procedural memory (the prompts and checklists themselves) is the riskiest to change. Treat it like a software release: test first, then ship.</p>
-<h2>Worked example</h2>
-<p>The firm's playbook says governing law must be California or Delaware. The agent flags New York law on three Northwind contracts. Each time, a partner overrides it: "This client has an NY office; NY law is acceptable for them."</p>
-<p>Each override goes into the log:</p>
-<pre><code class="language-python">rec = {&quot;ts&quot;: time.time(), &quot;client&quot;: client, &quot;contract&quot;: cid, &quot;rule&quot;: rule,
+<ul>
+<li>Mem0 updates memories on its own (ADD, UPDATE, DELETE, NOOP). Fine for chat; not for client work.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Simple beats fancy</h3><span class="slide-no">7/12</span></div><ul>
+<li>LongMemEval-v2: filesystem memory outperformed retrieval memory.</li>
+<li>MemoryArena: memory controllers were the weakest method.</li>
+<li>Our choice: plain files, plain search, one person in the loop.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our flow: correction to approved lesson</h3><span class="slide-no">8/12</span></div><ol>
+<li>Log: each partner override goes to an append-only <code>corrections.jsonl</code>.</li>
+<li>Propose: the model drafts one short rule. It must cite the correction IDs.</li>
+<li>Approve: a person approves; it is saved as <code>v1.json</code>, <code>v2.json</code>. Old files stay.</li>
+<li>Use: load only this client's lessons. Record <code>memory_version</code> on every run.</li>
+</ol></div><div class="slide"><div class="slide-top"><h3>Same contract, two clients</h3><span class="slide-no">9/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Generic client</th>
+<th>Northwind, memory v1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>msa_15, 10.1: "governed by the laws of the State of New York"</td>
+<td>Same clause, plus the approved lesson from 3 partner corrections</td>
+</tr>
+<tr>
+<td>Playbook: California or Delaware only → expected ISSUE</td>
+<td>Lesson says NY is fine for this client → expected OK, <code>memory_version: 1</code></td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Logging a correction in code</h3><span class="slide-no">10/12</span></div><pre><code class="language-python">rec = {&quot;ts&quot;: time.time(), &quot;client&quot;: client, &quot;contract&quot;: cid, &quot;rule&quot;: rule,
        &quot;model&quot;: model_said, &quot;human&quot;: human_said, &quot;reason&quot;: reason, &quot;by&quot;: by}
 rec[&quot;id&quot;] = hashlib.sha256(json.dumps(rec, sort_keys=True).encode()).hexdigest()[:10]
 with open(MEM / client / &quot;corrections.jsonl&quot;, &quot;a&quot;) as f:
     f.write(json.dumps(rec) + &quot;\n&quot;)
 </code></pre>
-<p>Line by line: the first line builds a record with the time, client, contract, rule, what the model said, what the human said, the reason, and who made the call. The second line gives the record a short ID made from its contents (a hash, like a fingerprint). The last two lines open the log in "a" mode, which means append, and add the record as one new line.</p>
-<p>Next, the model reads the three corrections and drafts one short rule. The code refuses the proposal if it cites no corrections. The partner approves it, and it becomes memory version 1.</p>
-<p>Now the same New York contract is reviewed twice. For a generic client, the agent says ISSUE. For Northwind with version 1, it says OK, and the output records <code>memory_version: 1</code>. If an auditor asks why, you can point to the lesson and the three corrections behind it.</p>
-<h2>Common mistakes</h2>
 <ul>
-<li><strong>Using a memory product that edits itself.</strong> Auto-updating memory is fine for chat apps. For client work, every change needs a person's approval.</li>
-<li><strong>Keeping only summaries.</strong> If you throw away the raw log, you can no longer check whether a lesson was justified. Keep the raw records.</li>
-<li><strong>Sharing lessons across clients.</strong> Scope memory per client or matter. Add a guard in code that refuses to load another client's lessons.</li>
-<li><strong>Letting document text write to memory.</strong> A contract could contain text designed to plant a false lesson. Only corrections from people should become evidence.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>A partner overrides the agent on three contracts in the same way. What should happen?</summary>
-<p>Each override is logged in the episodic log. The agent proposes one lesson that cites those three records. A person approves it, and it ships as the next memory version.</p>
-</details>
-<details>
-<summary>Why record a memory version on every run?</summary>
-<p>So any past decision can be replayed exactly as it was made. If someone asks &quot;why did it flag this in March?&quot;, you can show the lessons it used.</p>
-</details>
-<details>
-<summary>Why is procedural memory the riskiest kind to change?</summary>
-<p>It is the prompts and checklists that shape every review. A bad change there affects all clients at once, so it should be tested before release.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the Module 08 notebook from the top. Watch the corrections log fill up, then compare the generic review with the Northwind review of the same contract. In the exercises, add a second lesson as version 2 and see that version 1 can still be replayed.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Lines 1–2: who changed what, the model's verdict, the person's verdict, and why.</li>
+<li>Line 3: a short ID made from a hash of the record. Lessons cite this ID.</li>
+<li>Line 4: open in <code>"a"</code> (append) mode. Old lines are never edited.</li>
+<li>Line 5: write the record as one new line.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>Memory is plain files on the firm's machine. No extra service, nothing leaves the box.</li>
+<li>Every run records its memory version, so "why was this flagged in March?" has an answer.</li>
+<li>Lessons are scoped per client. Northwind's lesson never reaches another client's review.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Memory that edits itself → every change needs a person's approval.</li>
+<li>Keeping only summaries → keep the raw corrections log as evidence.</li>
+<li>Sharing lessons across clients → a code guard that refuses another client's lessons.</li>
+<li>Letting document text write memory → only people's corrections count as evidence. Memory is an attack vector.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A partner overrides the agent the same way on three contracts. What happens next?</summary><p>Each override is logged. The agent proposes one lesson citing those three IDs, a person approves it, and it ships as the next version.</p></details>
+
+<details><summary>Why record the memory version on every run?</summary><p>So any past decision can be replayed with the exact lessons it used.</p></details>
+
+<details><summary>Why is procedural memory the riskiest to change?</summary><p>It is the prompts and checklists behind every review. A bad change hits all clients at once, so test it before release.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run the notebook and read the three records in <code>corrections.jsonl</code>.</li>
+<li>Compare the generic review of msa_15 with the Northwind v1 review.</li>
+<li>Run Solution 1 (Texas lesson as v2) and Solution 2 (scope guard blocks client_bayview).</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 7 · CoALA · MemGPT · Generative Agents · MemoryArena · LoCoMo</p>
   <p class="big">Keep memory simple, cited and approved. Plain files and plain search beat fancy memory products, and an agent that silently rewrites its own memory can't be trusted or audited.</p>

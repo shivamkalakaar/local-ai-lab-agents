@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Enhancing Mathematical Reasoning in LLMs through Reasoning Distillation, GRPO, and Multi-agent PRM Reranking · Agent Engineering School</title>
-<meta name="description" content="How a Stanford team made a smaller model great at hard math by copying a stronger model&#x27;s reasoning, training with rewards, and picking the best of several answers.">
+<meta name="description" content="How a Stanford team made a model strong at hard math with distillation, GRPO and reranking, and which step mattered most.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,39 +255,26 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP3</span></div><section class="mod" id="ap3" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP3</div><h2>Enhancing Mathematical Reasoning in LLMs through Reasoning Distillation, GRPO, and Multi-agent PRM Reranking</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap3_math_reasoning.ipynb">Open in Colab</a><button class="done-btn" data-done="ap3" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How a Stanford team made a smaller model great at hard math by copying a stronger model&#x27;s reasoning, training with rewards, and picking the best of several answers.</p><article class="lesson"><h2>The big idea</h2>
-<p>Hard math problems need long, careful reasoning. Big models can do it, but they use a lot of tokens (the small chunks of text a model reads and writes). Tokens cost time and money.</p>
-<p>Abhinav Agarwal, Shree Reddy, Carlo Baronio and Shubhra Mishra tackled this in their CS329A project (Winter 2025). They stacked three ideas on top of a Qwen2.5 model:</p>
-<ol>
-<li><strong>Distillation.</strong> A strong "teacher" model (DeepSeek R1) shows its full reasoning, and the smaller "student" learns to copy it. Like a junior lawyer learning by reading a senior partner's annotated memos.</li>
-<li><strong>GRPO</strong> (Group Relative Policy Optimization). The model writes several answers to the same problem, a reward scores them, and the model is nudged toward the answers that beat the group average. Like grading a team's drafts against each other.</li>
-<li><strong>Reranking.</strong> At test time, write several answers and let a reward model pick the best one.</li>
-</ol>
-<p>The surprise was where the gain came from. Most of it came from the first step: good examples from a stronger model.</p>
-<h2>Why it matters for us</h2>
-<p>A firm can do the same with its own contract reviews. A large local model writes careful reasoning for many clauses. A smaller, faster model learns from the best of those examples.</p>
-<ul>
-<li>Good training data matters more than clever training. Filter teacher examples with a checker, and check the steps, not just the final answer.</li>
-<li>A checker that scores each answer can beat a simple vote when the right answer is rare.</li>
-<li>Reward training mostly bought shorter answers here. Shorter answers mean faster reviews on the firm's own machines.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP3</span></div><section class="mod" id="ap3" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP3</div><h2>Enhancing Mathematical Reasoning in LLMs through Reasoning Distillation, GRPO, and Multi-agent PRM Reranking</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap3_math_reasoning.ipynb">Open in Colab</a><button class="done-btn" data-done="ap3" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How a Stanford team made a model strong at hard math with distillation, GRPO and reranking, and which step mattered most.</p><article class="lesson"><p class="deck-src">Based on CS329A past project · Enhancing Mathematical Reasoning · <a href="https://cs329a.stanford.edu/winter2025projects/enhancing.pdf" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Build the three-stage reasoning recipe in miniature (distill, RL, rerank) and know which stage gives the most.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">2/12</span></div><ul>
+<li>Olympiad-level math (the AIMO prize) needs long, consistent reasoning.</li>
+<li>Strong models get there, but spend many tokens doing it.</li>
+<li>Token: a small chunk of text the model reads or writes. More tokens = more time and cost.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the students built: a three-stage recipe</h3><span class="slide-no">3/12</span></div><ul>
+<li>Team: Abhinav Agarwal, Shree Reddy, Carlo Baronio, Shubhra Mishra (CS329A, Winter 2025).</li>
+<li>Distillation: a strong teacher (DeepSeek R1) writes full reasoning; the student (Qwen2.5) learns to copy it.</li>
+<li>GRPO (Group Relative Policy Optimization): sample a group of answers, reward them, push up the ones above the group average.</li>
+<li>Reranking: at test time, write several answers; a reward model picks the best.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How it works</h3><span class="slide-no">4/12</span></div><ul>
+<li>Data: 387K problems (OpenR1-Math-220K 55%, 150K newly generated 37.5%, Bespoke-Stratos-17K 7.5%).<ul>
+<li>Rejection sampling: a GPT-4o-mini judge rejected about 15% of generated solutions.</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Build a big, clean dataset.</strong> They gathered 387K problems. About 15% of newly generated solutions were rejected by a GPT-4o-mini judge. This is rejection sampling: generate many, keep only the good ones.</p>
 </li>
-<li>
-<p><strong>Distill.</strong> Train the student on the teacher's full chain of thought (the written-out reasoning steps).</p>
-</li>
-<li>
-<p><strong>Train with GRPO.</strong> The reward was 1.0 for a correct answer plus 0.2 for the right format. They set the KL penalty to 0. The KL penalty normally keeps the model close to a frozen copy of itself, the reference model. Setting it to 0 means no reference model at all, which saves a whole model's worth of memory.</p>
-</li>
-<li>
-<p><strong>Rerank at test time.</strong> Several solvers write answers. A reward model picks the best.</p>
-</li>
-</ol>
-<p>Here is the ablation (turning parts on one at a time) on AIME'24, a hard math contest:</p>
-<div class="tbl"><table>
+<li>GRPO reward: 1.0 for a correct answer + 0.2 for the right format.</li>
+<li>KL penalty β = 0: no frozen reference model, saves a whole model's memory.</li>
+<li>Scaled to 32B with DeepSpeed ZeRO-3 and colocated vLLM.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What they found (AIME&#x27;24 ablation)</h3><span class="slide-no">5/12</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Stage</th>
@@ -297,54 +295,111 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>76.7% (+4.6)</td>
 </tr>
 <tr>
-<td>+ reranking</td>
+<td>+ reranking over 4 passes</td>
 <td>79.9% (+3.2)</td>
 </tr>
 </tbody>
 </table></div>
-<p>The 32B GRPO model used 5,048 tokens per problem, against 32K for the baselines. Reward-model picking beat majority voting at every size. For example, Qwen2.5-Math-7B scored 70.0% with the reward model over 64 answers, against 43.3% by majority vote. One warning: after about 320 GRPO steps on the 7B model, answers got cut off, and they had to double the context window (how much text the model can handle at once) from 8,192 to 16,384 tokens.</p>
-<p>A note of care: AIME'24 has only 30 problems, so 79.9% is not a score you can get on one run. The paper doesn't explain it.</p>
-<h2>Worked example</h2>
-<p>Picture the firm's teacher model reviewing a fee clause. It writes: "Step 1: 12 months × $10,000 = $120,000. Step 2: cap is $150,000, which is above the limit." The final verdict might be right, but if a step's math is wrong, we don't want the student to learn it.</p>
-<p>Our notebook uses seeded word problems with exact answers, and a small code checker that recomputes every "a op b = c" in each step:</p>
-<pre><code class="language-python">print(step_scores(&quot;Step 1: 12 * 7 = 84\nStep 2: 84 - 9 = 76\nStep 3: 76 / 4 = 19\nANSWER: 19&quot;))
+<ul>
+<li>Most of the gain came from distillation, not RL.</li>
+<li>RL mostly bought token efficiency.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fewer tokens, better picking</h3><span class="slide-no">6/12</span></div><ul>
+<li>32B GRPO model: 5,048 tokens per problem vs. 32K for baselines.</li>
+<li>Reward model vs. majority vote, Qwen2.5-Math-7B over 64 answers:</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Majority vote (maj@64)</th>
+<th>Reward model (rm@64)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>43.3%</td>
+<td>70.0%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>After about 320 GRPO steps on 7B, answers got cut off; context grew from 8,192 to 16,384 tokens.</li>
+<li>Caution: AIME'24 has 30 problems; 79.9% is not a multiple of 1/30. The paper doesn't explain it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our Colab rebuild: smaller</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>Our rebuild</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>387K olympiad problems</td>
+<td>Seeded word problems from <code>lal.tasks</code>, exact answers</td>
+</tr>
+<tr>
+<td>DeepSeek R1 → Qwen2.5</td>
+<td>Teacher llama3.1:8b; distilled file only (SFT behind <code>RUN_LONG</code>)</td>
+</tr>
+<tr>
+<td>Reward model reranks</td>
+<td>llama3.2:3b writes 4 answers; 5 ways to pick</td>
+</tr>
+<tr>
+<td>GRPO on up to 32B</td>
+<td>Optional: GRPO on SmolLM2-135M, same 1.0 + 0.2 reward, β = 0</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>A step checker in code</h3><span class="slide-no">8/12</span></div><pre><code class="language-python">print(step_scores(&quot;Step 1: 12 * 7 = 84\nStep 2: 84 - 9 = 76\nStep 3: 76 / 4 = 19\nANSWER: 19&quot;))
 </code></pre>
 <ul>
-<li>The input is a three-step solution.</li>
-<li>Step 1 is right: 12 × 7 is 84. Score 1.0.</li>
-<li>Step 2 is wrong: 84 − 9 is 75, not 76. Score 0.0.</li>
-<li>Step 3 is right as written: 76 ÷ 4 is 19. Score 1.0.</li>
-<li>The output is <code>[1.0, 0.0, 1.0]</code>.</li>
+<li>Input: a three-step solution.</li>
+<li>Step 1: 12 × 7 = 84 is right → 1.0.</li>
+<li>Step 2: 84 − 9 is 75, not 76 → 0.0.</li>
+<li>Step 3: 76 ÷ 4 = 19 is right as written → 1.0.</li>
+<li>Output: <code>[1.0, 0.0, 1.0]</code>. Code recomputes every "a op b = c".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Stage 1: filter the teacher&#x27;s answers</h3><span class="slide-no">9/12</span></div><ul>
+<li>Teacher writes 2 answers per problem.</li>
+<li>Keep only: right final number and no wrong step.</li>
+<li>Among those, keep the shortest (pushes toward fewer tokens).</li>
+<li>Write a ready-to-train SFT file (<code>ap3_distill.jsonl</code>).</li>
 </ul>
-<p>We use this checker twice.</p>
-<p>First, for distillation data. The teacher (llama3.1:8b) writes 2 answers per problem. We keep only answers with the right final number and no wrong step. Among those, we keep the shortest. The result is a ready-to-train file.</p>
-<p>Second, for reranking. The student (llama3.2:3b) writes 4 answers per test problem. A solution's score is its weakest step, the minimum. One bad step ruins the answer, just as one wrong number ruins a fee calculation. We compare five ways to choose: the first answer, a majority vote, the code checker, a model judge that names the first wrong step, and the oracle. The oracle asks "was any of the 4 right?" It is the ceiling for any picker.</p>
-<p>An optional part trains a tiny model (SmolLM2-135M) with GRPO, using the paper's 1.0 + 0.2 reward and a KL penalty of 0.</p>
-<h2>Common mistakes</h2>
-<ul>
-<li><strong>Spending effort on reward training first.</strong> Here distillation gave +22.1 points and GRPO gave +4.6. Get good examples first.</li>
-<li><strong>Checking only the final answer.</strong> A right answer reached through a wrong step teaches bad habits. Check every step.</li>
-<li><strong>Relying on majority vote for rare answers.</strong> If the right answer shows up once in four, a vote loses it. A step checker can still pick it.</li>
-<li><strong>Ignoring cut-off answers during training.</strong> Watch answer length. Raise the limit before truncation hurts accuracy.</li>
-<li><strong>Reading small benchmarks too precisely.</strong> With 30 problems, one question moves the score by 3.3 points.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Which stage gave the biggest gain in the ablation?</summary>
-<p>Distillation, which lifted the score from 50.0% to 72.1%. GRPO and reranking added smaller gains after that.</p>
-</details>
-<details>
-<summary>Why score a solution by its weakest step instead of the average?</summary>
-<p>One wrong step usually ruins the answer. An average lets a long solution with one bad step beat a short correct one.</p>
-</details>
-<details>
-<summary>What does setting the KL penalty to 0 save?</summary>
-<p>It removes the need for a frozen reference model during training, which saves a whole model&#x27;s memory.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the notebook to build the filtered distillation file and see how many teacher answers were rejected, including right answers with a wrong step. Then compare the five ways to pick among 4 student answers, and look at the gap between "first sample" and the oracle. Set <code>RUN_LONG = True</code> on a GPU to watch GRPO raise a tiny model's reward.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Right answer, wrong step</th>
+<th>Right answer, all steps right</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rejected: teaches bad habits</td>
+<td>Kept, if shortest</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Stage 3: five ways to pick among 4 answers</h3><span class="slide-no">10/12</span></div><ul>
+<li>First sample: what one call gives you.</li>
+<li>Majority vote: most common answer.</li>
+<li>Code step-checker: score = weakest step (min).</li>
+<li>LLM judge: the 8B model names the first wrong step.</li>
+<li>Oracle (pass@4): was any of the 4 right? The ceiling for any picker.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>A large local model writes careful reasoning for many clauses; keep only the checked ones.</li>
+<li>A smaller, faster model learns from those, on the firm's own machine.</li>
+<li>Check each step ("12 months × $10,000 = $120,000"), not just the final verdict.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>RL first → get good teacher data first; it gave +22.1 vs. +4.6.</li>
+<li>Checking only the final answer → check every step.</li>
+<li>Majority vote when the right answer is rare → use a step checker.</li>
+<li>Ignoring cut-off answers in training → watch length; raise the limit.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Which stage gave the biggest gain in the ablation?</summary><p>Distillation, from 50.0% to 72.1%. GRPO and reranking added smaller gains.</p></details>
+
+<details><summary>Why score a solution by its weakest step instead of the average?</summary><p>One wrong step usually ruins the answer. An average lets a long solution with one bad step beat a short correct one.</p></details>
+
+<details><summary>What does setting the KL penalty to 0 save?</summary><p>The frozen reference model is no longer needed, which saves a whole model&#x27;s memory.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Build the distillation file; count rejected answers, including right answers with a wrong step.</li>
+<li>Compare the five pickers; look at the gap between first sample and oracle.</li>
+<li>On a GPU, set <code>RUN_LONG = True</code> and watch GRPO raise the tiny model's mean reward.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Winter 2025 · Abhinav Agarwal, Shree Reddy, Carlo Baronio, Shubhra Mishra</p>
 

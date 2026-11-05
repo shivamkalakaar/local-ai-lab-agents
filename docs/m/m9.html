@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Multi-agent systems · Agent Engineering School</title>
-<meta name="description" content="When a team of AI agents helps and when it hurts. Default to one agent plus a checker, and split work only when the pieces are truly independent.">
+<meta name="description" content="When a team of agents helps and when it hurts. Default to one agent plus a checker; split only truly independent work.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,32 +255,110 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 09</span></div><section class="mod" id="m9" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 09</div><h2>Multi-agent systems</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/09_multi_agent.ipynb">Open in Colab</a><button class="done-btn" data-done="m9" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>10 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">When a team of AI agents helps and when it hurts. Default to one agent plus a checker, and split work only when the pieces are truly independent.</p><article class="lesson"><h2>The big idea</h2>
-<p>A multi-agent system is several AI agents, each with its own role, passing messages to solve one task. It sounds powerful. Picture a team of specialists, each an expert in one thing.</p>
-<p>But think about how real teams work. If you need 50 letters stuffed into envelopes, five people finish faster than one. If you need one tricky contract read carefully, five people passing notes will do worse than one careful reader. Each handoff loses detail. Each person's mistake gets passed along.</p>
-<p>The research matches this. Across 260 setups, multi-agent systems averaged about the same as a single agent: −0.3%. They helped on wide work that splits cleanly into separate pieces. They hurt on step-by-step work where each step depends on the last.</p>
-<p>So the rule is simple. Start with one strong agent plus a separate checker. Add more agents only for wide, separable work, and only when your tests show a gain.</p>
-<h2>Why it matters for us</h2>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 09</span></div><section class="mod" id="m9" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 09</div><h2>Multi-agent systems</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/09_multi_agent.ipynb">Open in Colab</a><button class="done-btn" data-done="m9" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">When a team of agents helps and when it hurts. Default to one agent plus a checker; split only truly independent work.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 8 · Multi-Agent Systems · <a href="https://web.stanford.edu/class/cs329z/slides/lecture08.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Decide when to use one agent or a team, and build the one-agent-plus-checker design that usually wins.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What is a multi-agent system?</h3><span class="slide-no">2/12</span></div><ul>
+<li>Multi-agent system (MAS): several agents working on one shared task.</li>
+<li>Orchestration: who assigns work to whom.</li>
+<li>Communication: how agents pass information.</li>
+<li>Coordination: who owns each task, and what must happen first.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Benefits vs drawbacks</h3><span class="slide-no">3/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benefits</th>
+<th>Drawbacks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Parallel execution of separable subtasks</td>
+<td>Coordination overhead: time and tokens</td>
+</tr>
+<tr>
+<td>Specialization: own prompt, model, tools</td>
+<td>Information loss in handoffs</td>
+</tr>
+<tr>
+<td>Focused context per agent</td>
+<td>Conflicting actions, duplicated work</td>
+</tr>
+<tr>
+<td>Broader exploration</td>
+<td>Error propagation: one mistake misleads others</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li>On one local GPU (the chip that runs the model), agents do not truly run side by side for free. Every extra agent is another model call, and that means more waiting.</li>
-<li>Contract review is mostly linked work. Reading the renewal clause, checking the notice period and drafting a fix all depend on each other. That is exactly where teams struggle.</li>
-<li>Where teams do fit: reviewing 20 separate contracts at once. Each contract is its own job.</li>
-</ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li><strong>Ask: is the work separable?</strong> Can the pieces be done without talking to each other? Twenty contracts, yes. Five clauses that must agree on dates and parties, no.</li>
-<li><strong>If not separable, use one agent plus a checker.</strong> One model call does the reading and judging. A checker then re-verifies what can be verified. The best checker is plain code, because code does not guess.</li>
-<li><strong>If separable, give each worker a written brief.</strong> A brief says the goal, the output format, the limits, and when to stop. "Review this" is not a brief.</li>
-<li><strong>Treat sub-agents like tools.</strong> Call a sub-agent like a function: send a bounded brief, get a short result back. The caller stays in charge. This is called agent-as-tool.</li>
-<li><strong>Pass files, not retellings.</strong> When one agent hands work to another, pass the actual document or result. Summaries in messages lose detail.</li>
-</ol>
-<p>Why teams fail, according to the MAST study (2025), which sorted failures into three groups:</p>
-<div class="tbl"><table>
+<li>Collaboration helps only when its benefits outweigh the coordination costs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The numbers</h3><span class="slide-no">4/12</span></div><ul>
+<li>Across 260 setups, multi-agent systems averaged −0.3% vs a single agent.</li>
+<li>They helped on wide, separable work. They hurt on step-by-step work.</li>
+<li>CooperBench: one agent solving both tasks beat two agents coordinating.</li>
+<li>On one local GPU, every extra agent is another model call: more waiting.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>When to use SAS vs MAS</h3><span class="slide-no">5/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Prefer a single agent when...</th>
+<th>Try multiple agents when...</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Steps depend on each other</td>
+<td>Subtasks need little syncing</td>
+</tr>
+<tr>
+<td>Work shares one state</td>
+<td>Information splits into focused contexts</td>
+</tr>
+<tr>
+<td>One agent meets quality, cost and speed goals</td>
+<td>Parallel work fixes a measured bottleneck</td>
+</tr>
+<tr>
+<td>Check five clauses of one contract</td>
+<td>Review 20 separate contracts</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Start with a strong single-agent baseline. Add agents for a purpose, and measure.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Orchestration patterns</h3><span class="slide-no">6/12</span></div><ul>
+<li>Independent: agents work alone; a final step merges outputs.</li>
+<li>Centralized (orchestrator): one agent assigns work and decides what is next.</li>
+<li>Decentralized (swarm): all agents talk to all others.</li>
+<li>Hybrid: an orchestrator, plus limited peer messages.</li>
+<li>Cost: single agent &lt; orchestrated &lt; swarm.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Handoff vs agent-as-tool</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Handoff</th>
+<th>Agent-as-tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Control moves to the receiving agent</td>
+<td>Caller keeps control</td>
+</tr>
+<tr>
+<td>Conversation history follows</td>
+<td>Sends a bounded request and selected context</td>
+</tr>
+<tr>
+<td>Specialist talks to the user next</td>
+<td>Result comes back; caller writes the final answer</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Our default: agent-as-tool. The brief says goal, output format, limits, and when to stop.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why teams fail (MAST)</h3><span class="slide-no">8/12</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Cause</th>
-<th>Share of failures</th>
-<th>What it looks like</th>
+<th>Share</th>
+<th>Looks like</th>
 </tr>
 </thead>
 <tbody>
@@ -279,53 +368,52 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>Ignoring the task, repeating steps, not knowing when to stop</td>
 </tr>
 <tr>
-<td>Agents misaligned</td>
+<td>Misalignment between agents</td>
 <td>32.3%</td>
 <td>Context lost in handoffs, ignoring each other</td>
 </tr>
 <tr>
 <td>Weak checking</td>
 <td>23.5%</td>
-<td>No verification, or only a shallow final check</td>
+<td>No verification, or a shallow final check</td>
 </tr>
 </tbody>
 </table></div>
-<p>Another study (Kim et al., 2025) measured error amplification, meaning how much mistakes grow as they pass between agents. Independent agents with a naive merge amplified errors 17.2 times. With a central checker, it was 4.4 times.</p>
-<h2>Worked example</h2>
-<p>The notebook compares two designs on 8 contracts. The playbook has four rules: liability cap, governing law, auto-renewal length, and termination notice.</p>
-<p><strong>Design A</strong> is one agent plus a checker. One call reads the relevant clauses and judges all four rules. Then code re-checks the two number rules directly:</p>
-<pre><code class="language-python">renew = next(x for t, x in secs.items() if &quot;Renewal&quot; in t)
+<ul>
+<li>Error amplification: naive merge 17.2×; with a central checker 4.4×.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our test: two designs on 8 contracts</h3><span class="slide-no">9/12</span></div><ul>
+<li>Design A: one call judges all four playbook rules, then code re-checks the numbers.</li>
+<li>Design B: four specialist agents (one per rule) plus a lead agent that merges. 5 calls per contract.</li>
+<li>The notebook prints precision, recall, time and model calls for each.</li>
+<li>Then: 4 parallel copies of Design A review all 20 contracts. That is where a team fits.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The checker in code</h3><span class="slide-no">10/12</span></div><pre><code class="language-python">renew = next(x for t, x in secs.items() if &quot;Renewal&quot; in t)
 years = re.search(r&quot;\((\d+)\) year&quot;, renew); days = re.search(r&quot;(\d+)\)? days&quot;, renew)
 if years: flags = (flags - {&quot;auto_renewal&quot;}) | ({&quot;auto_renewal&quot;} if int(years.group(1)) &gt; 1 else set())
 if days: flags = (flags - {&quot;termination_notice&quot;}) | ({&quot;termination_notice&quot;} if int(days.group(1)) &lt; 30 else set())
 </code></pre>
-<p>Line by line: the first line finds the renewal clause. The second line uses a pattern search to pull out the number of years, like "(4) year", and the number of days. The third line says: forget what the model said about renewal; flag it only if the renewal is longer than 1 year. The fourth line does the same for notice: flag it only if notice is under 30 days. The model's opinion is replaced by a fact the code can check.</p>
-<p><strong>Design B</strong> is a team of five. Four specialist agents each judge one rule. A fifth "lead" agent reads their reports and writes the final list. That is five model calls per contract instead of one. The lead also has to turn prose back into rule names, which is another chance to slip.</p>
-<p>The notebook prints precision (how many flags were real), recall (how many real issues were found), time and calls for each design. Run it and compare. Then it shows where a team does fit: four parallel copies of Design A reviewing all 20 contracts at once.</p>
-<h2>Common mistakes</h2>
 <ul>
-<li><strong>"More agents is better."</strong> On average it isn't, and it costs several times the tokens. On a local box it also costs several times the wait.</li>
-<li><strong>One-line delegation.</strong> "Review this" gives no rule, no format, no stopping point. The notebook shows a vague team that comments on anything and can't map its prose back to rules.</li>
-<li><strong>Splitting linked steps into chatty agents.</strong> An "extractor agent", a "risk agent" and a "redline agent" talking to each other is a fixed workflow in disguise. Build it as one.</li>
-<li><strong>Skipping the checker.</strong> Weak verification is a whole category of failure. Put a code check after the model wherever you can.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Should we split contract review into an extractor agent, a risk agent and a redline agent that chat with each other?</summary>
-<p>No. Those steps are linked, so use a fixed workflow with one checker. Split only independent work, like many separate contracts in parallel.</p>
-</details>
-<details>
-<summary>Why does a central checker reduce error amplification?</summary>
-<p>Without one, each agent&#x27;s mistake flows straight into the final answer. A checker catches errors before they are merged, so they don&#x27;t pile up.</p>
-</details>
-<details>
-<summary>What four things belong in a brief for a worker agent?</summary>
-<p>The goal, the output format, the limits, and when to stop.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the Module 09 notebook and compare the printed precision, recall, time and model calls for the two designs. Then do the exercises: remove the code checker from Design A, and give the team a vague brief. Watch which numbers move.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Line 1: find the renewal clause.</li>
+<li>Line 2: pull out the years, e.g. "three (3) year", and the notice days.</li>
+<li>Line 3: drop the model's renewal verdict; flag only if renewal is over 1 year.</li>
+<li>Line 4: same for notice: flag only if under 30 days.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>Contract review is linked work. Use one agent plus a code checker.</li>
+<li>On one local machine, five agents means five model calls per contract.</li>
+<li>A team fits batch work: many separate contracts, each worker with a written brief.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>"More agents is better" → on average it isn't, and costs several times the tokens.</li>
+<li>One-line delegation ("Review this") → brief with goal, format, limits, stop rule.</li>
+<li>Linked steps split into chatty agents → build one fixed workflow.</li>
+<li>No checker → put a code check after the model wherever you can.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Should we split review into an extractor agent, a risk agent and a redline agent that chat?</summary><p>No. Those steps are linked, so use one workflow with a checker. Split only independent work, like separate contracts.</p></details>
+
+<details><summary>Why does a central checker reduce error amplification?</summary><p>It catches each agent&#x27;s mistakes before they are merged. In the study, errors grew 4.4× with a checker vs 17.2× without.</p></details>
+
+<details><summary>What four things go in a brief for a worker agent?</summary><p>The goal, the output format, the limits, and when to stop.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Compare precision, recall, time and calls for "single+checker" vs "team of 5".</li>
+<li>Run Solution 1: remove the checker and watch recall on the renewal rules.</li>
+<li>Run Solution 2: the vague team on msa_15. See it fail to map prose back to rule names.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 8 · Kim et al., "Towards a Science of Scaling Agent Systems" · MAST · AutoGen · Anthropic multi-agent research</p>
   <p class="big">Default to one strong agent plus a separate checker. Add more agents only for wide, separable work, and only when your eval shows a gain.</p>

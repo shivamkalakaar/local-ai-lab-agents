@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Robust verification · Agent Engineering School</title>
-<meta name="description" content="Learn how verifiers pick the right answer from many tries, why checking each step beats checking only the end, and how several weak checkers can beat one.">
+<meta name="description" content="Verifiers score answers so you can pick the right try. Check whole answers or each step, and combine weak checkers.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,103 +255,171 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A02</span></div><section class="mod" id="a02" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A02</div><h2>Robust verification</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a02_verification.ipynb">Open in Colab</a><button class="done-btn" data-done="a02" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Learn how verifiers pick the right answer from many tries, why checking each step beats checking only the end, and how several weak checkers can beat one.</p><article class="lesson"><h2>The big idea</h2>
-<p>In a01, more tries meant a better chance that one try was right. But someone still has to find that try. A verifier is anything that scores a candidate answer. It can be exact code, unit tests, a trained model, an AI judge, or a simple rule.</p>
-<p>Think of a firm reviewing a junior's memo. A partner can check only the conclusion. Or she can read each step and mark where the reasoning slipped. She can also ask three colleagues, each good at spotting different errors, and weigh their views.</p>
-<p>Those are the three ideas in this module. Check the outcome. Check each step. And combine several weak checkers into one strong one.</p>
-<h2>Why it matters for us</h2>
-<ul>
-<li>A small local model can often produce a right answer in a few tries. The verifier decides whether you actually ship it. Without one, extra tries are wasted money.</li>
-<li>Contract review has many cheap checks. Does a cited clause exist? Is there a clear "sign" or "don't sign" verdict? Do the numbers add up? Each is weak alone, but together they are strong.</li>
-<li>Step scores also help the lawyer. They point to the exact line where an answer went wrong.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A02</span></div><section class="mod" id="a02" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A02</div><h2>Robust verification</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a02_verification.ipynb">Open in Colab</a><button class="done-btn" data-done="a02" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Verifiers score answers so you can pick the right try. Check whole answers or each step, and combine weak checkers.</p><article class="lesson"><p class="deck-src">Based on CS329A · Robust verification · <a href="https://arxiv.org/abs/2506.18203" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
+<li>Learn how to build and score verifiers, why step checks beat answer checks, and how to combine weak checkers into a strong one.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why verification?</h3><span class="slide-no">2/13</span></div><ul>
+<li>a01: coverage grew fast with more tries, but majority vote kept only part of the gain.</li>
+<li>Verifier: anything that scores a candidate answer.<ul>
+<li>Exact checker, unit tests, a trained model, an LLM judge, a rule</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Score a verifier like a filter.</strong> A verifier accepts or rejects each candidate. Precision asks: of what it accepted, how much was really right? Recall asks: of the right answers, how many did it accept? When you must pick one answer, precision matters most. A judge that says yes to everything is useless for picking.</p>
 </li>
-<li>
-<p><strong>Outcome verifiers.</strong> An outcome verifier judges only the final answer. The GSM8K paper (Cobbe et al., 2021) trained one, then picked the best of 100 samples. It gave about the same boost as a 30x larger model. But there was a warning. With their 6B verifier, accuracy fell past 400 samples. Search started finding wrong answers that fooled the verifier. This is called reward hacking.</p>
-</li>
-<li>
-<p><strong>Process verifiers.</strong> A process verifier scores each step. The "Let's Verify Step by Step" paper (Lightman et al., 2023) had people label 800,000 steps. A solution's score is the chance that every step is right: multiply the step scores. Picking the best of 1,860 solutions on a math set, step checking got 78.2%. Outcome checking got 72.4%. Majority vote got 69.6%.</p>
-</li>
-<li>
-<p><strong>Step labels without people.</strong> Labeling steps by hand is expensive. The Math-Shepherd paper (2023) found a shortcut. Cut a solution after step i. Let a model finish it several times (8 in their data). Check the final answers. The share that come out right is the soft label. "Did any come out right?" is the hard label. If a step is wrong, the finishes after it start failing. Training on these labels lifted a 7B model from 77.9% to 84.1% on a grade-school math set.</p>
-</li>
-<li>
-<p><strong>Combine weak verifiers.</strong> The Weaver paper (2025) started from many imperfect checkers. It turned each score into a yes/no vote. Then it estimated how accurate each checker is without true answers, from how much it agrees with the others. This is called weak supervision. Checkers that look no better than chance get dropped. The rest are weighted by accuracy. Weaver averaged 87.7% across four test sets, against 72.2% for majority vote. It then shrank the whole ensemble into a small model that kept about 98% of the accuracy at a tiny fraction of the cost.</p>
-</li>
-</ol>
-<div class="tbl"><table>
+<li>Generation-verification gap: coverage minus what your verifier actually picks.</li>
+<li>No verifier → more tries mostly add cost.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scoring a verifier</h3><span class="slide-no">3/13</span></div><ul>
+<li>A verifier accepts or rejects each candidate. Score it like a classifier.</li>
+<li>Precision: of the accepted candidates, how many were right.</li>
+<li>Recall: of the right candidates, how many it accepted.</li>
+<li>Oracle: compares with the true answer. Perfect, but rare in business work.</li>
+<li>To pick one answer, precision matters more than recall.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Outcome vs process verifiers</h3><span class="slide-no">4/13</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Verifier</th>
-<th>Looks at</th>
-<th>Strength</th>
-<th>Weakness</th>
+<th>Outcome reward model (ORM)</th>
+<th>Process reward model (PRM)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Outcome</td>
-<td>Final answer</td>
-<td>Simple</td>
-<td>Can be fooled at scale</td>
+<td>Judges only the final answer</td>
+<td>Scores each reasoning step</td>
 </tr>
 <tr>
-<td>Process</td>
-<td>Each step</td>
-<td>Shows where it broke</td>
-<td>Costly labels</td>
+<td>One score per solution</td>
+<td>Solution score = product of step scores</td>
 </tr>
 <tr>
-<td>Weak ensemble</td>
-<td>Many checks</td>
-<td>No labels needed</td>
-<td>Twins with the same blind spot</td>
+<td>Says "wrong"</td>
+<td>Says where it went wrong</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Training Verifiers (Cobbe et al. 2021)</h3><span class="slide-no">5/13</span></div><ul>
+<li>Released GSM8K: 8.5K grade-school word problems.</li>
+<li>Trained a verifier to judge full solutions; picked the best of 100 samples.</li>
+<li>Gain: about the same as a 30x larger model.</li>
+<li>Large generator + small verifier beat small generator + large verifier.</li>
+<li>Warning: past 400 samples, accuracy fell.<ul>
+<li>Search found wrong answers that fooled the verifier</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Let&#x27;s Verify Step by Step (Lightman et al. 2023)</h3><span class="slide-no">6/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Picker (best of 1,860, MATH subset)</th>
+<th>Accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Process reward model</td>
+<td>78.2%</td>
+</tr>
+<tr>
+<td>Outcome reward model</td>
+<td>72.4%</td>
+</tr>
+<tr>
+<td>Majority vote</td>
+<td>69.6%</td>
 </tr>
 </tbody>
 </table></div>
-<h2>Worked example</h2>
-<p>The firm asks the local model four times: "Can we sign msa_15 as written?" We get four answers. Now we score each with three cheap checkers.</p>
 <ul>
-<li><strong>Agreement:</strong> what share of the other answers reached the same verdict.</li>
-<li><strong>AI judge:</strong> the model rates the answer from 0 to 10.</li>
-<li><strong>Code check:</strong> do the cited clause numbers exist, and is there a clear verdict?</li>
-</ul>
-<p>Say the judge gives every answer 9. It can't help us pick. The agreement and code checks disagree on one answer. The weighting gives the judge little say, because it looks no better than chance. The answer with real citations and support from the others wins.</p>
-<p>The notebook does the same with math problems. Here are its three checkers as yes/no votes:</p>
-<pre><code class="language-python">VERIFIERS = {&quot;judge&quot;: lambda c: c[&quot;judge&quot;] &gt;= 0.7,
-             &quot;agree&quot;: lambda c: c[&quot;agree&quot;] &gt;= 0.5,
-             &quot;arith&quot;: lambda c: c[&quot;arith&quot;] &gt;= 0.75}
+<li>PRM800K: 800K human step labels on 75K solutions.</li>
+<li>Active learning (label the convincing wrong answers first): about 2.6x more data-efficient.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step labels without people (Math-Shepherd)</h3><span class="slide-no">7/13</span></div><ul>
+<li>Cut the solution after step i. Let a model finish it N times (N=8 in the paper).</li>
+<li>Soft label: share of finishes that reach the right answer.</li>
+<li>Hard label: 1 if any finish is right.</li>
+<li>Step-by-step RL on these labels: Mistral-7B on GSM8K 77.9% → 84.1%; 89.1% with verification.</li>
+<li>Costs many calls per step: an offline data-making tool.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Combine weak verifiers (Weaver, 2025)</h3><span class="slide-no">8/13</span></div><ul>
+<li>Turn each verifier's score into a yes/no vote.</li>
+<li>Weak supervision: estimate each verifier's accuracy from how it agrees with the others. No labels.</li>
+<li>Drop verifiers no better than chance; weight the rest by accuracy.</li>
+<li>Distill: a 400M model kept about 98% of the accuracy, cutting verification compute by up to 99.97%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Weaver results</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Picker (avg of 4 benchmarks)</th>
+<th>Accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Majority vote</td>
+<td>72.2%</td>
+</tr>
+<tr>
+<td>GPT-4o</td>
+<td>69.0%</td>
+</tr>
+<tr>
+<td>o3-mini</td>
+<td>86.7%</td>
+</tr>
+<tr>
+<td>Weaver (open models, 100 samples)</td>
+<td>87.7%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Within 4.2% of the pass@100 oracle.</li>
+<li>Struggles when right answers are very rare.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three weak verifiers in code</h3><span class="slide-no">10/13</span></div><pre><code class="language-python">VERIFIERS = {&quot;judge&quot;: lambda c: c[&quot;judge&quot;] &gt;= 0.7, &quot;agree&quot;: lambda c: c[&quot;agree&quot;] &gt;= 0.5, &quot;arith&quot;: lambda c: c[&quot;arith&quot;] &gt;= 0.75}
+VOTES = {c[&quot;key&quot;]: {v: int(f(c)) for v, f in VERIFIERS.items()} for c in CANDS}
 </code></pre>
-<p>In plain words: the judge votes yes if it scored 7 or more out of 10. Agreement votes yes if at least half the other tries reached the same answer. The arithmetic check recomputes every "a op b = c" in the text with Python, and votes yes if at least 75% are right. The notebook then weights these votes without using the true answers.</p>
-<h2>Common mistakes</h2>
 <ul>
-<li><strong>Trusting a judge that says yes to almost everything.</strong> High recall with low precision can't pick one answer. Measure precision first.</li>
-<li><strong>Searching too hard against one verifier.</strong> Past some number of samples, wrong answers start to fool it. Cap the samples.</li>
-<li><strong>Combining checkers with the same blind spot.</strong> Two prompts to the same model will agree with each other. Label-free weighting then overrates both. Mix checkers that fail in different ways.</li>
-<li><strong>Using too few rollouts for step labels.</strong> Each finish moves a soft label by a big jump when there are few. Use more, or treat the labels as rough.</li>
-<li><strong>Fitting weights on your test set.</strong> Use a separate set, or a label-free method.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Why can majority vote fail even when the right answer was sampled?</summary>
-<p>If the right answer is rare and wrong answers cluster on the same value, the vote picks the cluster.</p>
-</details>
-<details>
-<summary>What does a process verifier give you that an outcome verifier doesn&#x27;t?</summary>
-<p>A score for each step, so you see where a solution broke. Lightman et al. found it also picked better: 78.2% against 72.4%.</p>
-</details>
-<details>
-<summary>How does Math-Shepherd label a step without people?</summary>
-<p>It finishes the solution from that step several times. The share of right final answers is the soft label; whether any is right is the hard label.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the notebook and compare precision and recall for the judge, agreement and arithmetic checks. Then look at the step scores and the rollout labels on one right and one wrong solution. Finally, compare the pickers in section 8. With 6 problems, one flip moves the score by 17 points, so read it as a demo.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li><code>judge</code>: yes if the LLM judge scored the answer 7 or more out of 10.</li>
+<li><code>agree</code>: yes if at least half of the other tries reached the same answer.</li>
+<li><code>arith</code>: yes if at least 75% of the "a op b = c" lines recompute correctly in Python.</li>
+<li><code>VOTES</code>: one yes/no vote per verifier per candidate; weighted next without labels.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Weak checkers on a contract answer</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Checker</th>
+<th>What it checks</th>
+<th>How it fails</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agreement</td>
+<td>Did other tries reach the same verdict?</td>
+<td>Wrong answers can cluster</td>
+</tr>
+<tr>
+<td>LLM judge</td>
+<td>Rates the answer 0–10</td>
+<td>Small models say yes to almost everything</td>
+</tr>
+<tr>
+<td>Code check</td>
+<td>Does the quoted clause exist in the contract?</td>
+<td>Can't judge the reasoning</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Different checkers fail in different ways. That is why combining helps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+<li>All checkers run on the firm's machine: code rules, agreement, a local judge model.</li>
+<li>A step score shows a reviewer where an answer broke.</li>
+<li>Distill the combined checker into a small model so checking stays cheap.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>Trusting a judge that says yes to everything → measure its precision first.</li>
+<li>Searching too hard against one verifier → cap samples; wrong answers start to fool it.</li>
+<li>Combining verifiers with the same blind spot → they agree, so label-free weighting overrates them.</li>
+<li>Fitting weights on the test set → use a separate set or a label-free method.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why can majority vote fail even when the right answer was sampled?</summary><p>If the right answer is rare and wrong answers cluster, the vote picks the cluster.</p></details>
+
+<details><summary>What does a process verifier give you that an outcome verifier doesn&#x27;t?</summary><p>A score per step, so you see where a solution broke. Lightman et al. found it also picked better: 78.2% vs 72.4%.</p></details>
+
+<details><summary>How does Math-Shepherd label a step without people?</summary><p>It finishes the solution from that step several times. The share of right final answers is the soft label; whether any is right is the hard label.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run sections 3–4 and compare precision and recall for the judge, agreement and arithmetic checks.</li>
+<li>Run the Math-Shepherd rollouts: on the wrong solution, see where the soft label drops.</li>
+<li>Run section 8: compare the first try, majority vote, Weaver-lite and oracle. With 6 problems, one flip is 17 points.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Lecture 3 (Sep 29)</p>
 

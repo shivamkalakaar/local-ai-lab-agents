@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Test-time compute scaling · Agent Engineering School</title>
-<meta name="description" content="Learn how letting a model try many times, or revise its work, can beat a bigger model, and why it only pays off if you can spot the right try.">
+<meta name="description" content="Let a model try many times or revise its work, then pick well. More tries only pay off if you can spot the right one.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,38 +255,84 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A01</span></div><section class="mod" id="a01" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A01</div><h2>Test-time compute scaling</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a01_test_time_compute.ipynb">Open in Colab</a><button class="done-btn" data-done="a01" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Learn how letting a model try many times, or revise its work, can beat a bigger model, and why it only pays off if you can spot the right try.</p><article class="lesson"><h2>The big idea</h2>
-<p>You can make a model better without training it. Just let it try the same problem many times and keep a good answer. Extra work done at answer time is called test-time compute.</p>
-<p>Think of a student on a hard exam question. One rushed attempt may be wrong. Five attempts on scrap paper give a much better chance that one of them is right. The catch: the student must then know which attempt to hand in.</p>
-<p>That catch is the whole story of this module. More tries help only if something can tell the right try from the wrong ones. And the best way to spend those tries depends on how hard the question is.</p>
-<h2>Why it matters for us</h2>
-<ul>
-<li>On the firm's own computers, a small open model is cheap to run many times. Many cheap tries plus a good checker can beat one call to an expensive cloud model.</li>
-<li>Contract review often has checkable parts. Did the answer cite a real clause? Is the cap at most 12 months of fees? Code can check those. That makes extra tries worth it.</li>
-<li>Where nothing can check the answer, more tries mostly add cost. Build the checker first.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A01</span></div><section class="mod" id="a01" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A01</div><h2>Test-time compute scaling</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a01_test_time_compute.ipynb">Open in Colab</a><button class="done-btn" data-done="a01" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Let a model try many times or revise its work, then pick well. More tries only pay off if you can spot the right one.</p><article class="lesson"><p class="deck-src">Based on CS329A · Test-time compute scaling · <a href="https://arxiv.org/abs/2407.21787" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Learn how to buy accuracy at answer time, why picking the right try is the hard part, and how to spend tries by difficulty.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why test-time compute?</h3><span class="slide-no">2/12</span></div><ul>
+<li>Test-time compute: extra work spent when answering (more tries, revisions, search) instead of when training.</li>
+<li>No training needed. Same model, more tries.</li>
+<li>Two ways to spend it:<ul>
+<li>Parallel: many independent tries, then pick one</li>
+<li>Sequential: one try, then revise it, then revise again</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Repeated sampling.</strong> Ask the same question many times at a temperature above 0. Temperature is a setting for how random the model's word choices are. At 0, every try is identical, so more tries add nothing.</p>
 </li>
-<li>
-<p><strong>Coverage.</strong> Coverage, also written pass@k, is the share of problems where at least one of k tries is right. The Large Language Monkeys paper (2024) sampled up to 10,000 times per problem. Coverage kept rising across four orders of magnitude. On a coding benchmark, one model went from 15.9% with one try to 56% with 250 tries.</p>
+<li>The catch: something must tell the right try from the wrong ones.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Repeated sampling and coverage</h3><span class="slide-no">3/12</span></div><ul>
+<li>Repeated sampling: ask the same question many times at temperature above 0, so the tries differ.</li>
+<li>Temperature 0: every try is the same. More tries add nothing.</li>
+<li>Coverage (pass@k): share of problems where at least one of k tries is right.</li>
+<li>Coverage is an upper bound. It assumes a perfect checker.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Large Language Monkeys (Brown et al. 2024)</h3><span class="slide-no">4/12</span></div><ul>
+<li>Sampled up to 10,000 times per problem on math and coding sets.</li>
+<li>Coverage kept rising over four orders of magnitude.</li>
+<li>SWE-bench Lite, DeepSeek-Coder-V2-Instruct: 15.9% with 1 try → 56% with 250 tries.<ul>
+<li>Single-try state of the art at the time: 43%</li>
+</ul>
 </li>
-<li>
-<p><strong>Picking is the hard part.</strong> Coverage assumes a perfect checker that always finds the right try. Without one, the simplest picker is majority vote: keep the most common answer. In the same paper, on a math set, coverage passed 95%, but majority vote stalled near 40–41% after about 100 samples. The difference is called the generation-verification gap: the model could produce the right answer, but the picker can't find it.</p>
+</ul></div><div class="slide"><div class="slide-top"><h3>Cheap model + many tries vs expensive model</h3><span class="slide-no">5/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>5 tries, DeepSeek-Coder-V2-Instruct</th>
+<th>1 try, GPT-4o</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Solved 29.62% of SWE-bench Lite</td>
+<td>Solved 24.00%</td>
+</tr>
+<tr>
+<td>Cost $10.8</td>
+<td>Cost $39</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Many cheap tries can win, if a checker picks the right one.</li>
+<li>On SWE-bench, the checker is the test suite.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Picking is the hard part</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Coverage (oracle picker)</th>
+<th>Majority vote / reward model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MATH, Llama-3-8B-Instruct: 82.9% at 100 tries → 98.44% at 10,000</td>
+<td>Stalled around 100 tries: best gain 40.50% → 41.41%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Majority vote (self-consistency): keep the answer most tries agree on. Needs no checker, but stalls.</li>
+<li>Generation-verification gap: the model could produce the right answer, but the picker can't find it.</li>
+<li>Module a02 is about closing this gap.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why the curve flattens (Schaeffer et al. 2025)</h3><span class="slide-no">7/12</span></div><ul>
+<li>One problem: the chance all k tries fail drops fast (exponentially) as k grows.</li>
+<li>Average over many problems: drops slowly, like a power law.</li>
+<li>Heavy tail: a few very hard problems with near-zero success per try. They cause the slow average.</li>
+<li>Their exponent estimator: about 10x lower error than curve fitting.</li>
+<li>Lesson: sample a little, look at per-problem success rates, forecast before you spend.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Archon: stack the tricks (Saad-Falcon et al. 2024)</h3><span class="slide-no">8/12</span></div><ul>
+<li>Generator: makes candidate answers.</li>
+<li>Ranker: orders candidates and keeps the best.</li>
+<li>Fuser: merges several candidates into one better answer.</li>
+<li>Verifier: keeps only answers whose reasoning checks out.</li>
+<li>Searched 9,576 stacks; the best beat o1, GPT-4o and Claude 3.5 Sonnet by 15.1% on average.<ul>
+<li>Fuser helped on every benchmark (8.9% on average); verifiers helped most on reasoning.</li>
+</ul>
 </li>
-<li>
-<p><strong>Why the curve has that shape.</strong> The Power Laws paper (2025) explains it. For one problem, the chance that every try fails drops fast as you add tries. But averaged over many problems, the curve drops slowly. That's because a few problems are very hard, with almost no chance per try. This group of near-hopeless problems is called a heavy tail. The practical lesson: sample a little first, look at how often each problem succeeds, and forecast before spending.</p>
-</li>
-<li>
-<p><strong>Build a pipeline of steps.</strong> The Archon paper (2024) treats tricks as building blocks. A generator makes candidates. A ranker orders them and keeps the best. A fuser merges several into one better answer. A verifier keeps only answers that check out. Archon then searches for the best stack per task, instead of guessing.</p>
-</li>
-<li>
-<p><strong>Spend by difficulty.</strong> The Compute-Optimal paper (Snell et al., 2024) compared two ways to spend a budget. Parallel means many independent tries, then pick. Sequential means one try, then revise it, then revise again. Sequential worked best on easy questions. A mix worked best on harder ones. Choosing per question matched or beat simple best-of-N with up to 4x less compute. But on the hardest questions, a bigger model was the better buy.</p>
-</li>
-</ol>
-<div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Spend by difficulty (Snell et al. 2024)</h3><span class="slide-no">9/12</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Strategy</th>
@@ -285,56 +342,51 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </thead>
 <tbody>
 <tr>
-<td>Parallel</td>
-<td>Many separate tries, then pick</td>
-<td>Harder questions, with a good picker</td>
-</tr>
-<tr>
 <td>Sequential</td>
 <td>One try, then revise it</td>
 <td>Easy questions</td>
 </tr>
 <tr>
+<td>Mix of both</td>
+<td>Some tries, some revisions</td>
+<td>Harder questions</td>
+</tr>
+<tr>
 <td>Bigger model</td>
 <td>Pay for size, not tries</td>
-<td>The hardest questions, or heavy traffic</td>
+<td>Hardest questions, or heavy traffic</td>
 </tr>
 </tbody>
 </table></div>
-<h2>Worked example</h2>
-<p>A paralegal asks the local model: "In msa_07, what is the liability cap in dollars?" The cap is a number of months times the monthly fee.</p>
-<p>We ask 6 times at temperature 0.8. Say four tries give one figure and two give another. Majority vote picks the four. That is a fine guess, but not proof.</p>
-<p>Now add a checker. Code can pull the clause numbers the answer cites and confirm the math. If only one try cites the right clause and multiplies correctly, the checker picks it even though it lost the vote. This is the generation-verification gap closing.</p>
-<p>The notebook does the same with math word problems, which have exact answers. Here is how it scores majority vote:</p>
-<pre><code class="language-python">def majority_acc(probs, k):
+<ul>
+<li>Difficulty: the model's own success rate over many tries, not a human label.</li>
+<li>Choosing per question matched or beat best-of-N with up to 4x less compute.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scoring majority vote in code</h3><span class="slide-no">10/12</span></div><pre><code class="language-python">def majority_acc(probs, k):
     return sum(majority([s[&quot;answer&quot;] for s in SAMPLES[p[&quot;id&quot;]][:k]]) == p[&quot;answer&quot;] for p in probs) / len(probs)
 </code></pre>
-<p>In plain words: for each problem, take the first k answers, keep the most common one, and check it against the true answer. Then report the share of problems it got right. The notebook prints this next to coverage, so you see the gap for every k.</p>
-<h2>Common mistakes</h2>
 <ul>
-<li><strong>Reporting coverage as accuracy.</strong> Coverage assumes you can always spot the right try. In real work you usually can't.</li>
-<li><strong>Adding samples without a checker.</strong> Majority vote and reward models stalled near 100 samples while coverage kept rising.</li>
-<li><strong>Sampling at temperature 0.</strong> Every try is the same. Turn the temperature up.</li>
-<li><strong>Counting calls instead of tokens.</strong> A fuser or revision call reads all the candidates, so its cost grows with their number.</li>
-<li><strong>Picking a strategy on the same small set you report on.</strong> That overfits. Hold some questions back for the final score.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Coverage at 100 tries is 90%, but majority vote at 100 tries is 45%. What is missing?</summary>
-<p>A good verifier. The model can produce the right answer, but the picker can&#x27;t find it. That gap is the generation-verification gap.</p>
-</details>
-<details>
-<summary>Why does the average success curve flatten even though each single problem gets solved quickly with more tries?</summary>
-<p>A few problems are very hard, with almost no chance per try. These pull the average down and make it improve slowly.</p>
-</details>
-<details>
-<summary>For an easy question, should you spend 4 calls on 4 separate tries or on 1 try plus 3 revisions?</summary>
-<p>Snell et al. found revision worked best on easy questions. They used a specially trained revision model, so test it on your own task.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the sampling section and compare the coverage column with the majority-vote column at each k. Then run the Archon-style pipeline on the hard problems and the parallel-versus-sequential test. With only a few problems the results are noisy, so look at the pattern, not one number.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>For each problem, take its first k sampled answers.</li>
+<li><code>majority(...)</code>: keep the most common answer.</li>
+<li>Compare it to the true answer; count the hits.</li>
+<li>Divide by the number of problems: share solved by voting at k.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>A small local model is cheap to run many times on the firm's own machine.</li>
+<li>Contract checks often have a code checker: does the quote exist? Is the cap at most 12 months of fees?</li>
+<li>Where nothing can check the answer, more tries mostly add cost. Build the checker first.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Reporting coverage as accuracy → report what your real picker gets.</li>
+<li>Adding samples without a checker → build verification first; voting stalls near 100 tries.</li>
+<li>Counting calls, not tokens → a fuser or revision call reads all candidates; count tokens.</li>
+<li>Tuning the strategy on the set you report on → hold out data for the final score.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Coverage at 100 tries is 90%, majority vote at 100 tries is 45%. What is missing?</summary><p>A good verifier. The model can produce the right answer, but the picker can&#x27;t find it: the generation-verification gap.</p></details>
+
+<details><summary>Why does the average success curve flatten when each single problem is solved fast with more tries?</summary><p>A heavy tail of very hard problems with near-zero success per try pulls the average down, so it falls like a power law.</p></details>
+
+<details><summary>For an easy question, should you spend 4 calls on 4 parallel tries or 1 try plus 3 revisions?</summary><p>Snell et al. found revision best on easy questions. They used a fine-tuned revision model, so test it on your own task.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run sections 3–4: compare the coverage column with the majority-vote column at each k.</li>
+<li>Run the Archon-style pipeline on the 4 hard problems: first, majority, ranked, fused, fused+verify.</li>
+<li>Run parallel vs sequential on easy and hard. With 8 problems it is noisy; look at the pattern.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Lecture 2 (Sep 26)</p>
 

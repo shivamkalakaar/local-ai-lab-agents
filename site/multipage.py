@@ -37,7 +37,7 @@ PAGE_CSS = """
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -46,6 +46,17 @@ PAGE_CSS = """
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -125,16 +136,31 @@ def read_lesson(mid):
     def qa(mm):
         return (f'<details><summary>{html.escape(mm.group(1).strip())}</summary>'
                 f'<p>{html.escape(mm.group(2).strip())}</p></details>\n')
+    md = lambda s: re.sub(r"<table>", '<div class="tbl"><table>',
+                          markdown.markdown(re.sub(r"(?m)^  (?=[-*] )", "    ", s), extensions=["tables", "fenced_code", "md_in_html"])).replace("</table>", "</table></div>")
     parts = re.split(r"(?m)^## ", text)
-    out = [parts[0]]
+    slides, tail = [], []
     for part in parts[1:]:
         head, _, body = part.partition("\n")
-        if head.lower().startswith("check your understanding"):
+        low = head.lower().strip()
+        if low.startswith("check your understanding"):
             body = re.sub(r"\*\*Q:\s*(.+?)\*\*\s*\n\s*A:\s*(.+?)(?=\n\s*\n|\n\*\*Q:|\Z)", qa, body, flags=re.S)
-            body = '<div class="check" markdown="1">\n' + body + "\n</div>\n"
-        out.append("## " + head + "\n" + body)
-    body_html = markdown.markdown("".join(out), extensions=["tables", "fenced_code", "md_in_html"])
-    body_html = re.sub(r"<table>", '<div class="tbl"><table>', body_html).replace("</table>", "</table></div>")
+            tail.append(f'<h2>{html.escape(head.strip())}</h2><div class="check">{md(body)}</div>')
+        elif low.startswith("try it in colab"):
+            tail.append(f'<h2>{html.escape(head.strip())}</h2>{md(body)}')
+        else:
+            slides.append((head.strip(), md(body)))
+    n = len(slides)
+    deck = "".join(
+        f'<div class="slide{" objective" if h.lower().startswith("learning objective") else ""}">'
+        f'<div class="slide-top"><h3>{html.escape(h)}</h3><span class="slide-no">{k}/{n}</span></div>{b}</div>'
+        for k, (h, b) in enumerate(slides, 1))
+    src = ""
+    if meta.get("source"):
+        link = (f' · <a href="{html.escape(meta["slides"])}" target="_blank" rel="noopener">'
+                f'{"original slides (PDF)" if "cs329z/slides" in meta.get("slides", "") else "main paper"}</a>') if meta.get("slides") else ""
+        src = f'<p class="deck-src">Based on {html.escape(meta["source"])}{link}</p>'
+    body_html = md(parts[0]) + src + f'<div class="deck">{deck}</div>' + "".join(tail)
     return meta, body_html
 
 
@@ -213,13 +239,13 @@ def build():
             head = f"<h3>{html.escape(gname)}</h3>" if gname else ""
             cards.append(f'<div class="cards-group">{head}<div class="cards">{"".join(cs)}</div></div>')
     howto = ('<div class="howto"><b>How to use this course</b><ol>'
-             '<li>Pick a card below. Each lesson explains one idea in plain English, with examples from contract review.</li>'
+             '<li>Pick a card below. Each lesson is a short set of slides: one idea per slide, short bullets, side-by-side examples.</li>'
              '<li>Answer the three questions at the end of the lesson to check you got it.</li>'
              '<li>Open the module in Colab and run the code. It runs a free open model on Colab\'s GPU, with no API keys.</li>'
              '<li>Want more detail? Each page has a "Go deeper" section with key terms, papers and the full code.</li></ol></div>')
     hero_home = re.sub(r"<p><b>For one-click Colab, use the team site:</b>.*?</p>", "", hero, flags=re.S)
     hero_home = re.sub(r'<p class="eyebrow">.*?</p>', '<p class="eyebrow">Self-paced course · 34 short lessons · every line of code runs in Colab</p>', hero_home, flags=re.S)
-    hero_home = re.sub(r'<p class="lede">.*?</p>', '<p class="lede">Plain-English lessons on building AI agents that run on your own computers, drawn from Stanford CS329Z (Engineering AI Agents) and CS329A (Self-Improving AI Agents). Each lesson teaches one idea with examples from contract review, then links to a runnable Colab notebook.</p>', hero_home, flags=re.S)
+    hero_home = re.sub(r'<p class="lede">.*?</p>', '<p class="lede">Slide-style lessons on building AI agents that run on your own computers, drawn from Stanford CS329Z (Engineering AI Agents) and CS329A (Self-Improving AI Agents). Each lesson links to the original lecture slides and a runnable Colab notebook.</p>', hero_home, flags=re.S)
     hero_home = re.sub(r'<div class="meta">.*?</div>', '', hero_home, flags=re.S)
     hero_home = fix_links(hero_home, False).replace("</header>", howto + "</header>")
     home_body = (f'<div class="wrap">{rail_for(None, False)}<main>{hero_home}{"".join(cards)}'
@@ -243,7 +269,7 @@ def build():
             head_html = f'<div class="mod-head"><div><div class="mod-num">{html.escape(i["num"])}</div><h2>{html.escape(i["title"])}</h2></div></div>'
         les = i["lesson"]
         if les:
-            meta = f'<div class="lesson-meta">{("<span>" + i["minutes"] + " min read</span>") if i["minutes"] else ""}<span>Plain-English lesson, then the deeper material</span></div>'
+            meta = f'<div class="lesson-meta">{("<span>" + i["minutes"] + " min read</span>") if i["minutes"] else ""}<span>Slides first, then the deeper material</span></div>'
             body = (f'{head_html}{meta}<p class="lesson-summary">{html.escape(i["summary"])}</p>'
                     f'<article class="lesson">{les[1]}</article>'
                     f'<div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>{inner}</div>')
@@ -259,7 +285,7 @@ def build():
         (ROOT / f"docs/m/{mid}.html").write_text(page(f'{i["title"]} · Agent Engineering School', full, True,
                                                       needs_mermaid="mermaid" in body, desc=i["summary"]))
     have = sum(1 for m in ORDER if INFO[m]["lesson"])
-    print(f"home + {len(ORDER)} module pages; {have} with plain-English lessons")
+    print(f"home + {len(ORDER)} module pages; {have} with slide lessons")
 
 
 if __name__ == "__main__":

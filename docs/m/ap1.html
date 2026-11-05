@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AppBench: Benchmarking AI-Generated Web Applications · Agent Engineering School</title>
-<meta name="description" content="How a Stanford team graded AI-built web apps by what a user can actually do, and how to check that your grader deserves trust.">
+<meta name="description" content="How a Stanford team graded AI-built web apps by what a user can do, and how to check the grader first.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,83 +255,168 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP1</span></div><section class="mod" id="ap1" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP1</div><h2>AppBench: Benchmarking AI-Generated Web Applications</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap1_appbench.ipynb">Open in Colab</a><button class="done-btn" data-done="ap1" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>11 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How a Stanford team graded AI-built web apps by what a user can actually do, and how to check that your grader deserves trust.</p><article class="lesson"><h2>The big idea</h2>
-<p>AI tools can now build a whole web app from one request. But how do you know the app works? Most code tests only check small pieces, like "does this function return 10?" They don't ask whether a person can click, type and get the right result.</p>
-<p>Four Stanford students, Ethan Hellman, Brendan McLaughlin, Abhinav Lalwani and Belinda Mo, built AppBench (CS329A, Winter 2025) to fill that gap. They wrote 9 app requests, from L0 (a plain static page) up to L4 (a live whiteboard several people share). For each request they wrote a checklist and turned it into an automatic grader.</p>
-<p>Think of a building inspector. The inspector doesn't just confirm the house is standing. They flip switches, run taps and try the doors. And if the power is off, they don't fail every light separately. They note one root problem.</p>
-<p>That is AppBench in one picture: test what a user would do, in a sensible order, and skip the checks that can't work yet.</p>
-<h2>Why it matters for us</h2>
-<p>A law firm will soon ask a local model to build small internal tools. Think of a deadline tracker, a fee calculator, or a page that lists which clauses break the playbook (the firm's house rules, like "liability cap at most 12 months of fees").</p>
-<ul>
-<li>"It runs" is not enough. The tracker must still show your deadlines after you refresh the page.</li>
-<li>The grader itself can be wrong. AppBench checked theirs against three human raters before trusting it. We should do the same, even if only with a few known-good and known-broken examples.</li>
-<li>Fancy agent products did not clearly win. One-shot models (one request, one answer, no back-and-forth) were close to full agent products. Lovable and Bolt came out on top. So measure before you pay for the fancier tool.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP1</span></div><section class="mod" id="ap1" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP1</div><h2>AppBench: Benchmarking AI-Generated Web Applications</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap1_appbench.ipynb">Open in Colab</a><button class="done-btn" data-done="ap1" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How a Stanford team graded AI-built web apps by what a user can do, and how to check the grader first.</p><article class="lesson"><p class="deck-src">Based on CS329A past project · AppBench · <a href="https://cs329a.stanford.edu/winter2025projects/appbench.pdf" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
+<li>Build a checklist grader for AI-built apps, and test the grader before you trust it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">2/13</span></div><ul>
+<li>AI tools can build a whole web app from one request.</li>
+<li>Code benchmarks check single functions with unit tests.</li>
+<li>Nothing checked if the app is usable:<ul>
+<li>Does navigation work?</li>
+<li>Does saved state survive a refresh?</li>
+<li>Are errors handled?</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Write the request.</strong> Describe the app in plain words, as a user would. AppBench spread its 9 requests over six areas: looks, features, saved state, outside services, moving between pages, and data handling.</p>
 </li>
-<li>
-<p><strong>Split the checklist in two.</strong> Explicit checks are what the user asked for. Implicit checks are what a good app would also do, like ignoring a blank entry or having a back button.</p>
+</ul></div><div class="slide"><div class="slide-top"><h3>&quot;It compiles&quot; vs &quot;a user can use it&quot;</h3><span class="slide-no">3/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Unit test</th>
+<th>User check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tip(50, 20)</code> returns 10</td>
+<td>Type a bill, click Calculate, see the tip</td>
+</tr>
+<tr>
+<td>The page loads</td>
+<td>Add two tasks, refresh, both are still there</td>
+</tr>
+<tr>
+<td>Passes on the happy path</td>
+<td>A blank task is ignored</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What the students built: AppBench</h3><span class="slide-no">4/13</span></div><ul>
+<li>Team: Ethan Hellman, Brendan McLaughlin, Abhinav Lalwani, Belinda Mo (CS329A, Winter 2025).</li>
+<li>9 app requests, from L0 (static page) to L4 (live shared whiteboard).</li>
+<li>Six axes: UI, features, state, API integration, cross-page navigation, data processing.</li>
+<li>7 builders, one shot each: Replit, Bolt, Cursor Agent, Lovable, Claude Sonnet 3.7, GPT-4.5, OpenHands CodeAct 2.1.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How the checklist works</h3><span class="slide-no">5/13</span></div><ul>
+<li>Explicit check: what the user asked for.</li>
+<li>Implicit check: what a good app would also do (a back button, ignore blank input).</li>
+<li>Dependency graph: which check needs which other check to pass first.<ul>
+<li>Parent fails → children are skipped and score 0.</li>
+<li>One root failure shows once, not ten times.</li>
+</ul>
 </li>
-<li>
-<p><strong>Order the checks as a dependency graph.</strong> A dependency graph is a map of which check needs which other check to pass first. You can't test "add to cart" if the product page never opens. If a parent check fails, its children are skipped and score zero. One root failure then shows up as one failure, not ten.</p>
-</li>
-<li>
-<p><strong>Turn each check into a test.</strong> AppBench used screenshots judged by a model that reads images, a model-driven browser that clicks through the app, and network tricks to fake server errors.</p>
-</li>
-<li>
-<p><strong>Weight and score.</strong> Important checks count more. The total is scaled to 0–100.</p>
-</li>
-<li>
-<p><strong>Grade the grader.</strong> Compare the automatic scores with human scores. AppBench reported a Pearson correlation of 0.8173 and a Spearman correlation of 0.6827 with three raters. Correlation is a number from -1 to 1 that says how closely two sets of scores move together.</p>
-</li>
-</ol>
-<p>What they found: every kind of builder scored above 75% up to level L2. Scores fell at L3 and dropped sharply at L4. Two of the seven builders could not produce a working app for one L3 task and one L4 task.</p>
-<h2>Worked example</h2>
-<p>Our rebuild is smaller. Colab has no browser, so each app must expose its logic as plain JavaScript functions on <code>window.app</code>. Python reads the page's structure. Node.js (a program that runs JavaScript outside a browser) runs the app's own code inside a fake page and calls those functions.</p>
-<p>Picture the firm asking for a deadline tracker that saves tasks. The closest app in our notebook is the L3 to-do list. Here are its checks:</p>
-<pre><code class="language-python">(&quot;app loads&quot;, 1, True, [], APP_LOADS),
+<li>Weighted scores, scaled to 0–100.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How each check runs</h3><span class="slide-no">6/13</span></div><ul>
+<li>Screenshot + multimodal LLM: a model that reads images judges the look.</li>
+<li>LLM-driven browser (Stagehand on Playwright): clicks through the app.</li>
+<li>Network interception: fakes server errors to test error handling.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What they found</h3><span class="slide-no">7/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Grader vs. 3 human raters</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pearson correlation</td>
+<td>0.8173</td>
+</tr>
+<tr>
+<td>Spearman correlation</td>
+<td>0.6827</td>
+</tr>
+<tr>
+<td>Mean MSE / MAE</td>
+<td>0.0302 / 0.1313</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>All builders scored above 75% up to L2. Scores fell at L3 and dropped sharply at L4.</li>
+<li>2 of 7 builders failed to produce a compiling app for one L3 and one L4 task.</li>
+<li>One-shot models were close to full agent products. Lovable and Bolt were top.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our Colab rebuild: smaller</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>AppBench</th>
+<th>Our rebuild</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>9 apps, L0–L4</td>
+<td>5 single-file HTML apps, L0–L3</td>
+</tr>
+<tr>
+<td>Real browser</td>
+<td>No browser: Node.js runs the app's script in a fake page</td>
+</tr>
+<tr>
+<td>7 commercial builders</td>
+<td>The local model, one shot, then one fix round</td>
+</tr>
+<tr>
+<td>3 human raters</td>
+<td>Known-good and known-broken apps (hand score + LLM judge in solutions)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Each app exposes its logic as functions on <code>window.app</code>.</li>
+<li>Python's HTML parser checks structure.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The checklist in code (L3 to-do app)</h3><span class="slide-no">9/13</span></div><pre><code class="language-python">(&quot;app loads&quot;, 1, True, [], APP_LOADS),
 (&quot;add + toggle + remaining&quot;, 3, True, [&quot;app loads&quot;], js([[&quot;app.addTask('a')&quot;, &quot;app.addTask('b')&quot;, &quot;app.toggle(0)&quot;, &quot;app.remaining()&quot;]], 1)),
 (&quot;saves JSON under 'todos'&quot;, 2, True, [&quot;add + toggle + remaining&quot;], js([[&quot;app.addTask('a')&quot;, &quot;JSON.parse(localStorage.getItem('todos')).length&quot;]], 1)),
 (&quot;survives a refresh&quot;, 3, True, [&quot;saves JSON under 'todos'&quot;], js([[&quot;app.addTask('a')&quot;, &quot;app.addTask('b')&quot;], [&quot;app.remaining()&quot;]], 2)),
 (&quot;ignores blank tasks&quot;, 1, False, [&quot;app loads&quot;], js([[&quot;app.addTask('   ')&quot;, &quot;app.all().length&quot;]], 0)),
 </code></pre>
-<p>Each line has five parts: a name, a weight, whether the user asked for it (True) or it is implicit (False), the checks it depends on, and the test itself.</p>
 <ul>
-<li>"app loads" just asks: does <code>window.app</code> exist? Everything else depends on it.</li>
-<li>The second check adds two tasks, ticks one off, and expects 1 task left. It is worth 3 points.</li>
-<li>The third check looks inside <code>localStorage</code> (the browser's small built-in storage) for the saved list.</li>
-<li>The fourth check is the clever one. The inner lists are two "page loads". It adds two tasks, then reloads the page and asks how many remain. The answer must be 2.</li>
-<li>The last check is implicit. Nobody asked, but a good app ignores a blank task.</li>
-</ul>
-<p>If the app never saves, the refresh check is skipped instead of failing for a confusing reason. The report then points straight at the real problem.</p>
-<h2>Common mistakes</h2>
+<li>Each tuple: name, weight, explicit (True) or implicit (False), parents, test.</li>
+<li>Line 1: does <code>window.app</code> exist? Everything depends on it.</li>
+<li>Line 2: add two tasks, tick one, expect 1 left.</li>
+<li>Line 3: look in <code>localStorage</code> (the browser's small storage) for the saved list.</li>
+<li>Line 4: two inner lists = two page loads. Reload, expect 2 tasks.</li>
+<li>Line 5: implicit; nobody asked, but blank tasks should be ignored.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Test the grader first</h3><span class="slide-no">10/13</span></div><ul>
+<li>Known-good tip calculator: must score 100.</li>
+<li>Known-broken one (no labels, wrong math, wrong button id): must score under 60.</li>
+<li>Crashing script: behavior checks must fail.</li>
+<li>Only then grade the model's apps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One shot vs one fix round</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>One shot</th>
+<th>One fix round</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Same prompt, one turn, no feedback</td>
+<td>Model gets the names of its failed checks, one chance to fix</td>
+</tr>
+<tr>
+<td>1 call per app</td>
+<td>1 more call per app (0 if nothing failed)</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>Grading by "it compiles."</strong> A page can load and still lose all your data on refresh. Test what a user does.</li>
-<li><strong>Only checking what was asked.</strong> Implicit checks catch the gap between a literal answer and a good one. Keep them, but weight them lower.</li>
-<li><strong>Letting one failure cascade.</strong> Without dependencies, a missing button looks like ten bugs. Skip children of failed parents.</li>
-<li><strong>Trusting the grader blindly.</strong> First make sure a known-good app scores 100 and a known-broken app scores low. Then compare with a human.</li>
-<li><strong>Assuming the agent wins.</strong> Measure a strong one-shot model next to the agent product before you pay for the agent.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Why does AppBench skip a check when the check it depends on fails?</summary>
-<p>So one root problem shows up once. Otherwise a single missing feature would cause a pile of confusing failures.</p>
-</details>
-<details>
-<summary>What is the difference between an explicit and an implicit check?</summary>
-<p>An explicit check tests what the user asked for. An implicit check tests what a good app would also do, like ignoring blank input.</p>
-</details>
-<details>
-<summary>How did the team know their automatic grader was any good?</summary>
-<p>They compared its scores with three human raters. The Pearson correlation was 0.8173, so the grader mostly agreed with people.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the notebook to grade a known-good and a known-broken app, then let the local model build all five apps in one shot. Look at which checks fail as the level goes up, especially the implicit ones and the refresh test. Then run the one fix round and see how much precise failure messages help.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Our checks name the exact problem, so the fix round often helps.</li>
+<li>AppBench agents got no such feedback.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+<li>A firm will ask a local model for small tools: a deadline tracker, a fee calculator, a playbook-breach list.</li>
+<li>Grade them on the firm's own machine with a checklist like this: "deadlines survive a refresh", "liability cap over 12 months is flagged".</li>
+<li>Check the grader on a known-good and known-broken tool before trusting it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>Grading by "it compiles" → test what a user does, including a refresh.</li>
+<li>Only explicit checks → add implicit ones, weighted lower.</li>
+<li>One failure cascades into ten → skip children of failed parents.</li>
+<li>Trusting the grader blindly → known-good must score 100, known-broken low; then compare with a human.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why does AppBench skip a check when its parent check fails?</summary><p>So one root problem shows up once. Otherwise one missing feature causes a pile of confusing failures.</p></details>
+
+<details><summary>What is the difference between an explicit and an implicit check?</summary><p>Explicit tests what the user asked for. Implicit tests what a good app would also do, like ignoring blank input.</p></details>
+
+<details><summary>How did the team know their grader was any good?</summary><p>They compared it with three human raters. Pearson correlation was 0.8173.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Grade the known-good, known-broken and crashing tip calculators; check the scores.</li>
+<li>Let the local model build all five apps; see which checks fail as the level rises.</li>
+<li>Run the fix round and compare the one-shot and after-fix scores.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Winter 2025 · Ethan Hellman, Brendan McLaughlin, Abhinav Lalwani, Belinda Mo</p>
 

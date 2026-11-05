@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>LLMs for builders · Agent Engineering School</title>
-<meta name="description" content="How to treat a language model like an unreliable part: force its answers into a fixed shape, check them against the source, and sample several when unsure.">
+<meta name="description" content="Treat the model as an unreliable part with a typed interface. Force a schema, check the content in code, and sample several answers when unsure.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,95 +255,184 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 02</span></div><section class="mod" id="m2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 02</div><h2>LLMs for builders</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/02_llms_for_builders.ipynb">Open in Colab</a><button class="done-btn" data-done="m2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to treat a language model like an unreliable part: force its answers into a fixed shape, check them against the source, and sample several when unsure.</p><article class="lesson"><h2>The big idea</h2>
-<p>A language model is clever but unreliable. It can give a great answer, then a made-up one, in the same tone. So builders don't trust it. They wrap it.</p>
-<p>Think of a temp worker filling in a paper form. You don't let them write a free-form essay. You give them boxes: "Governing law: <strong><em>_". "Cap in months: </em></strong>_". You add a box marked "not stated." Then you check their answers against the original document before anyone signs.</p>
-<p>That is this whole module. Give the model a form (a schema). Make it fill in the boxes. Check the boxes. And when you can't check, ask several times and see if the answers agree.</p>
-<h2>Why it matters for us</h2>
-<p>A contract review is only useful if the next step can rely on it. If the model writes "about a year or so" when code expects the number 12, everything after breaks. A fixed shape fixes that.</p>
-<p>Small local models make more mistakes than big cloud ones. But there is good news. Spending more effort at answer time, by sampling several answers and checking them, can close much of the gap. With enough samples and a checker, small Llama models beat GPT-4o's single answer on math problems (course Lecture 2). That is a strong reason to run small models well instead of big models badly.</p>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Set temperature low for facts.</strong> Temperature controls randomness. Use 0 to 0.3 for pulling out facts. Use higher values only when you want variety.</p>
-</li>
-<li>
-<p><strong>Define a schema.</strong> A schema is a description of the exact fields you want, with types. For example, <code>liability_cap_months</code> must be a whole number. In Python we write this with Pydantic, a library for typed data.</p>
-</li>
-<li>
-<p><strong>Always add an "absent" option.</strong> Let each field be <code>None</code> (empty) if the contract doesn't say. Without this, the model invents a value to fill the box.</p>
-</li>
-<li>
-<p><strong>Let the server force the shape.</strong> Constrained decoding means the server only lets the model write words that fit the schema. The output is always valid JSON (a standard data format). Parsing never fails.</p>
-</li>
-<li>
-<p><strong>Check the content anyway.</strong> Valid shape is not correct content. The number could still be wrong. So we check in code. For example: does the quoted sentence really appear in the contract?</p>
-</li>
-<li>
-<p><strong>Sample when unsure.</strong> Two ways:</p>
-</li>
-<li><strong>Best-of-n</strong>, when you have a checker. Ask up to n times. Keep the first answer that passes the check.</li>
-<li><strong>Majority vote</strong>, when you have no checker. Ask several times and take the most common answer. How often they agree is a confidence signal. Low agreement means "send to a person."</li>
-</ol>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 02</span></div><section class="mod" id="m2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 02</div><h2>LLMs for builders</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/02_llms_for_builders.ipynb">Open in Colab</a><button class="done-btn" data-done="m2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Treat the model as an unreliable part with a typed interface. Force a schema, check the content in code, and sample several answers when unsure.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 2 · LLMs for Builders · <a href="https://web.stanford.edu/class/cs329z/slides/lecture02.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
+<li>Get structured, checkable output from a local model: schema, constrained decoding, code checks, and sampling.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What is a language model?</h3><span class="slide-no">2/13</span></div><ul>
+<li>Language model: gives the probability of a sequence of tokens.</li>
+<li>Built one token at a time: probability of each token given the ones before it.</li>
+<li>Generative: so we can sample from it.</li>
+</ul>
 <div class="tbl"><table>
 <thead>
 <tr>
-<th>You have...</th>
-<th>Use</th>
+<th>"The class was about ___"</th>
+<th>Probability</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>A code check (quote in document, rule passes)</td>
-<td>Best-of-n</td>
+<td>to</td>
+<td>0.3171</td>
 </tr>
 <tr>
-<td>No checker, short answers like yes/no</td>
-<td>Majority vote</td>
+<td>as</td>
+<td>0.0491</td>
+</tr>
+<tr>
+<td>the</td>
+<td>0.036</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Sampling: how the next token is picked</h3><span class="slide-no">3/13</span></div><ul>
+<li>Greedy: always take the most likely token.</li>
+<li>Top-k / top-p (nucleus): sample from the k most likely, or the smallest set adding up to p.</li>
+<li>Temperature: divide the probabilities by T, then renormalize. Low T = predictable. High T = varied.</li>
+<li>Math and code: lower temperature. Creative writing: more diversity.</li>
+<li>Our rule: 0–0.3 for extraction.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why structured output</h3><span class="slide-no">4/13</span></div><ul>
+<li>Agent parts need a shared contract for how they talk to each other.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Input message</th>
+<th>Typed output fields (DSPy signature example)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"I'm Sarah(sarah@acme.co). Meet Thursday?"</td>
+<td><code>name</code>: text · <code>email</code>: text or None · <code>intent</code>: exactly one of meeting, intro, follow-up</td>
 </tr>
 </tbody>
 </table></div>
-<h2>Worked example</h2>
-<p>The notebook defines the form for a contract:</p>
-<pre><code class="language-python">class Terms(BaseModel):
+<ul>
+<li>The next step can rely on the shape, not parse free text.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A typed contract with Pydantic</h3><span class="slide-no">5/13</span></div><pre><code class="language-python">class Terms(BaseModel):
     governing_law: str | None = Field(description=&quot;US state name, e.g. 'Delaware', or null&quot;)
     liability_cap_months: int | None = Field(description=&quot;Cap as months of fees, e.g. 12. null if liability is unlimited&quot;)
+    renewal_years: int | None = Field(description=&quot;Length of each automatic renewal period in years&quot;)
+    notice_days: int | None = Field(description=&quot;Days of notice needed to stop renewal&quot;)
     cap_quote: str | None = Field(description=&quot;Exact sentence from the contract stating the liability cap&quot;)
 </code></pre>
 <ul>
-<li><code>class Terms(BaseModel)</code> declares a new form called Terms.</li>
-<li><code>governing_law</code> is text, or <code>None</code> if absent. The description tells the model what to write.</li>
-<li><code>liability_cap_months</code> is a whole number, or <code>None</code> if liability is unlimited.</li>
-<li><code>cap_quote</code> asks for the exact sentence. This is what lets us check the answer.</li>
-</ul>
-<p>The system prompt says: "Copy quotes exactly. If a term is absent, use null. Never guess."</p>
-<p>We run it on <code>msa_07</code>. Out comes a neat record: a state, a cap in months, renewal years, notice days, and a quote. Then one line of code asks: is that quote really in the contract? For the real quote, yes. For a made-up quote like "Liability is capped at $1 million," no.</p>
-<p>The notebook then scores each field on 8 contracts against the known answers. You see which fields the model gets right and how many quotes check out.</p>
-<p>Finally, best-of-n. The code asks up to four times at a higher temperature. It returns the first answer whose quote is found in the contract. If none pass, it returns nothing. That means "escalate to a person," not "guess."</p>
-<h2>Common mistakes</h2>
+<li>Line 1: a schema named <code>Terms</code>. Pydantic: Python library for typed data.</li>
+<li>Lines 2–5: each field has a type; <code>| None</code> = may be empty.</li>
+<li><code>description</code> tells the model what to write.</li>
+<li>Line 6: an exact quote, so code can check it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Always give an &quot;absent&quot; option</h3><span class="slide-no">6/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Schema allows null</th>
+<th>Schema forces a number</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>int</code> or <code>None</code></td>
+<td><code>int</code> only (<code>CapForced</code> in the solutions)</td>
+</tr>
+<tr>
+<td>msa_16 → null is a valid answer</td>
+<td>msa_16 → the model has to invent a cap</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>Asking for JSON in the prompt and hoping.</strong> Use the server's schema mode so the shape is guaranteed.</li>
-<li><strong>No "absent" option.</strong> Force a number on a contract with unlimited liability, and the model will invent one. The notebook shows this on <code>msa_16</code>.</li>
-<li><strong>Free text for fixed choices.</strong> If the answer must be one of a few states, use a fixed list (<code>Literal</code> in Python). Then "DE" and "State of Delaware" can't sneak in.</li>
-<li><strong>Trusting the model's own confidence.</strong> Use agreement across samples, or an outside check, instead.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Constrained decoding guarantees valid JSON. Why check the answer anyway?</summary>
-<p>Valid format is not correct content. The value can still be wrong or made up. Check it against the source, for example by confirming the quote is in the document.</p>
-</details>
-<details>
-<summary>When do you use majority vote instead of best-of-n?</summary>
-<p>When you have no checker. Majority vote works for short answers you can compare, like yes/no or a number. Best-of-n needs a check to decide which sample passes.</p>
-</details>
-<details>
-<summary>Why does the schema let every field be empty?</summary>
-<p>So the model has an honest way to say &quot;not in this contract.&quot; Without it, the model fills required boxes with invented values.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the extraction on <code>msa_07</code> and compare it to the printed truth. Then look at the field scores across 8 contracts. Last, run the solution that removes the "null" option on <code>msa_16</code> and watch the model invent a cap for a contract that has none.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>msa_16, clause 7.1: "IN NO EVENT SHALL EITHER PARTY'S TOTAL LIABILITY UNDER THIS AGREEMENT BE LIMITED..."</li>
+<li>System prompt: "If a term is absent, use null. Never guess."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Constrained decoding</h3><span class="slide-no">7/13</span></div><ul>
+<li>Constrained decoding: the server only lets the model write tokens that fit the schema.</li>
+<li>SGLang does this with finite state machines.</li>
+<li>Output is always valid JSON. Parsing never fails.</li>
+<li>Valid format is not correct content. The value can still be wrong.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Check the content in code</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Quote</th>
+<th><code>quote_is_in_doc(..., contract("msa_07"))</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The cap quote the model extracted</td>
+<td>True only if it matches the contract text</td>
+</tr>
+<tr>
+<td>"Liability is capped at $1 million." (made up)</td>
+<td>False</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The notebook also scores each field on 8 contracts against the known answers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fixed choices: use a list, not free text</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Free text</th>
+<th><code>Literal[...]</code> list</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"State of Delaware", "DE", "Delaware law"</td>
+<td>"Delaware" only</td>
+</tr>
+<tr>
+<td>Grading needs fuzzy matching</td>
+<td>Grading is exact</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><code>Literal["California", "Delaware", "New York", "Texas", "Florida", "Nevada", "Other"]</code></li>
+<li>Off-menu answers become impossible.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Spend compute at answer time</h3><span class="slide-no">10/13</span></div><ul>
+<li>Test-time scaling: sample more answers instead of using a bigger model.</li>
+<li>Repeated sampling with a checker: small Llama models beat GPT-4o's single answer on math (Lecture 2).</li>
+<li>No checker: self-consistency. Majority vote over 40 reasoning paths took ARC from 43% to 53%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Best-of-n vs majority vote</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>You have...</th>
+<th>Use</th>
+<th>In the notebook</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A code check</td>
+<td>Best-of-n: sample until one passes</td>
+<td>Up to 4 tries at temperature 0.7 on msa_12; keep the first whose quote is in the contract</td>
+</tr>
+<tr>
+<td>No checker, short answers</td>
+<td>Majority vote: most common answer wins</td>
+<td>5 yes/no answers at temperature 0.8 on msa_08's cap clause</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Agreement rate = confidence. Low agreement → send to a person.</li>
+<li>Nothing passes best-of-n → escalate, don't guess.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+<li>A review is only useful if the next step can rely on it: a number, not prose.</li>
+<li>Small local models make more mistakes. Sampling plus a checker closes much of the gap.</li>
+<li>The quote check gives the lawyer a sentence they can find in the contract.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>Asking for JSON in the prompt and hoping → use the server's schema mode.</li>
+<li>No "absent" option → the model invents values. See msa_16.</li>
+<li>Free text for fixed choices → use <code>Literal</code>.</li>
+<li>Trusting the model's own confidence → use agreement across samples or a code check.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Constrained decoding guarantees valid JSON. Why check the answer anyway?</summary><p>Valid format is not correct content. Check it against the source, for example that the quote is really in the document.</p></details>
+
+<details><summary>When do you use majority vote instead of best-of-n?</summary><p>When you have no checker. Majority vote works for short answers you can compare, like yes/no or a number.</p></details>
+
+<details><summary>Why can every field in `Terms` be null?</summary><p>So the model has an honest way to say &quot;not in this contract&quot; instead of inventing a value.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run <code>extract("msa_07")</code> and compare it to the printed truth.</li>
+<li>Read the field scores across 8 contracts and the "cap quote verified" count.</li>
+<li>Run the solution that forces a number on msa_16 and watch the model invent a cap.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 2 · DSPy · SGLang and vLLM structured output</p>
   <p class="big">Treat the model as an unreliable component with a typed interface. Force its output into a schema, and when you can check answers, sample several and keep the one that passes.</p>

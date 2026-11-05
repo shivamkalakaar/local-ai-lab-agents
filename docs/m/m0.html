@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Start here · Agent Engineering School</title>
-<meta name="description" content="How to run an AI model on your own computer, send it your first question, and meet the practice contracts we use all course.">
+<meta name="description" content="Run a model on your own computer, send it a first question, measure speed, and meet the 20 practice contracts used all course.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,42 +255,47 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 00</span></div><section class="mod" id="m0" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 00</div><h2>Start here</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/00_setup_first_call.ipynb">Open in Colab</a><button class="done-btn" data-done="m0" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>10 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to run an AI model on your own computer, send it your first question, and meet the practice contracts we use all course.</p><article class="lesson"><h2>The big idea</h2>
-<p>Most people use AI through a website or a paid service. Your words travel to someone else's computer, get answered there, and come back. This course does it differently. The model lives on the same machine as your files.</p>
-<p>Think of it like the difference between sending documents to an outside copy shop and owning a printer. The outside shop is easy. But your papers leave the building. With your own printer, nothing leaves, and there is no charge per page.</p>
-<p>A model (the trained AI program that reads text and writes text) is just a large file. A small program called Ollama loads that file and lets your code talk to it. We use Meta's Llama 3.1 8B. The "8B" means 8 billion internal settings. It is about 5 GB to download.</p>
-<p>Once it is running, your code asks it questions the same way it would ask a cloud service. Only the address changes.</p>
-<h2>Why it matters for us</h2>
-<p>A law firm holds private client contracts. Many firms cannot send those to an outside AI company. Running the model on the firm's own computers solves that. No data leaves the box, and there are no API keys (passwords for paid AI services) to manage.</p>
-<p>It also changes the cost picture. On your own hardware there is no bill per word. But speed still matters, because a lawyer will not wait forever. So from day one we measure how fast the model answers.</p>
-<p>Finally, we need practice data where we know the right answers. Otherwise we can never tell if our AI is any good.</p>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Get a GPU.</strong> A GPU (graphics chip) does the heavy math fast. In Colab, Google's free notebook service, you pick "T4 GPU" in the runtime menu.</p>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 00</span></div><section class="mod" id="m0" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 00</div><h2>Start here</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/00_setup_first_call.ipynb">Open in Colab</a><button class="done-btn" data-done="m0" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Run a model on your own computer, send it a first question, measure speed, and meet the 20 practice contracts used all course.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 1 · Intro to Agentic Systems · <a href="https://web.stanford.edu/class/cs329z/slides/lecture01.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Run a local model, call it from Python, measure its speed, and load the practice contracts with known answers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Cloud model vs local model</h3><span class="slide-no">2/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Cloud AI service</th>
+<th>Local model (this course)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Your text goes to someone else's computer</td>
+<td>The model runs on the same machine as your files</td>
+</tr>
+<tr>
+<td>Needs an API key (password for a paid service)</td>
+<td>No key: <code>api_key="not-needed"</code></td>
+</tr>
+<tr>
+<td>Bill per token</td>
+<td>No bill per token; speed still matters</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Same code for both. Only the address changes.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What you need</h3><span class="slide-no">3/12</span></div><ul>
+<li>Ollama: small program that loads a model and serves it on this machine.</li>
+<li>Model: Meta's Llama 3.1 8B. "8B" = 8 billion parameters. About 5 GB.</li>
+<li>GPU: graphics chip that does the math fast. In Colab: <code>Runtime → Change runtime type → T4 GPU</code>.</li>
+<li>Setup cell: installs Ollama, starts it, downloads the model. 2–3 minutes the first time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Where the model lives</h3><span class="slide-no">4/12</span></div><ul>
+<li>Ollama serves the model at <code>http://localhost:11434</code>.<ul>
+<li>localhost: "this same computer"</li>
+</ul>
 </li>
-<li>
-<p><strong>Run the setup cell.</strong> It installs Ollama, starts it, and downloads the model. The first time takes 2 to 3 minutes. Loading the model into the GPU's memory takes about a minute more.</p>
-</li>
-<li>
-<p><strong>Point your code at localhost.</strong> Ollama serves the model at <code>http://localhost:11434</code>. "Localhost" means "this same computer." Ollama speaks the same language as OpenAI's service, so we can use the normal <code>openai</code> Python library.</p>
-</li>
-<li>
-<p><strong>Send a message, get a reply.</strong> You send a list of messages. Each has a role (who is speaking, like "user") and content (the words). The model sends back text.</p>
-</li>
-<li>
-<p><strong>Measure tokens and speed.</strong> A token is a chunk of text, roughly a short word or part of a word. The reply tells you how many tokens you sent and how many came back. Divide output tokens by seconds to get speed.</p>
-</li>
-<li>
-<p><strong>Pick a temperature.</strong> Temperature controls randomness. At 0, the model gives the same answer every time. At higher values, answers vary. Use 0 for anything you will check.</p>
-</li>
-</ol>
-<pre><code>your code  --(question)--&gt;  Ollama on localhost  --&gt;  Llama 3.1 8B
-           &lt;--(answer)----                       &lt;--
-</code></pre>
-<h2>Worked example</h2>
-<p>Here is the first real call in the notebook.</p>
-<pre><code class="language-python">local = OpenAI(base_url=&quot;http://localhost:11434/v1&quot;, api_key=&quot;not-needed&quot;)
+<li>It speaks the same API as OpenAI, so we use the normal <code>openai</code> Python library.</li>
+<li>The model is the LLM core from Lecture 1. Later modules add tools, memory and an environment around it.</li>
+</ul>
+<pre><code>your code → Ollama on localhost:11434 → Llama 3.1 8B → reply
+</code></pre></div><div class="slide"><div class="slide-top"><h3>Your first call</h3><span class="slide-no">5/12</span></div><pre><code class="language-python">local = OpenAI(base_url=&quot;http://localhost:11434/v1&quot;, api_key=&quot;not-needed&quot;)
 resp = local.chat.completions.create(
     model=MODEL,
     messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;In one sentence: why would a law firm want AI that runs on its own computers?&quot;}],
@@ -287,47 +303,106 @@ resp = local.chat.completions.create(
 )
 reply = resp.choices[0].message.content
 </code></pre>
-<p>Line by line:</p>
 <ul>
-<li>The first line makes a client (a connection object). <code>base_url</code> points at this machine, not at OpenAI. The key is a dummy value, because nothing leaves the computer.</li>
-<li><code>create(...)</code> sends the request. <code>model=MODEL</code> names the model the setup cell downloaded.</li>
-<li><code>messages</code> holds one user message: our question.</li>
-<li><code>temperature=0</code> asks for the steadiest answer.</li>
-<li>The last line pulls the reply text out of the response.</li>
-</ul>
-<p>Next, the notebook loads the practice data. There are 20 made-up service agreements. Some have problems planted on purpose:</p>
+<li>Line 1: client pointed at localhost, not OpenAI. Dummy key.</li>
+<li>Line 3: <code>MODEL</code> = <code>llama3.1:8b</code>, downloaded by the setup cell.</li>
+<li>Line 4: one message. Role: who speaks. Content: the words.</li>
+<li>Line 5: temperature 0, the steadiest answer.</li>
+<li>Line 7: pull the reply text out.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Measure tokens and speed</h3><span class="slide-no">6/12</span></div><ul>
+<li>Token: a short word or piece of a word. Models read and write tokens.</li>
+<li>The reply reports <code>prompt_tokens</code> (sent) and <code>completion_tokens</code> (returned).</li>
+<li>Speed: output tokens ÷ seconds = tokens per second.</li>
+<li>First model load into GPU memory takes about a minute. Time a later call.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Temperature: same question, different settings</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Temperature 0</th>
+<th>Temperature 1.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Same answer every run</td>
+<td>Answers vary run to run</td>
+</tr>
+<tr>
+<td>Use for extraction and anything you will check</td>
+<td>Use for brainstorming, or sampling several answers to check</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li>a liability cap that is missing or too large (the firm's playbook says at most 12 months of fees),</li>
-<li>the wrong governing law (which state's law applies),</li>
-<li>a long auto-renewal,</li>
-<li>a short notice period to cancel.</li>
+<li>Temperature: scales the model's word probabilities. Low = pick the likely word. High = more variety.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two helpers used in every later notebook</h3><span class="slide-no">8/12</span></div><ul>
+<li><code>ask(prompt)</code>: prompt in, text out.</li>
+<li><code>structured(prompt, Schema)</code>: forced JSON that matches a Pydantic schema.</li>
+<li>Both live in <code>lal/llm.py</code> and wrap the same call, at the same localhost address.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our practice data</h3><span class="slide-no">9/12</span></div><ul>
+<li>20 made-up service agreements: <code>msa_01</code> … <code>msa_20</code>.</li>
+<li>Problems planted on purpose, so we know every right answer.</li>
+<li>Built by <code>data/gen.py</code>; answers in <code>data/labels.jsonl</code>.</li>
 </ul>
-<p>Because we planted the problems, we know the true answer for each contract. For <code>msa_07</code>, the notebook prints the contract text, then the true answer, then the playbook rules. Every later module grades its agents against these answers.</p>
-<p>Two small helpers keep later code short. <code>ask(prompt)</code> sends a question and returns text. <code>structured(prompt, Schema)</code> returns data in a fixed shape. Both talk to the same local address.</p>
-<h2>Common mistakes</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Playbook rule</th>
+<th>Planted problem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cap stated, at most 12 months of fees</td>
+<td>Cap missing or too large</td>
+</tr>
+<tr>
+<td>Governing law: California or Delaware</td>
+<td>Wrong state (e.g., New York)</td>
+</tr>
+<tr>
+<td>Auto-renewal one year or shorter</td>
+<td>3- or 5-year renewals</td>
+</tr>
+<tr>
+<td>Notice at least 30 days</td>
+<td>5, 10 or 15 days</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Example: msa_07 and its true answer</h3><span class="slide-no">10/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Contract text (clause 7.1)</th>
+<th>True answer in labels.jsonl</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"...SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE TWENTY-FOUR (24) MONTHS PRECEDING THE CLAIM."</td>
+<td><code>liability_cap_months: 24</code> → issue: <code>liability_cap</code>, clause 7.1</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>Forgetting the GPU.</strong> Without it, the model runs very slowly. Change the runtime type before you run setup.</li>
-<li><strong>Judging speed on the first call.</strong> The first call includes loading the model into memory. Time the second call instead.</li>
-<li><strong>Using high temperature for facts.</strong> At high temperature, details like the cap period can drift. Use 0 when you extract or check.</li>
-<li><strong>Testing without known answers.</strong> If you don't know the right answer, you can't tell if the AI got it right. Start with labeled data, like our 20 contracts.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>What changes in the code when you switch from a cloud AI service to a local model?</summary>
-<p>Mainly the address. `base_url` points at localhost, and the API key becomes a dummy value. The rest of the code stays the same.</p>
-</details>
-<details>
-<summary>If there is no bill per token on your own machine, why measure tokens at all?</summary>
-<p>Speed. More tokens take more time, and lawyers need answers quickly. Token counts also tell you how full the model&#x27;s input is getting.</p>
-</details>
-<details>
-<summary>Why did we plant problems in the practice contracts?</summary>
-<p>So we know the right answers. Then we can grade any agent we build and see if a change made it better or worse.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the setup cell, then the first call, and note how many seconds it takes. Then ask the model to summarize <code>msa_07</code> in three bullets at temperature 0, 0.7 and 1.3. Notice that at 0 the summary repeats exactly, while at high values the wording changes and facts can slip.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>24 months is over the 12-month rule, so it is flagged.</li>
+<li>Lecture 1: agent work = the system, the data, and the evals. Known answers are the data and the evals.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>A firm can't send client contracts to an outside AI company. Here nothing leaves the machine.</li>
+<li>No API keys to manage, no per-token bill.</li>
+<li>Every later module grades its agent against these 20 known answers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>No GPU selected → very slow. Change the runtime type before setup.</li>
+<li>Timing the first call → it includes model loading. Time a later call.</li>
+<li>High temperature for facts → details like the cap period can drift. Use 0.</li>
+<li>Testing without known answers → you can't tell if the AI is right. Start with labeled data.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What changes in the code when you switch from a cloud service to the local model?</summary><p>The address and the key. `base_url` points at localhost and the key is a dummy value; the rest stays the same.</p></details>
+
+<details><summary>There is no bill per token on your own machine. Why count tokens at all?</summary><p>Speed. More tokens take more time, and token counts show how full the model&#x27;s input is getting.</p></details>
+
+<details><summary>Why plant problems in the practice contracts?</summary><p>So we know the right answers. Then we can grade any agent and see if a change helped or hurt.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run the setup cell, then the first call. Note the seconds and the tokens per second.</li>
+<li>Run the temperature cell: 0 gives one answer, 1.0 gives several.</li>
+<li>Summarize <code>msa_07</code> at temperature 0, 0.7 and 1.3. At high values, watch facts like the cap period drift.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">How to use this page</p>
   <p>Work through the modules in order. The course itself goes basics → building blocks → making it good, and later modules assume earlier ones. Each module has:</p>

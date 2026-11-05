@@ -1,94 +1,110 @@
 ---
-summary: How a Stanford team made a smaller model great at hard math by copying a stronger model's reasoning, training with rewards, and picking the best of several answers.
-minutes: 12
+summary: How a Stanford team made a model strong at hard math with distillation, GRPO and reranking, and which step mattered most.
+minutes: 9
+source: CS329A past project · Enhancing Mathematical Reasoning
+slides: https://cs329a.stanford.edu/winter2025projects/enhancing.pdf
 ---
 
-## The big idea
+## Learning objective
+- Build the three-stage reasoning recipe in miniature (distill, RL, rerank) and know which stage gives the most.
 
-Hard math problems need long, careful reasoning. Big models can do it, but they use a lot of tokens (the small chunks of text a model reads and writes). Tokens cost time and money.
+## The problem
+- Olympiad-level math (the AIMO prize) needs long, consistent reasoning.
+- Strong models get there, but spend many tokens doing it.
+- Token: a small chunk of text the model reads or writes. More tokens = more time and cost.
 
-Abhinav Agarwal, Shree Reddy, Carlo Baronio and Shubhra Mishra tackled this in their CS329A project (Winter 2025). They stacked three ideas on top of a Qwen2.5 model:
+## What the students built: a three-stage recipe
+- Team: Abhinav Agarwal, Shree Reddy, Carlo Baronio, Shubhra Mishra (CS329A, Winter 2025).
+- Distillation: a strong teacher (DeepSeek R1) writes full reasoning; the student (Qwen2.5) learns to copy it.
+- GRPO (Group Relative Policy Optimization): sample a group of answers, reward them, push up the ones above the group average.
+- Reranking: at test time, write several answers; a reward model picks the best.
 
-1. **Distillation.** A strong "teacher" model (DeepSeek R1) shows its full reasoning, and the smaller "student" learns to copy it. Like a junior lawyer learning by reading a senior partner's annotated memos.
-2. **GRPO** (Group Relative Policy Optimization). The model writes several answers to the same problem, a reward scores them, and the model is nudged toward the answers that beat the group average. Like grading a team's drafts against each other.
-3. **Reranking.** At test time, write several answers and let a reward model pick the best one.
+## How it works
+- Data: 387K problems (OpenR1-Math-220K 55%, 150K newly generated 37.5%, Bespoke-Stratos-17K 7.5%).
+  - Rejection sampling: a GPT-4o-mini judge rejected about 15% of generated solutions.
+- GRPO reward: 1.0 for a correct answer + 0.2 for the right format.
+- KL penalty β = 0: no frozen reference model, saves a whole model's memory.
+- Scaled to 32B with DeepSpeed ZeRO-3 and colocated vLLM.
 
-The surprise was where the gain came from. Most of it came from the first step: good examples from a stronger model.
-
-## Why it matters for us
-
-A firm can do the same with its own contract reviews. A large local model writes careful reasoning for many clauses. A smaller, faster model learns from the best of those examples.
-
-- Good training data matters more than clever training. Filter teacher examples with a checker, and check the steps, not just the final answer.
-- A checker that scores each answer can beat a simple vote when the right answer is rare.
-- Reward training mostly bought shorter answers here. Shorter answers mean faster reviews on the firm's own machines.
-
-## How it works, step by step
-
-1. **Build a big, clean dataset.** They gathered 387K problems. About 15% of newly generated solutions were rejected by a GPT-4o-mini judge. This is rejection sampling: generate many, keep only the good ones.
-
-2. **Distill.** Train the student on the teacher's full chain of thought (the written-out reasoning steps).
-
-3. **Train with GRPO.** The reward was 1.0 for a correct answer plus 0.2 for the right format. They set the KL penalty to 0. The KL penalty normally keeps the model close to a frozen copy of itself, the reference model. Setting it to 0 means no reference model at all, which saves a whole model's worth of memory.
-
-4. **Rerank at test time.** Several solvers write answers. A reward model picks the best.
-
-Here is the ablation (turning parts on one at a time) on AIME'24, a hard math contest:
-
+## What they found (AIME'24 ablation)
 | Stage | Score |
 |---|---|
 | Base model | 50.0% |
 | + distillation | 72.1% (+22.1) |
 | + GRPO | 76.7% (+4.6) |
-| + reranking | 79.9% (+3.2) |
+| + reranking over 4 passes | 79.9% (+3.2) |
 
-The 32B GRPO model used 5,048 tokens per problem, against 32K for the baselines. Reward-model picking beat majority voting at every size. For example, Qwen2.5-Math-7B scored 70.0% with the reward model over 64 answers, against 43.3% by majority vote. One warning: after about 320 GRPO steps on the 7B model, answers got cut off, and they had to double the context window (how much text the model can handle at once) from 8,192 to 16,384 tokens.
+- Most of the gain came from distillation, not RL.
+- RL mostly bought token efficiency.
 
-A note of care: AIME'24 has only 30 problems, so 79.9% is not a score you can get on one run. The paper doesn't explain it.
+## Fewer tokens, better picking
+- 32B GRPO model: 5,048 tokens per problem vs. 32K for baselines.
+- Reward model vs. majority vote, Qwen2.5-Math-7B over 64 answers:
 
-## Worked example
+| Majority vote (maj@64) | Reward model (rm@64) |
+|---|---|
+| 43.3% | 70.0% |
 
-Picture the firm's teacher model reviewing a fee clause. It writes: "Step 1: 12 months × $10,000 = $120,000. Step 2: cap is $150,000, which is above the limit." The final verdict might be right, but if a step's math is wrong, we don't want the student to learn it.
+- After about 320 GRPO steps on 7B, answers got cut off; context grew from 8,192 to 16,384 tokens.
+- Caution: AIME'24 has 30 problems; 79.9% is not a multiple of 1/30. The paper doesn't explain it.
 
-Our notebook uses seeded word problems with exact answers, and a small code checker that recomputes every "a op b = c" in each step:
+## Our Colab rebuild: smaller
+| Paper | Our rebuild |
+|---|---|
+| 387K olympiad problems | Seeded word problems from `lal.tasks`, exact answers |
+| DeepSeek R1 → Qwen2.5 | Teacher llama3.1:8b; distilled file only (SFT behind `RUN_LONG`) |
+| Reward model reranks | llama3.2:3b writes 4 answers; 5 ways to pick |
+| GRPO on up to 32B | Optional: GRPO on SmolLM2-135M, same 1.0 + 0.2 reward, β = 0 |
 
+## A step checker in code
 ```python
 print(step_scores("Step 1: 12 * 7 = 84\nStep 2: 84 - 9 = 76\nStep 3: 76 / 4 = 19\nANSWER: 19"))
 ```
+- Input: a three-step solution.
+- Step 1: 12 × 7 = 84 is right → 1.0.
+- Step 2: 84 − 9 is 75, not 76 → 0.0.
+- Step 3: 76 ÷ 4 = 19 is right as written → 1.0.
+- Output: `[1.0, 0.0, 1.0]`. Code recomputes every "a op b = c".
 
-- The input is a three-step solution.
-- Step 1 is right: 12 × 7 is 84. Score 1.0.
-- Step 2 is wrong: 84 − 9 is 75, not 76. Score 0.0.
-- Step 3 is right as written: 76 ÷ 4 is 19. Score 1.0.
-- The output is `[1.0, 0.0, 1.0]`.
+## Stage 1: filter the teacher's answers
+- Teacher writes 2 answers per problem.
+- Keep only: right final number and no wrong step.
+- Among those, keep the shortest (pushes toward fewer tokens).
+- Write a ready-to-train SFT file (`ap3_distill.jsonl`).
 
-We use this checker twice.
+| Right answer, wrong step | Right answer, all steps right |
+|---|---|
+| Rejected: teaches bad habits | Kept, if shortest |
 
-First, for distillation data. The teacher (llama3.1:8b) writes 2 answers per problem. We keep only answers with the right final number and no wrong step. Among those, we keep the shortest. The result is a ready-to-train file.
+## Stage 3: five ways to pick among 4 answers
+- First sample: what one call gives you.
+- Majority vote: most common answer.
+- Code step-checker: score = weakest step (min).
+- LLM judge: the 8B model names the first wrong step.
+- Oracle (pass@4): was any of the 4 right? The ceiling for any picker.
 
-Second, for reranking. The student (llama3.2:3b) writes 4 answers per test problem. A solution's score is its weakest step, the minimum. One bad step ruins the answer, just as one wrong number ruins a fee calculation. We compare five ways to choose: the first answer, a majority vote, the code checker, a model judge that names the first wrong step, and the oracle. The oracle asks "was any of the 4 right?" It is the ceiling for any picker.
-
-An optional part trains a tiny model (SmolLM2-135M) with GRPO, using the paper's 1.0 + 0.2 reward and a KL penalty of 0.
+## How this applies to us
+- A large local model writes careful reasoning for many clauses; keep only the checked ones.
+- A smaller, faster model learns from those, on the firm's own machine.
+- Check each step ("12 months × $10,000 = $120,000"), not just the final verdict.
 
 ## Common mistakes
-
-- **Spending effort on reward training first.** Here distillation gave +22.1 points and GRPO gave +4.6. Get good examples first.
-- **Checking only the final answer.** A right answer reached through a wrong step teaches bad habits. Check every step.
-- **Relying on majority vote for rare answers.** If the right answer shows up once in four, a vote loses it. A step checker can still pick it.
-- **Ignoring cut-off answers during training.** Watch answer length. Raise the limit before truncation hurts accuracy.
-- **Reading small benchmarks too precisely.** With 30 problems, one question moves the score by 3.3 points.
+- RL first → get good teacher data first; it gave +22.1 vs. +4.6.
+- Checking only the final answer → check every step.
+- Majority vote when the right answer is rare → use a step checker.
+- Ignoring cut-off answers in training → watch length; raise the limit.
 
 ## Check your understanding
-
 **Q: Which stage gave the biggest gain in the ablation?**
-A: Distillation, which lifted the score from 50.0% to 72.1%. GRPO and reranking added smaller gains after that.
+A: Distillation, from 50.0% to 72.1%. GRPO and reranking added smaller gains.
 
 **Q: Why score a solution by its weakest step instead of the average?**
 A: One wrong step usually ruins the answer. An average lets a long solution with one bad step beat a short correct one.
 
 **Q: What does setting the KL penalty to 0 save?**
-A: It removes the need for a frozen reference model during training, which saves a whole model's memory.
+A: The frozen reference model is no longer needed, which saves a whole model's memory.
 
 ## Try it in Colab
-
-Run the notebook to build the filtered distillation file and see how many teacher answers were rejected, including right answers with a wrong step. Then compare the five ways to pick among 4 student answers, and look at the gap between "first sample" and the oracle. Set `RUN_LONG = True` on a GPU to watch GRPO raise a tiny model's reward.
+- Build the distillation file; count rejected answers, including right answers with a wrong step.
+- Compare the five pickers; look at the gap between first sample and oracle.
+- On a GPU, set `RUN_LONG = True` and watch GRPO raise the tiny model's mean reward.

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Frameworks and harnesses · Agent Engineering School</title>
-<meta name="description" content="What a harness is (all the code around the model), why it matters so much for small models, and how DSPy, LangGraph and crash-safe steps help.">
+<meta name="description" content="The harness is all the code around the model. Learn DSPy and LangGraph on a local model, and make long jobs survive a crash.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,74 +255,188 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 07</span></div><section class="mod" id="m7" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 07</div><h2>Frameworks and harnesses</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/07_frameworks.ipynb">Open in Colab</a><button class="done-btn" data-done="m7" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">What a harness is (all the code around the model), why it matters so much for small models, and how DSPy, LangGraph and crash-safe steps help.</p><article class="lesson"><h2>The big idea</h2>
-<p>The harness is all the code around the model. The loop, the tools, the prompts, the limits, the logging. The model is the engine. The harness is the rest of the car.</p>
-<p>A strong engine in a badly built car still drives poorly. A modest engine in a well-built car can do surprisingly well. For smaller models, the harness matters about as much as the model itself.</p>
-<p>Frameworks are ready-made harness parts. This module covers two the course teaches, DSPy and LangGraph. It also covers one idea: crash-safe steps, so a long job can pick up where it stopped.</p>
-<h2>Why it matters for us</h2>
-<p>The course shows this with a test called HarnessTax. The same smaller model, Haiku 4.5, scored 31.1%, 41.1% or 47.8% on a coding benchmark. Only the harness changed. Top models moved only 3 to 4 points across the same harnesses.</p>
-<p>Local open models are in the "smaller model" group. So for a firm running AI on its own machines, the harness is a big part of the product. Pick it by measuring, not by reputation.</p>
-<p>Long jobs also crash. The GPU runs out of memory. The session drops. If a firm is reviewing a hundred contracts, it should not start over from zero.</p>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>DSPy: describe inputs and outputs, not prompts.</strong> A signature says what goes in and what comes out, with types. "Clause in. Cap in months and a yes/no out." DSPy writes the actual prompt for you. Later, an optimizer can improve that prompt against your test scores.</p>
-</li>
-<li>
-<p><strong>DSPy modules mix model calls with plain Python.</strong> A module is a small program. It can call a signature, then apply a rule in code, like "cap over 12 months is an issue."</p>
-</li>
-<li>
-<p><strong>LangGraph: state, nodes and edges.</strong> State is a shared record, like a form passed along a desk line. Nodes are steps that each fill in part of the form. Edges say which step comes next. Some edges are decisions made by code.</p>
-</li>
-<li>
-<p><strong>Crash-safe steps.</strong> Record each finished step with its result. On restart, look up the record first. If the step is done, reuse the saved result instead of calling the model again. This is the idea behind Temporal, a tool for durable execution (jobs that survive crashes).</p>
-</li>
-</ol>
-<pre><code>LangGraph flow for governing law:
-get clause --&gt; read law (model) --decide (code)--&gt; check law --&gt; END
-                                        \--------&gt; needs human --&gt; END
-</code></pre>
-<h2>Worked example</h2>
-<p><strong>DSPy.</strong> The notebook writes a signature for the liability clause:</p>
-<pre><code class="language-python">class ExtractCap(dspy.Signature):
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 07</span></div><section class="mod" id="m7" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 07</div><h2>Frameworks and harnesses</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/07_frameworks.ipynb">Open in Colab</a><button class="done-btn" data-done="m7" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">The harness is all the code around the model. Learn DSPy and LangGraph on a local model, and make long jobs survive a crash.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 5 · Frameworks &amp; Orchestration · <a href="https://web.stanford.edu/class/cs329z/slides/lecture05.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
+<li>Relate framework abstractions (DSPy, LangGraph, durable steps) back to the system designs from earlier modules.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Abstractions in frameworks</h3><span class="slide-no">2/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>By hand</th>
+<th>With a framework</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Writing backprop by hand</td>
+<td>Writing backprop with PyTorch</td>
+</tr>
+<tr>
+<td>The agent loop from module 01</td>
+<td><code>dspy.ReAct(...)</code> in one line</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Frameworks hide system details.</li>
+<li>You still need to know what happens underneath.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three pillars of AI systems</h3><span class="slide-no">3/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Data</th>
+<th>System or model</th>
+<th>Evaluation + metric</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Training data, rollouts, demonstrations, human feedback</td>
+<td>Language model, compound AI workflow, agentic system</td>
+<td>Pass rate, exact match, LLM judge, cost/latency</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Agency spectrum: model → workflow → agent. There are frameworks at each level.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSPy: declare what, not the prompt</h3><span class="slide-no">4/13</span></div><ul>
+<li>Signature (what): strict inputs and outputs, with types.</li>
+<li>Module (how): composes signatures with program logic. <code>dspy.Predict</code>, <code>dspy.ChainOfThought</code>, <code>dspy.ReAct</code>.</li>
+<li>Optimizer: improves the prompts or weights to raise a metric.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A DSPy signature</h3><span class="slide-no">5/13</span></div><pre><code class="language-python">class ExtractCap(dspy.Signature):
     &quot;&quot;&quot;Read a limitation-of-liability clause and extract the cap.&quot;&quot;&quot;
     clause: str = dspy.InputField()
     cap_months: int | None = dspy.OutputField(desc=&quot;months of fees the cap equals; None if liability is unlimited&quot;)
     favorable_to_customer: bool = dspy.OutputField()
 </code></pre>
 <ul>
-<li>The class line names the task. The short sentence under it tells the model the goal.</li>
-<li><code>clause</code> is the input: the clause text.</li>
-<li><code>cap_months</code> is an output: a whole number, or None if there's no cap.</li>
-<li><code>favorable_to_customer</code> is a yes/no output.</li>
+<li>Line 1: names the task.</li>
+<li>Line 2: the docstring becomes the instruction.</li>
+<li>Line 3: input, the clause text.</li>
+<li>Line 4: output, a whole number or None (no cap).</li>
+<li>Line 5: output, yes/no.</li>
+<li>No prompt written by hand. <code>lm.inspect_history(n=1)</code> shows the one DSPy sent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSPy module: model call + rule in code</h3><span class="slide-no">6/13</span></div><ul>
+<li><code>CapReview</code> runs <code>dspy.ChainOfThought(ExtractCap)</code> on the liability section.</li>
+<li>Then code decides: <code>issue = p.cap_months is None or p.cap_months &gt; 12</code>.</li>
+<li>Notebook runs it on msa_02 (12 months) and msa_20 (36 months).</li>
+<li>DSPy talks to the same local server: <code>api_base="http://localhost:11434/v1"</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LangGraph: state, nodes, edges</h3><span class="slide-no">7/13</span></div><ul>
+<li>State: shared workspace the graph reads and writes (<code>cid</code>, <code>clause</code>, <code>law</code>, <code>status</code>).</li>
+<li>Node: a function that reads and writes the state.</li>
+<li>Edge: says which node runs next. Conditional edge: code picks the branch.</li>
 </ul>
-<p>No prompt is written by hand. The notebook then wraps it in a module that flags an issue when the cap is missing or over 12 months. That rule lives in code. It also prints the exact prompt DSPy sent, so you can read it.</p>
-<p><strong>LangGraph.</strong> The graph handles governing law. One node fetches the clause. One asks the model which state's law applies. Then code decides. If the answer looks like a state name, go to the check. If not, send it to a person. The check marks California or Delaware as OK and anything else as ISSUE. On msa_10, which uses Florida law, the result is ISSUE.</p>
-<p><strong>Crash-safe steps.</strong> A small wrapper saves each step's result in a SQLite file (a simple database in one file). The notebook runs the law check on six contracts. Then it runs them again, as if after a crash. The second run reuses saved results. It is much faster, and the results match.</p>
-<h2>Common mistakes</h2>
+<pre><code>get clause → read law (model) → decide (code) → check law → END
+                                       └──────→ needs human → END
+</code></pre>
 <ul>
-<li><strong>Trusting a framework's hidden prompt.</strong> Read the prompt it actually sends. DSPy shows it with <code>inspect_history</code>.</li>
-<li><strong>Picking a harness by reputation.</strong> Measure success and cost for your model on your task.</li>
-<li><strong>Scores that are only a number.</strong> Return text like "expected 12, got 24." Optimizers learn from the reason.</li>
-<li><strong>Model calls inside Temporal's main workflow code.</strong> Temporal replays that code to recover. Model calls give different answers each time, so they go in separate recorded steps.</li>
+<li><code>check_law</code>: California or Delaware → OK; anything else → ISSUE. msa_10 (Florida) should be ISSUE.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSPy vs LangGraph</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>DSPy</th>
+<th>LangGraph</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Signatures and modules</td>
+<td>State, nodes and edges</td>
+</tr>
+<tr>
+<td>Best for pipelines you want to tune with an optimizer</td>
+<td>Best for mixing fixed steps, decisions and agent steps</td>
+</tr>
+<tr>
+<td><code>ExtractCap</code> → <code>CapReview</code></td>
+<td><code>get</code> → <code>read</code> → <code>check</code> or <code>human</code></td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What is an agent harness?</h3><span class="slide-no">9/13</span></div><ul>
+<li>Harness: all the code around the model: tools, memory, context, execution.</li>
 </ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>What is a harness?</summary>
-<p>All the code around the model: the loop, tools, prompts, limits and logging. For smaller models it matters about as much as the model.</p>
-</details>
-<details>
-<summary>In the LangGraph example, who decides whether a contract goes to a person?</summary>
-<p>Code does. The decide step checks whether the model&#x27;s answer looks like a state name. If not, it routes to &quot;needs human.&quot;</p>
-</details>
-<details>
-<summary>How do crash-safe steps save time after a crash?</summary>
-<p>Each finished step&#x27;s result is saved. On restart, the code finds the saved result and reuses it instead of calling the model again.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the DSPy extraction on msa_08 and read the printed prompt DSPy sent. Then run the LangGraph on msa_04 and msa_10 and compare their status. Finally, check the timing line for the crash-safe steps: the rerun should be far faster with the same results.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Harness</th>
+<th>Design choice</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mini SWE-agent</td>
+<td>Only bash; linear history</td>
+</tr>
+<tr>
+<td>OpenHands</td>
+<td>One JSON event per step; stops after 4 repeats of the same action</td>
+</tr>
+<tr>
+<td>Pi</td>
+<td>Four tools (read, write, edit, bash); system prompt under 1,000 tokens</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The harness can make a big difference</h3><span class="slide-no">10/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Haiku 4.5, same model (Terminal-Bench 2)</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Codex harness</td>
+<td>31.1%</td>
+</tr>
+<tr>
+<td>Claude Code harness</td>
+<td>41.1%</td>
+</tr>
+<tr>
+<td>Pi harness</td>
+<td>47.8%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Top models moved only 3–4 points across the same harnesses.</li>
+<li>Local open models are the smaller-model case.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Durable steps: survive a crash</h3><span class="slide-no">11/13</span></div><ul>
+<li>Temporal: activities are units that can fail; workflows link them; finished results are recorded.</li>
+<li>Our version: SQLite, about 20 lines. Each step's result is stored under a hash of its name and arguments.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>First run</th>
+<th>Rerun after a "crash"</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calls the model for each of 6 contracts</td>
+<td>Finds each saved result, no model call</td>
+</tr>
+<tr>
+<td>Saves every result</td>
+<td>Same results; the check expects it faster</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+<li>For a small local model, the harness is a big part of the product. Pick it by measuring.</li>
+<li>A firm reviewing many contracts should not restart from zero when the GPU runs out of memory.</li>
+<li>Rules like "cap over 12 months is an issue" stay in code, outside the framework's prompt.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>Trusting a framework's hidden prompt → read it with <code>inspect_history</code>.</li>
+<li>Picking a harness by reputation → measure success and cost on your task.</li>
+<li>Metrics that return only a number → return "expected 12, got 24"; optimizers learn from it.</li>
+<li>Model calls inside Temporal workflow code → replay breaks. Put them in recorded activities.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>In the LangGraph example, who decides whether a contract goes to a person?</summary><p>Code. `decide` checks that the model&#x27;s answer looks like a state name; if not, it routes to &quot;needs human.&quot;</p></details>
+
+<details><summary>How do durable steps save time after a crash?</summary><p>Each finished step&#x27;s result is saved. On restart, the code reuses it instead of calling the model again.</p></details>
+
+<details><summary>Why must a Temporal workflow function avoid LLM calls?</summary><p>Temporal replays workflow code to recover. LLM calls give different answers each time, so they go in activities whose results are recorded.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run the DSPy extraction on msa_08 and read the prompt DSPy sent.</li>
+<li>Run the graph on msa_04 and msa_10 and compare their status.</li>
+<li>Check the timing line: the rerun should be faster with <code>same results: True</code>.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 5 · DSPy · LangGraph · Temporal · Arena, "HarnessTax" · course repo lecture5-frameworks</p>
   <p class="big">The harness is all the code around the model: the loop, tools, prompts, limits and logging. For weaker models it matters as much as the model itself. Pick it by measuring.</p>

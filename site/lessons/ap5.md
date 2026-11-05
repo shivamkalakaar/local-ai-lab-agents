@@ -1,44 +1,40 @@
 ---
-summary: How a Stanford team added a planner and web search to a pipeline of model calls, and why search only helps when it finds the right pages.
-minutes: 11
+summary: How a Stanford team added a planner and web search to a pipeline of model calls, and why search helps only when it finds the right pages.
+minutes: 9
+source: CS329A past project · ARCHON Augmented
+slides: https://cs329a.stanford.edu/winter2025projects/archon.pdf
 ---
 
-## The big idea
+## Learning objective
+- Build a plan → search → generate → critique → fuse → verify pipeline, and ablate each block on your own data.
 
-One model call is often not your best answer. Archon (the Archon paper, 2024) stacks simple steps into a pipeline. Several models generate answers. A critic points out flaws. A ranker orders them. A fuser merges the best into one. A verifier checks the result.
+## The problem
+- Archon: stacks inference-time steps (generate, fuse, critique, rank, verify, unit tests) into a pipeline.
+- Only seven building blocks.
+- No tool use, no web search.
+- Its strong results relied on models of about 70B parameters.
 
-Megan Mou, Sherry Xie, Emily Zhang and Andrew Park extended Archon in their CS329A project, ARCHON Augmented (Winter 2025). Archon had only seven building blocks, no tools, and its strong results relied on models of about 70B parameters. They added three new blocks:
+## Archon's blocks, one line each
+- Generator: writes candidate answers.
+- Critic: notes each candidate's flaws.
+- Ranker: orders the candidates, best first.
+- Fuser: merges the best candidates into one answer.
+- Verifier: checks the answer is supported.
 
-- A Planner at the front. It rephrases the question and writes a step-by-step plan for every later block.
-- An Expander after each generator. It adds detail so the critic and ranker can judge each answer.
-- A Web Search block. It writes search queries from the plan and passes the top 10 results per query to the generators.
+## What the students built: three new blocks
+- Team: Megan Mou, Sherry Xie, Emily Zhang, Andrew Park (CS329A, Winter 2025).
+- Planner (first): rephrases the request, writes a step-by-step plan for every later block.
+- Expander (after each generator): adds detail so critics and rankers can judge.
+- Web Search Tool Call: queries from the plan, top 10 Google results per query.
 
-Think of a research desk at a newspaper. An editor plans the story. Researchers pull clippings. Several writers draft. A copy editor critiques, picks the best parts, and a fact-checker signs off. Every step can help. But if the researchers pull the wrong clippings, the story gets worse, not better.
+## Setup
+- Closed-source config: GPT-4o generates and ranks; Qwen2-72B critiques and fuses.
+- Open-source config: an ensemble of open models.
+- HLE (Humanity's Last Exam): 500-question subset, 453 scored.
+- AlpacaEval LC: instruction following, win rate adjusted for answer length.
+- Ablation: add or remove one block at a time.
 
-## Why it matters for us
-
-A firm's contract review often needs outside facts: the client's past deals, the firm's precedent memos, the latest playbook. A local pipeline with search over the firm's own files is a natural fit.
-
-- A planner is cheap and helped weaker open models catch up on following instructions. That is good news for firms running open models on their own computers.
-- Search helps only when it finds the right documents. Noisy or look-alike pages can make answers worse.
-- Each block costs model calls. Test each one on your own data and drop the ones that don't help.
-
-## How it works, step by step
-
-1. **Plan.** The Planner rephrases the request and writes a short plan and search queries.
-
-2. **Search.** The queries go to a search engine. The results become context for the next step.
-
-3. **Generate.** Several models write candidate answers, using the plan and the pages.
-
-4. **Expand, critique, rank.** The Expander fills in detail. The critic notes flaws. The ranker orders the candidates.
-
-5. **Fuse and verify.** The fuser writes one answer from the best candidates. The verifier checks it is supported.
-
-6. **Ablate.** Ablation means removing one block at a time to see what it adds. The team did this on two benchmarks.
-
-Results on AlpacaEval (an instruction-following test scored by win rate against a reference model, adjusted for answer length), closed / mixed setups:
-
+## What they found: AlpacaEval LC
 | Setup | Closed | Mixed |
 |---|---|---|
 | Archon | 67.73% | 57.01% |
@@ -46,49 +42,74 @@ Results on AlpacaEval (an instruction-following test scored by win rate against 
 | + Planner + Expander | 66.01% | 68.30% |
 | + Planner + Search + Expander | 73.40% | 73.92% |
 
-On Humanity's Last Exam (HLE, a very hard quiz; 453 questions scored), the best was Planner + Expander at 4.2% (19 of 453) in the closed setup. Plain Archon got 3.3%, and zero-shot GPT-4o got 3.1%. Here search hurt: results were often off-topic or full of page clutter. Also, these HLE gaps are a few questions out of 453, so they are within noise.
+- The planner helped the weaker open setup catch up.
 
-## Worked example
+## What they found: HLE
+| Setup | Closed | Open |
+|---|---|---|
+| Archon | 3.3% | 3.3% |
+| + Planner + Expander | 4.2% (19/453) | 3.8% (17/453) |
+| + Planner + Search + Expander | 3.3% | 2.9% |
 
-Imagine the firm asks: "How many years passed between the client's first master agreement and its latest amendment?" The answer needs two documents and some arithmetic. A single search on the raw question may find only one of them.
+- Zero-shot GPT-4o: 3.1%.
+- Search hurt: results were off-topic or cluttered.
+- A few questions out of 453 is noise.
 
-Our notebook builds this in miniature. The questions are about made-up towns, so no model can know the answers without searching. The "web" is 16 local pages: eight real town pages, three look-alike decoys ("New Velmora" with different numbers), and five clutter pages. Search uses BM25, a classic keyword ranking. Here is the full pipeline in the notebook:
+## Our Colab rebuild: smaller
+| Paper | Our rebuild |
+|---|---|
+| Google search over the real web | BM25 over 16 local pages |
+| HLE and AlpacaEval | 6 questions about made-up towns (search is required) |
+| ~70B models | Generators: llama3.1:8b, llama3.1:8b, llama3.2:3b |
+| Planner, Expander, Search | Planner and Search; Expander skipped to save calls |
 
+- BM25: keyword search; rare words count more, long pages count less.
+- The 16 pages: 8 real towns, 3 look-alike decoys ("New ..."), 5 clutter pages.
+
+## The pipeline
 ```
 question → Planner (plan + search queries) → Web search (BM25) → 3 Generators (8B, 8B, 3B)
          → Critic + Ranker → Fuser → Verifier → answer          (7 model calls)
 ```
+- Planner: up to 3 queries, one per fact needed.
+- BM25: top 3 pages per query.
+- One call critiques and ranks all three candidates.
+- Fuser: one answer from the top two.
+- Verifier says "not supported" → fall back to the top-ranked candidate.
 
-- The Planner writes up to 3 queries, one per fact needed. That is how it finds both pages for a two-step question.
-- BM25 returns the top 3 pages per query. Rare words count more, and long pages count less.
-- Three generators write answers: two from llama3.1:8b and one from llama3.2:3b, a tiny mixed team.
-- One call critiques and ranks all three.
-- The fuser writes one final answer from the top two.
-- The verifier asks whether the pages support it. If not, we fall back to the top-ranked candidate.
+## Four setups, compared
+| Setup | Calls per question |
+|---|---|
+| Single call, no search | 1 |
+| Single call + search (RAG) | 1 |
+| Planner + search + 1 generator | 2 |
+| Full pipeline | 7 |
 
-We skip the Expander to save calls. The notebook compares four setups: a single call, a single call plus search (RAG, retrieval-augmented generation: fetch documents, then answer), planner plus search plus one generator, and the full pipeline. It reports accuracy and calls per question.
+- RAG: retrieval-augmented generation; fetch pages, then answer.
+- If the 2-call setup ties the 7-call one, use the 2-call one.
 
-For the firm, the decoy pages are the key lesson. "Acme Holdings" and "Acme Holdings UK" may have different contracts. If search pulls the wrong one, the pipeline confidently gives a wrong answer.
+## How this applies to us
+- Contract review needs outside facts: past deals, precedent memos, the playbook. Search the firm's own files, locally.
+- A planner is cheap and helped open models catch up.
+- Decoys matter: "Acme Holdings" vs. "Acme Holdings UK" may have different contracts. Test search with look-alikes.
 
 ## Common mistakes
-
-- **Assuming search always helps.** On HLE it hurt. Check what the search actually returns before you trust it.
-- **Adding blocks without testing each one.** The Expander helped in one setup and hurt in another. Remove one block at a time and measure.
-- **Reading tiny differences as wins.** A gap of four questions out of 453 is noise.
-- **Ignoring cost.** The full pipeline uses 7 calls per question. If "planner plus search plus one generator" ties it with 2 calls, use that.
-- **Forgetting look-alike documents.** Similar names with different facts are where retrieval goes wrong. Test with decoys.
+- Assuming search always helps → check what it returns; on HLE it hurt.
+- Adding blocks without testing → the Expander helped in one setup and hurt in another; ablate.
+- Reading tiny gaps as wins → four questions out of 453 is noise.
+- Ignoring cost → 7 calls per question; compare with the 2-call setup.
 
 ## Check your understanding
-
 **Q: Why did web search hurt on Humanity's Last Exam?**
-A: The results were often off-topic or full of page clutter. That confused the models instead of helping them.
+A: The results were often off-topic or cluttered. That confused the models instead of helping.
 
 **Q: What does the Planner add to the pipeline?**
-A: It rephrases the question and writes a step-by-step plan and search queries. Every later block uses that plan.
+A: It rephrases the question and writes a plan and search queries. Every later block uses that plan.
 
 **Q: Why does the notebook use questions about made-up towns?**
-A: No model can know the answers, so search is truly needed. That makes the value of search easy to see.
+A: No model can know the answers, so search is truly needed. The value of search is easy to see.
 
 ## Try it in Colab
-
-Run the notebook to compare the four setups and look at accuracy next to calls per question. Read the retrieved page lists to see whether a decoy page sneaks in. Then use the solutions to score the pipeline without the fuser and verifier, and to test a noisier web.
+- Compare the four setups: accuracy next to calls per question.
+- Read the retrieved page lists: does a "New ..." decoy sneak in?
+- In the solutions, score "rank only" vs. the full pipeline, then test a noisier web.

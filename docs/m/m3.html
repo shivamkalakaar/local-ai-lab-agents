@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Context engineering · Agent Engineering School</title>
-<meta name="description" content="Why the model&#x27;s reading space is a small desk, and five simple ways to keep only what matters on it without losing the full record.">
+<meta name="description" content="Keep only what the next step needs in the model&#x27;s context. Event log, observation masking, compaction, pinned rules and just-in-time loading.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,44 +255,89 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 03</span></div><section class="mod" id="m3" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 03</div><h2>Context engineering</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/03_context_engineering.ipynb">Open in Colab</a><button class="done-btn" data-done="m3" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Why the model&#x27;s reading space is a small desk, and five simple ways to keep only what matters on it without losing the full record.</p><article class="lesson"><h2>The big idea</h2>
-<p>A model can only read so much at once. That limit is the context window (the amount of text the model can see in one go). Everything it knows about your task must fit there.</p>
-<p>Think of it as a small desk. A lawyer with a clean desk, holding only the clause they need, works well. Pile twenty binders on it and they slow down and miss things. Models are the same. Quality drops well before the desk is full. The course saw measurable decline starting around 8K tokens (about a few thousand words) on one test.</p>
-<p>Context engineering is the habit of choosing what goes on the desk at each step. Keep the goal, the rules and the recent work. File the rest away, where you can fetch it when needed.</p>
-<h2>Why it matters for us</h2>
-<p>Local models have smaller useful desks than big cloud models. They also slow down as the prompt grows, because every extra word costs computing time on your own GPU. So a tidy desk means faster and better answers.</p>
-<p>In an agent, the biggest clutter is old tool output. In one coding agent, about 84% of all tokens were tool results. Hiding the old ones roughly halved cost with equal or better results (course Lecture 6). For contract review, that means old clause text the agent already read.</p>
-<p>There is also a safety point. Rules like "never send anything" must never fall off the desk.</p>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Keep a full log, separately.</strong> Store every step in an append-only event log (a list you only ever add to, never edit). This is your full record for audits and replays. What the model sees is rebuilt from this log each turn.</p>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 03</span></div><section class="mod" id="m3" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 03</div><h2>Context engineering</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/03_context_engineering.ipynb">Open in Colab</a><button class="done-btn" data-done="m3" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Keep only what the next step needs in the model&#x27;s context. Event log, observation masking, compaction, pinned rules and just-in-time loading.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 2 · LLMs for Builders (context engineering; patterns from Lecture 6) · <a href="https://web.stanford.edu/class/cs329z/slides/lecture02.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/14</span></div><ul>
+<li>Choose what goes into the context window each turn, and trim it without losing the full record.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What goes in the context of an agent?</h3><span class="slide-no">2/14</span></div><ul>
+<li>Context window: all the text the model can see in one call.</li>
+<li>What fills it:<ul>
+<li>System prompt</li>
+<li>Message history</li>
+<li>Memories</li>
+<li>Tool call results</li>
+<li>Attached files</li>
+</ul>
 </li>
-<li>
-<p><strong>Pin the hard rules.</strong> Put critical rules in the system prompt (the standing instructions at the top). Never let them live only in chat history. One real agent deleted a user's inbox after "confirm before acting" got summarized away.</p>
-</li>
-<li>
-<p><strong>Hide old tool outputs.</strong> This is observation masking. Replace each old tool result with a one-line note like "[old tool output hidden, 400 chars]". Keep the last few turns word for word. It needs no extra model call. Try this first.</p>
-</li>
-<li>
-<p><strong>Summarize the middle if you must.</strong> This is compaction. When hiding isn't enough, ask the model to summarize the older history. Keep the rules, the goal and the recent turns out of the summary.</p>
-</li>
-<li>
-<p><strong>Load just in time.</strong> Don't paste every contract "just in case." Keep a list of IDs. Load the one contract you need, when you need it. Write progress to a notes file so it survives a reset.</p>
-</li>
-<li>
-<p><strong>Keep the start stable.</strong> If the system prompt and tool list stay identical across calls, the server can reuse work it already did on that opening text. This speeds up each call.</p>
-</li>
-</ol>
-<pre><code>what the model sees each turn:
-[pinned rules] [user's goal] [old steps, tool output hidden] [last 4 turns, in full]
-          ^ rebuilt every turn from the full log, which is never edited
-</code></pre>
-<h2>Worked example</h2>
-<p>First, the notebook measures the desk problem. It asks "What governing law does msa_09 use?" with 1, then 5, then 10 contracts in the prompt. You see the token count and time climb, even though the answer is in one contract.</p>
-<p>Next, it records an agent reviewing <code>msa_15</code>. The agent reads sections 3, 4, 7, 9 and 10. Each read is logged as a tool result. Then it builds a trimmed view:</p>
-<pre><code class="language-python">def build_context(events, keep_recent=4):
-    msgs = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: PINNED}, events[0]]
+</ul></div><div class="slide"><div class="slide-top"><h3>Why not just put everything? Context rot</h3><span class="slide-no">3/14</span></div><ul>
+<li>Context rot: quality drops as the context grows, well before the window is full.</li>
+<li>OOLONG test: measurable decline from about 8K tokens.</li>
+<li>Local models also slow down: every extra token costs time on your own GPU.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>10 contracts pasted in</th>
+<th>Just msa_09, loaded when needed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Many prompt tokens, slow</td>
+<td>Few prompt tokens, fast</td>
+</tr>
+<tr>
+<td>Answer buried among 10 documents</td>
+<td>Only the document that matters</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Two principles</h3><span class="slide-no">4/14</span></div><ul>
+<li>Focus the context: keep only what the task at hand needs. The whole history does not need to be there.</li>
+<li>Preserve continuity: keep the requirements, goals, constraints and progress.</li>
+<li>Excess information is context bloat.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context management patterns</h3><span class="slide-no">5/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>What it does</th>
+<th>In the notebook</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Persistent event log</td>
+<td>Rebuild the context from stored events</td>
+<td><code>events</code> list, never edited</td>
+</tr>
+<tr>
+<td>Observation masking</td>
+<td>Hide old tool outputs</td>
+<td><code>build_context</code></td>
+</tr>
+<tr>
+<td>Compaction</td>
+<td>Summarize earlier context</td>
+<td><code>compact</code></td>
+</tr>
+<tr>
+<td>Memory offloading</td>
+<td>Store to files to free the context</td>
+<td><code>notes.md</code> solution</td>
+</tr>
+<tr>
+<td>Context isolation</td>
+<td>Give a subtask only what it needs</td>
+<td>Subagents, module 09</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Real systems combine them.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Persistent event log</h3><span class="slide-no">6/14</span></div><ul>
+<li>Store every step exactly as it happened. Append only.</li>
+<li>Rebuild the model's input from the log on every call.</li>
+<li>Trim what the model sees; the full record stays for audit and replay.</li>
+<li>Notebook: an agent reads msa_15 sections 3, 4, 7, 9 and 10. Each read is logged as a tool event.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Observation masking</h3><span class="slide-no">7/14</span></div><pre><code class="language-python">def build_context(events, keep_recent=4):
+    msgs = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: PINNED}, events[0]]             # pinned rules + the user's goal
     for e in events[1:-keep_recent]:
         if e[&quot;kind&quot;] == &quot;tool&quot;:
             msgs.append({&quot;role&quot;: e[&quot;role&quot;], &quot;content&quot;: f&quot;[old tool output hidden, {len(e['content'])} chars]&quot;})
@@ -290,39 +346,63 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     return msgs + events[-keep_recent:]
 </code></pre>
 <ul>
-<li>The function takes the full log and how many recent events to keep in full.</li>
-<li><code>msgs</code> starts with the pinned rules and the first event, which is the user's goal.</li>
-<li>The loop walks through the middle events, skipping the last four.</li>
-<li>If an event is a tool result, it is swapped for a short placeholder.</li>
-<li>Other events, like "Reading section 7," are kept as is.</li>
-<li>Finally, the last four events are added back word for word.</li>
-</ul>
-<p>The notebook prints the full size and the trimmed size, so you can see how much smaller the context got. The full log is untouched.</p>
-<p>Then compaction. The middle is summarized into at most 5 bullets, with clause numbers kept exact. The notebook checks that "never send" is still in the pinned rules afterward.</p>
-<h2>Common mistakes</h2>
+<li>Line 2: start with the pinned rules and the user's goal.</li>
+<li>Lines 3–5: in the middle, swap each tool output for a one-line placeholder.</li>
+<li>Lines 6–7: keep other events, like "Reading section 7."</li>
+<li>Line 8: add the last 4 events word for word.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Masking: before and after</h3><span class="slide-no">8/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Full event</th>
+<th>What the model sees</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"[tool result] section 7: LIMITATION OF LIABILITY 7.1 EACH PARTY'S TOTAL LIABILITY ... THIRTY-SIX (36) MONTHS ..."</td>
+<td>"[old tool output hidden, N chars]"</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>Stuffing every document in "just in case."</strong> It makes answers worse, not better. Load what the step needs.</li>
-<li><strong>Summarizing first.</strong> Summaries cost a model call and can lose details. Hide old tool output first, since it is free.</li>
-<li><strong>Keeping safety rules only in chat history.</strong> Compaction can delete them. Pin them in the system prompt.</li>
-<li><strong>Editing earlier messages.</strong> It breaks the server's reuse of the stable opening, so you pay to reprocess everything. Rebuild from the log instead.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Your local agent gets slow and worse after 20 turns. What do you try first?</summary>
-<p>Hide old tool outputs. It is free, and tool outputs are most of the tokens. Summarize only if that isn&#x27;t enough.</p>
-</details>
-<details>
-<summary>Why rebuild the context from a log instead of keeping one growing list?</summary>
-<p>The log stays the complete record for audit and replay. Meanwhile, what the model sees can be trimmed freely. You get both.</p>
-</details>
-<details>
-<summary>Where should &quot;never send, file or delete anything&quot; live?</summary>
-<p>In the pinned system prompt, outside anything that gets trimmed or summarized. Then no amount of compaction can remove it.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the 1, 5 and 10 contract test and watch prompt tokens and seconds grow. Then compare the full and trimmed sizes from <code>build_context</code>. In the solutions, try putting the question at the start of the long prompt instead of the end, and see whether your model's answer changes.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>No extra model call. Try this first.</li>
+<li>In one coding agent, about 84% of tokens were tool outputs. Hiding old ones roughly halved cost (Lecture 6).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pin the hard rules</h3><span class="slide-no">9/14</span></div><ul>
+<li>Pinned rules: in the system prompt, outside anything that gets trimmed.</li>
+<li><code>PINNED</code>: "You never send, file or delete anything. You only write a review for a lawyer." / "Every issue must cite a clause number."</li>
+<li>One real agent deleted a user's inbox after "confirm before acting" was summarized away.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Compaction</h3><span class="slide-no">10/14</span></div><ul>
+<li>Compaction: the LLM summarizes earlier steps into fewer tokens.</li>
+<li>Notebook: the middle becomes at most 5 bullets, clause numbers and numbers exact.</li>
+<li>Keep too much → you compact again soon.</li>
+<li>Drop too much → you lose context the task needs.</li>
+<li>Check: "never send" is still in the pinned rules afterward.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Keep the start stable</h3><span class="slide-no">11/14</span></div><ul>
+<li>KV cache: the server's saved work on tokens it already read.</li>
+<li>Add to the end only. The cached start is reused.</li>
+<li>Edit an earlier message → positions change → the server recomputes everything after it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Load just in time</h3><span class="slide-no">12/14</span></div><ul>
+<li>Keep IDs, not contents. Load one contract when the step needs it.</li>
+<li>Progressive disclosure: show tools and files later, as needed.</li>
+<li>Notes file: the agent appends one line per section to <code>notes.md</code>. A new session starts from the notes, not the whole contract.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">13/14</span></div><ul>
+<li>Local models have smaller useful windows and slow down with long prompts.</li>
+<li>Old clause text the agent already read is the main clutter. Mask it.</li>
+<li>Rules like "never send anything" stay pinned on the firm's machine, every turn.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">14/14</span></div><ul>
+<li>Every document "just in case" → worse answers. Load what the step needs.</li>
+<li>Summarizing first → costs a call and loses detail. Mask first.</li>
+<li>Safety rules only in chat history → compaction can delete them. Pin them.</li>
+<li>Editing earlier messages → breaks the KV cache. Rebuild from the log.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Your local agent gets slow and worse after 20 turns. What do you try first?</summary><p>Hide old tool outputs. It needs no model call and tool outputs are most of the tokens; summarize only if that isn&#x27;t enough.</p></details>
+
+<details><summary>Why rebuild the context from a log instead of keeping one growing list?</summary><p>The log stays the complete record for audit and replay, while what the model sees can be trimmed freely.</p></details>
+
+<details><summary>Where should &quot;never send, file or delete anything&quot; live?</summary><p>In the pinned system prompt, outside anything trimmed or summarized, so compaction can&#x27;t remove it.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run the 1, 5 and 10 contract test. Watch prompt tokens and seconds grow.</li>
+<li>Compare the full and trimmed sizes printed by <code>build_context</code>.</li>
+<li>In the solutions, put the question at the start of the long prompt instead of the end and compare answers.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lectures 2 and 6 · Anthropic, "Effective Context Engineering" · LangChain, "Context Engineering" · MemGPT</p>
   <p class="big">The context window is a small, expensive desk. Put only what the next step needs on it. Quality starts to drop well before the window is full.</p>

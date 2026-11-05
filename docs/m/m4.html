@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Retrieval (RAG) · Agent Engineering School</title>
-<meta name="description" content="How to find the few passages a model needs from many documents, by searching two ways at once and checking every quote in code.">
+<meta name="description" content="How the RAG pipeline is built, what to index, how to search it, and how to check the model&#x27;s quotes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,84 +255,132 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 04</span></div><section class="mod" id="m4" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 04</div><h2>Retrieval (RAG)</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/04_retrieval_rag.ipynb">Open in Colab</a><button class="done-btn" data-done="m4" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to find the few passages a model needs from many documents, by searching two ways at once and checking every quote in code.</p><article class="lesson"><h2>The big idea</h2>
-<p>Retrieval means finding the right few passages before the model answers. RAG (retrieval-augmented generation) is the name for "search first, then answer from what you found."</p>
-<p>Think of a law library. You don't hand a new associate every book and say "find the cap." You give them a good index. They pull the three pages that matter, read those, and answer. The model is the associate. Retrieval is the index.</p>
-<p>The default that works has a few parts. Split documents on their natural structure. Label each piece with where it came from. Search two ways: by exact words and by meaning. Merge the results. Then check every quote the model gives against the real text.</p>
-<h2>Why it matters for us</h2>
-<p>A firm has many contracts. They won't all fit on the model's desk at once, and small local models do worse with long prompts. Retrieval lets the model read only the clauses that matter.</p>
-<p>If all your documents are small, you may not need retrieval. The course's rule of thumb: under about 200K tokens of documents, put it all in the prompt and skip it. Above that, build the pipeline.</p>
-<p>Lawyers need answers they can trust. A citation that points to a real clause, checked by code, is what makes an answer usable. Everything here, including the search model, runs on the firm's own machine.</p>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Chunk on structure.</strong> A chunk is one piece of a document. For contracts, one section makes a natural chunk. Splitting on headings keeps each idea whole.</p>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 04</span></div><section class="mod" id="m4" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 04</div><h2>Retrieval (RAG)</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/04_retrieval_rag.ipynb">Open in Colab</a><button class="done-btn" data-done="m4" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How the RAG pipeline is built, what to index, how to search it, and how to check the model&#x27;s quotes.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 3 · RAG + Agents · <a href="https://web.stanford.edu/class/cs329z/slides/lecture03.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Learn how the RAG pipeline is built and where it breaks, what to index, and how to search it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why retrieval?</h3><span class="slide-no">2/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>LLM alone</th>
+<th>LLM + retrieval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"What is the liability cap in msa_20?"</td>
+<td>Retrieved: msa_20, 7.1: "...shall not exceed the fees paid by Customer in the thirty-six (36) months preceding the claim."</td>
+</tr>
+<tr>
+<td>"Caps are usually 12 months of fees." (a guess)</td>
+<td>"36 months of fees. Source: msa_20#7." Over our 12-month rule: flag it.</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Don't ask the model to memorize everything. Give it the right text just in time.</li>
+<li>Dynamic: easy to add or update documents.</li>
+<li>Interpretable: the model can point to its source, so a person can check it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The RAG pipeline</h3><span class="slide-no">3/12</span></div><ul>
+<li>RAG: retrieval-augmented generation. Search first, then answer from what you found.</li>
+<li>Retriever: finds the top-k passages for a question.</li>
+<li>Generator: the LLM writes the answer from the question plus those passages.</li>
+</ul>
+<pre><code>question → search → top chunks → LLM answers → code checks the quote
+</code></pre></div><div class="slide"><div class="slide-top"><h3>Do you even need it?</h3><span class="slide-no">4/12</span></div><ul>
+<li>Under about 200K tokens of documents: put everything in the prompt. Skip RAG.</li>
+<li>Above that: build the pipeline.</li>
+<li>Small local models do worse with long prompts, so RAG helps them sooner.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Chunking: basic unit in retrieval</h3><span class="slide-no">5/12</span></div><ul>
+<li>Chunk: one piece of a document. Search returns chunks, not whole files.</li>
+<li>Fixed-size (e.g., 100–500 tokens)<ul>
+<li>Too small: the chunk has no context</li>
+<li>Too large: one chunk mixes many topics</li>
+</ul>
 </li>
-<li>
-<p><strong>Add a context note.</strong> Put a one-line label at the top of each chunk, like "From msa_07, section 7 (Limitation of Liability)." The clause text alone never says which contract it came from. The label does. This idea is called contextual retrieval (from Anthropic).</p>
+<li>Overlap: 10–20%, so no sentence is lost at a boundary.</li>
+<li>Structure: split on headings. For contracts, one section = one chunk.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why contextual retrieval</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Chunk</th>
+<th>Contextualized chunk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Each party's total liability ... shall not exceed the fees paid ... in the thirty-six (36) months preceding the claim."</td>
+<td>"From msa_20, section 7 (Limitation of Liability). Each party's total liability ... shall not exceed the fees paid ... in the thirty-six (36) months ..."</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The clause alone never says which contract it is from.</li>
+<li>Add a one-line label to each chunk before indexing (idea from Anthropic).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two ways to search</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Keyword search (BM25)</th>
+<th>Meaning search (embeddings)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Scores chunks by shared words</td>
+<td>Turns text into numbers; similar meaning → similar numbers</td>
+</tr>
+<tr>
+<td>Finds "7.2(b)", "msa_15"</td>
+<td>Finds "limitation of liability" when you typed "cap on damages"</td>
+</tr>
+<tr>
+<td>Misses synonyms</td>
+<td>Misses exact IDs and clause numbers</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Hybrid retrieval: run both, then merge. Each catches what the other misses.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Merging and reranking</h3><span class="slide-no">8/12</span></div><ul>
+<li>RRF (reciprocal rank fusion): merge two ranked lists.<ul>
+<li>Each chunk gets 1 / (60 + its rank) from each list. Add up, sort.</li>
+</ul>
 </li>
-<li>
-<p><strong>Search by keywords.</strong> BM25 is a classic keyword search. It scores chunks by shared words. It is good at exact strings like "7.2(b)" or "msa_15".</p>
+<li>Rerank (optional): fetch a wide pool, then a slower, more accurate model reorders it and keeps the best few.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scoring a retriever</h3><span class="slide-no">9/12</span></div><ul>
+<li>recall@k (also called Hit@k): how often the right chunk is in the top k.</li>
+<li>Measure retrieval on its own, before the answers.<ul>
+<li>If the final answer is wrong, you can't tell which part failed.</li>
+</ul>
 </li>
-<li>
-<p><strong>Search by meaning.</strong> An embedding model turns text into a list of numbers that captures meaning. Similar meanings give similar numbers. This finds "limitation of liability" when the lawyer typed "cap on damages."</p>
-</li>
-<li>
-<p><strong>Merge with RRF.</strong> Reciprocal rank fusion combines two ranked lists. Each chunk gets points for ranking high in either list: 1 divided by (60 plus its rank). Add the points and sort.</p>
-</li>
-<li>
-<p><strong>Optionally rerank.</strong> Fetch a wide pool, then let a slower, more accurate model reorder it and keep the best few.</p>
-</li>
-<li>
-<p><strong>Check citations in code.</strong> The model must name its source chunk and give an exact quote. Code confirms the quote is really in that chunk.</p>
-</li>
-</ol>
-<pre><code>question --&gt; keyword search  --\
-                                 merge (RRF) --&gt; top chunks --&gt; model answers --&gt; code checks quote
-question --&gt; meaning search  --/
-</code></pre>
-<h2>Worked example</h2>
-<p>The notebook turns all 20 contracts into chunks, one per section. Each chunk gets its context note. It builds both indexes, then searches "msa_15 cap on damages." The top hit is section 7 of msa_15.</p>
-<p>Next it measures retrieval on its own. It uses recall@k: out of all test questions, how often was the right chunk in the top k results? The questions use different words from the contracts, like "how do we stop it renewing." The notebook prints recall@3 for keyword only, meaning only, and hybrid.</p>
-<p>Then it answers a real question with citations:</p>
-<pre><code class="language-python">hits = index.search(question, k=k)
+<li>Test with questions in different words from the contract: "how do we stop it renewing?"</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Checking citations in code</h3><span class="slide-no">10/12</span></div><pre><code class="language-python">hits = index.search(question, k=k)
 ctx = &quot;\n\n&quot;.join(f&quot;[{c['id']}] {c['text']}&quot; for c in hits)
 a = structured([... &quot;Answer only from the sources. Give the source id and an exact quote.&quot; ...], Answer)
 src = next((c for c in hits if c[&quot;id&quot;] == cid), None)
 a_ok = src is not None and quote_is_in_doc(a.quote, src[&quot;text&quot;])
 </code></pre>
 <ul>
-<li>The first line runs the hybrid search and keeps the top few chunks.</li>
-<li>The second line joins them into one block, each tagged with its ID like <code>[msa_20#7]</code>.</li>
-<li>The third line asks the model for an answer, a source ID and an exact quote, in a fixed shape.</li>
-<li>The fourth line finds the chunk the model named among the ones we gave it.</li>
-<li>The last line checks that the chunk exists and the quote really appears in it.</li>
-</ul>
-<p>For "What is the liability cap in msa_20?" you get the answer, the chunk ID, the quote, and "citation verified: True" or False.</p>
-<h2>Common mistakes</h2>
-<ul>
-<li><strong>Using meaning search alone.</strong> It misses exact strings like clause numbers and IDs. Use keyword search too.</li>
-<li><strong>Judging retrieval only by the final answer.</strong> If the answer is wrong, you can't tell which part failed. Measure recall@k separately.</li>
-<li><strong>Treating retrieved text as instructions.</strong> It is data. A contract could contain "ignore previous instructions."</li>
-<li><strong>Ignoring who may see what.</strong> Filter by client or matter during the search, not after.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>A lawyer asks &quot;what does 7.2(b) say?&quot; and meaning search returns the wrong clause. Why?</summary>
-<p>Embeddings capture meaning, not exact strings like &quot;7.2(b)&quot;. Keyword search finds it. That is why we search both ways.</p>
-</details>
-<details>
-<summary>Why add a context note to each chunk?</summary>
-<p>The clause text alone doesn&#x27;t say which contract or section it belongs to. The note carries that, which helps both kinds of search.</p>
-</details>
-<details>
-<summary>Why fetch a wide pool and then rerank, instead of fetching only a few?</summary>
-<p>Fast search is noisy. A wide pool makes sure the right passage is in there. The slower reranker then moves it to the top.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the recall@3 comparison and see how keyword, meaning and hybrid compare on your machine. Then run the solution that removes the context notes and watch what drops. Finally, check whether the RAG answer for msa_20 comes back with a verified citation.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Line 1: hybrid search, keep the top k chunks.</li>
+<li>Line 2: join them, each tagged with its id, e.g. <code>[msa_20#7]</code>.</li>
+<li>Line 3: ask for an answer, a source id and an exact quote.</li>
+<li>Lines 4–5: find that chunk; check the quote is really in it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>A firm has too many contracts to fit in one prompt. RAG sends only the clauses that matter.</li>
+<li>Search, embeddings and the LLM all run on the firm's own machine.</li>
+<li>A checked quote is what makes the answer usable for a lawyer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Meaning search alone → misses clause numbers. Add keyword search.</li>
+<li>Judging only the final answer → measure recall@k separately.</li>
+<li>Treating retrieved text as instructions → it is data. A contract can say "ignore previous instructions."</li>
+<li>Filtering access after search → filter by client or matter during search.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A lawyer asks &quot;what does 7.2(b) say?&quot; and meaning search returns the wrong clause. Why?</summary><p>Embeddings capture meaning, not exact strings like &quot;7.2(b)&quot;. Keyword search finds it, which is why we use both.</p></details>
+
+<details><summary>Why add a one-line label to each chunk?</summary><p>The clause text alone doesn&#x27;t say which contract or section it is from. The label carries that, so search can match it.</p></details>
+
+<details><summary>Why fetch a wide pool and then rerank?</summary><p>Fast search is noisy. A wide pool makes sure the right chunk is in it; the slower reranker moves it to the top.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run the recall@3 comparison: keyword vs meaning vs hybrid.</li>
+<li>Run the solution that removes the chunk labels and see what drops.</li>
+<li>Ask about msa_20 and check the answer says "citation verified: True".</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 3 · Lewis et al. (RAG) · DPR · ColBERT · Anthropic, "Contextual Retrieval"</p>
   <p class="big">Retrieval finds the few passages the model needs. The default that works: search two ways (keywords and meaning), merge, rerank, and check every citation in code.</p>

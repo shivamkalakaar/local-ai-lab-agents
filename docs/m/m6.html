@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Design patterns · Agent Engineering School</title>
-<meta name="description" content="The handful of standard shapes most AI systems take, from simple chains to checker loops, and how to pick the simplest one that works.">
+<meta name="description" content="Five workflow patterns and four agent patterns cover most systems. Start with the simplest that works; use code, not the model, as the checker.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,100 +255,192 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 06</span></div><section class="mod" id="m6" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 06</div><h2>Design patterns</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/06_design_patterns.ipynb">Open in Colab</a><button class="done-btn" data-done="m6" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>13 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">The handful of standard shapes most AI systems take, from simple chains to checker loops, and how to pick the simplest one that works.</p><article class="lesson"><h2>The big idea</h2>
-<p>Most AI systems are built from a few standard shapes. Learn them, and you can sketch almost any system on a napkin.</p>
-<p>Think of a kitchen. There are a few ways to run it. One cook does steps in order. A host sends each order to the right station. Several cooks work on different dishes at once. A head chef tastes each plate and sends it back if it's wrong. You choose based on the menu, not on what looks fancy.</p>
-<p>The five workflow shapes are chaining, routing, parallel, orchestrator-workers, and generator plus checker. On top of these sit a few agent shapes. The rule is always the same. Start with the simplest one that works. Add more only when your tests show it helps.</p>
-<h2>Why it matters for us</h2>
-<p>Contract review has known steps, so most of it fits simple shapes. A chain extracts the cap, checks it, then drafts a fix. Parallel checks each playbook rule at once.</p>
-<p>Simple shapes suit small local models. Each step asks the model one narrow question. Code handles the rest. Fewer open choices means fewer chances to drift.</p>
-<p>One finding matters a lot. Asking a model "is this good?" with no outside signal does not help. It even made GPT-4-class models worse (course Lecture 6). Checkers should be real checks: code, rules, or tools.</p>
-<h2>How it works, step by step</h2>
-<div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 06</span></div><section class="mod" id="m6" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 06</div><h2>Design patterns</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/06_design_patterns.ipynb">Open in Colab</a><button class="done-btn" data-done="m6" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Five workflow patterns and four agent patterns cover most systems. Start with the simplest that works; use code, not the model, as the checker.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 6 · Agent Design Patterns and Scaffolds · <a href="https://web.stanford.edu/class/cs329z/slides/lecture06.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Define the common design patterns for workflows and agents, and pick the simplest one for a task.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Workflows vs agents</h3><span class="slide-no">2/12</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Shape</th>
+<th></th>
+<th>Workflows</th>
+<th>Agents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Control flow</td>
+<td>Code</td>
+<td>LLM</td>
+</tr>
+<tr>
+<td>Adaptation</td>
+<td>Fixed branches, routes, loops</td>
+<td>Chooses next step from observations</td>
+</tr>
+<tr>
+<td>Best fit</td>
+<td>Clear, repeatable structure</td>
+<td>Exploration, flexible decisions</td>
+</tr>
+<tr>
+<td>Example</td>
+<td>Classify ticket → retrieve policy → draft reply</td>
+<td>Resolve ticket using tools</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Real systems often combine both.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Five workflow patterns</h3><span class="slide-no">3/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pattern</th>
 <th>What it does</th>
 <th>Contract example</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Chaining</td>
-<td>Fixed steps, with checks between them</td>
-<td>Extract cap, then check it, then draft a fix</td>
+<td>Prompt chaining</td>
+<td>Fixed steps, checks between</td>
+<td>Extract cap → check → flag</td>
 </tr>
 <tr>
 <td>Routing</td>
-<td>Sort the input, send it to the right handler</td>
-<td>Easy clause to code, hard one to the model</td>
+<td>Classify, send to the right handler</td>
+<td>Easy clause → code; odd one → model</td>
 </tr>
 <tr>
-<td>Parallel</td>
-<td>Run independent checks at once</td>
-<td>Check all four playbook rules together</td>
+<td>Parallelization</td>
+<td>Independent work at once, or voting</td>
+<td>All 4 playbook rules at once</td>
 </tr>
 <tr>
 <td>Orchestrator-workers</td>
-<td>A model splits the job and hands out parts</td>
-<td>Review a pile of unknown documents</td>
+<td>One LLM creates subtasks at runtime</td>
+<td>Review unknown documents</td>
 </tr>
 <tr>
-<td>Generator + checker</td>
-<td>Draft, check, revise in a loop</td>
-<td>Draft a redline, check it meets 12 months</td>
+<td>Evaluator-optimizer</td>
+<td>Generate, critique, revise</td>
+<td>Draft a redline, check, fix</td>
 </tr>
 </tbody>
-</table></div>
-<p>And the agent shapes:</p>
-<ol>
-<li><strong>ReAct.</strong> Think, act, look at the result, repeat. This is the basic agent loop from module 01 (the ReAct paper, 2023).</li>
-<li><strong>Reflexion.</strong> After a clear failure, like a failed test, write a short lesson and retry with it.</li>
-<li><strong>CodeAct.</strong> Instead of one tool call per turn, the model writes a small Python program that does several steps at once. Good when a task needs loops over data.</li>
-<li><strong>Plan then execute.</strong> One call writes the full plan. Then code runs each step. The course reports about 40 to 60% fewer tokens. This turns agent work back into a workflow.</li>
-</ol>
-<h2>Worked example</h2>
-<p><strong>Chaining.</strong> The notebook finds the liability section. The model pulls out the cap and quotes the sentence. Then two code gates run:</p>
-<pre><code class="language-python">if not quote_is_in_doc(cap.quote, contract(cid)):
+</table></div></div><div class="slide"><div class="slide-top"><h3>Prompt chaining in code</h3><span class="slide-no">4/12</span></div><pre><code class="language-python">cap = structured(f&quot;{s['text']}\n\nExtract the cap in months of fees (null if unlimited) and quote the sentence.&quot;, Cap)   # step 1: LLM
+if not quote_is_in_doc(cap.quote, contract(cid)):                                                                     # gate: code
     return {&quot;status&quot;: &quot;HOLD&quot;, &quot;why&quot;: &quot;quote not found in contract&quot;}
-ok = cap.months is not None and cap.months &lt;= PB[&quot;max_cap_months&quot;]
+ok = cap.months is not None and cap.months &lt;= PB[&quot;max_cap_months&quot;]                                                    # step 2: rule in code
 return {&quot;status&quot;: &quot;OK&quot; if ok else &quot;ISSUE&quot;, &quot;months&quot;: cap.months}
 </code></pre>
 <ul>
-<li>The first line checks the model's quote is really in the contract.</li>
-<li>If not, the contract goes on HOLD. A person looks at it. We don't guess.</li>
-<li>The third line applies the playbook rule in code. No cap, or a cap over 12 months, is not OK.</li>
-<li>The last line returns OK or ISSUE, plus the number.</li>
+<li>Line 1: the model extracts the cap and quotes it.</li>
+<li>Lines 2–3: quote not in the contract → HOLD for a person.</li>
+<li>Line 4: the 12-month rule, in code. No cap counts as not OK.</li>
+<li>Line 5: OK or ISSUE. The notebook's check expects ISSUE on msa_07 (24 months).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Routing and parallelization</h3><span class="slide-no">5/12</span></div><ul>
+<li>Routing: classify the input first, then send it to the right handler. Saves time and money.<ul>
+<li>Notebook: a regex finds "State of ..." → code answers, no model call. Otherwise → model.</li>
 </ul>
-<p>On msa_07, which has a 24-month cap, the result is ISSUE.</p>
-<p><strong>Routing.</strong> For governing law, a simple text pattern looks for "State of ...". If it matches, code answers with no model call. Only odd cases go to the model.</p>
-<p><strong>Parallel.</strong> The four playbook rules don't depend on each other. The notebook checks them for msa_15 at the same time, each asking the model "PASS or FAIL?" for one clause.</p>
-<p><strong>Generator + checker.</strong> The model rewrites msa_08's cap clause. Code then reads the new text, finds every "N months," and checks the largest is at most 12. If not, it sends back specific feedback, like "the text says 24 months; the playbook max is 12." Note that code checks the text itself, not the model's own claim about it.</p>
-<p><strong>CodeAct.</strong> Asked which contracts use Texas, Florida or New York law, the model writes a short program that loops over all contracts. The notebook runs it in a limited space, a toy sandbox (a fenced-off area for running untrusted code).</p>
-<h2>Common mistakes</h2>
+</li>
+<li>Sectioning: split independent work and run it together.<ul>
+<li>Notebook: 4 playbook rules on msa_15 in parallel threads. Truth: liability_cap and governing_law fail.</li>
+</ul>
+</li>
+<li>Voting: run the same input several times; an aggregator decides.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Evaluator-optimizer</h3><span class="slide-no">6/12</span></div><ul>
+<li>One LLM generates; another step gives feedback; repeat.</li>
+<li>Two conditions: (1) clear, stateable feedback; (2) something able to give it.</li>
+<li>Notebook: rewrite msa_08's cap (36 months). Code reads the new text, finds every "N months," checks the largest ≤ 12.</li>
+<li>Feedback is specific: "the text says {N} months; the playbook max is 12."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Who should check: the model or code?</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>LLM checker</th>
+<th>Code checker</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Does the clause meet the playbook? Answer YES or NO only."</td>
+<td>Regex finds "N months" / "N years", checks max ≤ 12</td>
+</tr>
+<tr>
+<td>A model judging, with no outside signal</td>
+<td>Reads the draft text itself, same answer every time</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>A checker that is just the same model asking "is this good?"</strong> Without an outside signal it burns tokens. Use code or rules.</li>
-<li><strong>Orchestrator-workers for known steps.</strong> If you can list the steps, write a chain.</li>
-<li><strong>Starting complex.</strong> Begin with a chain. Add routing, parallel or loops only when tests show a gain.</li>
-<li><strong>Checking the model's claim instead of its output.</strong> Read the draft text yourself, in code.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>When does a generator plus checker loop help?</summary>
-<p>When the feedback can be stated clearly, something can give it reliably (tests, rules, a tool-using critic), and the generator can act on it.</p>
-</details>
-<details>
-<summary>How does plan then execute help a small local model?</summary>
-<p>It makes one planning call, then runs simple fixed steps. Fewer open decisions means fewer chances to drift, and it uses fewer tokens.</p>
-</details>
-<details>
-<summary>Why does the chain put a contract on HOLD instead of guessing?</summary>
-<p>Because the model&#x27;s quote wasn&#x27;t found in the contract. That is a sign the answer may be wrong, so a person should look.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the chain on msa_01, msa_07 and msa_16 and compare with the printed truth. Then run the redline loop and see how many rounds it takes. In the solutions, compare how many known-bad drafts the model checker approves versus the code checker.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Asking an LLM to judge its own responses can lower performance.</li>
+<li>CRITIC: a checker that uses tools (search, code) scored about 75 vs 67 F1 without.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four agent patterns</h3><span class="slide-no">8/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Key insight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ReAct</td>
+<td>Reason before taking actions</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>Turn feedback from the environment into a short lesson, retry with it</td>
+</tr>
+<tr>
+<td>CodeAct</td>
+<td>Code is the right form for actions</td>
+</tr>
+<tr>
+<td>ReWOO / LLMCompiler</td>
+<td>Plan first, then execute; turns agent work back into a workflow</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>JSON actions vs code actions</h3><span class="slide-no">9/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>JSON tool call (ReAct)</th>
+<th>Code action (CodeAct)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One call per turn: read msa_01, then msa_02, ...</td>
+<td>One snippet loops over <code>ids()</code> and filters by governing law</td>
+</tr>
+<tr>
+<td>Many turns</td>
+<td>Fewer turns when the task needs loops</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Question: "Which contract ids are governed by Texas, Florida or New York law?" Truth: msa_09, msa_10, msa_15.</li>
+<li>Runs in a restricted namespace: a toy sandbox. Real systems use containers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Plan then execute</h3><span class="slide-no">10/12</span></div><ul>
+<li>One call writes the plan: a list of checks from a fixed menu (<code>Literal["liability_cap", "governing_law", "auto_renewal", "termination_notice"]</code>).</li>
+<li>Code runs each check.</li>
+<li>ReWOO: about 40–60% fewer tokens.</li>
+<li>Today, planning shows up mostly as parallel tool calls.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>Contract review has known steps. Most of it is chaining plus parallel checks.</li>
+<li>Each step asks the small local model one narrow question; code does the rest.</li>
+<li>Playbook rules live in code, so checks are exact and repeatable.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Checker = same model asking "is this good?" → use code, rules or tools.</li>
+<li>Orchestrator-workers for known steps → if you can list the steps, write a chain.</li>
+<li>Starting complex → begin with a chain; add patterns when your eval shows a gain.</li>
+<li>Checking the model's claim (<code>d.months</code>) → check the draft text itself.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>When does an evaluator-optimizer loop help?</summary><p>When the feedback can be stated clearly, something can give it reliably (tests, rules, a tool), and the generator can act on it.</p></details>
+
+<details><summary>Why does the chain put a contract on HOLD instead of guessing?</summary><p>The model&#x27;s quote wasn&#x27;t found in the contract, a sign the answer may be wrong, so a person looks.</p></details>
+
+<details><summary>How does plan then execute help a small local model?</summary><p>One planning call, then fixed steps run by code. Fewer open decisions and fewer tokens.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run the chain on msa_01, msa_07 and msa_16 and compare with the printed truth.</li>
+<li>Run the redline loop on msa_08 and see how many rounds it takes.</li>
+<li>In the solutions, count how many of the 3 known-bad drafts the LLM checker approves vs the code checker.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 6 · Anthropic, "Building Effective Agents" · ReAct · Reflexion · CodeAct · ReWOO</p>
   <p class="big">Five workflow patterns and four agent patterns cover almost everything. Start with the simplest one that works and add complexity only when your eval shows it helps.</p>

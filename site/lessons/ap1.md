@@ -1,48 +1,70 @@
 ---
-summary: How a Stanford team graded AI-built web apps by what a user can actually do, and how to check that your grader deserves trust.
-minutes: 11
+summary: How a Stanford team graded AI-built web apps by what a user can do, and how to check the grader first.
+minutes: 9
+source: CS329A past project · AppBench
+slides: https://cs329a.stanford.edu/winter2025projects/appbench.pdf
 ---
 
-## The big idea
+## Learning objective
+- Build a checklist grader for AI-built apps, and test the grader before you trust it.
 
-AI tools can now build a whole web app from one request. But how do you know the app works? Most code tests only check small pieces, like "does this function return 10?" They don't ask whether a person can click, type and get the right result.
+## The problem
+- AI tools can build a whole web app from one request.
+- Code benchmarks check single functions with unit tests.
+- Nothing checked if the app is usable:
+  - Does navigation work?
+  - Does saved state survive a refresh?
+  - Are errors handled?
 
-Four Stanford students, Ethan Hellman, Brendan McLaughlin, Abhinav Lalwani and Belinda Mo, built AppBench (CS329A, Winter 2025) to fill that gap. They wrote 9 app requests, from L0 (a plain static page) up to L4 (a live whiteboard several people share). For each request they wrote a checklist and turned it into an automatic grader.
+## "It compiles" vs "a user can use it"
+| Unit test | User check |
+|---|---|
+| `tip(50, 20)` returns 10 | Type a bill, click Calculate, see the tip |
+| The page loads | Add two tasks, refresh, both are still there |
+| Passes on the happy path | A blank task is ignored |
 
-Think of a building inspector. The inspector doesn't just confirm the house is standing. They flip switches, run taps and try the doors. And if the power is off, they don't fail every light separately. They note one root problem.
+## What the students built: AppBench
+- Team: Ethan Hellman, Brendan McLaughlin, Abhinav Lalwani, Belinda Mo (CS329A, Winter 2025).
+- 9 app requests, from L0 (static page) to L4 (live shared whiteboard).
+- Six axes: UI, features, state, API integration, cross-page navigation, data processing.
+- 7 builders, one shot each: Replit, Bolt, Cursor Agent, Lovable, Claude Sonnet 3.7, GPT-4.5, OpenHands CodeAct 2.1.
 
-That is AppBench in one picture: test what a user would do, in a sensible order, and skip the checks that can't work yet.
+## How the checklist works
+- Explicit check: what the user asked for.
+- Implicit check: what a good app would also do (a back button, ignore blank input).
+- Dependency graph: which check needs which other check to pass first.
+  - Parent fails → children are skipped and score 0.
+  - One root failure shows once, not ten times.
+- Weighted scores, scaled to 0–100.
 
-## Why it matters for us
+## How each check runs
+- Screenshot + multimodal LLM: a model that reads images judges the look.
+- LLM-driven browser (Stagehand on Playwright): clicks through the app.
+- Network interception: fakes server errors to test error handling.
 
-A law firm will soon ask a local model to build small internal tools. Think of a deadline tracker, a fee calculator, or a page that lists which clauses break the playbook (the firm's house rules, like "liability cap at most 12 months of fees").
+## What they found
+| Grader vs. 3 human raters | Value |
+|---|---|
+| Pearson correlation | 0.8173 |
+| Spearman correlation | 0.6827 |
+| Mean MSE / MAE | 0.0302 / 0.1313 |
 
-- "It runs" is not enough. The tracker must still show your deadlines after you refresh the page.
-- The grader itself can be wrong. AppBench checked theirs against three human raters before trusting it. We should do the same, even if only with a few known-good and known-broken examples.
-- Fancy agent products did not clearly win. One-shot models (one request, one answer, no back-and-forth) were close to full agent products. Lovable and Bolt came out on top. So measure before you pay for the fancier tool.
+- All builders scored above 75% up to L2. Scores fell at L3 and dropped sharply at L4.
+- 2 of 7 builders failed to produce a compiling app for one L3 and one L4 task.
+- One-shot models were close to full agent products. Lovable and Bolt were top.
 
-## How it works, step by step
+## Our Colab rebuild: smaller
+| AppBench | Our rebuild |
+|---|---|
+| 9 apps, L0–L4 | 5 single-file HTML apps, L0–L3 |
+| Real browser | No browser: Node.js runs the app's script in a fake page |
+| 7 commercial builders | The local model, one shot, then one fix round |
+| 3 human raters | Known-good and known-broken apps (hand score + LLM judge in solutions) |
 
-1. **Write the request.** Describe the app in plain words, as a user would. AppBench spread its 9 requests over six areas: looks, features, saved state, outside services, moving between pages, and data handling.
+- Each app exposes its logic as functions on `window.app`.
+- Python's HTML parser checks structure.
 
-2. **Split the checklist in two.** Explicit checks are what the user asked for. Implicit checks are what a good app would also do, like ignoring a blank entry or having a back button.
-
-3. **Order the checks as a dependency graph.** A dependency graph is a map of which check needs which other check to pass first. You can't test "add to cart" if the product page never opens. If a parent check fails, its children are skipped and score zero. One root failure then shows up as one failure, not ten.
-
-4. **Turn each check into a test.** AppBench used screenshots judged by a model that reads images, a model-driven browser that clicks through the app, and network tricks to fake server errors.
-
-5. **Weight and score.** Important checks count more. The total is scaled to 0–100.
-
-6. **Grade the grader.** Compare the automatic scores with human scores. AppBench reported a Pearson correlation of 0.8173 and a Spearman correlation of 0.6827 with three raters. Correlation is a number from -1 to 1 that says how closely two sets of scores move together.
-
-What they found: every kind of builder scored above 75% up to level L2. Scores fell at L3 and dropped sharply at L4. Two of the seven builders could not produce a working app for one L3 task and one L4 task.
-
-## Worked example
-
-Our rebuild is smaller. Colab has no browser, so each app must expose its logic as plain JavaScript functions on `window.app`. Python reads the page's structure. Node.js (a program that runs JavaScript outside a browser) runs the app's own code inside a fake page and calls those functions.
-
-Picture the firm asking for a deadline tracker that saves tasks. The closest app in our notebook is the L3 to-do list. Here are its checks:
-
+## The checklist in code (L3 to-do app)
 ```python
 ("app loads", 1, True, [], APP_LOADS),
 ("add + toggle + remaining", 3, True, ["app loads"], js([["app.addTask('a')", "app.addTask('b')", "app.toggle(0)", "app.remaining()"]], 1)),
@@ -50,36 +72,50 @@ Picture the firm asking for a deadline tracker that saves tasks. The closest app
 ("survives a refresh", 3, True, ["saves JSON under 'todos'"], js([["app.addTask('a')", "app.addTask('b')"], ["app.remaining()"]], 2)),
 ("ignores blank tasks", 1, False, ["app loads"], js([["app.addTask('   ')", "app.all().length"]], 0)),
 ```
+- Each tuple: name, weight, explicit (True) or implicit (False), parents, test.
+- Line 1: does `window.app` exist? Everything depends on it.
+- Line 2: add two tasks, tick one, expect 1 left.
+- Line 3: look in `localStorage` (the browser's small storage) for the saved list.
+- Line 4: two inner lists = two page loads. Reload, expect 2 tasks.
+- Line 5: implicit; nobody asked, but blank tasks should be ignored.
 
-Each line has five parts: a name, a weight, whether the user asked for it (True) or it is implicit (False), the checks it depends on, and the test itself.
+## Test the grader first
+- Known-good tip calculator: must score 100.
+- Known-broken one (no labels, wrong math, wrong button id): must score under 60.
+- Crashing script: behavior checks must fail.
+- Only then grade the model's apps.
 
-- "app loads" just asks: does `window.app` exist? Everything else depends on it.
-- The second check adds two tasks, ticks one off, and expects 1 task left. It is worth 3 points.
-- The third check looks inside `localStorage` (the browser's small built-in storage) for the saved list.
-- The fourth check is the clever one. The inner lists are two "page loads". It adds two tasks, then reloads the page and asks how many remain. The answer must be 2.
-- The last check is implicit. Nobody asked, but a good app ignores a blank task.
+## One shot vs one fix round
+| One shot | One fix round |
+|---|---|
+| Same prompt, one turn, no feedback | Model gets the names of its failed checks, one chance to fix |
+| 1 call per app | 1 more call per app (0 if nothing failed) |
 
-If the app never saves, the refresh check is skipped instead of failing for a confusing reason. The report then points straight at the real problem.
+- Our checks name the exact problem, so the fix round often helps.
+- AppBench agents got no such feedback.
+
+## How this applies to us
+- A firm will ask a local model for small tools: a deadline tracker, a fee calculator, a playbook-breach list.
+- Grade them on the firm's own machine with a checklist like this: "deadlines survive a refresh", "liability cap over 12 months is flagged".
+- Check the grader on a known-good and known-broken tool before trusting it.
 
 ## Common mistakes
-
-- **Grading by "it compiles."** A page can load and still lose all your data on refresh. Test what a user does.
-- **Only checking what was asked.** Implicit checks catch the gap between a literal answer and a good one. Keep them, but weight them lower.
-- **Letting one failure cascade.** Without dependencies, a missing button looks like ten bugs. Skip children of failed parents.
-- **Trusting the grader blindly.** First make sure a known-good app scores 100 and a known-broken app scores low. Then compare with a human.
-- **Assuming the agent wins.** Measure a strong one-shot model next to the agent product before you pay for the agent.
+- Grading by "it compiles" → test what a user does, including a refresh.
+- Only explicit checks → add implicit ones, weighted lower.
+- One failure cascades into ten → skip children of failed parents.
+- Trusting the grader blindly → known-good must score 100, known-broken low; then compare with a human.
 
 ## Check your understanding
-
-**Q: Why does AppBench skip a check when the check it depends on fails?**
-A: So one root problem shows up once. Otherwise a single missing feature would cause a pile of confusing failures.
+**Q: Why does AppBench skip a check when its parent check fails?**
+A: So one root problem shows up once. Otherwise one missing feature causes a pile of confusing failures.
 
 **Q: What is the difference between an explicit and an implicit check?**
-A: An explicit check tests what the user asked for. An implicit check tests what a good app would also do, like ignoring blank input.
+A: Explicit tests what the user asked for. Implicit tests what a good app would also do, like ignoring blank input.
 
-**Q: How did the team know their automatic grader was any good?**
-A: They compared its scores with three human raters. The Pearson correlation was 0.8173, so the grader mostly agreed with people.
+**Q: How did the team know their grader was any good?**
+A: They compared it with three human raters. Pearson correlation was 0.8173.
 
 ## Try it in Colab
-
-Run the notebook to grade a known-good and a known-broken app, then let the local model build all five apps in one shot. Look at which checks fail as the level goes up, especially the implicit ones and the refresh test. Then run the one fix round and see how much precise failure messages help.
+- Grade the known-good, known-broken and crashing tip calculators; check the scores.
+- Let the local model build all five apps; see which checks fail as the level rises.
+- Run the fix round and compare the one-shot and after-fix scores.

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Optimization: prompts, then weights · Agent Engineering School</title>
-<meta name="description" content="How to make a small local model better at one job by improving its instructions automatically with GEPA, before reaching for expensive training.">
+<meta name="description" content="Make a small local model better at one job by letting a bigger local model rewrite its instructions (GEPA), before any training.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,79 +255,148 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 11</span></div><section class="mod" id="m11" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 11</div><h2>Optimization: prompts, then weights</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/11_optimization_gepa.ipynb">Open in Colab</a><button class="done-btn" data-done="m11" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to make a small local model better at one job by improving its instructions automatically with GEPA, before reaching for expensive training.</p><article class="lesson"><h2>The big idea</h2>
-<p>There are two ways to make a model better at a task. You can change its instructions (the prompt). Or you can change the model itself by training it (changing its weights, the millions of numbers inside it). Changing instructions is far cheaper. Try it first.</p>
-<p>GEPA (the GEPA paper, 2026) is a tool that rewrites instructions for you. Picture a junior associate drafting summaries, and a senior partner reviewing them. The partner doesn't just say "wrong". She writes "you said 30 days notice; the clause says 15." Then she rewrites the associate's checklist so the mistake doesn't happen again. Repeat a few dozen times, and the checklist gets very good.</p>
-<p>In GEPA, the junior is a small fast model, called the student. The partner is a bigger model, called the reflection model. It reads the student's mistakes and the written feedback, and proposes better instructions. GEPA keeps the best versions and tries again.</p>
-<p>In the course demo, this took Gemma 3 12B from 55% to 100% on a held-out set. Only the instruction text changed.</p>
-<h2>Why it matters for us</h2>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 11</span></div><section class="mod" id="m11" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 11</div><h2>Optimization: prompts, then weights</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/11_optimization_gepa.ipynb">Open in Colab</a><button class="done-btn" data-done="m11" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Make a small local model better at one job by letting a bigger local model rewrite its instructions (GEPA), before any training.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 9 · Optimization · <a href="https://web.stanford.edu/class/cs329z/slides/lecture09.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Improve a small local model's prompt with GEPA, and know when to move on to training.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Prompt wording matters</h3><span class="slide-no">2/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Prompt for PaLM 2-L-IT (math)</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Let's think step by step."</td>
+<td>71.8%</td>
+</tr>
+<tr>
+<td>"Let's combine our numerical command and clear thinking..."</td>
+<td>74.5%</td>
+</tr>
+<tr>
+<td>"Take a deep breath and work on this problem step-by-step."</td>
+<td>80.2%</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li>Small models run fast and cheap on a firm's own computers. But out of the box they make more mistakes. Prompt optimization closes much of that gap without any training.</li>
-<li>Both models can run locally. In our notebook, the student is Llama 3.2 3B and the reflection model is Llama 3.1 8B. No client data leaves the box.</li>
-<li>The result is just text. You can read it, version it, and roll it back.</li>
-</ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Pick a narrow task with exact answers.</strong> Ours: read the renewal and liability clauses, and pull out three numbers. Renewal years, notice days, and the liability cap in months.</p>
-</li>
-<li>
-<p><strong>Write a metric that gives text feedback.</strong> A metric is the grading function. Ours returns a score and a sentence like "notice_days: expected 15, got 30." That sentence is what GEPA learns from. A bare score tells the reflection model that something is wrong, not what.</p>
-</li>
-<li>
-<p><strong>Split the data three ways.</strong> Train (GEPA learns from these), validation (GEPA uses these to pick the best candidate), and test (hidden until the end). The test set is the honest score.</p>
-</li>
-<li>
-<p><strong>Run GEPA with a budget.</strong> The budget is how many times the metric may be called. Each attempt on one input is a rollout. GEPA tries the current instructions, collects failures, asks the reflection model for better instructions, and keeps a set of the strongest candidates.</p>
-</li>
-<li>
-<p><strong>Freeze the winner.</strong> Save the optimized instructions to a file, with a version.</p>
-</li>
-<li>
-<p><strong>Climb the ladder only if needed.</strong> If prompts plateau, move to training:</p>
-</li>
-<li>SFT (supervised fine-tuning): train on good examples, keeping only those a checker passes.</li>
-<li>On-policy distillation: the student writes, and a teacher model scores every word. This needs a teacher you can run yourself, since closed APIs don't share those scores.</li>
-<li>RL with GRPO: sample several answers, push toward the ones that beat the group average. Use it only where answers can be checked automatically.</li>
-<li>Then re-tune the prompt on the new model.</li>
-</ol>
-<h2>Worked example</h2>
-<p>Take a renewal clause: "renews for successive one (1) year terms unless either party gives at least fifteen (15) days' notice." The right answer is renewal_years = 1, notice_days = 15.</p>
-<p>The baseline student, with a plain prompt, gets some fields wrong on the hidden test set. The notebook prints that score first.</p>
-<p>Then GEPA runs:</p>
-<pre><code class="language-python">gepa = dspy.GEPA(metric=metric, max_metric_calls=60, reflection_lm=teacher, track_stats=True)
+<li>Small wording changes move the score. An optimizer can search for the best wording.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three pillars of optimization</h3><span class="slide-no">3/12</span></div><ul>
+<li>Data: training examples, rollouts, human feedback.</li>
+<li>System: the model, workflow or agent you tune.</li>
+<li>Metric: pass rate, exact match, LLM judge, cost.</li>
+<li>You need all three. No trustworthy metric, no optimization.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context vs weight optimization</h3><span class="slide-no">4/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Context (prompt) optimization</th>
+<th>Weight optimization</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Changes the instructions and examples</td>
+<td>Changes the model's numbers by training</td>
+</tr>
+<tr>
+<td>Sample-efficient; fast; simple setup</td>
+<td>Data hungry; grows with thousands of examples</td>
+</tr>
+<tr>
+<td>Works with API-only models</td>
+<td>Needs a model you can train</td>
+</tr>
+<tr>
+<td>Our case: a better prompt for Llama 3.2 3B</td>
+<td>Fallback if prompts plateau</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Try prompts first. They are cheaper.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GEPA: reflective prompt evolution</h3><span class="slide-no">5/12</span></div><ul>
+<li>Student: the small fast model doing the task (Llama 3.2 3B).</li>
+<li>Reflection model: a bigger model that reads the student's mistakes and rewrites the instructions (Llama 3.1 8B).</li>
+<li>Pareto set: GEPA keeps several strong candidates, not just one.</li>
+<li>Course demo: Gemma 3 12B went from 55% to 100% on a held-out set. Only the instruction text changed.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our task: three numbers from two clauses</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Clause (msa_13)</th>
+<th>Correct output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"...automatically renew for successive one (1) year periods unless either party gives at least 15 days' prior written notice..."</td>
+<td>renewal_years = 1, notice_days = 15</td>
+</tr>
+<tr>
+<td>"...SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE 12 MONTHS PRECEDING THE CLAIM."</td>
+<td>cap_months = 12</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>cap_months is 0 if liability is unlimited.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Feedback, not just a score</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Bare score</th>
+<th>Text feedback</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.67</td>
+<td>"Wrong -&gt; notice_days: expected 15, got 30"</td>
+</tr>
+<tr>
+<td>Reflection model knows something failed</td>
+<td>Reflection model knows what to fix</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>GEPA learns from the text. Vague "Wrong." usually gives smaller gains.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three data splits</h3><span class="slide-no">8/12</span></div><ul>
+<li>Train: 7 contracts. GEPA learns from these.</li>
+<li>Validation: 4 contracts. GEPA picks the best candidate on these.</li>
+<li>Test: 9 contracts. Hidden until the end. This is the honest score.</li>
+<li>Budget: <code>max_metric_calls</code>, how many times the metric may run.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Running GEPA in code</h3><span class="slide-no">9/12</span></div><pre><code class="language-python">gepa = dspy.GEPA(metric=metric, max_metric_calls=60, reflection_lm=teacher, track_stats=True)
 optimized = gepa.compile(program, trainset=train, valset=val)
 after = evaluate(optimized, test)
 print(f&quot;held-out test: {before:.0%} -&gt; {after:.0%}&quot;)
 </code></pre>
-<p>Line by line: the first line sets up GEPA with our metric, a budget of 60 metric calls, and the bigger model as the reflection model. The second line runs the optimization: it learns from the training contracts and picks the winner using the validation contracts. The third line scores the winner on the hidden test set. The last line prints the score before and after.</p>
-<p>Finally, the notebook prints the new instructions. You will see plain sentences of guidance, written by the reflection model after reading the student's mistakes. That is the whole change. The model is the same.</p>
-<p>The budget of 60 keeps the demo to about 10–15 minutes on a T4 (Colab's free GPU). Bigger budgets usually do better.</p>
-<h2>Common mistakes</h2>
 <ul>
-<li><strong>Optimizing without a trustworthy metric.</strong> The optimizer will find every loophole in your grader. Fix the metric first (see Module 10).</li>
-<li><strong>Vague feedback.</strong> A metric that only says "wrong" leaves the reflection model guessing. Say what was expected and what came back.</li>
-<li><strong>Looking at the test set during tuning.</strong> Then the final score is no longer honest. GEPA uses train and validation only.</li>
-<li><strong>Jumping to training too early.</strong> Training costs far more and can break other skills. In one course example, instruction-following fell from 85% to 45% after narrow training. Always run a general check after training.</li>
-<li><strong>Picking a teacher from a leaderboard.</strong> The strongest model isn't always the best teacher. Judge a teacher by how good the student becomes.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Our local model gets 70% on clause extraction. What do we try first?</summary>
-<p>GEPA prompt optimization, with a bigger model reflecting on mistakes and a metric that returns text feedback. Only if that plateaus do we build a training set.</p>
-</details>
-<details>
-<summary>Why does the metric return a sentence and not just a number?</summary>
-<p>The reflection model needs to see what went wrong to fix the instructions. &quot;Expected 15, got 30&quot; points to the exact mistake; a number alone does not.</p>
-</details>
-<details>
-<summary>Why does on-policy distillation need an open-weight teacher?</summary>
-<p>It needs the teacher&#x27;s score for every word the student wrote. Closed APIs don&#x27;t return those, so you need a teacher you can run yourself.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the Module 11 notebook and note the baseline and after-GEPA scores on the held-out test. Then read the printed instructions to see exactly what changed. The exercises raise the budget and try vague feedback; both are long, so they are off by default.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Line 1: our metric, a budget of 60 calls, the 8B model reflects.</li>
+<li>Line 2: learn on train, pick the winner on validation.</li>
+<li>Line 3: score the winner on the hidden test set.</li>
+<li>Line 4: print before and after. About 10–15 minutes on a T4.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The ladder after prompts</h3><span class="slide-no">10/12</span></div><ul>
+<li>SFT (supervised fine-tuning): train on a teacher's outputs that pass your checker.</li>
+<li>On-policy distillation: the student writes, the teacher scores every token. Needs an open-weight teacher.</li>
+<li>RL with GRPO: sample a group of answers; push toward those above the group average. Only where answers can be checked automatically.</li>
+<li>Then re-tune prompts on the new model (prompts → weights → prompts).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>Student and reflection model both run on the firm's machine. No client data leaves.</li>
+<li>The result is text: read it, version it (<code>renewal_terms_gepa.json</code>), roll it back.</li>
+<li>A tuned small model is faster and cheaper to run in-house.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Optimizing on a weak metric → the optimizer finds every loophole. Fix the metric first.</li>
+<li>Feedback that only says "wrong" → say what was expected and what came back.</li>
+<li>Peeking at the test set → GEPA uses train and validation only.</li>
+<li>Training too early → in one course example, instruction-following fell from 85% to 45% after narrow training. Run a general check.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Our local model gets 70% on clause extraction. What do we try first?</summary><p>GEPA prompt optimization with a metric that gives text feedback. Build a training set only if that plateaus.</p></details>
+
+<details><summary>Why does the metric return a sentence, not just a number?</summary><p>&quot;Expected 15, got 30&quot; shows the reflection model what to fix. A number only says something is wrong.</p></details>
+
+<details><summary>Why does on-policy distillation need an open-weight teacher?</summary><p>It needs the teacher&#x27;s score for every token. Closed APIs don&#x27;t return those.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Note the baseline and after-GEPA scores on the held-out test.</li>
+<li>Read the printed instructions: that text is the whole change.</li>
+<li>Solutions (off by default): budget 150, and vague feedback.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 9 · GEPA · MIPROv2 · DeepSeekMath (GRPO) · Thinking Machines, on-policy distillation · BetterTogether · FireAct</p>
   <p class="big">Improve prompts first; it's fast and cheap. Move to weights when prompts plateau on a small model. On-policy distillation from an open teacher is the most compute-efficient way to make a small model good at one task.</p>

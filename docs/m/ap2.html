@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PRIME: Planning with Reflective Iterative Multi-Agentic Exploration · Agent Engineering School</title>
-<meta name="description" content="How a Stanford team let an agent pick the right thinking trick for each step of a plan, and why you must compare at the same call budget.">
+<meta name="description" content="How a Stanford team let an agent pick the reasoning trick for each step, and why you compare at equal call budgets.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,43 +255,139 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP2</span></div><section class="mod" id="ap2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP2</div><h2>PRIME: Planning with Reflective Iterative Multi-Agentic Exploration</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap2_prime.ipynb">Open in Colab</a><button class="done-btn" data-done="ap2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>11 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How a Stanford team let an agent pick the right thinking trick for each step of a plan, and why you must compare at the same call budget.</p><article class="lesson"><h2>The big idea</h2>
-<p>There are many tricks to make a model think better. It can reflect on its own answer. It can refine a draft. Two copies can debate. Most teams pick one trick and use it everywhere.</p>
-<p>Chelsea Zou, Samuel Liu and Jui Khankari (the poster also lists Miriam Cheng) asked a better question in their CS329A project, PRIME (Winter 2025). What if the agent picked the best trick for each step of the task?</p>
-<p>Think of a head chef. They don't use the same method for every dish. Some get a quick sear. Some get slow tasting and adjusting. A good chef learns which method works for which dish, and keeps that knowledge for next time.</p>
-<p>PRIME does this with a search method called Monte Carlo Tree Search (MCTS): try promising options, keep score of what worked, and spend more effort on the winners while still testing others now and then.</p>
-<h2>Why it matters for us</h2>
-<p>A contract review has many steps. Some are easy, like "find the governing-law clause." Some are hard, like "does this indemnity clause break the playbook rule on liability caps?"</p>
-<ul>
-<li>Spending the same effort on every step wastes calls on the easy ones and starves the hard ones. Picking a method per step can help.</li>
-<li>On a firm's own computers, model calls are cheap but not free. PRIME's lesson is to compare methods at the same number of calls. Otherwise "smarter" may just mean "tried more times."</li>
-<li>A cheap test, called a reverse ablation, shows which part of a pipeline deserves the bigger model. You upgrade one part at a time and see which upgrade helps most.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP2</span></div><section class="mod" id="ap2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP2</div><h2>PRIME: Planning with Reflective Iterative Multi-Agentic Exploration</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap2_prime.ipynb">Open in Colab</a><button class="done-btn" data-done="ap2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How a Stanford team let an agent pick the reasoning trick for each step, and why you compare at equal call budgets.</p><article class="lesson"><p class="deck-src">Based on CS329A past project · PRIME · <a href="https://cs329a.stanford.edu/winter2025projects/prime.pdf" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
+<li>Use tree search to pick a reasoning trick per subgoal, and compare it fairly at the same call budget.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">2/13</span></div><ul>
+<li>Many tricks make a model reason better: reflection, refinement, debate, voting.</li>
+<li>Teams apply them ad hoc: one trick, used the same way on every step.</li>
+<li>No principled way to pick the right trick for each step of a multi-step plan.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One trick everywhere vs. one trick per step</h3><span class="slide-no">3/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Fixed strategy</th>
+<th>PRIME</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reflect on every step</td>
+<td>Easy step: solve once</td>
+</tr>
+<tr>
+<td>Same effort on easy and hard steps</td>
+<td>Hard step: reflect, or drill down</td>
+</tr>
+<tr>
+<td>Nothing learned between tasks</td>
+<td>Keeps stats on which trick worked</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What the students built: PRIME</h3><span class="slide-no">4/13</span></div><ul>
+<li>Team: Chelsea Zou, Samuel Liu, Jui Khankari (the poster lists Chelsea Zou, Jui Khankari, Miriam Cheng).</li>
+<li>Option: one reasoning technique, treated as a reusable move.</li>
+<li>MCTS (Monte Carlo Tree Search): try promising moves, keep score, spend more on winners.</li>
+<li>Built on LATS (Language Agent Tree Search), an earlier tree-search agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How it works</h3><span class="slide-no">5/13</span></div><ul>
+<li>Planner: splits the task into subgoals.</li>
+<li>At each node, three actions:<ul>
+<li>Drill down: split the subgoal further</li>
+<li>Solve: call a tool (self-reflection, self-refinement, debate)</li>
+<li>Backtrack: drop a useless subgoal</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Plan.</strong> A planner splits the task into subgoals (smaller pieces of the job). Each subgoal gets a confidence score from the model.</p>
 </li>
-<li>
-<p><strong>Choose an action at each step.</strong> PRIME can Drill down (break the subgoal up further), Solve it with a chosen tool (self-reflection, self-refinement or debate), or Backtrack (give up on this branch and go back).</p>
-</li>
-<li>
-<p><strong>Pick which option to try with UCT.</strong> UCT stands for Upper Confidence bound for Trees. It is a simple score: how well this option has done so far, plus a bonus for options you haven't tried much. The bonus keeps the search curious.</p>
-</li>
-<li>
-<p><strong>Score the result.</strong> In the paper, values mix a model's own score with self-consistency (whether repeated answers agree).</p>
-</li>
-<li>
-<p><strong>Back up the score.</strong> The option's value becomes the running mean (average so far) of all its results. Good options rise. Bad ones sink.</p>
-</li>
-</ol>
-<p>PRIME used GPT-4o-mini inside the search and tested on PlanBench, WebShop and Game of 24, 60 questions each. In Table 1, PRIME scored 36.2% / 40% / 75%. LATS, an earlier tree-search agent, scored 2.2% / 38% / 44%. Plain GPT-4o-mini scored 0% on all three. A word of caution: the paper's text gives different figures for some of the same cells, so these numbers are not fully consistent. The authors estimate PRIME cost about 4x less than o1, even with more calls.</p>
-<p>Two honest results matter most. On WebShop, PRIME and LATS nearly tied, and reflections were generic. And the search wandered when it was unclear whether a step had worked.</p>
-<h2>Worked example</h2>
-<p>Picture a paralegal with a budget of five model calls for one tricky clause. The plan lists three angles: compare the cap to fees, check carve-outs, check the time window. For each angle, the agent can answer directly, answer then reflect, or break the angle down further. After each try, a checker says pass or fail. The agent learns which angle-and-method pairs pay off.</p>
-<p>Contract checks are rarely exact, so our notebook uses Game of 24 instead. You must use four numbers once each, with + − × ÷, to make 24. A code checker can grade every answer perfectly. That makes the reward clear, which is exactly when tree search shines.</p>
-<p>Here is the heart of the selection loop:</p>
-<pre><code class="language-python">uct = lambda a: a[&quot;V&quot;] + C * math.sqrt(math.log(total) / a[&quot;N&quot;])
+<li>UCT: score = how well a move did + a bonus for moves tried rarely.</li>
+<li>Running mean: a move's value = average of all its rewards so far.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setup</h3><span class="slide-no">6/13</span></div><ul>
+<li>GPT-4o-mini inside PRIME.</li>
+<li>Compared with LATS, plain GPT-4o-mini and one-shot GPT-o1.</li>
+<li>60 sampled questions each from PlanBench, WebShop and Game of 24.</li>
+<li>Reverse ablation: upgrade only the planner, or only the executor, to a stronger model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What they found (Table 1, success rate)</h3><span class="slide-no">7/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>PlanBench</th>
+<th>WebShop</th>
+<th>Game of 24</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PRIME (4o-mini)</td>
+<td>36.2%</td>
+<td>40%</td>
+<td>75%</td>
+</tr>
+<tr>
+<td>LATS (4o-mini)</td>
+<td>2.2%</td>
+<td>38%</td>
+<td>44%</td>
+</tr>
+<tr>
+<td>GPT-4o-mini</td>
+<td>0%</td>
+<td>0%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>GPT-o1</td>
+<td>100%</td>
+<td>100%</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>PRIME, upgraded planner</td>
+<td>95%</td>
+<td>94%</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>PRIME, upgraded executor</td>
+<td>96%</td>
+<td>92%</td>
+<td>100%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Caution: the paper's text gives different numbers for some cells.</li>
+<li>About 4x cheaper than o1, despite more calls (their estimate).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Where it struggled</h3><span class="slide-no">8/13</span></div><ul>
+<li>WebShop: PRIME and LATS nearly tied; reflections were generic.</li>
+<li>Unclear step value (obfuscated PlanBench): the search wandered.</li>
+<li>Tree search shines when each step's result is clear and checkable.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our Colab rebuild: smaller</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>PRIME</th>
+<th>PRIME-lite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3 benchmarks, 60 questions each</td>
+<td>Game of 24 only, 6 solvable puzzles</td>
+</tr>
+<tr>
+<td>Full tree of subgoals</td>
+<td>Planner proposes up to 4 first steps, with a confidence</td>
+</tr>
+<tr>
+<td>Tools: reflection, refinement, debate</td>
+<td>Tools: solve, reflect, drill down</td>
+</tr>
+<tr>
+<td>LM score + self-consistency</td>
+<td>Exact checker: reward 1 or 0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Game of 24: use four numbers once each, with + − × ÷, to make 24.</li>
+<li>Code drops impossible steps for free (backtrack).</li>
+<li>Tool stats carry over from puzzle to puzzle.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The selection loop in code</h3><span class="slide-no">10/13</span></div><pre><code class="language-python">uct = lambda a: a[&quot;V&quot;] + C * math.sqrt(math.log(total) / a[&quot;N&quot;])
 arm = max(arms, key=uct)
 ok, used = run_tool(arm[&quot;tool&quot;], nums, steps, arm[&quot;left&quot;], budget - calls)
 calls += used
@@ -288,39 +395,55 @@ r = 1.0 if ok else 0.0
 arm[&quot;V&quot;] = (arm[&quot;V&quot;] * arm[&quot;N&quot;] + r) / (arm[&quot;N&quot;] + 1); arm[&quot;N&quot;] += 1; total += 1
 </code></pre>
 <ul>
-<li>An "arm" is one pairing of a first step and a tool, like "8 − 2 = 6, then reflect."</li>
-<li>Line 1 is the UCT score. <code>V</code> is how well the arm has done. The square-root part is the curiosity bonus. It is big when the arm <code>N</code> has been tried rarely. <code>C</code> sets how curious to be.</li>
-<li>Line 2 picks the arm with the highest score.</li>
-<li>Line 3 runs the tool and reports success and how many calls it used.</li>
-<li>Line 4 counts calls against the budget of 5.</li>
-<li>Line 5 turns pass or fail into a reward of 1 or 0.</li>
-<li>Line 6 updates the running mean, the same rule the paper uses.</li>
-</ul>
-<p>The notebook runs PRIME-lite next to two baselines. One is a single call. The other is "retry with feedback," which also gets up to 5 calls. If PRIME-lite only beats the single call, the extra calls did the work, not the cleverness.</p>
-<h2>Common mistakes</h2>
+<li>Arm: one (first step, tool) pair, e.g. "8 - 2 = 6, then reflect".</li>
+<li>Line 1: UCT score; <code>V</code> = past success, square root = curiosity bonus, <code>C</code> = how curious.</li>
+<li>Line 2: pick the highest-scoring arm.</li>
+<li>Line 3: run the tool; get success and calls used.</li>
+<li>Line 4: count calls against the budget of 5.</li>
+<li>Lines 5–6: checker gives 1 or 0; update the running mean.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fair comparison: same budget</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Calls per puzzle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single shot</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Retry with feedback (checker message, try again)</td>
+<td>up to 5</td>
+</tr>
+<tr>
+<td>PRIME-lite</td>
+<td>up to 5</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>Comparing at unequal budgets.</strong> A method with 5 calls will usually beat 1 call. Always include a simple retry baseline with the same budget.</li>
-<li><strong>Using tree search without a clear reward.</strong> If you can't tell whether a step worked, the search wanders. Use it where a checker exists.</li>
-<li><strong>Upgrading every part at once.</strong> Swap in the bigger model one part at a time. That shows where the money should go.</li>
-<li><strong>Trusting one table.</strong> The PRIME paper's own numbers disagree in places. Read results with care and rerun what matters.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>What does the curiosity bonus in UCT do?</summary>
-<p>It raises the score of options that haven&#x27;t been tried much. That stops the search from locking onto its first favorite too early.</p>
-</details>
-<details>
-<summary>Why does the notebook include a &quot;retry with feedback&quot; baseline?</summary>
-<p>It uses the same 5-call budget as PRIME-lite. If they tie, the gain came from extra tries, not from smart strategy choice.</p>
-</details>
-<details>
-<summary>Where did PRIME struggle?</summary>
-<p>On WebShop it nearly tied with LATS, and its reflections were generic. It also wandered when a step&#x27;s value was unclear.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the notebook to compare single shot, retry with feedback, and PRIME-lite on six solvable puzzles. Look at the success rate next to the average number of calls. Then check the option statistics to see which tool the search learned to prefer, and try the exploration constant at 0.2 and 2.0.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>PRIME-lite beats single shot only → the extra calls did the work.</li>
+<li>PRIME-lite beats retry → the strategy choice did the work.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+<li>A contract review mixes easy steps ("find governing law") and hard ones ("does this indemnity break the 12-month cap rule?").</li>
+<li>On the firm's own machine, calls are cheap but not free: spend them on the hard steps.</li>
+<li>Reverse ablation shows which step deserves the bigger local model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>Comparing at unequal budgets → add a retry baseline with the same call count.</li>
+<li>Tree search without a clear reward → use it where a checker exists.</li>
+<li>Upgrading every part at once → upgrade one part at a time.</li>
+<li>Trusting one table → this paper's numbers disagree in places; rerun what matters.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What does the curiosity bonus in UCT do?</summary><p>It raises the score of moves tried rarely. The search doesn&#x27;t lock onto its first favorite too early.</p></details>
+
+<details><summary>Why does the notebook include a &quot;retry with feedback&quot; baseline?</summary><p>It uses the same 5-call budget as PRIME-lite. If they tie, the gain came from extra tries, not strategy choice.</p></details>
+
+<details><summary>Where did PRIME struggle?</summary><p>On WebShop it nearly tied with LATS, with generic reflections. It also wandered when a step&#x27;s value was unclear.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Compare single shot, retry with feedback and PRIME-lite: success rate next to average calls.</li>
+<li>Read the option statistics: which tool did the search learn to prefer?</li>
+<li>Run one puzzle with <code>C=0.2</code> and <code>C=2.0</code>; count the different arms tried.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Winter 2025 · Chelsea Zou, Samuel Liu, Jui Khankari (the poster lists Chelsea Zou, Jui Khankari, Miriam Cheng)</p>
 

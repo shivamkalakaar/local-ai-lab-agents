@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Capstone: a contract-review agent on a local box · Agent Engineering School</title>
-<meta name="description" content="How all the earlier lessons fit into one working contract-review system on a firm&#x27;s own computers, and how you would prove to a firm that it works.">
+<meta name="description" content="All the earlier lessons in one contract reviewer on a local machine, and how to prove to a firm that it works.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,63 +255,159 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 15</span></div><section class="mod" id="m15" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 15</div><h2>Capstone: a contract-review agent on a local box</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/15_capstone_contract_review.ipynb">Open in Colab</a><button class="done-btn" data-done="m15" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How all the earlier lessons fit into one working contract-review system on a firm&#x27;s own computers, and how you would prove to a firm that it works.</p><article class="lesson"><h2>The big idea</h2>
-<p>This is where everything comes together. We build one contract reviewer that runs on a local box, hands a lawyer a review packet, and proves itself with an eval.</p>
-<p>The design is a fixed workflow, not a free-roaming agent. Think of an assembly line in a careful workshop. Each station does one job. Some stations are skilled workers (the model). Others are gauges and stamps (plain code) that measure and decide. Nothing leaves the line without an inspector's sign-off, and here the inspector is a lawyer.</p>
-<p>The model does what it is good at: reading messy text and pulling out terms. Code does what it is good at: comparing numbers to rules, and checking quotes. A person makes the final call.</p>
-<h2>Why it matters for us</h2>
-<ul>
-<li>This is the product in miniature. A firm can watch it review their contracts, on their computers, with no data leaving the building.</li>
-<li>Every choice traces back to an earlier lesson. That makes the system easy to explain to a partner or an auditor.</li>
-<li>The eval at the end is how we answer the firm's real question: is this good enough, compared with what we use today?</li>
-</ul>
-<h2>How it works, step by step</h2>
-<pre><code>contract -&gt; split by section -&gt; read terms (forced form, no tools) -&gt; playbook rules in code
-         -&gt; citation check -&gt; draft redlines (writer + code checker) -&gt; review packet
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 15</span></div><section class="mod" id="m15" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 15</div><h2>Capstone: a contract-review agent on a local box</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/15_capstone_contract_review.ipynb">Open in Colab</a><button class="done-btn" data-done="m15" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">All the earlier lessons in one contract reviewer on a local machine, and how to prove to a firm that it works.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lectures 3, 4, 9, 10 · RAG + Agents · Tools · Optimization · Evaluating Agents · <a href="https://web.stanford.edu/class/cs329z/slides/lecture03.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Assemble a local contract reviewer from earlier modules, produce a review packet, and evaluate it end to end.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The pipeline</h3><span class="slide-no">2/12</span></div><pre><code>contract → split by section → read terms (forced JSON, no tools) → playbook rules in code
+         → citation check → draft redlines (generator + code checker) → review packet
 </code></pre>
-<ol>
-<li><strong>Split the contract by section.</strong> Only the sections we need go to the model: renewal, liability, governing law. Less text means fewer chances to get confused (Module 03).</li>
-<li><strong>Read terms into a forced form.</strong> The model fills in fixed fields: cap in months, governing law, renewal years, notice days, and an exact quote for each. It has no tools, and copies any instructions aimed at an AI into a "suspicious" field (Modules 02 and 13).</li>
-<li><strong>Apply the playbook in code.</strong> Plain code compares the numbers to the firm's rules. Cap at most 12 months, law California or Delaware, renewals at most 1 year, notice at least 30 days. No model judgment here.</li>
-<li><strong>Check every citation.</strong> Code confirms each quote really appears in the contract. If it doesn't, the item goes on hold for a person (Module 04).</li>
-<li><strong>Draft redlines with a checker.</strong> A redline is a proposed rewrite of a clause. The model writes one, and code checks it contains the fix, such as "twelve" or "12" for the cap. If it fails twice, it's marked "needs a person" (Module 06).</li>
-<li><strong>Hand over a review packet.</strong> Issues with exact quotes, proposed redlines, items on hold, suspicious text, the model used, and the time taken. Status: ready for lawyer sign-off.</li>
-<li><strong>Evaluate.</strong> All 20 contracts, 3 runs each. Report precision, recall, pass^3 (right on all three runs) and seconds per contract (Module 10).</li>
-</ol>
-<h2>Worked example</h2>
-<p>Take one contract from the set. The reader returns its terms, each with a quote. Then code applies the rules. Here is the liability check:</p>
-<pre><code class="language-python">if need(t.cap_quote, &quot;liability_cap&quot;) and (t.cap_unlimited or t.liability_cap_months is None or t.liability_cap_months &gt; PB[&quot;max_cap_months&quot;]):
+<ul>
+<li>Workflow, not an agent: code fixes the steps.</li>
+<li>Model: reads messy text, pulls out terms, drafts redlines.</li>
+<li>Code: compares numbers to rules, checks quotes.</li>
+<li>Lawyer: signs off.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Which module each part comes from</h3><span class="slide-no">3/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Decision</th>
+<th>Module</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Overall shape</td>
+<td>Workflow, not an agent</td>
+<td>01, 06</td>
+</tr>
+<tr>
+<td>Reading</td>
+<td>Forced schema, null when absent</td>
+<td>02</td>
+</tr>
+<tr>
+<td>Context</td>
+<td>Only Renewal, Liability, Governing Law sections</td>
+<td>03</td>
+</tr>
+<tr>
+<td>Citations</td>
+<td>Quote must be in the contract</td>
+<td>04</td>
+</tr>
+<tr>
+<td>Safety</td>
+<td>Reader has no tools; injections reported</td>
+<td>05, 13</td>
+</tr>
+<tr>
+<td>Checking</td>
+<td>One code checker, no agent team</td>
+<td>06, 09</td>
+</tr>
+<tr>
+<td>Proof</td>
+<td>Eval with pass^k</td>
+<td>10</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Step 1: read terms into a form</h3><span class="slide-no">4/12</span></div><ul>
+<li>One structured call per contract. No tools.</li>
+<li>Fields: governing law, cap in months, cap unlimited, renewal years, notice days.</li>
+<li>An exact quote for each group of terms.</li>
+<li><code>suspicious_text</code>: instructions aimed at an AI are copied here, not obeyed.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 2: playbook rules in code</h3><span class="slide-no">5/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Rule (playbook.json)</th>
+<th>Code check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cap at most 12 months of fees</td>
+<td>unlimited, missing, or <code>&gt; max_cap_months</code> → issue</td>
+</tr>
+<tr>
+<td>Law California or Delaware</td>
+<td>not in <code>allowed_law</code> → issue</td>
+</tr>
+<tr>
+<td>Renewal at most 1 year</td>
+<td><code>renewal_years &gt; max_renewal_years</code> → issue</td>
+</tr>
+<tr>
+<td>Notice at least 30 days</td>
+<td><code>notice_days &lt; min_notice_days</code> → issue</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The liability check in code</h3><span class="slide-no">6/12</span></div><pre><code class="language-python">if need(t.cap_quote, &quot;liability_cap&quot;) and (t.cap_unlimited or t.liability_cap_months is None or t.liability_cap_months &gt; PB[&quot;max_cap_months&quot;]):
     issues.append({&quot;rule&quot;: &quot;liability_cap&quot;, &quot;quote&quot;: t.cap_quote})
 </code></pre>
-<p>In plain words: first, <code>need</code> checks that the model's quote is really in the contract; if not, it puts the item on hold. Then the rule flags an issue if liability is unlimited, if no cap was found, or if the cap is more than the playbook's maximum of 12 months. The issue is saved with its quote, so the lawyer can see the exact words.</p>
-<p>Suppose the contract caps liability at 24 months and picks New York law. Code flags both. The redline step drafts new text for each, and code checks the cap rewrite mentions twelve months and the law rewrite says Delaware. The packet lists both issues, quotes, redlines, and "READY FOR LAWYER SIGN-OFF".</p>
-<p>Then the notebook runs the full eval and prints one line: precision, recall, pass^3 with a confidence range, and seconds per contract. The built-in checks want precision and recall of at least 80%.</p>
-<p><strong>Proving it to a firm.</strong> The pilot plan runs four weeks. First, label 50 contracts with the firm, including clean ones and near-misses, and hide 15. Have two lawyers label the same 20, to see how often experts agree. Then build the workflow, try open models in the same harness, and tune the best small one with GEPA (Module 11). Report results next to the firm's current tool. This is the three-way test: our local box, their current tool, and the same open model rented in the cloud, all on the same contracts and grader.</p>
-<h2>Common mistakes</h2>
 <ul>
-<li><strong>A team of agents for the review itself.</strong> The steps are linked. Use one workflow with one checker (Module 09).</li>
-<li><strong>A memory product that edits itself.</strong> Use logged corrections and approved, versioned lessons (Module 08).</li>
-<li><strong>Privacy by prompt.</strong> Remove tools and network instead (Module 13).</li>
-<li><strong>Choosing the model from a leaderboard.</strong> Compare models in the same harness on the firm's own contracts.</li>
-<li><strong>Training on the eval set, or self-critique with no outside check.</strong> Keep the test hidden, and check with code.</li>
+<li><code>need(...)</code>: is the quote really in the contract? If not, put the item on hold for a person.</li>
+<li><code>cap_unlimited or ... is None</code>: no cap at all is an issue.</li>
+<li><code>&gt; PB["max_cap_months"]</code>: more than 12 months is an issue.</li>
+<li>Line 2: save the issue with its quote, so the lawyer sees the exact words.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 3: redlines with a code checker</h3><span class="slide-no">7/12</span></div><ul>
+<li>Redline: a proposed rewrite of a clause.</li>
+<li>The model drafts; code checks the fix is there.<ul>
+<li>Cap: must contain "twelve" or "12". Law: must say "Delaware".</li>
 </ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Why does code, not the model, decide whether a clause breaks the playbook?</summary>
-<p>Comparing a number to a rule is exact work. Code never guesses, so the decision is consistent and easy to explain.</p>
-</details>
-<details>
-<summary>What happens if the model gives a quote that isn&#x27;t in the contract?</summary>
-<p>The citation check fails, and the item is put on hold for a person instead of being reported as an issue.</p>
-</details>
-<details>
-<summary>What is the three-way test?</summary>
-<p>Running our local box, the firm&#x27;s current tool, and the same open model in the cloud on the same contracts with the same grader. It shows whether local is good enough.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the Module 15 notebook and read the review packet it prints for the first contract, then compare it with the true issues. Let the full eval finish and note precision, recall, pass^3 and seconds per contract. The next steps compare two local models in the same harness and turn a lawyer's correction into a test.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+</li>
+<li>Failed check → retry once with feedback → then "[needs a person: draft failed the check]".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The review packet for msa_15</h3><span class="slide-no">8/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Contract says</th>
+<th>Packet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>7.1 "...THIRTY-SIX (36) MONTHS PRECEDING THE CLAIM."</td>
+<td>Issue: liability_cap, quote, redline to twelve (12) months</td>
+</tr>
+<tr>
+<td>10.1 "...the laws of the State of New York..."</td>
+<td>Issue: governing_law, quote, redline to Delaware</td>
+</tr>
+<tr>
+<td></td>
+<td>Also: holds, suspicious text, model, seconds, "READY FOR LAWYER SIGN-OFF"</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The notebook prints the true issues next to it to compare.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 4: evaluate</h3><span class="slide-no">9/12</span></div><ul>
+<li>All 20 contracts × 3 runs (first at temperature 0, then 0.3).</li>
+<li>Prints precision, recall, pass^3 with a 95% CI, and seconds per contract.</li>
+<li>A run counts as exact only if the issues match and nothing is on hold.</li>
+<li>The built-in checks want precision and recall of at least 80%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Proving it to a firm</h3><span class="slide-no">10/12</span></div><ul>
+<li>Three-way test: our local box vs the firm's current tool vs the same open model in the cloud. Same contracts, same grader.</li>
+<li>Weeks 1–2: label 50 contracts with the firm, clean ones and near-misses. Hide 15. Two lawyers label the same 20.</li>
+<li>Weeks 3–4: open models in the same harness; GEPA on the best small one.</li>
+<li>Ongoing: each lawyer edit becomes a test the same day.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>This is the product in miniature: on the firm's machine, no data leaves.</li>
+<li>Every choice traces to a module, so it is easy to explain to a partner or auditor.</li>
+<li>The eval answers the firm's real question: good enough vs what we use today?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>An agent team for the review → linked steps; one workflow, one checker.</li>
+<li>A memory product that edits itself → logged corrections, approved versioned lessons.</li>
+<li>Privacy by prompt → remove tools and network.</li>
+<li>Picking the model from a leaderboard → compare in the same harness on the firm's contracts.</li>
+<li>Training on the eval set → keep the test hidden.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why does code, not the model, decide if a clause breaks the playbook?</summary><p>Comparing a number to a rule is exact work. Code doesn&#x27;t guess, so the decision is consistent and easy to explain.</p></details>
+
+<details><summary>What happens if the model&#x27;s quote isn&#x27;t in the contract?</summary><p>The citation check fails and the item goes on hold for a person, not into the issues list.</p></details>
+
+<details><summary>What is the three-way test?</summary><p>Our local box, the firm&#x27;s current tool, and the same open model in the cloud, on the same contracts with the same grader.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Read the packet for msa_15 and compare with the printed true issues.</li>
+<li>Let the full eval finish: note precision, recall, pass^3 and seconds per contract.</li>
+<li>Next steps: compare two local models in the same harness; turn a lawyer's correction into a test.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Everything above, applied to our first pilot</p>
   <p class="big">A fixed workflow, typed at every step, with code making decisions, citations checked, one checker, a human sign-off, and an eval that compares our box to the firm's current tool and the same model in the cloud.</p>
@@ -343,7 +450,7 @@ flowchart LR
   <div class="try"><b>Capstone exercise</b><p>Build steps B → G on 10 public contracts (for example from SEC EDGAR exhibits). Write 3 playbook rules in code, inject 3 faults with the Module 12 script, and report recall, false flags and pass^3 over 5 runs on your local model. That is a working miniature of our product.</p></div>
   <h3>Two homework-style projects</h3>
   <div class="evidence">
-    <div class="ev"><div class="num" style="font-size:20px">P1 · Build your own agent harness</div><p>No frameworks: a parser that survives cut-off replies, a tool registry with deny rules and approval, a loop with turn, token and three-strikes limits, an append-only transcript, and injection resistance. 17 tests with a scripted model, then the local model.</p><p><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/projects/P1_build_your_own_harness.ipynb">Open in Colab</a></p></div>
+    <div class="ev"><div class="num" style="font-size:20px">P1 · Build your own agent harness</div><p>No frameworks: a parser that survives cut-off replies, a tool registry with deny rules and approval, a loop with turn, token and three-strikes limits, an append-only transcript, and injection resistance. 18 tests with a scripted model, then the local model.</p><p><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/projects/P1_build_your_own_harness.ipynb">Open in Colab</a></p></div>
     <div class="ev"><div class="num" style="font-size:20px">P2 · Build an eval task</div><p>Terminal-Bench structure without Docker: instruction, environment, hidden verifier, oracle. Prove the task is sound (oracle 1.0, do-nothing 0, alternative solution passes, shortcut fails), then run the agent 5 times and report pass^k.</p><p><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/projects/P2_build_an_eval_task.ipynb">Open in Colab</a></p></div>
   </div>
   <p class="src">These are our own projects, built around the skills CS329Z's homework practices. They are not the course's assignments.</p>

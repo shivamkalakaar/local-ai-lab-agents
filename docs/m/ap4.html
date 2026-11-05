@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Towards Effective Meta-Agents: Designing Agents that Design Agents (paper: Inefficiencies of Meta Agents for Agent Design) · Agent Engineering School</title>
-<meta name="description" content="How a Stanford team tested agents that design other agents, and why you should do the cost arithmetic before building one.">
+<meta name="description" content="How a Stanford team tested agents that design agents, and why you do the cost arithmetic before building one.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,88 +255,175 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP4</span></div><section class="mod" id="ap4" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP4</div><h2>Towards Effective Meta-Agents: Designing Agents that Design Agents (paper: Inefficiencies of Meta Agents for Agent Design)</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap4_meta_agents.ipynb">Open in Colab</a><button class="done-btn" data-done="ap4" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>11 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How a Stanford team tested agents that design other agents, and why you should do the cost arithmetic before building one.</p><article class="lesson"><h2>The big idea</h2>
-<p>A meta-agent is an agent that designs other agents. It writes a new agent, tests it, saves it in an archive (a list of every design so far with its score), and uses that archive to write the next one. It sounds like free progress.</p>
-<p>Batu El, Mert Yuksekgonul and James Zou studied this loop in their CS329A project (Winter 2025). The course page calls it "Towards Effective Meta-Agents." The paper is titled "Inefficiencies of Meta Agents for Agent Design." They asked three hard questions about meta-agents like ADAS (the Automated Design of Agentic Systems paper, 2024):</p>
-<ol>
-<li>Does the meta-agent really learn from its past designs?</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP4</span></div><section class="mod" id="ap4" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP4</div><h2>Towards Effective Meta-Agents: Designing Agents that Design Agents (paper: Inefficiencies of Meta Agents for Agent Design)</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap4_meta_agents.ipynb">Open in Colab</a><button class="done-btn" data-done="ap4" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How a Stanford team tested agents that design agents, and why you do the cost arithmetic before building one.</p><article class="lesson"><p class="deck-src">Based on CS329A past project · Towards Effective Meta-Agents · <a href="https://cs329a.stanford.edu/winter2025projects/batu.pdf" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Run a small meta-agent loop and decide, with break-even math, whether a designed agent is worth its cost.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">2/12</span></div><ul>
+<li>Meta-agent: an agent that writes new agents.</li>
+<li>ADAS (Automated Design of Agentic Systems): sample a design → evaluate → add to archive → repeat.</li>
+<li>Archive: every design so far, with its score.</li>
+<li>Three open questions:<ul>
+<li>Does it learn from past designs?</li>
 <li>Are the designs different enough to combine?</li>
-<li>Does the design cost ever pay for itself?</li>
-</ol>
-<p>Think of hiring a consultant to redesign your intake process. The new process may be a bit better. But you paid the consultant, and the new process takes longer per client. You only come out ahead after enough clients.</p>
-<h2>Why it matters for us</h2>
-<p>A firm might want a system that keeps inventing better contract-review agents on its own. This project says: check the math first.</p>
-<ul>
-<li>Designed agents often cost more per question, because they make more model calls. Add the cost of designing them, and they may never pay back.</li>
-<li>Showing the designer everything it has tried can be worse than showing it only the best few.</li>
-<li>Running on the firm's own computers lowers the price per call, but not the number of calls. The arithmetic still matters.</li>
+<li>Does the design cost ever pay back?</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Start with a library.</strong> The archive began with 7 hand-written agents, such as Chain-of-Thought (reason step by step), Majority Voting, LLM Debate and Step-back.</p>
 </li>
-<li>
-<p><strong>Pick what the designer sees.</strong> This choice is called the context strategy. There were three:</p>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the students built</h3><span class="slide-no">3/12</span></div><ul>
+<li>Team: Batu El, Mert Yuksekgonul, James Zou (paper: "Inefficiencies of Meta Agents for Agent Design").</li>
+<li>Archive starts with 7 hand-written agents: Chain-of-Thought, Majority Voting, Refinement from Feedback, LLM Debate, Quality-Diversity, Routing, Step-back.</li>
+<li>gpt-4o designs; the agents run on gpt-3.5.</li>
+<li>30 iterations, 3 runs, on MGSM, DROP, MMLU and GPQA.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three context strategies</h3><span class="slide-no">4/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>What the designer sees</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cumulative (ADAS)</td>
+<td>All past agents</td>
+</tr>
+<tr>
+<td>Parallel</td>
+<td>Only the 7 starting agents</td>
+</tr>
+<tr>
+<td>Evolutionary</td>
+<td>The 7 best agents so far ("parents")</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>How they measured it</h3><span class="slide-no">5/12</span></div><ul>
+<li>Score vector: one agent's right/wrong row over the questions.</li>
+<li>Cosine similarity: how alike two rows are; near 1 = same questions right.</li>
+<li>Coverage: share of questions at least one agent gets right.</li>
+<li>Total cost = C0 + n × Cj.<ul>
+<li>C0: one-time design cost</li>
+<li>Cj: cost per question once deployed</li>
+<li>n: number of questions</li>
+</ul>
 </li>
-<li>Cumulative: show all past agents (what ADAS does).</li>
-<li>Parallel: show only the 7 starting agents, so every new design starts fresh.</li>
-<li>
-<p>Evolutionary: show the 7 best agents so far, like picking parents.</p>
-</li>
-<li>
-<p><strong>Design, test, save.</strong> A gpt-4o meta-agent wrote agent code that ran on gpt-3.5. They repeated this for 30 rounds, on four test sets, 3 times each.</p>
-</li>
-<li>
-<p><strong>Measure diversity.</strong> Each agent gets a row of right and wrong answers. Cosine similarity (a number for how alike two rows are; near 1 means the same questions right) shows whether agents overlap. Coverage is the share of questions at least one agent gets right.</p>
-</li>
-<li>
-<p><strong>Do the cost math.</strong> Total cost is C0 + n × Cj. C0 is the one-time design cost. Cj is the cost per question once deployed. n is the number of questions.</p>
-</li>
-</ol>
-<p>What they found. Best training score, averaged: cumulative 55.0, parallel 60.0, evolutionary 60.3. So showing everything did not beat showing nothing new. Evolutionary gained up to 10 points over cumulative on MGSM (41.4 vs. 56.5). On test, the starting library scored 49.0, cumulative 52.2, parallel 55.9, evolutionary 55.2. Evolutionary agents were the least diverse.</p>
-<p>The cost result is the sharpest. Designed agents cost more per question than the starting ones. Counting design cost, a designed agent was cheaper per correct answer only after about 15,000 questions. That happened only on MMLU and DROP with parallel context. Elsewhere it never broke even.</p>
-<h2>Worked example</h2>
-<p>Say the firm's best plain agent reviews a clause in a single call. A meta-agent designs a "solve then check" agent that makes two calls and is a bit more accurate. Is it worth it?</p>
-<p>Our notebook asks the same question at small scale. Designs are data, not code: a system prompt plus one of four fixed procedures. So nothing the model writes is ever run as code. llama3.1:8b designs, llama3.2:3b runs the agents, on six kinds of checkable puzzles. Here is the break-even step:</p>
-<pre><code class="language-python">C0 = sum(tok(a[&quot;chars&quot;] + a.get(&quot;meta_chars&quot;, 0)) for a in designed)
+</ul></div><div class="slide"><div class="slide-top"><h3>What they found: scores</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Cumulative</th>
+<th>Parallel</th>
+<th>Evolutionary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Best train score (avg)</td>
+<td>55.0</td>
+<td>60.0</td>
+<td>60.3</td>
+</tr>
+<tr>
+<td>Test score (avg)</td>
+<td>52.2</td>
+<td>55.9</td>
+<td>55.2</td>
+</tr>
+<tr>
+<td>Coverage (avg)</td>
+<td>94.2%</td>
+<td>95.9%</td>
+<td>94.4%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Initial library on test: 49.0.</li>
+<li>Showing everything did not beat showing only the start.</li>
+<li>Evolutionary agents were the least diverse.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What they found: cost</h3><span class="slide-no">7/12</span></div><ul>
+<li>Designed agents cost more per query: cumulative &gt; evolutionary &gt; parallel &gt; initial.</li>
+<li>Cheaper per correct answer only after about 15,000 queries.</li>
+<li>Only on MMLU and DROP, with parallel context.</li>
+<li>Elsewhere: never.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our Colab rebuild: smaller</h3><span class="slide-no">8/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>Our rebuild</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model writes agent code</td>
+<td>Design = data: system prompt + 1 of 4 fixed procedures; no model code runs</td>
+</tr>
+<tr>
+<td>gpt-4o designs, gpt-3.5 runs</td>
+<td>llama3.1:8b designs, llama3.2:3b runs</td>
+</tr>
+<tr>
+<td>7 starting agents, 30 iterations</td>
+<td>3 starting agents, 3 iterations, evolutionary context</td>
+</tr>
+<tr>
+<td>4 benchmarks</td>
+<td>6 kinds of checkable puzzles (letters, reversing, sorting, weekdays, word problems, decimals)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Procedures: direct, think_step_by_step, solve_then_check, plan_then_solve.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Break-even in code</h3><span class="slide-no">9/12</span></div><pre><code class="language-python">C0 = sum(tok(a[&quot;chars&quot;] + a.get(&quot;meta_chars&quot;, 0)) for a in designed)
 c_init, c_new = tok(test_init[&quot;chars&quot;]) / len(TEST), tok(test_new[&quot;chars&quot;]) / len(TEST)
 p_init, p_new = max(test_init[&quot;score&quot;], 1e-9), max(test_new[&quot;score&quot;], 1e-9)
 gap = c_init / p_init - c_new / p_new
 breakeven = C0 / (p_new * gap) if gap &gt; 0 and best_new is not best_init else float(&quot;inf&quot;)
 </code></pre>
 <ul>
-<li>Line 1 adds up the design cost, C0. It counts the designer's prompts plus testing every new design. <code>tok</code> turns characters into tokens (about 4 characters each).</li>
-<li>Line 2 finds the cost per question for the old agent and the new one.</li>
-<li>Line 3 takes each agent's accuracy on the test set. The tiny number avoids dividing by zero.</li>
-<li>Line 4 compares cost per correct answer. If the new agent is not cheaper per correct answer, the gap is zero or negative.</li>
-<li>Line 5 finds how many questions it takes to earn back C0. If there is no gap, the answer is "never."</li>
-</ul>
-<p>For the firm, swap in real numbers: clauses per month, tokens per review, and accuracy. If break-even is 15,000 clauses and you review 500 a month, that is years away.</p>
-<h2>Common mistakes</h2>
+<li>Line 1: C0 = designer prompts + testing every new design; <code>tok</code> ≈ characters / 4.</li>
+<li>Line 2: tokens per question, old agent vs. new.</li>
+<li>Line 3: test accuracy; the tiny number avoids dividing by zero.</li>
+<li>Line 4: difference in cost per correct answer.</li>
+<li>Line 5: questions needed to earn back C0; no gap → never.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One call vs. two calls</h3><span class="slide-no">10/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Starting agent</th>
+<th>Designed agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Direct": 1 call per question</td>
+<td>"solve_then_check": 2 calls per question</td>
+</tr>
+<tr>
+<td>C0 = 0</td>
+<td>C0 = all design and testing</td>
+</tr>
+<tr>
+<td>Lower accuracy</td>
+<td>Often higher accuracy</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>Skipping the cost math.</strong> A better score can still lose money. Compute break-even first.</li>
-<li><strong>Feeding the designer everything.</strong> The full history did worse than a curated set. Show the best few designs.</li>
-<li><strong>Expecting a "pick the best agent per question" boost.</strong> Designed agents tend to solve the same questions, so combining them adds little unless you push for variety.</li>
-<li><strong>Trusting one run.</strong> Results from small test sets are noisy. The authors used 3 runs; use several too.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Which context strategy did ADAS use, and how did it compare?</summary>
-<p>Cumulative, which shows all past agents. It scored 55.0 on training, below parallel (60.0) and evolutionary (60.3).</p>
-</details>
-<details>
-<summary>What do C0 and Cj stand for in the cost formula?</summary>
-<p>C0 is the one-time cost of designing the agent. Cj is the cost per question once it is in use.</p>
-</details>
-<details>
-<summary>When did a designed agent pay for itself?</summary>
-<p>Only after about 15,000 questions, and only on MMLU and DROP with parallel context. On the other test sets it never did.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the notebook to test the 3 starting agents, then let the meta-agent design 3 more with evolutionary context. Compare the best designed agent with the best starting one on train and test. Then read the similarity table and the break-even line, and try the 10x designer price in the solutions.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Two calls double the per-query cost, so break-even can be "never".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>A firm might want a system that keeps inventing better contract-review agents.</li>
+<li>Local models lower the price per call, not the number of calls.</li>
+<li>Plug in real numbers: if break-even is 15,000 clauses and you review 500 a month, that is years away.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Skipping the cost math → compute break-even first.</li>
+<li>Showing the designer everything → show the best few designs.</li>
+<li>Expecting a big "best agent per question" boost → designs overlap; push for variety.</li>
+<li>Trusting one run → meta-evaluation is noisy; use several runs.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Which context strategy did ADAS use, and how did it compare?</summary><p>Cumulative, showing all past agents. It scored 55.0 on train, below parallel (60.0) and evolutionary (60.3).</p></details>
+
+<details><summary>What do C0 and Cj stand for in the cost formula?</summary><p>C0 is the one-time cost of designing the agent. Cj is the cost per question once it is in use.</p></details>
+
+<details><summary>When did a designed agent pay for itself?</summary><p>Only after about 15,000 queries, and only on MMLU and DROP with parallel context. Elsewhere never.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Test the 3 starting agents, then let the meta-agent design 3 more; compare train and test.</li>
+<li>Read the right/wrong table, mean similarity and coverage.</li>
+<li>Read the break-even line; then try the 10x designer price in the solutions.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Winter 2025 · Batu El, Mert Yuksekgonul, James Zou</p>
 

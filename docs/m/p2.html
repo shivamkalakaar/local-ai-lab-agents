@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Build an eval task, then test agents on it · Agent Engineering School</title>
-<meta name="description" content="Build a test task for agents, prove the test itself is fair, then run a local agent on it and report its score the way benchmarks do.">
+<meta name="description" content="Build a test task for agents, prove the task itself is sound, then run a local agent on it and report pass^k like a benchmark.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,96 +255,144 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Project 2</span></div><section class="mod" id="p2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Project 2</div><h2>Build an eval task, then test agents on it</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/projects/P2_build_an_eval_task.ipynb">Open in Colab</a><button class="done-btn" data-done="p2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Build a test task for agents, prove the test itself is fair, then run a local agent on it and report its score the way benchmarks do.</p><article class="lesson"><h2>The big idea</h2>
-<p>Before you trust an agent with real work, you need a test. An eval task is that test. It gives the agent a job, lets it work, then checks the result with code.</p>
-<p>Think of a driving test. The examiner gives clear instructions, watches only the outcome (did you park in the box?), and keeps the score sheet away from the driver. A good eval task works the same way.</p>
-<p>But a test can be broken. If a lazy answer passes, the score means nothing. So the first job is not testing the agent. It is testing the test.</p>
-<p>This project uses the same four-part layout as Terminal-Bench (a public benchmark for agents) and Harbor (the tool that runs its tasks).</p>
-<h2>Why it matters for us</h2>
-<ul>
-<li>A law firm can't rely on vendor claims. It needs its own tests, built from its own contracts and playbook, run on its own machines.</li>
-<li>Our main task is called contract-flags. The agent reads contracts and a playbook (the firm's rules), then lists which rules each contract breaks.</li>
-<li>For repeated business work, one lucky success is not enough. You need to know the agent succeeds every time. This project measures exactly that.</li>
-</ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li><strong>The four parts of a task.</strong></li>
-</ol>
-<pre><code>contract-flags/
-  instruction.md      what the agent is asked to do
-  environment/        the files the agent starts with
-  tests/test.py       HIDDEN verifier: runs after the agent, writes a reward from 0 to 1
-  solution/solve.py   reference (oracle) solution: must score 1.0
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Project 2</span></div><section class="mod" id="p2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Project 2</div><h2>Build an eval task, then test agents on it</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/projects/P2_build_an_eval_task.ipynb">Open in Colab</a><button class="done-btn" data-done="p2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Build a test task for agents, prove the task itself is sound, then run a local agent on it and report pass^k like a benchmark.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 10 · Evaluating Agents: Terminal-Bench and Harbor · <a href="https://web.stanford.edu/class/cs329z/slides/lecture10.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+<li>Build an eval task in the Terminal-Bench layout, prove it is sound with four checks, and report pass@k and pass^k.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Definitions</h3><span class="slide-no">2/12</span></div><ul>
+<li>Task: a single test with defined inputs and success criteria.</li>
+<li>Trial: one attempt at a task.</li>
+<li>Verifier: logic that scores the agent's work; writes a reward from 0 to 1.</li>
+<li>Oracle: the reference solution. Proves the task can be solved.</li>
+<li>Reward hacking: scoring well without doing the job.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The four parts of a task</h3><span class="slide-no">3/12</span></div><pre><code>contract-flags/
+  instruction.md        what the agent is asked to do (short, natural, fully specified)
+  environment/          the files the agent starts with
+  tests/test.py         HIDDEN verifier: runs after the agent, writes a reward from 0 to 1
+  solution/solve.py     reference (oracle) solution: must score 1.0
 </code></pre>
-<p>The verifier is hidden code that checks the final result and writes a reward (a score from 0 to 1). The oracle solution is a known-good answer used to prove the task can be solved.</p>
-<ol>
-<li>
-<p><strong>The runner.</strong> Each attempt gets a fresh, empty folder with a copy of the starting files. The tests are not copied in. After the agent stops, the verifier runs as a separate step. The reward file sits outside the agent's folder, so the agent can't write its own score. Harbor uses Docker containers (sealed boxes) for this. Colab can't run Docker, so we use temporary folders. The idea is the same.</p>
-</li>
-<li>
-<p><strong>The four soundness checks.</strong> A sound task is one where the score means what you think. Run four fake "agents" through it:</p>
-</li>
-<li>the oracle must score 1.0;</li>
-<li>doing nothing must score 0;</li>
-<li>a different correct method must also score 1.0 (so you're not grading one exact style);</li>
-<li>a known shortcut must score low.</li>
-</ol>
-<p>A shortcut is a way to score well without doing the job. This is also called reward hacking. Here, the shortcut flags every rule for every contract.</p>
-<ol>
-<li>
-<p><strong>Run the agent.</strong> The agent is the harness from Project 1. It gets three tools that only work inside its folder: list files, read a file, write a file. It runs 5 times.</p>
-</li>
-<li>
-<p><strong>Report it like a benchmark.</strong> Three numbers:</p>
-</li>
-<li>mean reward: average partial credit across contracts;</li>
-<li>pass@k: at least one of k attempts fully solved it;</li>
-<li>pass^k: every one of k attempts fully solved it. For repeated business work, this is the number that matters.</li>
-</ol>
-<h2>Worked example</h2>
-<p>The notebook's solution builds a second task, "fee-check." The agent gets one contract and three invoices. It must list the invoices whose amount doesn't match the monthly fee in clause 2.1. In the data, the fee is $4,500, and the February invoice is $500 too high.</p>
-<p>Here is the core of the hidden verifier:</p>
-<pre><code class="language-python">want = json.loads((Path(__file__).parent / &quot;expected.json&quot;).read_text())
+<ul>
+<li>Our task: read contracts and the playbook, write <code>report.json</code> listing which rules each contract breaks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Terminal-Bench vs our task</h3><span class="slide-no">4/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Terminal-Bench task</th>
+<th>contract-flags</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"output a STEP file in /app/out.step..."</td>
+<td>"list which playbook rules each contract breaks"</td>
+</tr>
+<tr>
+<td><code>Dockerfile</code> copies <code>schematic.png</code></td>
+<td><code>environment/</code>: contracts + <code>playbook.json</code></td>
+</tr>
+<tr>
+<td><code>assert watertight()</code>, <code>assert correct_volume()</code> ...</td>
+<td><code>tests/test.py</code> compares <code>report.json</code> to the answer</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The runner</h3><span class="slide-no">5/12</span></div><ul>
+<li>Each attempt gets a fresh temp folder with a copy of <code>environment/</code>. Tests are not copied.</li>
+<li>The verifier runs as a separate step after the agent stops.</li>
+<li>The reward file lives outside the agent's folder. The agent can't write its own score.</li>
+<li>Harbor uses Docker. Colab can't, so we use temp folders. Same idea.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Test the task before any agent</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Fake agent</th>
+<th>Must score</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Oracle</td>
+<td>1.0</td>
+<td>The task is solvable and the verifier works</td>
+</tr>
+<tr>
+<td>Do nothing</td>
+<td>0</td>
+<td>Empty output can't pass</td>
+</tr>
+<tr>
+<td>Different correct method</td>
+<td>1.0</td>
+<td>Verifier checks the result, not one style</td>
+</tr>
+<tr>
+<td>Flag everything (shortcut)</td>
+<td>under 0.5</td>
+<td>Reward hacking fails</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Tasks are software. Software has bugs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Run the agent</h3><span class="slide-no">7/12</span></div><ul>
+<li>The agent is the Project 1 harness with three tools: list files, read a file, write a file.</li>
+<li>The tools only work inside its folder. It never sees the tests.</li>
+<li>Limits: 16 turns, 40,000-token budget. 5 attempts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Report like a benchmark</h3><span class="slide-no">8/12</span></div><ul>
+<li>Mean reward: average partial credit across contracts.</li>
+<li>pass@k: at least one of k attempts fully solved it.</li>
+<li>pass^k: every one of k attempts fully solved it. This is the number for repeated work.</li>
+<li>One success in five looks fine on pass@5 and scores 0% on pass^5.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Second task: fee-check</h3><span class="slide-no">9/12</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>msa_07, 2.1: "Customer shall pay Vendor $4,500 per month..."</td>
+<td>Monthly fee: $4,500</td>
+</tr>
+<tr>
+<td>invoice_jan $4,500 · invoice_feb $5,000 · invoice_mar $4,500</td>
+<td><code>mismatches.json</code>: <code>["invoice_feb.txt"]</code></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Shortcut: list every invoice → scores 0.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The fee-check verifier in code</h3><span class="slide-no">10/12</span></div><pre><code class="language-python">want = json.loads((Path(__file__).parent / &quot;expected.json&quot;).read_text())
 p = ws / &quot;mismatches.json&quot;
-got = json.loads(p.read_text()) if p.exists() else None
+try:
+    got = json.loads(p.read_text()) if p.exists() else None
+except json.JSONDecodeError:
+    got = None
 ok = isinstance(got, list) and sorted(got) == want
 out.write_text(&quot;1.0&quot; if ok else &quot;0.0&quot;)
 </code></pre>
-<p>In plain words:</p>
 <ul>
-<li>Line 1: load the right answer, which lives next to the test, out of the agent's reach.</li>
-<li>Line 2: find the file the agent was told to write.</li>
-<li>Line 3: read it if it exists. If not, the answer is "nothing." (The real file also treats broken JSON as "nothing.")</li>
-<li>Line 4: the answer passes only if it is a list with exactly the right invoice names.</li>
-<li>Line 5: write the reward, 1.0 or 0.0.</li>
-</ul>
-<p>Then the soundness checks. The oracle scores 1.0. Doing nothing scores 0. A second correct method, which reads the numbers a different way, scores 1.0. The shortcut lists every invoice as wrong, and scores 0. Now the task is proven fair, and the agent runs on it.</p>
-<p>Notice the verifier checks the final file, not the steps. It doesn't care how the agent found the fee. That leaves room for any correct approach.</p>
-<h2>Common mistakes</h2>
-<ul>
-<li><strong>Testing the agent before testing the task.</strong> A broken task gives meaningless scores. Always run the four soundness checks first.</li>
-<li><strong>Letting the agent see or touch the tests.</strong> Keep tests and the reward file outside the agent's folder. Otherwise it can edit them.</li>
-<li><strong>Grading the steps instead of the result.</strong> Checking for one exact method fails good agents that solve it another way. Test the final state.</li>
-<li><strong>Vague instructions.</strong> Keep the instruction short and complete. Each test should match one requirement written in the instruction.</li>
-<li><strong>Reporting only pass@k.</strong> One success in five tries looks fine on pass@k. Report pass^k too, since a firm needs it to work every time.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Why must a different correct solution also score 1.0?</summary>
-<p>It proves the verifier checks the result, not one particular way of getting there. Otherwise a good agent could fail for using a different method.</p>
-</details>
-<details>
-<summary>The agent writes a file called &quot;reward&quot; in its own folder with the value 1.0. Does it get full marks?</summary>
-<p>No. The runner reads the reward from a file outside the agent&#x27;s folder, written only by the hidden verifier.</p>
-</details>
-<details>
-<summary>What is the difference between pass@k and pass^k?</summary>
-<p>pass@k asks whether at least one of k tries fully solved the task. pass^k asks whether all k tries did, which is what repeated business work needs.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the soundness checks first and confirm all four print PASS. Then run the agent 5 times and compare pass@5 with pass^5. Finally, build your own task in <code>projects/p2_tasks/my-task/</code> (an NDA check or a redline idea works well) and prove it is sound with the same four checks.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Line 1: load the right answer; it sits next to the test, out of the agent's reach.</li>
+<li>Line 2: the file the agent was told to write.</li>
+<li>Lines 3–6: read it; missing file or broken JSON counts as nothing.</li>
+<li>Line 7: pass only if it is a list with exactly the right names.</li>
+<li>Line 8: write reward 1.0 or 0.0.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+<li>A firm needs its own tests, from its own contracts and playbook, run on its own machine.</li>
+<li>The same four checks prove a firm's task is fair before any model is scored.</li>
+<li>pass^k tells the firm whether the local agent works every time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Testing the agent before the task → run the four soundness checks first.</li>
+<li>Agent can see or edit the tests → keep tests and reward outside its folder.</li>
+<li>Grading the steps → test the final result.</li>
+<li>Vague instructions → short and complete; one test per requirement.</li>
+<li>Reporting only pass@k → report pass^k too.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why must a different correct solution also score 1.0?</summary><p>It proves the verifier checks the result, not one way of getting there.</p></details>
+
+<details><summary>The agent writes a &quot;reward&quot; file with 1.0 in its own folder. Full marks?</summary><p>No. The runner reads the reward from a file outside the agent&#x27;s folder, written only by the verifier.</p></details>
+
+<details><summary>What is the difference between pass@k and pass^k?</summary><p>pass@k: at least one of k tries fully solved it. pass^k: all k tries did.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run the four soundness checks; confirm all print PASS.</li>
+<li>Run the agent 5 times; compare pass@5 with pass^5.</li>
+<li>Build your own task in <code>projects/p2_tasks/my-task/</code> (NDA check or redline) and prove it sound.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Homework-style project built on the skills of CS329Z Homework 2 and the Terminal-Bench lecture · not the course's assignment</p>
   <p class="big">A benchmark task has four parts: an instruction, a starting environment, a hidden verifier that writes a reward, and a reference solution. You prove the task itself is sound, then run an agent on it several times and report pass@k and pass^k.</p>

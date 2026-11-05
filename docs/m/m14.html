@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Long-running and coding agents · Agent Engineering School</title>
-<meta name="description" content="How to run an agent on a job too big for one sitting, like a whole data room. Write progress down in a checklist, do one item at a time, and finish only with evidence.">
+<meta name="description" content="Run an agent on a job too big for one sitting, like a whole data room. A checklist, one item per session, and evidence before &quot;done&quot;.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,68 +255,109 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 14</span></div><section class="mod" id="m14" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 14</div><h2>Long-running and coding agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/14_long_running_agents.ipynb">Open in Colab</a><button class="done-btn" data-done="m14" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>10 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to run an agent on a job too big for one sitting, like a whole data room. Write progress down in a checklist, do one item at a time, and finish only with evidence.</p><article class="lesson"><h2>The big idea</h2>
-<p>A model can only read so much at once. That limit is the context window (the amount of text the model can hold in mind at one time). Some jobs are far bigger. Reviewing 200 contracts in a data room won't fit in one sitting.</p>
-<p>So the agent has to work in sessions, and each new session starts with a blank mind. The fix is to write memory down outside the model.</p>
-<p>Think of a night-shift nurse handing over to the day shift. The day nurse doesn't remember the night. She reads the chart: what was done, what is left, what to watch. The chart holds the progress, not anyone's head.</p>
-<p>For agents, that chart is a checklist and a progress file. Each session reads them, does one item, marks it done only with evidence, and saves. The job can't be called finished until every item has evidence.</p>
-<h2>Why it matters for us</h2>
-<ul>
-<li>Due diligence and portfolio reviews are long jobs. A firm needs them done reliably, not in one fragile run.</li>
-<li>A local box may be slower than a cloud service. Long jobs will run for hours, and crashes happen. With saved progress, a crash loses one item, not the whole job.</li>
-<li>Lawyers need to see every step. A record after each item makes the work reviewable and replayable.</li>
-</ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li><strong>A setup session writes the checklist.</strong> Code, not the model, writes one item per contract per rule. Every item starts as "not done". It also creates an empty progress file.</li>
-<li><strong>The agent may only tick boxes.</strong> It can flip an item to done and attach evidence. It can never add, remove or reword items. Otherwise it could quietly shrink the job.</li>
-<li><strong>Each work session does one item.</strong> Read the checklist, pick the next unfinished item, do it, save. One item per session keeps each step small and checkable.</li>
-<li><strong>Evidence must be real.</strong> The agent quotes the exact words that decide the item. Code checks that the quote really appears in the contract. If not, the item is retried later, up to a limit.</li>
-<li><strong>Commit after each step.</strong> Each finished item is saved as a commit in git (a tool that keeps a numbered history of file changes). You can see and replay every step.</li>
-<li><strong>A stop hook guards the finish.</strong> A stop hook is a rule that blocks the final report until every item has evidence.</li>
-</ol>
-<pre><code>setup:  checklist (all &quot;not done&quot;) + progress file
-loop:   read checklist -&gt; do ONE item -&gt; verify quote -&gt; mark done -&gt; commit
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 14</span></div><section class="mod" id="m14" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 14</div><h2>Long-running and coding agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/14_long_running_agents.ipynb">Open in Colab</a><button class="done-btn" data-done="m14" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Run an agent on a job too big for one sitting, like a whole data room. A checklist, one item per session, and evidence before &quot;done&quot;.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 10 · Evaluating Agents: Terminal-Bench and Harbor · <a href="https://web.stanford.edu/class/cs329z/slides/lecture10.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/11</span></div><ul>
+<li>Build a long-running review loop that survives crashes, does one checked step at a time, and can't finish early.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why long jobs are hard</h3><span class="slide-no">2/11</span></div><ul>
+<li>Context window: how much text the model can hold at once.</li>
+<li>Long-horizon: context grows and drifts (Lecture 1, key challenges).</li>
+<li>200 contracts in a data room won't fit in one sitting.</li>
+<li>Each new session starts blank. Progress must live in files, not in the model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Terms (from the lecture)</h3><span class="slide-no">3/11</span></div><ul>
+<li>Task: a single test with defined inputs and success criteria.</li>
+<li>Trial: one attempt at a task.</li>
+<li>Verifier: logic that scores the agent's work.</li>
+<li>Trajectory: the complete record of a trial.</li>
+<li>Ours: one checklist item = one task; code is the verifier; git log is the trajectory.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The pattern</h3><span class="slide-no">4/11</span></div><pre><code>setup:  checklist (all &quot;not done&quot;) + progress file
+loop:   read checklist → do ONE item → verify quote → mark done → commit
 finish: only when every item has evidence
 </code></pre>
-<h2>Worked example</h2>
-<p>The firm's rules: liability cap at most 12 months of fees, governing law California or Delaware, renewals at most 1 year, notice at least 30 days.</p>
-<p>The matter has 4 contracts. With 4 rules each, that's 16 checklist items, one for each contract and rule pair. Each work session picks the next one and asks the model: does this clause break the rule? Quote the exact words that decide it.</p>
-<p>Then code checks the evidence:</p>
-<pre><code class="language-python">if not quote_is_in_doc(f.quote, contract(todo[&quot;contract&quot;])):
+<ul>
+<li>Setup session: code writes the checklist. One item per contract per rule.</li>
+<li>Work session: one item, then save.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Who may change what</h3><span class="slide-no">5/11</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>The code</th>
+<th>The agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Writes the checklist (scope is fixed)</td>
+<td>May only flip <code>done</code> and attach evidence</td>
+</tr>
+<tr>
+<td>Checks the quote is in the contract</td>
+<td>Answers: does the clause break the rule?</td>
+</tr>
+<tr>
+<td>Commits each step to git</td>
+<td>Never adds, removes or rewords items</td>
+</tr>
+<tr>
+<td>Blocks the final report until all items have evidence</td>
+<td>Can't call the job finished</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Our matter: 16 items</h3><span class="slide-no">6/11</span></div><ul>
+<li>4 contracts × 4 playbook rules = 16 items, e.g. <code>msa_13:termination_notice</code>.</li>
+<li>msa_13, 4.1: "...at least 15 days' prior written notice..." → rule needs at least 30 → breaks.</li>
+<li>The model must quote the exact words that decide it.</li>
+<li>Retries get temperature 0.5 for variety. After 3 failed tries, the item is left for a person.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Verifying evidence in code</h3><span class="slide-no">7/11</span></div><pre><code class="language-python">if not quote_is_in_doc(f.quote, contract(todo[&quot;contract&quot;])):
     todo[&quot;tries&quot;] = todo.get(&quot;tries&quot;, 0) + 1
     (WORK / &quot;checklist.json&quot;).write_text(json.dumps(state, indent=1))
     return &quot;RETRY&quot;
 todo.update(done=True, evidence={&quot;breaks_rule&quot;: f.breaks_rule, &quot;quote&quot;: f.quote})
 </code></pre>
-<p>Line by line: the first line asks whether the model's quote really appears in the contract. If it doesn't, the second line adds one to the item's try count. The third line saves the checklist so the count survives a crash. The fourth line returns "retry", leaving the item not done. If the quote is real, the last line marks the item done and attaches the verdict and quote.</p>
-<p>After each item, the progress file gets a line naming the item and "BREAKS" or "ok", and git gets a commit. The loop has a hard limit, so it can never run forever. Items that fail three times are skipped for a person to look at.</p>
-<p>At the end, the notebook scores the finished items against the true answers. It also shows the git log, one commit per item.</p>
-<h2>Common mistakes</h2>
 <ul>
-<li><strong>Letting the agent edit the checklist.</strong> It may only flip "done" with evidence. A model that can reword the list can make the job look finished.</li>
-<li><strong>Doing many items per session.</strong> One item, verify, commit. Big steps mean big losses when something fails.</li>
-<li><strong>Keeping progress in the model's head.</strong> The next session starts blank. If it isn't in a file, it didn't happen.</li>
-<li><strong>Accepting "done" without evidence.</strong> Require a quote, and check it in code.</li>
-<li><strong>No stop limit.</strong> Always cap the number of loops and retries.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Why one item per session?</summary>
-<p>Each session starts with a clean context. Small steps with a commit each mean a failure loses one item, not the whole job, and every step can be reviewed.</p>
-</details>
-<details>
-<summary>The run crashes halfway. What happens when you restart it?</summary>
-<p>It reads the checklist and continues with the unfinished items. The file holds the progress, so finished items are not redone.</p>
-</details>
-<details>
-<summary>Why does code, not the model, write the checklist?</summary>
-<p>So the scope of the job is fixed and trusted. The model can only report on items, not change what the job covers.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the Module 14 notebook and read the progress file and git log it prints. Note how many of 16 items were done and how many were correct. In the exercises, reset a few items as if the run crashed, rerun, and check that only those items run again.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Line 1: is the model's quote really in the contract?</li>
+<li>Line 2: if not, add one to this item's try count.</li>
+<li>Line 3: save the checklist, so the count survives a crash.</li>
+<li>Line 4: return "RETRY"; the item stays not done.</li>
+<li>Line 5: quote is real: mark done, attach verdict and quote.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reliable runs</h3><span class="slide-no">8/11</span></div><ul>
+<li>Reliable (fault tolerant): a crash loses one item, not the job.</li>
+<li>Reproducible: each item is a git commit you can review and replay.</li>
+<li>Stop rule: the loop runs at most 16 + 4 times. Never forever.</li>
+<li>Stop hook: the final report refuses to run while any item lacks evidence.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Crash vs restart</h3><span class="slide-no">9/11</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Without a checklist file</th>
+<th>With a checklist file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Crash at item 9: progress was in the model's context</td>
+<td>Crash at item 9: items 1–8 are saved and committed</td>
+</tr>
+<tr>
+<td>Restart redoes everything</td>
+<td>Restart reads the file, runs only unfinished items</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">10/11</span></div><ul>
+<li>Due diligence is a long job. On a local machine it may run for hours.</li>
+<li>Saved progress means a crash or reboot costs one item.</li>
+<li>Every step is a commit a lawyer can review: "full receipts for every row."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">11/11</span></div><ul>
+<li>Letting the agent edit the checklist → it can make the job look finished.</li>
+<li>Many items per session → one item, verify, commit.</li>
+<li>Progress kept in the model's head → if it isn't in a file, it didn't happen.</li>
+<li>"Done" without evidence → require a quote; check it in code.</li>
+<li>No loop limit → cap loops and retries.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why one item per session?</summary><p>Small steps with a commit each mean a failure loses one item, and every step can be reviewed.</p></details>
+
+<details><summary>The run crashes halfway. What happens on restart?</summary><p>It reads the checklist and continues with unfinished items. Finished items are not redone.</p></details>
+
+<details><summary>Why does code, not the model, write the checklist?</summary><p>So the job&#x27;s scope is fixed. The model can only report on items, not change what the job covers.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Read the printed <code>progress.md</code> and the git log (one commit per item).</li>
+<li>Note how many of 16 items are done and how many are correct.</li>
+<li>Solutions: reset 3 items as if crashed and rerun; add the stop hook.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">SWE-agent · OpenHands · Anthropic, "Effective Harnesses for Long-Running Agents" · Claude Code best practices · Terminal-Bench</p>
   <p class="big">For jobs longer than one context window, the agent's memory must be written down: a checklist it can only mark done with evidence, a progress file, and a commit after each step.</p>

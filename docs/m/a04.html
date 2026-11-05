@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Multi-step reasoning and planning · Agent Engineering School</title>
-<meta name="description" content="Learn how agents handle hard multi-step tasks: search and back up from dead ends, split tasks only when needed, run independent steps at once, and learn from steps.">
+<meta name="description" content="When one pass isn&#x27;t enough, search a tree of steps, split tasks only when they fail, and run independent steps at once.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,75 +255,204 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A04</span></div><section class="mod" id="a04" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A04</div><h2>Multi-step reasoning and planning</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a04_planning_search.ipynb">Open in Colab</a><button class="done-btn" data-done="a04" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>13 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Learn how agents handle hard multi-step tasks: search and back up from dead ends, split tasks only when needed, run independent steps at once, and learn from steps.</p><article class="lesson"><h2>The big idea</h2>
-<p>Some tasks can't be done in one straight pass. The first idea may lead to a dead end. A plain chain of steps commits early and never looks back.</p>
-<p>Think of finding your way through an unfamiliar office building. You try a corridor. If it ends at a locked door, you go back and try another. You don't map the whole building first. You split the trip into parts only where you get lost. And if two colleagues are free, you send them down two corridors at once.</p>
-<p>This module covers those habits for agents. Search a tree of steps and back up. Split a task only when a direct try fails. Choose between new ideas and fixing old ones. Run independent steps at the same time. And log every step, so it can become training data.</p>
-<h2>Why it matters for us</h2>
-<ul>
-<li>Contract review is many steps: find clauses, check rules, compute figures, write a summary. Some depend on each other, some don't. Knowing which is which saves time.</li>
-<li>Local models are slower than cloud ones. Running independent checks at once, and not over-planning easy tasks, keeps waiting time down.</li>
-<li>Search only works where steps can be undone. Reading a clause can be undone. Sending an email cannot. A firm must know the difference.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A04</span></div><section class="mod" id="a04" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A04</div><h2>Multi-step reasoning and planning</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a04_planning_search.ipynb">Open in Colab</a><button class="done-btn" data-done="a04" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">When one pass isn&#x27;t enough, search a tree of steps, split tasks only when they fail, and run independent steps at once.</p><article class="lesson"><p class="deck-src">Based on CS329A · Multi-step reasoning and planning · <a href="https://arxiv.org/abs/2310.04406" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/14</span></div><ul>
+<li>Learn when to search, when to split a task, how to spend calls wider or deeper, and how to turn logged steps into training data.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why planning?</h3><span class="slide-no">2/14</span></div><ul>
+<li>A greedy chain commits to its first idea and never looks back.</li>
+<li>Hard tasks need more than one straight pass.</li>
+<li>Five tools from this lecture:<ul>
+<li>Tree search: back up from dead ends (LATS)</li>
+<li>Split only on failure (ADaPT)</li>
+<li>Wider vs deeper budget (AB-MCTS)</li>
+<li>Parallel independent steps (SPRINT)</li>
+<li>Step-level training data (SWiRL)</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Tree search with backtracking (LATS).</strong> The LATS paper (2023) runs a tree search over agent steps. Select a promising step. Expand it into several possible next steps (5 by default). Evaluate each with a value score: how promising it looks. LATS mixes the model's own rating with how often the same step was proposed. If a path fails, write a short note on why, and try another branch. On a number puzzle, LATS scored 0.44 against 0.20 for an earlier tree method. The cost: more calls than a single chain, and it needs states you can go back to.</p>
 </li>
-<li>
-<p><strong>Split only when needed (ADaPT).</strong> The ADaPT paper (2024) first lets the model try the whole task. Only if that fails does a planner split it into smaller parts. Then it repeats on each part, up to a set depth. Easy tasks cost one call. With GPT-3.5, it reached 71.6% on a household-task benchmark, against 43.3% for ReAct. A warning: the model judged its own success, and overrated it by more than 30 points on a shopping benchmark. Use a real checker when you can.</p>
+</ul></div><div class="slide"><div class="slide-top"><h3>Greedy chain vs tree search</h3><span class="slide-no">3/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Greedy chain</th>
+<th>Tree search</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One next step, no going back</td>
+<td>Several candidate steps, scored</td>
+</tr>
+<tr>
+<td>Dead end → fail</td>
+<td>Dead end → back up to a better branch</td>
+</tr>
+<tr>
+<td>Fewest calls</td>
+<td>More calls</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Tree search: explore several next steps, score them, return to a better branch when one fails.</li>
+<li>Value function: a score for how promising a partial solution is.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LATS: tree search for agents (Zhou et al. 2023)</h3><span class="slide-no">4/14</span></div><ul>
+<li>Monte Carlo Tree Search over agent actions.<ul>
+<li>Select: pick a promising node</li>
+<li>Expand: sample n actions (n = 5 by default) and run them</li>
+<li>Evaluate: value = LM's own rating mixed with self-consistency</li>
+<li>Backpropagate, and write a reflection after a failure</li>
+</ul>
 </li>
-<li>
-<p><strong>Wider or deeper (AB-MCTS).</strong> With a fixed budget, the next call can make a brand-new answer (wider) or improve the best one so far using feedback (deeper). The AB-MCTS paper (2025) lets the scores decide, using Thompson sampling: a method that mostly picks what has worked, but still tries the other option sometimes. On a coding benchmark with 128 calls, pure refinement scored 30.1%, repeated sampling 37.9%, and AB-MCTS 40.6%. The gains showed up at large budgets.</p>
+<li>Needs states you can return to. A sent email can't be undone.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LATS results</h3><span class="slide-no">5/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>LATS</th>
+<th>Baseline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HumanEval pass@1 (GPT-3.5)</td>
+<td>83.8%</td>
+<td>68.1% Reflexion</td>
+</tr>
+<tr>
+<td>HotPotQA EM (GPT-3.5)</td>
+<td>0.63</td>
+<td>0.32 ReAct</td>
+</tr>
+<tr>
+<td>Game of 24</td>
+<td>0.44</td>
+<td>0.20 Tree-of-Thoughts</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>With GPT-4: 92.7% on HumanEval.</li>
+<li>Costs more than ReAct or Reflexion.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ADaPT: decompose only when needed (Prasad et al. 2024)</h3><span class="slide-no">6/14</span></div><ul>
+<li>As-needed decomposition: split a task only after a direct try fails.</li>
+<li>Executor tries the whole task first.</li>
+<li>On failure, a planner splits it into sub-tasks; recurse on each, up to a max depth.</li>
+<li>Easy tasks cost one call. Only hard ones pay for planning.</li>
+<li>Watch out: the executor's self-reported success was over 30 points too high on WebShop.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ADaPT results (GPT-3.5)</h3><span class="slide-no">7/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>ADaPT</th>
+<th>ReAct</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ALFWorld</td>
+<td>71.6%</td>
+<td>43.3%</td>
+</tr>
+<tr>
+<td>WebShop</td>
+<td>44.0%</td>
+<td>32.0%</td>
+</tr>
+<tr>
+<td>TextCraft</td>
+<td>52.0%</td>
+<td>19.0%</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Wider or deeper? (AB-MCTS, Inoue et al. 2025)</h3><span class="slide-no">8/14</span></div><ul>
+<li>Wider: spend the next call on a brand-new answer.</li>
+<li>Deeper: refine an existing answer with feedback.</li>
+<li>Thompson sampling: picks the option whose random draw from its scores is highest; balances new vs proven.</li>
+<li>AB-MCTS makes this choice at every node.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AB-MCTS results</h3><span class="slide-no">9/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>CodeContests, GPT-4o, 128 calls</th>
+<th>Solved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pure refinement (deeper only)</td>
+<td>30.1%</td>
+</tr>
+<tr>
+<td>Standard MCTS</td>
+<td>37.5%</td>
+</tr>
+<tr>
+<td>Repeated sampling (wider only)</td>
+<td>37.9%</td>
+</tr>
+<tr>
+<td>AB-MCTS-M</td>
+<td>40.6%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>On ARC-AGI, repeated sampling still led at 128 calls; AB-MCTS kept improving up to 512.</li>
+<li>Gains show up at large budgets.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SPRINT: run independent steps at once (Biju et al. 2025)</h3><span class="slide-no">10/14</span></div><ul>
+<li>Critical path: the steps that must happen one after another. It sets the latency.</li>
+<li>SPRINT trains a model to alternate a plan (independent subtasks) with parallel execution.</li>
+<li>About 1,700 examples fine-tune a 7B reasoning model.</li>
+<li>MATH-500: 92.5% vs 91.0%, with up to 39% fewer sequential tokens on long problems.<ul>
+<li>Up to 45% fewer on GPQA, 65% on Countdown</li>
+</ul>
 </li>
-<li>
-<p><strong>Run independent steps at once (SPRINT).</strong> Reasoning models usually think in one long line. The SPRINT paper (2025) trained a model to write a plan of independent subtasks, then run them in parallel. It matched its baselines on math while cutting sequential tokens (the text that must be written one piece after another) by up to 39% on long problems. The key point: waiting time is set by the longest chain of dependent steps, called the critical path, not by the total work.</p>
-</li>
-<li>
-<p><strong>Learn from steps, not just outcomes (SWiRL).</strong> The SWiRL paper (2025) cut each multi-step run into one example per action: the context so far, then the next action. A judge model kept steps it found reasonable, even when the final answer was wrong. This process filtering beat keeping only runs with correct answers. A failed run still contains good steps.</p>
-</li>
-</ol>
-<h2>Worked example</h2>
-<p>A contract review plan has four rule checks, then a summary. The checks don't depend on each other. The summary needs all four.</p>
-<pre><code class="language-python">PLAN = {&quot;liability_cap&quot;: [], &quot;governing_law&quot;: [], &quot;auto_renewal&quot;: [], &quot;termination_notice&quot;: [],
+</ul></div><div class="slide"><div class="slide-top"><h3>A parallel contract review plan</h3><span class="slide-no">11/14</span></div><pre><code class="language-python">PLAN = {&quot;liability_cap&quot;: [], &quot;governing_law&quot;: [], &quot;auto_renewal&quot;: [], &quot;termination_notice&quot;: [],
         &quot;summary&quot;: [&quot;liability_cap&quot;, &quot;governing_law&quot;, &quot;auto_renewal&quot;, &quot;termination_notice&quot;]}
 print(&quot;plan rounds:&quot;, stages(PLAN))
 </code></pre>
-<p>In plain words:</p>
 <ul>
-<li>Line 1–2: each step lists what it depends on. The four checks depend on nothing. The summary depends on all four.</li>
-<li>Line 3: <code>stages</code> groups steps into rounds. A step runs once everything it needs is done. So round 1 holds all four checks, and round 2 holds the summary.</li>
+<li>Each step lists what it depends on.</li>
+<li>The four rule checks depend on nothing; the summary needs all four.</li>
+<li><code>stages</code> groups steps into rounds: round 1 = four checks, round 2 = summary.</li>
+<li>With 2 parallel slots, 4 checks take about 2 rounds instead of 4.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWiRL: train on steps, not runs (Goldie et al. 2025)</h3><span class="slide-no">12/14</span></div><ul>
+<li>Sub-trajectory: cut a run with k actions into k examples (context so far → next action).</li>
+<li>Process filtering: keep steps a judge calls reasonable, even if the final answer was wrong.</li>
+<li>Gemma 2 27B, relative gains: 21.5% GSM8K, 12.3% HotPotQA.</li>
 </ul>
-<p>Now run it on contract msa_15. Each check asks the model: "Does this clause follow this rule? PASS or FAIL." With two parallel slots, the four checks take about two rounds instead of four. The summary then lists every FAIL: "Cannot sign as written: ..."</p>
-<pre><code>round 1:  [liability_cap] [governing_law] [auto_renewal] [termination_notice]
-round 2:              [summary]
-</code></pre>
-<p>Add one more step, say "compute the dollar cap," which needs the liability check. Now the chain gets longer. No number of parallel slots can beat that longest chain.</p>
-<h2>Common mistakes</h2>
-<ul>
-<li><strong>Searching where actions can't be undone.</strong> A sent email or a database write can't be rewound. Only search over safe, reversible steps.</li>
-<li><strong>Trusting the model's own value scores.</strong> They are noisy. Use a real checker when one exists.</li>
-<li><strong>Planning everything up front.</strong> A long fixed plan breaks when any step fails. Try first, and split only what fails.</li>
-<li><strong>Running dependent steps in parallel.</strong> Map what depends on what first. Otherwise a step runs before its inputs exist.</li>
-<li><strong>Keeping only successful runs as training data.</strong> Good steps inside failed runs are lost. Label steps, not just outcomes.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>What does ADaPT do differently from planning everything first?</summary>
-<p>It tries the whole task first. It only plans and splits when that fails, and repeats on the failed parts, so easy tasks cost one call.</p>
-</details>
-<details>
-<summary>In AB-MCTS, what choice is made at each step, and what decides it?</summary>
-<p>Whether to make a new answer (wider) or improve an existing one (deeper). Thompson sampling on the feedback scores decides.</p>
-</details>
-<details>
-<summary>Why might SWiRL keep a step from a run whose final answer was wrong?</summary>
-<p>The step itself was judged reasonable. Keeping such steps gave better training results than keeping only successful runs.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the greedy chain and the tree search on the number puzzles, and compare how often each solves them and how many calls they use. Then run the ADaPT section and see that easy puzzles stop after one call. Finally, run the parallel review plan and compare the sequential and parallel times.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Filter</th>
+<th>Keeps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Outcome only</td>
+<td>Steps from runs with the right final answer</td>
+</tr>
+<tr>
+<td>Process only</td>
+<td>Good steps, even inside failed runs. Best for RL</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">13/14</span></div><ul>
+<li>Independent playbook checks can run in parallel on the firm's machine; the summary waits for all.</li>
+<li>Try a direct review first; split into per-rule checks only when it fails.</li>
+<li>Log every step. A failed review still has good steps to train a local model on.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">14/14</span></div><ul>
+<li>Searching where actions can't be undone → only search over states you can return to.</li>
+<li>Planning everything up front → try directly, split only what fails.</li>
+<li>Trusting self-reported success → use a real checker.</li>
+<li>Parallelizing dependent steps → map dependencies first; the longest chain sets latency.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What does ADaPT do differently from plan-and-execute?</summary><p>It tries the whole task first and splits it only when the executor fails, so easy tasks cost one call.</p></details>
+
+<details><summary>In AB-MCTS, what choice is made at each node, and what decides it?</summary><p>Whether to generate a new answer (wider) or refine an existing one (deeper). Thompson sampling on the feedback scores decides.</p></details>
+
+<details><summary>Why might SWiRL keep a step from a run whose final answer was wrong?</summary><p>The step itself was judged reasonable. Process-only filtering gave the best RL results.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run greedy vs tree search on the 3 number puzzles. Which solves more, and at what call cost?</li>
+<li>Run ADaPT and see which puzzles stop after one direct try.</li>
+<li>Run the SWiRL section: count the good steps that live inside failed runs.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Lecture 5 (Oct 6)</p>
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Agentic evaluations and long-horizon tasks · Agent Engineering School</title>
-<meta name="description" content="How to measure an agent in terms a customer understands. You&#x27;ll learn METR&#x27;s time horizon, GDPval&#x27;s expert comparisons, and DeepScholar&#x27;s separate scores for research reports.">
+<meta name="description" content="Measure an agent in terms a customer understands. METR&#x27;s time horizon, GDPval&#x27;s expert comparisons, and DeepScholar&#x27;s separate scores for research reports.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,81 +255,220 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A10</span></div><section class="mod" id="a10" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A10</div><h2>Agentic evaluations and long-horizon tasks</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a10_evals_long_horizon.ipynb">Open in Colab</a><button class="done-btn" data-done="a10" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to measure an agent in terms a customer understands. You&#x27;ll learn METR&#x27;s time horizon, GDPval&#x27;s expert comparisons, and DeepScholar&#x27;s separate scores for research reports.</p><article class="lesson"><h2>The big idea</h2>
-<p>"78% on a benchmark" tells a customer almost nothing. Which 78%? Of what? Would the work be usable? This lesson measures agents in human terms instead.</p>
-<p>Think of hiring a paralegal. You don't ask for their test score. You ask: how big a task can I hand them and expect it done? Would a senior lawyer accept their memo? When they cite a source, does the source really say that?</p>
-<p>Three papers turn those questions into numbers. METR asks how long a task (in human minutes) the agent finishes half the time. GDPval asks whether an expert would prefer the agent's work over another expert's. DeepScholar-Bench scores a research report on several separate axes, so you can see exactly what went wrong.</p>
-<h2>Why it matters for us</h2>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A10</span></div><section class="mod" id="a10" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A10</div><h2>Agentic evaluations and long-horizon tasks</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a10_evals_long_horizon.ipynb">Open in Colab</a><button class="done-btn" data-done="a10" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Measure an agent in terms a customer understands. METR&#x27;s time horizon, GDPval&#x27;s expert comparisons, and DeepScholar&#x27;s separate scores for research reports.</p><article class="lesson"><p class="deck-src">Based on CS329A · Lecture 17 · Agentic evaluations and long-horizon tasks · <a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/14</span></div><ul>
+<li>Measure an agent in human terms: task length it can finish, expert preference for its work, and separate scores for coverage and citations.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three questions, three papers</h3><span class="slide-no">2/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Paper</th>
+<th>Number</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>How long a task can it finish?</td>
+<td>METR (Kwa et al. 2025)</td>
+<td>50% time horizon, in human minutes</td>
+</tr>
+<tr>
+<td>Would an expert prefer its work?</td>
+<td>GDPval (Patwardhan et al. 2025)</td>
+<td>Win-or-tie rate vs an expert</td>
+</tr>
+<tr>
+<td>Is its research report sound?</td>
+<td>DeepScholar-Bench (Patel et al. 2025)</td>
+<td>Separate coverage, retrieval, citation scores</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li>A firm deciding whether to trust a local agent needs a plain claim, like "it finishes 10-minute contract checks 80% of the time". A benchmark percentage won't do.</li>
-<li>Every agent output at a law firm gets reviewed. Review time must be counted in any claim about savings.</li>
-<li>Contract summaries cite clauses. You need to check that each citation actually supports the sentence it sits next to.</li>
+<li>"78% on a benchmark" doesn't tell a customer what the agent can do.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>METR: time horizon</h3><span class="slide-no">3/14</span></div><ul>
+<li>Time skilled humans on 170 tasks: over 800 baselines, 2,529 hours.</li>
+<li>Human baseline: a timed attempt; task difficulty = geometric mean of successful times.</li>
+<li>Per model, fit a logistic curve (S-shaped, 0 to 1): success vs log of human time.</li>
+<li>50% time horizon: task length where the curve crosses 50%.</li>
+<li>8 runs per agent and task.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>50% vs 80% horizon</h3><span class="slide-no">4/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>50% horizon</th>
+<th>80% horizon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tasks the model finishes half the time</td>
+<td>Tasks it finishes 80% of the time</td>
+</tr>
+<tr>
+<td>Claude 3.7 Sonnet: about 50 minutes</td>
+<td>Roughly 4–6x shorter than the 50% horizon</td>
+</tr>
+<tr>
+<td>Doubled about every 7 months since 2019</td>
+<td>Closer to what business use needs</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Half of tasks failing is not a product. Quote the 80% (or higher) number.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our toy: multi-step contract checks</h3><span class="slide-no">5/14</span></div><ul>
+<li>A task with N steps: walk through N facts from a contract fact sheet, keep a running total.<ul>
+<li>"Add the notice days of msa_..." / "Subtract the renewal years of msa_..."</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Time real people first</strong> (the METR paper, 2025). METR timed skilled people on 170 tasks, from seconds to many hours. A task's difficulty is how long people took to do it. Guessing these times would ruin everything that follows.</p>
 </li>
-<li>
-<p><strong>Fit an S-curve.</strong> For each model, plot success against task length. Longer tasks fail more. A logistic curve (an S-shaped curve running from 0 to 1) fits this well. The 50% time horizon is the task length where the curve crosses 50%. METR found frontier models' 50% horizons doubled about every 7 months since 2019. Claude 3.7 Sonnet was about 50 minutes.</p>
+<li>15 tasks, 1 to 32 steps. Each run twice (METR: 8 times).</li>
+<li>Assumed human time: 1 minute + 1.5 minutes per step (2.5 to 49 minutes).<ul>
+<li>Our guess. METR timed real people. The horizon is only as good as these times.</li>
+</ul>
 </li>
-<li>
-<p><strong>Quote the reliable number.</strong> Half of tasks failing is not a product. The 80% horizon is the length a model finishes 80% of the time. METR found it was roughly 4 to 6 times shorter than the 50% horizon. That is the number a business should plan around.</p>
-</li>
-<li>
-<p><strong>Grade the real work product</strong> (the GDPval paper, 2025). GDPval has 1,320 tasks across 44 occupations, written by professionals with about 14 years of experience on average. Each asks for a real deliverable (a memo, a spreadsheet, slides). Experts compare the model's version with a human expert's, blind and side by side. The score is the win-or-tie rate: how often the model's work was judged as good or better. The best model on their gold set, Claude Opus 4.1, reached 47.6%.</p>
-</li>
-<li>
-<p><strong>Count review time.</strong> GDPval found GPT-5 was about 90 times faster than an expert on raw time. But someone must review the output and fix it when it's wrong. Counting that, the gain shrank to about 1.12 times faster and 1.18 times cheaper. An automatic grader agreed with experts 65.7% of the time, against 70.8% between experts. Useful for quick checks, not a replacement.</p>
-</li>
-<li>
-<p><strong>Score research reports on separate axes</strong> (the DeepScholar-Bench paper, 2025). Systems write a cited related-work section for a recent paper. It is a live benchmark (new items keep being added, so models can't have trained on them). Scores cover three axes: synthesis (did it include the key facts?), retrieval (did it find the important sources?) and verifiability (does each citation support its sentence?). No system passed 31% on the combined score. The best system overall was weak on citations, while another led on citations.</p>
-</li>
-</ol>
-<pre><code>success
- 100% |*****
-      |      ***
-  50% |---------*---------   &lt;- 50% horizon
-      |            ***
-   0% |________________****
-       1    4    16   64  human minutes (log scale)
+</ul></div><div class="slide"><div class="slide-top"><h3>GDPval: grade the real deliverable</h3><span class="slide-no">6/14</span></div><ul>
+<li>1,320 tasks, 44 occupations, 9 sectors contributing most to US GDP.</li>
+<li>Written by professionals with 14 years of experience on average.</li>
+<li>Deliverable: the actual work product (document, slides, spreadsheet).</li>
+<li>Experts compare model vs expert deliverables, blind and pairwise.</li>
+<li>Win-or-tie rate: share judged as good as or better than the expert's.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Count review time</h3><span class="slide-no">7/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Raw comparison (GPT-5)</th>
+<th>"Try once, then fix"</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>About 90x faster than an expert</td>
+<td>About 1.12x faster</td>
+</tr>
+<tr>
+<td>About 474x cheaper</td>
+<td>About 1.18x cheaper</td>
+</tr>
+<tr>
+<td>Ignores review</td>
+<td>Expert reviews and fixes or redoes the output</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Automated grader agreed with experts 65.7% of the time; experts with each other 70.8%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Order swap in code</h3><span class="slide-no">8/14</span></div><pre><code class="language-python">first = grade_once(cid, model_text, expert_text)     # model is A
+second = grade_once(cid, expert_text, model_text)    # model is B
+if first == &quot;A&quot; and second == &quot;B&quot;: return &quot;win&quot;
+if first == &quot;B&quot; and second == &quot;A&quot;: return &quot;loss&quot;
+return &quot;tie&quot;
 </code></pre>
-<h2>Worked example</h2>
-<p>The notebook builds all three on contracts.</p>
-<p><strong>Time horizon.</strong> A task with N steps asks the agent to walk through N facts from a contract fact sheet, keeping a running total. More steps means more chances to slip. The notebook assumes a person needs 1 minute to set up plus 1.5 minutes per step. That is a made-up estimate, and it says so. Each task runs twice. Then it fits the S-curve and reads off the 50% and 80% horizons.</p>
-<p><strong>Expert comparison.</strong> Three client emails about contracts that break the playbook. For example, a liability cap above 12 months of fees. An expert reference email is written from the labels. A model grader compares the agent's email with the expert's, in both orders. Small graders often pick whichever email comes first. So if the verdict flips when the order swaps, it counts as a tie.</p>
-<p><strong>Research report.</strong> The agent gets six sources: three about evaluating agents, three about memory (distractors). It writes a short cited summary. Plain code then checks each metric:</p>
 <ul>
-<li>Citing a distractor lowers retrieval precision.</li>
-<li>A sentence with no citation lowers claim coverage (the share of sentences backed by a source).</li>
-<li>Citing a real source for a claim it doesn't make lowers citation precision.</li>
-</ul>
-<p>One overall score would hide which of these went wrong.</p>
-<h2>Common mistakes</h2>
+<li>Lines 1–2: grade the same pair twice, positions swapped.</li>
+<li>Line 3: model picked both times → win.</li>
+<li>Line 4: expert picked both times → loss.</li>
+<li>Line 5: any disagreement → tie. Small graders often pick the same position both times.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Expert email vs wrong email (msa_17)</h3><span class="slide-no">9/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Expert reference</th>
+<th>Confidently wrong</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Clause 4.1 ... renews automatically for five-year periods; the playbook allows one year at most."</td>
+<td>"It meets every playbook rule, so the client can sign it as is."</td>
+</tr>
+<tr>
+<td>"It also needs only 15 days' notice of non-renewal; the playbook requires at least 30 days."</td>
+<td></td>
+</tr>
+<tr>
+<td>"Recommendation: revise 4.1 to one-year renewals with at least 30 days' notice."</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>Guessing human times.</strong> The horizon is only as good as the timings. Time real people where you can.</li>
-<li><strong>Quoting the 50% horizon to a customer.</strong> Quote 80% or higher, and design review around it.</li>
-<li><strong>Claiming big speed-ups without review time.</strong> GDPval's gain nearly vanished once review and fixes were counted.</li>
-<li><strong>Trusting a grader that saw only one order.</strong> Swap the order and count a flip as a tie.</li>
-<li><strong>Rewarding copied text.</strong> Word-overlap scores can be gamed by pasting sources. Keep a judge for whether it is a real synthesis.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>How does METR turn success rates into a time horizon?</summary>
-<p>For each model it fits an S-curve of success against the log of human task time. The horizon is the task length where the curve crosses 50%.</p>
-</details>
-<details>
-<summary>Why did GDPval&#x27;s speed and cost advantage shrink so much?</summary>
-<p>An expert must review the model&#x27;s output and fix or redo it when it is wrong. Once that time is counted, most of the raw speed gain disappears.</p>
-</details>
-<details>
-<summary>A summary cites a memory paper for a sentence about agent evaluation. Which metrics drop?</summary>
-<p>Retrieval precision, because a non-relevant source was cited. Probably citation precision too, because that source doesn&#x27;t support the sentence.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the a10 notebook. Fit the time-horizon curve on the multi-step contract tasks and compare the 50% and 80% numbers. Then watch how often the email grader flips when the order swaps, and see which research metric each kind of error lowers.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Contract 4.1: "...successive five (5) year periods unless either party gives at least 15 days' prior written notice..."</li>
+<li>Sanity check: the wrong email must not win against the expert.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DeepScholar-Bench: three axes</h3><span class="slide-no">10/14</span></div><ul>
+<li>Live benchmark: queries come from recent arXiv papers, so models can't have trained on them.</li>
+<li>Task: research and write a cited related-work section.</li>
+<li>Knowledge synthesis: organization; nugget coverage (key facts from the human-written section).</li>
+<li>Retrieval quality: relevance; reference coverage (important citations found).</li>
+<li>Verifiability: citation precision; claim coverage.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Each metric catches a different failure</h3><span class="slide-no">11/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>What it checks</th>
+<th>Drops when...</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reference coverage</td>
+<td>Share of relevant sources cited</td>
+<td>a key source is never cited</td>
+</tr>
+<tr>
+<td>Retrieval precision</td>
+<td>Share of cited sources that are relevant</td>
+<td>a distractor (MemGPT, CacheBlend) is cited</td>
+</tr>
+<tr>
+<td>Citation precision</td>
+<td>Cited source supports its sentence</td>
+<td>a real source is cited for a claim it doesn't make</td>
+</tr>
+<tr>
+<td>Claim coverage</td>
+<td>Every sentence backed by a citation</td>
+<td>a sentence has no citation</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Our "supports" test: at least 3 shared content words. The paper uses an LLM judge.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the papers showed</h3><span class="slide-no">12/14</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>What it showed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>METR</td>
+<td>50% horizons doubled about every 7 months (207 days); GPT-2 about 2 seconds, Claude 3.7 Sonnet about 50 minutes</td>
+</tr>
+<tr>
+<td>GDPval</td>
+<td>Best on the gold subset: Claude Opus 4.1, 47.6% win-or-tie vs experts</td>
+</tr>
+<tr>
+<td>DeepScholar-Bench</td>
+<td>No system above a 31% geometric mean; OpenAI DeepResearch 0.309 but claim coverage 0.138</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">13/14</span></div><ul>
+<li>A firm needs a plain claim: "finishes X-minute contract checks Y% of the time". Time real lawyers on real tasks.</li>
+<li>Every agent output at a firm is reviewed. Count review time in any savings claim.</li>
+<li>Contract summaries cite clauses. Check each citation supports its sentence.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">14/14</span></div><ul>
+<li>Guessing human times → time real people; the horizon depends on them.</li>
+<li>Quoting the 50% horizon → quote 80% or more, and plan review around it.</li>
+<li>One-order LLM grader → swap positions; count disagreement as a tie.</li>
+<li>Rewarding copied text → word-overlap metrics can be gamed by pasting sources; keep a judge for synthesis.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>How does METR turn success rates into a time horizon?</summary><p>For each model, fit a logistic curve of success against log human time, then find the task length where it crosses 50%.</p></details>
+
+<details><summary>Why did GDPval&#x27;s speed and cost advantage shrink?</summary><p>An expert must review the model&#x27;s output and fix or redo it when it is wrong. That review time counts.</p></details>
+
+<details><summary>A summary cites a distractor source for a true sentence. Which of our metrics drops?</summary><p>Retrieval precision (a non-relevant source was cited), and probably citation precision (the source doesn&#x27;t support the sentence).</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Fit the logistic curve on the toy tasks; read the 50% and 80% horizons and the bootstrap range.</li>
+<li>Run the GDPval-style comparison on msa_08, msa_10, msa_17; check the wrong email loses.</li>
+<li>Score the oracle, bad and model summaries; then try Solution 3, which games the metrics by copying sources.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Lecture 17 (Nov 17)</p>
 

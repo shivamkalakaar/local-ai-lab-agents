@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Open-ended evolution of self-improving agents · Agent Engineering School</title>
-<meta name="description" content="How an AI can improve code, agents and even experiments by guessing changes, scoring each one automatically, and building on the best. Covers ADAS, the AI Scientist and AlphaEvolve.">
+<meta name="description" content="Let a model propose changes to code, agents or experiments, score each one automatically, and keep an archive of what worked.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,73 +255,138 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A06</span></div><section class="mod" id="a06" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A06</div><h2>Open-ended evolution of self-improving agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a06_open_ended_evolution.ipynb">Open in Colab</a><button class="done-btn" data-done="a06" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How an AI can improve code, agents and even experiments by guessing changes, scoring each one automatically, and building on the best. Covers ADAS, the AI Scientist and AlphaEvolve.</p><article class="lesson"><h2>The big idea</h2>
-<p>Picture a test kitchen. A cook keeps a binder of every recipe tried so far, each with a taste score. Each day they pick a good recipe, change one thing, cook it, and have it tasted. Good results go in the binder. Bad ones are noted and rarely tried again. Over months, the binder fills with better and stranger dishes.</p>
-<p>That is open-ended evolution with AI. A language model proposes changes to code, to an agent, or to an experiment. A program scores every proposal. An archive (the stored set of every candidate tried, with its score) keeps what worked, so the next round can build on it.</p>
-<p>The surprising lesson is where the progress comes from. The model only supplies guesses. The real work is done by the scorer and the archive. A good scorer turns a stream of cheap guesses into steady improvement.</p>
-<h2>Why it matters for us</h2>
-<ul>
-<li>Small local models make lots of wrong guesses. This loop doesn't mind. If a cheap model can make many tries and a program can score them, you can still find good answers on your own computers.</li>
-<li>A law firm has checkable tasks. A set of contracts with known correct flags can score any new review agent automatically. That means the firm could search for a better agent design instead of hand-tuning prompts.</li>
-<li>The danger is real too. These loops run code the model wrote. You must fence that code in.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A06</span></div><section class="mod" id="a06" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A06</div><h2>Open-ended evolution of self-improving agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a06_open_ended_evolution.ipynb">Open in Colab</a><button class="done-btn" data-done="a06" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Let a model propose changes to code, agents or experiments, score each one automatically, and keep an archive of what worked.</p><article class="lesson"><p class="deck-src">Based on CS329A · Open-ended evolution of self-improving agents · <a href="https://arxiv.org/abs/2408.08435" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
+<li>Learn the propose → evaluate → archive loop behind AlphaEvolve, ADAS and the AI Scientist, and why the evaluator matters most.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One loop, three systems</h3><span class="slide-no">2/13</span></div><ul>
+<li>Propose: an LLM suggests a change (to code, an agent, an experiment).</li>
+<li>Evaluate: a program scores it automatically.</li>
+<li>Archive: store every candidate with its score; build on the good ones.</li>
+<li>Repeat.</li>
+<li>Progress comes from the evaluator and the archive. The LLM supplies the guesses.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Key terms</h3><span class="slide-no">3/13</span></div><ul>
+<li>Archive: every candidate tried so far, with its score.</li>
+<li>Open-endedness: search for new and interesting, not only better on one number.</li>
+<li>Meta agent: an agent whose job is to write other agents, as code.</li>
+<li>Evaluation cascade: a tiny fast test first; full test only for those that pass.</li>
+<li>Sandbox: run untrusted code in a separate, limited process (timeouts, no network).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AlphaEvolve (Novikov et al. 2025)</h3><span class="slide-no">4/13</span></div><ul>
+<li>Program database keeps diversity:<ul>
+<li>MAP-Elites: keep the best candidate in each niche</li>
+<li>Islands: evolve several separate populations</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Build the scorer first.</strong> The scorer must check validity before quality. Validity means "is this even a legal answer?" Quality means "how good is it?" Skip the validity check and the search will find a cheat.</p>
 </li>
-<li>
-<p><strong>Fence in the code.</strong> Model-written code can loop forever or delete files. Run it in a sandbox (a separate, limited process or container with a timeout, no network, and limited disk). The AI Scientist paper (2024) reports their system edited its own code to raise its timeout, and once relaunched itself repeatedly.</p>
+<li>Gemini 2.0 Flash (many fast ideas) + Gemini 2.0 Pro (fewer, better ones) propose code diffs.</li>
+<li>Automatic evaluators score each child, often as a cascade.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AlphaEvolve results</h3><span class="slide-no">5/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4x4 complex matrix multiplication</td>
+<td>48 scalar multiplications; first gain over Strassen in this setting in 56 years</td>
+</tr>
+<tr>
+<td>50+ open math problems</td>
+<td>Matched best known in ~75%, improved ~20%</td>
+</tr>
+<tr>
+<td>Kissing number, 11 dimensions</td>
+<td>593 (previous 592)</td>
+</tr>
+<tr>
+<td>Google scheduling heuristic</td>
+<td>Recovers 0.7% of fleet-wide compute on average</td>
+</tr>
+<tr>
+<td>FlashAttention kernel</td>
+<td>32% speedup</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Mini AlphaEvolve: bin packing</h3><span class="slide-no">6/13</span></div><ul>
+<li>Task: put items into as few bins of size 100 as possible.</li>
+<li>Program to evolve: <code>pack(items, capacity)</code>. Seed: next fit.</li>
+<li>Evaluator:<ul>
+<li>Validity first: every item used once, no bin over capacity; invalid scores 0</li>
+<li>Quality: lower bound / bins used. 1.0 is perfect.</li>
+</ul>
 </li>
-<li>
-<p><strong>AlphaEvolve: evolve a program</strong> (the AlphaEvolve paper, 2025). It keeps a database of programs. Each step it picks a parent, shows the model that parent plus a few strong "inspiration" programs, and asks for an improved version. A fast model makes many ideas. A stronger model makes fewer, better ones. Each child is tested in an evaluation cascade: a tiny, quick test first, and the full, costly test only for children that pass. This found a way to multiply two 4x4 complex matrices with 48 multiplications instead of 49, the first gain over Strassen's method in this setting in 56 years.</p>
-</li>
-<li>
-<p><strong>ADAS: evolve the agent itself</strong> (the ADAS paper, 2024). Here each agent is written as code: a function that may call the model several times. A meta agent (an agent whose job is to write other agents) reads the archive of earlier designs and their scores. It writes a new design. That design is tested and added to the archive. The archive starts with known designs like "think step by step". The follow-up Darwin Gödel Machine paper (2025) applied the same idea to a coding agent that edits its own code, raising its score on a coding benchmark from 20.0% to 50.0%.</p>
-</li>
-<li>
-<p><strong>The AI Scientist: evolve research.</strong> It chains the whole research process: idea, experiment code, run, write-up, then an automated review. The authors report under $15 per paper. The weak points are the model acting as reviewer and the sandbox.</p>
-</li>
-<li>
-<p><strong>Keep the whole archive, not only the best.</strong> A candidate that looks worse today can be a stepping stone to a big win later. Open-endedness means rewarding what is new and interesting, not only what scores highest, so the search doesn't get stuck.</p>
-</li>
-</ol>
-<pre><code>pick parent from archive -&gt; model proposes change -&gt; sandbox runs it
-        ^                                                  |
-        |                                                  v
-   store child + score  &lt;---- quick test -&gt; full test (if it passed)
+<li>Cascade: 2 small instances first, then 20 full ones.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The evaluator in code</h3><span class="slide-no">7/13</span></div><pre><code class="language-python">        bins = pack(list(items), cap)
+        flat = [x for b in bins for x in b]
+        if Counter(flat) != Counter(items) or any(sum(b) &gt; cap for b in bins) or any(len(b) == 0 for b in bins):
+            return None
+        scores.append(math.ceil(sum(items) / cap) / len(bins))
 </code></pre>
-<h2>Worked example</h2>
-<p>The firm wants a better clause-review agent. It has 50 past contracts, each with the correct flags from its playbook. For example: "liability cap at most 12 months of fees".</p>
-<p>The archive starts with two designs. One asks the model once. One asks it to think step by step first. Each is scored by how many flags it gets right.</p>
-<p>The meta agent reads both designs and their scores. It proposes a third: "first find the liability clause, then compare it to the rule in a second call." The sandbox runs it on 10 contracts as a quick test. It does fine, so it gets the full 50. It scores higher, and goes into the archive.</p>
-<p>Now the warning. Suppose the scorer only counts "flags raised" and never checks they are correct. The search would soon find an agent that flags every clause. In the notebook's bin-packing version, a cheating program that overfills one bin scores 27 out of a "perfect" 1.0. The search optimizes what you measure, cheats included.</p>
-<p>The other warning: a small test set lies. With 6 questions, one answer is worth about 17 points. A "winner" may just be lucky. Always confirm it on contracts the search never saw.</p>
-<h2>Common mistakes</h2>
 <ul>
-<li><strong>A scorer without a validity check.</strong> The search will find the loophole. Check legality first, then quality.</li>
-<li><strong>Running model code in your own process.</strong> Use a separate process or container with a timeout and no network.</li>
-<li><strong>Trusting a win on a tiny search set.</strong> Keep a held-out set (data the search never touched) and trust only gains that show up there.</li>
-<li><strong>Keeping only the current best.</strong> Without an archive and some variety, the search gets stuck on one line of ideas.</li>
-<li><strong>Letting a model reviewer be the only judge.</strong> Check the write-up's numbers against the raw results with plain code.</li>
+<li>Line 1: run the evolved <code>pack</code> on a random instance.</li>
+<li>Line 2: flatten the bins into one list of items.</li>
+<li>Lines 3–4: any lost, duplicated or overfilled item → invalid.</li>
+<li>Line 5: score = best possible bin count / bins used.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Without vs with a validity check</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Score only</th>
+<th>Validity check first</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One overfilled bin scores 27 out of a "perfect" 1.0</td>
+<td>Overfilled packing scores 0</td>
+</tr>
+<tr>
+<td>Search finds the loophole</td>
+<td>Search must actually pack better</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Reward hacking: scoring high in a way that breaks the task's intent.</li>
+<li>The search optimizes what you measure, cheats included.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ADAS: a meta agent designs agents (Hu et al. 2024)</h3><span class="slide-no">9/13</span></div><ul>
+<li>Agents are code: a <code>forward()</code> function that may call the model several times.</li>
+<li>Meta agent reads the archive (designs + scores), writes a new design.</li>
+<li>New design runs on validation tasks; score goes into the archive.</li>
+<li>Archive seeded with hand designs: Chain-of-Thought, Self-Refine.</li>
+<li>GPT-4 meta agent, GPT-3.5 running agents:<ul>
+<li>+13.6 F1 on DROP, +14.4% on MGSM over the best hand designs</li>
+<li>Kept an edge when moved to other models (e.g. Claude, GPT-4)</li>
 </ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Why does AlphaEvolve use an evaluation cascade instead of the full test on every child?</summary>
-<p>Most children are worse or broken. A tiny quick test filters them out early, so the expensive test is spent only on promising ones.</p>
-</details>
-<details>
-<summary>In ADAS, what does the meta agent produce, and how is it judged?</summary>
-<p>A new agent written as code. It is run on test tasks, and its score is stored with it in the archive.</p>
-</details>
-<details>
-<summary>Name two safety measures for an AI Scientist-style loop.</summary>
-<p>Run generated code in a sandbox with time and storage limits and no network. Check the write-up&#x27;s claims against the raw results with code, rather than trusting a model reviewer.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the a06 notebook. It evolves a bin-packing function (a mini AlphaEvolve), lets a meta agent invent agent designs (a mini ADAS), and runs a tiny idea-to-review loop. Watch the archive's best score climb, then try removing the validity check to see the cheat appear.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Darwin Gödel Machine (Zhang et al. 2025)</h3><span class="slide-no">10/13</span></div><ul>
+<li>A coding agent rewrites its own code.</li>
+<li>Each new version is tested on coding benchmarks and kept in the archive.</li>
+<li>New versions branch from any archive member, not only the current best.</li>
+<li>SWE-bench 20.0% → 50.0%; Polyglot 14.2% → 30.7%.</li>
+<li>Stepping stones that look worse now can lead to the biggest later gains.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The AI Scientist (Lu et al. 2024)</h3><span class="slide-no">11/13</span></div><ul>
+<li>Idea → experiment code → run → write-up → automated review.</li>
+<li>Under $15 per paper.</li>
+<li>GPT-4o reviewer: 0.65 balanced accuracy on 500 ICLR 2022 papers; humans 0.66.</li>
+<li>Safety issues: it edited its own code to extend timeouts; once relaunched itself repeatedly.</li>
+<li>Our version adds a code check: do the write-up's numbers appear in the raw results?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+<li>The firm's past reviews, with correct playbook flags, are the evaluator for evolving a review agent.</li>
+<li>All proposals run in a sandbox on the firm's machine with a local model.</li>
+<li>Confirm any winner on contracts the search never saw.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>No validity check → the search finds the loophole. Check validity before quality.</li>
+<li>Trusting a tiny search set → with 6 questions, one answer is 17 points; confirm on held-out data.</li>
+<li>Running model code in your own process → use a subprocess or container with a timeout.</li>
+<li>Keeping only the current best → keep the archive and some diversity.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why does AlphaEvolve run an evaluation cascade instead of the full test on every child?</summary><p>Most children are worse or broken. A tiny fast test filters them out, so the expensive test runs only on promising ones.</p></details>
+
+<details><summary>In ADAS, what does the meta agent output, and how is it judged?</summary><p>A new agent written as code (a `forward()` function). It runs on validation tasks, and its score is stored with it in the archive.</p></details>
+
+<details><summary>Name two safety measures for an AI Scientist-style loop.</summary><p>Run generated code in a sandbox with time and memory limits and no network. Check the write-up&#x27;s numbers against the raw results with code.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run mini AlphaEvolve: compare the next-fit seed score with the best evolved program.</li>
+<li>Run mini ADAS: which new design beat chain-of-thought on 6 questions? Is it more than one question's worth?</li>
+<li>Run the AI Scientist loop and read the "numbers found in the results" line.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Lecture 7 (Oct 13)</p>
 

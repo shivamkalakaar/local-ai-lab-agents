@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>What an agent is, and when you don&#x27;t need one · Agent Engineering School</title>
-<meta name="description" content="What an AI agent really is (a model in a loop), how to build one from scratch, and why a simple fixed workflow is often the better choice.">
+<meta name="description" content="An agent is an LLM in a loop. Build one from scratch, add four safety limits, and see why a fixed workflow is often the better choice.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,88 +255,141 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 01</span></div><section class="mod" id="m1" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 01</div><h2>What an agent is, and when you don't need one</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/01_agent_loop.ipynb">Open in Colab</a><button class="done-btn" data-done="m1" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">What an AI agent really is (a model in a loop), how to build one from scratch, and why a simple fixed workflow is often the better choice.</p><article class="lesson"><h2>The big idea</h2>
-<p>An agent is a language model in a loop. It looks at the task, picks a next step, uses a tool, reads the result, and repeats. It stops when it thinks it can answer.</p>
-<p>Picture a new intern with a filing cabinet. You ask, "What is the liability cap in the Acme contract?" The intern opens the index, picks a section, reads it, and decides what to read next. Nobody told them the exact steps. They figured it out as they went. That is an agent.</p>
-<p>Now picture a checklist instead. "Open section 7. Read the cap. Write down the number." The intern still reads and thinks, but you fixed the steps. That is a workflow (a process where your code decides the steps and the model only fills in the fuzzy parts).</p>
-<p>The main lesson of this module is simple. Most business tasks should be workflows, not agents. Use an agent only when the steps truly depend on what you find.</p>
-<h2>Why it matters for us</h2>
-<p>A law firm checking contracts against its playbook knows the steps. Find the liability clause. Read the cap. Compare it to 12 months. The steps are the same every time. That is a workflow.</p>
-<p>This matters even more on a firm's own computers. Local models are smaller. Every choice you hand to a small model is a chance for it to go wrong. Fewer choices means fewer mistakes.</p>
-<p>Cost matters too. In one study, a complex agent cost over 50 times more than simple baselines and still scored lower (the "AI Agents That Matter" paper). Always report accuracy together with cost.</p>
-<h2>How it works, step by step</h2>
-<p>An agent has a few parts:</p>
-<ul>
-<li><strong>The model</strong>, which reads the situation and decides what to do.</li>
-<li><strong>Tools</strong>, which are plain functions it can ask to run, like "read clause 7.1".</li>
-<li><strong>Memory</strong>, which here is just the growing list of messages.</li>
-<li><strong>The environment</strong>, the world it acts on. Here, the contract files.</li>
-</ul>
-<p>The loop itself runs like this:</p>
-<ol>
-<li>Give the model the task, plus a list of tools with short descriptions.</li>
-<li>The model replies. Either it asks for a tool (a "tool call") or it gives a final answer.</li>
-<li>If it asked for a tool, your code runs that function and adds the result to the messages.</li>
-<li>Go back to step 2.</li>
-<li>Stop when the model answers, or when a safety limit hits.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 01</span></div><section class="mod" id="m1" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 01</div><h2>What an agent is, and when you don't need one</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/01_agent_loop.ipynb">Open in Colab</a><button class="done-btn" data-done="m1" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">An agent is an LLM in a loop. Build one from scratch, add four safety limits, and see why a fixed workflow is often the better choice.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 1 · Intro to Agentic Systems · <a href="https://web.stanford.edu/class/cs329z/slides/lecture01.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/11</span></div><ul>
+<li>Get familiar with an agent loop on top of an LLM, its key parts, and when a workflow beats an agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What is an agent?</h3><span class="slide-no">2/11</span></div><ul>
+<li>"Agent": from Latin <em>agens</em>, "one who acts."</li>
+<li>Russell and Norvig (1995): anything that perceives through sensors and acts through actuators.</li>
+<li>LLM agent: an LLM in a loop. It picks a step, calls a tool, sees the result, repeats until it can answer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Anatomy of an agent</h3><span class="slide-no">3/11</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What it does</th>
+<th>In our notebook</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM core</td>
+<td>Reads the situation, decides or writes</td>
+<td>Llama 3.1 8B on Ollama</td>
+</tr>
+<tr>
+<td>Planning &amp; reasoning</td>
+<td>Thinks before acting</td>
+<td>"Use the tools to read clauses before answering"</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td>Traces so far</td>
+<td>The growing <code>messages</code> list</td>
+</tr>
+<tr>
+<td>Tools</td>
+<td>Functions it can call</td>
+<td><code>list_sections</code>, <code>get_clause</code></td>
+</tr>
+<tr>
+<td>Environment</td>
+<td>The world it acts on; sends back results</td>
+<td>The contract files</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The agent loop</h3><span class="slide-no">4/11</span></div><ol>
+<li>Send the task plus a list of tools with short descriptions.</li>
+<li>Model replies: a tool call, or a final answer.</li>
+<li>Tool call → your code runs it, adds the result to the messages.</li>
+<li>Repeat until an answer or a safety limit.</li>
 </ol>
-<p>Four safety limits matter most:</p>
+<pre><code>task → LLM → tool call → run tool → result → LLM → ... → answer
+</code></pre></div><div class="slide"><div class="slide-top"><h3>Reasoning alone vs reasoning + acting</h3><span class="slide-no">5/11</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Reason only</th>
+<th>ReAct (reason + act)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Apple Remote was designed for Apple TV... answer: iPhone, iPad, iPod Touch"</td>
+<td>Search[Apple Remote] → Front Row → Search[Front Row (software)] → "keyboard function keys" ✓</td>
+</tr>
+<tr>
+<td>Answers from memory; can make facts up</td>
+<td>Checks each step against what the tool returns</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>A turn cap.</strong> Stop after a set number of rounds. Loops are the most common agent failure.</li>
-<li><strong>A stuck detector.</strong> If the model makes the exact same call twice, tell it to stop repeating.</li>
-<li><strong>Errors returned as results.</strong> If a tool fails, send the error message back. The model can often fix its own mistake.</li>
-<li><strong>A format check.</strong> Small local models sometimes write a tool call as plain text instead of making it. Send that back as an error.</li>
-</ul>
-<h2>Worked example</h2>
-<p>The notebook gives the agent two tools: <code>list_sections</code> (show the headings) and <code>get_clause</code> (read one numbered clause). Then it asks: "In contract msa_07, what is the liability cap? Quote the clause."</p>
-<p>The agent first lists the sections. It sees "7. Limitation of Liability." It then reads clause 7.1. It answers with the cap and the quote. You can watch each turn print out.</p>
-<p>Here is the heart of the loop:</p>
-<pre><code class="language-python">for turn in range(max_turns):
+<li>ReAct paper: made-up facts were 56% of failures with reasoning alone, 0% with reasoning plus actions.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Workflows vs agents: who decides the steps?</h3><span class="slide-no">6/11</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Code fixes the steps</td>
+<td>The LLM decides the steps</td>
+</tr>
+<tr>
+<td><code>cap_workflow</code>: code finds the "Liability" section; model reads that one clause</td>
+<td><code>run_agent</code>: model lists sections, picks one, reads it, decides what next</td>
+</tr>
+<tr>
+<td>Few model decisions → few ways to fail</td>
+<td>Flexible, but every choice can go wrong</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Both are compound AI systems: an LLM plus other parts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four safety limits</h3><span class="slide-no">7/11</span></div><ul>
+<li>Turn cap: stop after <code>max_turns</code> rounds. Loops are the most common agent failure.</li>
+<li>Stuck detector: same tool call twice → "you already made this exact call."</li>
+<li>Errors as results: a failed tool sends its error back, so the model can fix its call.</li>
+<li>Format check: small models sometimes <em>write</em> a tool call as text. Send back "FORMAT ERROR."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The loop in code</h3><span class="slide-no">8/11</span></div><pre><code class="language-python">for turn in range(max_turns):                                   # limit 1: turn cap
     msg = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS, temperature=0).choices[0].message
     messages.append(msg)
     if not msg.tool_calls:
         return {&quot;answer&quot;: msg.content, &quot;turns&quot;: turn + 1, &quot;tool_calls&quot;: calls}
+    for call in msg.tool_calls:
+        ...
+        messages.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: call.id, &quot;content&quot;: str(result)})
 </code></pre>
 <ul>
-<li>The <code>for</code> line is the turn cap. The loop can run only <code>max_turns</code> times.</li>
-<li>The next line sends all messages so far, plus the tool list, and gets the model's reply.</li>
-<li>We add that reply to the message list, so the model remembers it next turn.</li>
-<li>If the reply has no tool calls, the model is done. We return its answer.</li>
-</ul>
-<p>Then the notebook builds the same task as a workflow:</p>
-<pre><code class="language-python">sec = next(s for s in sections(contract(cid)) if &quot;Liability&quot; in s[&quot;title&quot;])
-return ask(f&quot;{sec['text']}\n\nWhat is the liability cap, in months of fees? ...&quot;)
-</code></pre>
-<ul>
-<li>The first line is plain code. It finds the section whose title says "Liability".</li>
-<li>The second line hands only that one section to the model and asks one narrow question.</li>
-</ul>
-<p>The model makes no decisions about where to look. It just reads one clause. The notebook compares both on five contracts and checks the workflow gets at least four right. The workflow is usually faster too.</p>
-<h2>Common mistakes</h2>
-<ul>
-<li><strong>Building an agent because it sounds impressive.</strong> If you know the steps, write a workflow.</li>
-<li><strong>No turn limit.</strong> Without one, a confused agent can loop forever, rereading the same clauses.</li>
-<li><strong>Crashing on tool errors.</strong> Return the error as text instead. A clear message like "NOT FOUND. Valid clauses: ..." lets the model recover.</li>
-<li><strong>Reporting accuracy without cost.</strong> Retries can buy accuracy. Show time and cost next to every score.</li>
-<li><strong>Skipping simple baselines.</strong> Try retrying, or a cheap model first with escalation to a stronger one. These often match complex agents.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>A firm wants every NDA checked against its 12-point playbook. Agent or workflow?</summary>
-<p>Workflow. The steps are known and the same every time. Use the model to read clauses, and do the checks in code where you can.</p>
-</details>
-<details>
-<summary>What does the stuck detector do?</summary>
-<p>It notices when the model makes the exact same tool call twice. Instead of running it again, it tells the model to use what it has or answer.</p>
-</details>
-<details>
-<summary>When does an agent make sense?</summary>
-<p>When the steps depend on what you find, so you can&#x27;t write them down in advance. For example, &quot;research this counterparty and tell me what to worry about.&quot;</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the agent on <code>msa_07</code> and watch each turn print. Then run the five-contract comparison and look at both the "ok" columns and the seconds. Finally, remove the stuck detector and ask for the vendor's tax ID, which isn't in the contract, to see the agent loop.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Line 1: the loop runs at most <code>max_turns</code> times.</li>
+<li>Line 2: send all messages plus the tool list; get the reply.</li>
+<li>Line 3: keep the reply, so the model sees it next turn.</li>
+<li>Lines 4–5: no tool call → the model is done. Return its answer.</li>
+<li>Lines 6–8: run each tool call (with the limits) and add the result.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Try the simple workflow first</h3><span class="slide-no">9/11</span></div><ul>
+<li>The notebook runs both on msa_01, msa_07, msa_08, msa_15 and msa_18 and prints correct/seconds for each.</li>
+<li>Its check expects the workflow right on at least 4 of 5.</li>
+<li>Kapoor, "AI Agents That Matter": LATS, a complex agent, cost over 50× more than simple baselines and scored lower.</li>
+<li>Always report accuracy next to cost and time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">10/11</span></div><ul>
+<li>Checking a contract against a playbook has known steps: find the clause, read the cap, compare to 12 months. That is a workflow.</li>
+<li>Local models are small. Every choice handed to them is a chance to fail.</li>
+<li>Keep agents for tasks where the next step depends on what you find.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">11/11</span></div><ul>
+<li>Agent because it sounds impressive → if you know the steps, write a workflow.</li>
+<li>No turn limit → a confused agent rereads the same clauses forever.</li>
+<li>Crashing on tool errors → return "NOT FOUND. Valid clauses: ..." so it can recover.</li>
+<li>Accuracy without cost → retries buy accuracy. Show time and cost too.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A firm wants every NDA checked against its 12-point playbook. Agent or workflow?</summary><p>Workflow. The steps are known and the same every time; use the model to read clauses and do the checks in code.</p></details>
+
+<details><summary>What does the stuck detector do?</summary><p>It spots the exact same tool call made twice and, instead of running it, tells the model to use what it has or answer.</p></details>
+
+<details><summary>When does an agent make sense?</summary><p>When the steps depend on what you find, so you can&#x27;t write them down in advance.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run the agent on msa_07 and watch each turn print.</li>
+<li>Run the five-contract comparison. Look at the "ok" columns and the seconds.</li>
+<li>Remove the stuck detector and ask for the vendor's tax ID (not in the contract). Watch it loop.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 1 · Zaharia et al., "Compound AI Systems" · Weng, "LLM Powered Autonomous Agents" · Kapoor et al., "AI Agents That Matter"</p>
   <p class="big">An agent is an LLM in a loop that picks its own next step, uses tools, and sees the results. Most real business tasks should not be agents. They should be <b>workflows</b>, where your code fixes the steps and the LLM fills in the fuzzy parts.</p>

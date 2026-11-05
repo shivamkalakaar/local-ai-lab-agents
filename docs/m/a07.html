@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Self-improvement with search and deep research agents · Agent Engineering School</title>
-<meta name="description" content="Two ways to make an agent better without retraining it. Search over many answers and pick wisely (AlphaCode), or let the model look things up mid-thought (Search-o1).">
+<meta name="description" content="Make an agent better without training it. Search over many answers and pick well (AlphaCode), or look facts up mid-thought (Search-o1).">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,87 +255,196 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A07</span></div><section class="mod" id="a07" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A07</div><h2>Self-improvement with search and deep research agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a07_search_deep_research.ipynb">Open in Colab</a><button class="done-btn" data-done="a07" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">Two ways to make an agent better without retraining it. Search over many answers and pick wisely (AlphaCode), or let the model look things up mid-thought (Search-o1).</p><article class="lesson"><h2>The big idea</h2>
-<p>You can make an agent better without changing the model at all. You make it search. There are two kinds of search, and they solve different problems.</p>
-<p>The first is search over answers. Think of hiring. You don't interview one candidate and hope. You get many applications, throw out the ones that fail the basic screen, and then pick carefully from the rest. AlphaCode does this with computer programs.</p>
-<p>The second is search for knowledge. Think of a lawyer drafting a memo. When they hit a fact they don't know, they stop, look it up, jot down the one line that matters, and keep writing. Search-o1 teaches a model to do this in the middle of its reasoning.</p>
-<h2>Why it matters for us</h2>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A07</span></div><section class="mod" id="a07" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A07</div><h2>Self-improvement with search and deep research agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a07_search_deep_research.ipynb">Open in Colab</a><button class="done-btn" data-done="a07" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Make an agent better without training it. Search over many answers and pick well (AlphaCode), or look facts up mid-thought (Search-o1).</p><article class="lesson"><p class="deck-src">Based on CS329A · Lecture 8 · Self-improvement with search and deep research agents · <a href="https://arxiv.org/abs/2203.07814" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
+<li>Use two kinds of search to make an agent better without training: sample-filter-cluster over answers, and search in the middle of reasoning.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two kinds of search</h3><span class="slide-no">2/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Search over answers</th>
+<th>Search for knowledge</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Draw many programs, keep the good ones</td>
+<td>Pause mid-thought, look a fact up</td>
+</tr>
+<tr>
+<td>Needs a cheap check (example tests)</td>
+<td>Needs a search tool over your documents</td>
+</tr>
+<tr>
+<td>AlphaCode (2022), AlphaCode 2 (2023)</td>
+<td>Search-o1 (2025)</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li>A small local model often gets things wrong on the first try. But if you can check answers cheaply, drawing many and filtering is affordable on your own machine.</li>
-<li>A local model knows nothing about the firm's contracts or internal policies. It must look them up. Doing that well is the difference between a useful assistant and a confident guesser.</li>
-<li>Many firm questions need two facts from two places. "Who must approve this contract?" needs the fee from the contract and the rule from the policy. Searching once rarely gets both.</li>
+<li>Both make the agent better with no change to the model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AlphaCode: sample, filter, cluster</h3><span class="slide-no">3/13</span></div><ul>
+<li>Sample: draw up to millions of programs per problem.</li>
+<li>Filter: run each on the example tests in the problem. Drop the ones that fail.<ul>
+<li>Removed about 99% of samples.</li>
 </ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Sample many answers</strong> (the AlphaCode paper, 2022). For each coding problem, AlphaCode drew huge numbers of programs, up to millions. More tries means a better chance at least one is right. The share of problems where at least one try is right is called coverage. It is the ceiling for any picking method.</p>
 </li>
-<li>
-<p><strong>Filter with the examples.</strong> Each problem comes with a few example tests. Running every program on them threw away about 99% of samples. This is a cheap, exact check. But passing the examples is not the same as being correct. Many wrong programs still pass.</p>
+<li>Cluster: run survivors on new inputs; group programs with identical outputs.<ul>
+<li>The inputs need no known answers.</li>
+</ul>
 </li>
-<li>
-<p><strong>Cluster by behavior.</strong> Run the survivors on fresh inputs. These inputs need no known answers. Group programs that give the same outputs. Then submit one program from each group, biggest group first, with at most 10 submissions. Why biggest first? There are many ways to be wrong, but correct programs tend to agree. So they pile up in the largest group. AlphaCode 2 (2023) kept this pipeline and added a scoring model (a model that predicts how likely a program is correct) to choose inside each group. With a better base model, it needed about 100 samples to match what the original needed a million for.</p>
-</li>
-<li>
-<p><strong>Search for knowledge: first, RAG from zero.</strong> RAG (retrieval-augmented generation) means: before the model answers, a search tool finds relevant documents and pastes them into its prompt. It is like handing the intern a folder before they answer. Naive RAG searches once, with the whole question.</p>
-</li>
-<li>
-<p><strong>Search-o1: search while thinking</strong> (the Search-o1 paper, 2025). The model reasons step by step. When unsure, it writes a search query between special tags, like <code>&lt;search&gt;...&lt;/search&gt;</code>. The system pauses, runs the search, and the model continues. This is agentic RAG: the model itself decides when and what to search, possibly several times.</p>
-</li>
-<li>
-<p><strong>Condense before pasting back.</strong> Raw search results are long and noisy. They can pull the reasoning off track. So a separate step, called Reason-in-Documents, reads the results and writes back only the few facts that matter. On a hard science quiz, this setup scored 63.6, against 58.6 for standard RAG with the same model.</p>
-</li>
-</ol>
-<pre><code>model reasons ... &lt;search&gt;fee in Acme contract&lt;/search&gt;
-     -&gt; search tool -&gt; 3 pages -&gt; Reason-in-Documents -&gt; &quot;Monthly fee is $8,000.&quot;
-model continues ... &lt;search&gt;procurement approval tiers&lt;/search&gt;
-     -&gt; ... -&gt; &quot;$5,000 to $15,000: Finance Director.&quot;
-model: ANSWER: Finance Director
+<li>Submit one program per cluster, biggest first, at most 10.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why the biggest cluster first</h3><span class="slide-no">4/13</span></div><ul>
+<li>Many ways to be wrong; correct programs tend to agree.</li>
+<li>So correct programs gather in the larger clusters.</li>
+<li>Random picks waste submissions on programs that look different but behave the same.</li>
+<li>Coverage: share of problems where at least one sample is correct. The ceiling for any picking method.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Same tests, different behavior</h3><span class="slide-no">5/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Correct <code>max_subarray</code></th>
+<th>Planted wrong version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>best = cur = nums[0]</code></td>
+<td><code>best = cur = 0</code></td>
+</tr>
+<tr>
+<td><code>cur = max(x, cur + x)</code></td>
+<td><code>cur = max(0, cur + x)</code></td>
+</tr>
+<tr>
+<td>Passes both example tests</td>
+<td>Also passes both example tests</td>
+</tr>
+<tr>
+<td>All-negative list → largest number</td>
+<td>All-negative list → 0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Filtering can't catch it. On generated inputs it behaves differently, so it lands in another cluster.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the papers showed</h3><span class="slide-no">6/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>What it showed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AlphaCode (Li et al. 2022)</td>
+<td>Top 54.3% in simulated Codeforces contests; 34.2% of held-out problems with 10 submissions</td>
+</tr>
+<tr>
+<td>AlphaCode 2 (2023)</td>
+<td>43% of 77 recent Codeforces problems in 10 tries vs 25%; about 85th percentile</td>
+</tr>
+<tr>
+<td>Search-o1 (Li et al. 2025)</td>
+<td>GPQA diamond 63.6 vs 58.6 with standard RAG and 58.1 with no retrieval</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>AlphaCode 2 added a scoring model: predicts how likely a sample is correct; picks the best in each cluster.</li>
+<li>It needed about 100 samples to match AlphaCode with a million.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Comparing ways to pick</h3><span class="slide-no">7/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>random</td>
+<td>pick K samples at random</td>
+</tr>
+<tr>
+<td>filter + random</td>
+<td>pick K at random from those passing the examples</td>
+</tr>
+<tr>
+<td>filter + cluster</td>
+<td>one sample from each of the K biggest clusters</td>
+</tr>
+<tr>
+<td>oracle</td>
+<td>any sample correct (coverage)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The gap to the oracle row is the selection problem.</li>
+<li>10@k: share of problems solved when k samples are drawn but only 10 may be submitted.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Naive RAG vs Search-o1</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Naive RAG</th>
+<th>Search-o1 style</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Search once, with the whole question</td>
+<td>Model writes <code>&lt;search&gt;query&lt;/search&gt;</code> when unsure</td>
+</tr>
+<tr>
+<td>Paste the raw results in</td>
+<td>Reason-in-Documents condenses results first</td>
+</tr>
+<tr>
+<td>Often gets one hop, misses the other</td>
+<td>Searches for one fact at a time</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>RAG (retrieval-augmented generation): search first, then answer from what you found.</li>
+<li>Agentic RAG: the model decides when and what to search, possibly many times.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reason-in-Documents</h3><span class="slide-no">9/13</span></div><ul>
+<li>A separate step: reads the retrieved pages, the reasoning so far and the query.</li>
+<li>Writes back only the useful facts (our notebook: 1–3 sentences).</li>
+<li>Why: long, noisy pages can push the reasoning off track.</li>
+<li>Search-o1 beat agentic RAG without this step by 4.7% averaged over five reasoning datasets.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A two-hop question</h3><span class="slide-no">10/13</span></div><ul>
+<li>Question: "Under our procurement policy, who must approve the agreement between Bayview Health Partners and Brightline Data Corp.?"</li>
+<li>Hop 1 (contract msa_01, 2.1): "Customer shall pay Vendor $12,500 per month"</li>
+<li>Hop 2 (Procurement Policy PP-4): $5,000 up to and including $15,000 → Finance Director</li>
+<li>Answer: Finance Director. One search with the whole question may bring back only one hop.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The Search-o1 loop in code</h3><span class="slide-no">11/13</span></div><pre><code class="language-python">out = ask_msgs(msgs, stop=[&quot;&lt;/search&gt;&quot;])
+...
+query = out[i_s + len(&quot;&lt;search&gt;&quot;):].strip()[:200]
+docs = search(query)
+info = reason_in_documents(transcript, query, docs) if condense else &quot;\n&quot;.join(d[&quot;text&quot;] for d in docs)
+transcript += f&quot;&lt;/search&gt;\n&lt;result&gt;{info}&lt;/result&gt;&quot;
 </code></pre>
-<h2>Worked example</h2>
-<p>The notebook builds this exact case. The corpus has 20 contracts and a few internal policies. One policy, "Procurement Policy PP-4", says who approves vendor spending. Under $5,000 a month, the Department Head. From $5,000 up to $15,000, the Finance Director. Above that, the Chief Financial Officer.</p>
-<p>The question: "Who must approve the agreement between this customer and this vendor?"</p>
 <ul>
-<li><strong>No search.</strong> The model has never seen these documents. It guesses.</li>
-<li><strong>Naive RAG.</strong> One search with the whole question. It often brings back the contract or the policy, but not both. Half the facts means a wrong answer.</li>
-<li><strong>Search-o1 style.</strong> The model searches for the contract's fee first. The condensing step returns one sentence with the fee. Then it searches for the approval rule. It now has both hops and can answer.</li>
-</ul>
-<p>The search tool itself is plain code:</p>
-<pre><code class="language-python">def search(query, k=3):
-    scores = BM25.get_scores(tok(query))
-    return [DOCS[i] for i in sorted(range(len(DOCS)), key=lambda i: -scores[i])[:k]]
-</code></pre>
-<ul>
-<li>Line 1 defines a search that returns the top <code>k</code> documents, three by default.</li>
-<li>Line 2 scores every document with BM25, a classic keyword-matching method. More shared words, especially rare ones, means a higher score.</li>
-<li>Line 3 sorts documents from best to worst score and returns the top three.</li>
-</ul>
-<p>The AlphaCode half of the notebook plants a wrong program that passes both example tests. Filtering can't catch it. But on fresh inputs it behaves differently, so it lands in a separate, smaller group.</p>
-<h2>Common mistakes</h2>
-<ul>
-<li><strong>Treating "passes the examples" as "correct".</strong> Many wrong programs pass. Use clustering and hidden tests.</li>
-<li><strong>Picking survivors at random.</strong> You waste your submission budget on programs that look different but behave the same.</li>
-<li><strong>Searching once with the whole question.</strong> For two-step questions, let the model search for each fact on its own.</li>
-<li><strong>Pasting long raw results into the reasoning.</strong> Condense them to a few facts first.</li>
-<li><strong>Only reading the score.</strong> A small model may never search, or may search with vague words. Read the transcripts.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Why does AlphaCode pick from the largest cluster first?</summary>
-<p>There are many ways to be wrong, but correct programs tend to behave the same. So correct programs gather in the larger clusters.</p>
-</details>
-<details>
-<summary>What does Reason-in-Documents do?</summary>
-<p>It reads the retrieved pages along with the current reasoning and query. It returns only the relevant facts, which are pasted back into the reasoning.</p>
-</details>
-<details>
-<summary>Why can naive RAG fail on the approver question?</summary>
-<p>The answer needs both the contract&#x27;s monthly fee and the policy&#x27;s approval tiers. One search with the whole question may return only one of them.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the a07 notebook. Part A samples small programs, filters, clusters, and compares picking methods against the oracle ceiling. Part B compares no search, naive RAG and a Search-o1 loop on two-hop contract questions; read a few transcripts to see what the model searched for.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Line 1: the model reasons; generation stops right after it asks for a search.</li>
+<li>Line 3: cut out the query between the tags.</li>
+<li>Line 4: BM25 search (keyword scoring) over contract sections and policies, top 3.</li>
+<li>Line 5: condense the pages into a few facts (or paste raw pages if <code>condense=False</code>).</li>
+<li>Line 6: put the facts back inside <code>&lt;result&gt;</code> and let the model continue. At most 3 searches.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+<li>A local model often fails on the first try. With a cheap exact check, drawing many and filtering is affordable on the firm's machine.</li>
+<li>A local model knows nothing about the firm's contracts or policies. It must look them up.</li>
+<li>Many firm questions need two facts from two places: the fee from the contract, the rule from the policy.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>"Passes the examples" = "correct" → many wrong programs pass; cluster and use hidden tests.</li>
+<li>Searching once with the whole question → let the model search one fact at a time.</li>
+<li>Pasting long raw results into the reasoning → condense to a few facts first.</li>
+<li>Reading only the score → a small model may never search, or search with vague words. Read the transcripts.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why does AlphaCode pick from the largest cluster first?</summary><p>There are many ways to be wrong, but correct programs tend to behave the same. So they gather in the larger clusters.</p></details>
+
+<details><summary>What does Reason-in-Documents do?</summary><p>It reads the retrieved pages with the current reasoning and query, and returns only the relevant facts to put back into the reasoning.</p></details>
+
+<details><summary>Why can naive RAG fail on the approver question?</summary><p>It needs the contract&#x27;s monthly fee and the policy&#x27;s approval tiers. One search with the whole question may bring back only one of them.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Part A: sample 6 programs for each of 5 small tasks; compare random, filter + random and filter + cluster against the oracle.</li>
+<li>Check that the planted wrong <code>max_subarray</code> lands in a different cluster.</li>
+<li>Part B: compare no search, naive RAG and the Search-o1 loop on two-hop questions; read what the model searched for.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Lecture 8 (Oct 17)</p>
 

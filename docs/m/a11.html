@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Guest lectures and reasoning frontiers · Agent Engineering School</title>
-<meta name="description" content="The reasoning tricks behind today&#x27;s models, tried on a small local one. You&#x27;ll understand chain of thought, self-consistency, least-to-most, CoT-decoding, and where the guest talks…">
+<meta name="description" content="The reasoning tricks behind today&#x27;s models, tried on a small local one. Chain of thought, self-consistency, least-to-most, CoT-decoding, and where the guest talks point.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,78 +255,211 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A11</span></div><section class="mod" id="a11" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A11</div><h2>Guest lectures and reasoning frontiers</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a11_guest_lectures.ipynb">Open in Colab</a><button class="done-btn" data-done="a11" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">The reasoning tricks behind today&#x27;s models, tried on a small local one. You&#x27;ll understand chain of thought, self-consistency, least-to-most, CoT-decoding, and where the guest talks…</p><article class="lesson"><h2>The big idea</h2>
-<p>The guest talks in this course trace one arc. Models learned to reason step by step. Then to sample many answers and vote. Then to learn from rewards a program can check. Now they act in software and in the physical world.</p>
-<p>The heart of it is simple. Think of a junior associate asked a tricky question. If you demand a one-word answer on the spot, they guess. If you let them write out their steps, they do better. If you ask five associates separately and they mostly agree, you can trust the answer more. If they disagree, you send it to a partner.</p>
-<p>One note: the course assigned no papers for these talks. Every reading on this page is our pick of the speaker's best-known public work, not the course's list.</p>
-<h2>Why it matters for us</h2>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A11</span></div><section class="mod" id="a11" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A11</div><h2>Guest lectures and reasoning frontiers</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a11_guest_lectures.ipynb">Open in Colab</a><button class="done-btn" data-done="a11" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">The reasoning tricks behind today&#x27;s models, tried on a small local one. Chain of thought, self-consistency, least-to-most, CoT-decoding, and where the guest talks point.</p><article class="lesson"><p class="deck-src">Based on CS329A · Guest lectures (9, 15, 16, 18, 19) and Lecture 20 · Reasoning frontiers · <a href="https://arxiv.org/abs/2203.11171" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
+<li>Use four prompt-only reasoning tricks on a local model, and use voting agreement to decide which answers need a person.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The guest talks</h3><span class="slide-no">2/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Lecture</th>
+<th>Speaker</th>
+<th>Topic</th>
+<th>Our reading pick</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>9</td>
+<td>Melvin Johnson</td>
+<td>Post-training, chatbots to agents</td>
+<td>Multilingual NMT (2017); Gemini report</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Denny Zhou</td>
+<td>Reasoning</td>
+<td>CoT, self-consistency, least-to-most, CoT-decoding</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Thang Luong</td>
+<td>AlphaProof, AlphaGeometry, IMO gold</td>
+<td>AlphaGeometry; DeepMind IMO posts</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Misha Laskin</td>
+<td>Agentic systems for autonomy</td>
+<td>Algorithm Distillation</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Danny Driess</td>
+<td>Multimodal agents in robotics</td>
+<td>PaLM-E; π0</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li>These tricks need no training. They work on any local model today, with just prompts and a few extra calls.</li>
-<li>Voting gives you a free confidence score. That tells the firm which contract answers can go straight through and which need a lawyer's eyes.</li>
-<li>The big math wins came from rewards a program could check exactly. The firm's labeled contracts are that kind of check, at small scale.</li>
-</ul>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Chain of thought: show your work</strong> (the Chain-of-Thought paper, 2022). Chain of thought (CoT) means the model writes its reasoning steps before the final answer. With eight worked examples, a very large model reached the best score at the time on grade-school math problems. Today's chat models are trained to do this, so "think step by step" is usually enough. The gain grows with model size. Tiny models can write steps that look right but aren't.</p>
-</li>
-<li>
-<p><strong>Self-consistency: ask several times, take the majority</strong> (the Self-Consistency paper, 2022). Sample several reasoning paths with some randomness (a temperature above 0, a setting that makes answers vary). Take the most common final answer. Why does it work? There are many paths to the right answer, but wrong answers tend to scatter. The paper reports a gain of 17.9% over single-chain CoT on grade-school math. The share of samples that agree is the agreement rate, a cheap confidence score.</p>
-</li>
-<li>
-<p><strong>Least-to-most: split the problem first</strong> (the Least-to-Most paper, 2022). First ask the model to break the problem into easier sub-questions. Then solve them in order, feeding each answer into the next. This helps most when the real problem is harder than the examples. On one test of following longer instructions, it reached at least 99%, against 16% for plain CoT.</p>
-</li>
-<li>
-<p><strong>CoT-decoding: reasoning without a prompt</strong> (the CoT-decoding paper, 2024). Normally a model uses greedy decoding: it always picks the single most likely next word. CoT-decoding branches instead. At the first word of the answer, it tries the top 10 alternatives and continues each one greedily. Some branches jump to a number. Others start "First..." and reason their way there. The branch whose answer the model is most confident about wins. On one 7B base model, math accuracy went from 9.9% with greedy decoding to 25.1%. The reasoning was in the model all along. Greedy decoding just hid it.</p>
-</li>
-<li>
-<p><strong>Checkable rewards beat clever prompts</strong> (Thang Luong's talk). AlphaGeometry (2024) paired a language model that suggests extra lines or points with an exact logic engine that does the proof. It solved 25 of 30 olympiad geometry problems. AlphaProof (2024) used reinforcement learning (learning by trial and reward) in Lean, a language whose proofs a computer can check exactly. It scored 28 of 42 at the 2024 math olympiad, but some problems took up to three days. In 2025, Gemini Deep Think scored 35 of 42 in plain language within the 4.5-hour limit, using "parallel thinking" (exploring several solutions at once).</p>
-</li>
-<li>
-<p><strong>The other talks, in one line each.</strong> Post-training (everything after the first big training run, like instruction tuning and RL) turns a text predictor into an agent (Melvin Johnson). An agent can improve from its own past attempts, if it can see them (Misha Laskin's Algorithm Distillation paper, 2022). The same recipe works for robots: start from a big pretrained model, add images and actions, then fine-tune (Danny Driess's PaLM-E and π0 papers).</p>
-</li>
-</ol>
-<h2>Worked example</h2>
-<p>The firm asks its local model: "This contract's monthly fee is X and the liability cap is Y. Is the cap within 12 months of fees?" It is a two-step problem: multiply, then compare.</p>
-<p><strong>Direct answer.</strong> "Answer yes or no only." The model has no room to work it out. It guesses.</p>
-<p><strong>Chain of thought.</strong> "Think step by step." It computes 12 times the fee, compares it to the cap, then answers.</p>
-<p><strong>Self-consistency.</strong> Ask the same question five times. The notebook does exactly this on math problems:</p>
-<pre><code class="language-python">K = 5
+<li>The course assigned no papers for these talks. Every reading here is our pick.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Direct answer vs chain of thought</h3><span class="slide-no">3/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Direct</th>
+<th>Chain of thought (CoT)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Reply with only the final number, no words, no working."</td>
+<td>"Think step by step, showing each calculation."</td>
+</tr>
+<tr>
+<td>No room for the steps</td>
+<td>Steps first, then <code>ANSWER: &lt;number&gt;</code></td>
+</tr>
+<tr>
+<td>15 tokens max</td>
+<td>500 tokens max</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>CoT: the model writes its reasoning steps before the answer.</li>
+<li>Gain grows with model size; tiny models can write steps that look right but are wrong.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Self-consistency</h3><span class="slide-no">4/13</span></div><ul>
+<li>Sample several reasoning paths (temperature above 0); take the majority answer.</li>
+<li>Many paths lead to the right answer; wrong answers tend to scatter.</li>
+<li>Agreement rate: share of samples matching the majority. A free confidence score.</li>
+<li>High agreement ≠ truth. A model can be wrong the same way every time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Voting in code</h3><span class="slide-no">5/13</span></div><pre><code class="language-python">samples = pmap(sample_answers, PROBS)
 votes = [Counter(a for a in s if a is not None).most_common(1) for s in samples]
 sc = [v[0][0] if v else None for v in votes]
 agree = [v[0][1] / K if v else 0 for v in votes]
 </code></pre>
 <ul>
-<li>Line 1 sets the number of samples per question to 5.</li>
-<li>Line 2 counts the answers for each question, skipping blanks, and finds the most common one.</li>
-<li>Line 3 takes that most common answer as the final vote.</li>
-<li>Line 4 computes agreement: how many of the 5 samples matched the vote.</li>
-</ul>
-<p><strong>The business use.</strong> If 5 of 5 agree, let it through. If only 2 of 5 agree, send it to a lawyer. You trade some review work for much higher accuracy on what passes unreviewed. But beware: agreement measures consistency, not truth. A model can be wrong the same way every time.</p>
-<h2>Common mistakes</h2>
+<li>Line 1: K = 5 CoT samples per problem at temperature 0.7.</li>
+<li>Line 2: count the final answers; find the most common.</li>
+<li>Line 3: the majority answer.</li>
+<li>Line 4: agreement = majority count / K.</li>
+<li>Review gate (Solution 3): agreement below 60% → send to a person.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Least-to-most</h3><span class="slide-no">6/13</span></div><ul>
+<li>Stage 1: break the problem into simpler sub-questions. Don't solve yet.</li>
+<li>Stage 2: solve them in order; each answer feeds the next.</li>
+<li>For problems harder than the prompt examples.</li>
+<li>Our notebook: 2 calls (decompose, then solve all). The paper solves each sub-question in its own call.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CoT-decoding: reasoning without a prompt</h3><span class="slide-no">7/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Greedy decoding</th>
+<th>CoT-decoding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Always pick the most likely next token</td>
+<td>Branch on the top-k first tokens (k = 10 in the paper)</td>
+</tr>
+<tr>
+<td>One path; often answers at once</td>
+<td>Continue each branch greedily</td>
+</tr>
+<tr>
+<td>Hides reasoning the model can do</td>
+<td>Pick by answer confidence</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>Forcing a short answer on a multi-step problem.</strong> "Only the number" removes the reasoning the model needs.</li>
-<li><strong>Reading high agreement as truth.</strong> Voting can't fix a mistake the model makes every time.</li>
-<li><strong>Expecting big CoT gains from tiny models.</strong> The gain grows with size. Check a sample of the steps.</li>
-<li><strong>Copying the olympiad recipe without a checker.</strong> RL worked there because answers could be verified exactly.</li>
+<li>Answer confidence (Δ): average gap between top-1 and top-2 token probabilities over the answer tokens.</li>
+<li>Needs raw completion and log-probs. Without them, our notebook uses branch agreement instead.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Denny Zhou&#x27;s four papers</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>What it showed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chain-of-Thought (Wei et al. 2022)</td>
+<td>540B model + 8 CoT examples: state of the art on GSM8K, beat fine-tuned GPT-3 with a verifier</td>
+</tr>
+<tr>
+<td>Self-Consistency (Wang et al. 2022)</td>
+<td>Over CoT: GSM8K +17.9%, SVAMP +11.0%, AQuA +12.2%</td>
+</tr>
+<tr>
+<td>Least-to-Most (Zhou et al. 2022)</td>
+<td>SCAN, 14 examples: at least 99% on every split vs 16% for CoT</td>
+</tr>
+<tr>
+<td>CoT-decoding (Wang and Zhou 2024)</td>
+<td>Pre-trained Mistral-7B on GSM8K: 9.9% greedy → 25.1%</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Math olympiad: from formal to plain language</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>System</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AlphaGeometry (2024)</td>
+<td>25 of 30 olympiad geometry problems; previous best 10; average gold medalist about 25.9</td>
+</tr>
+<tr>
+<td>AlphaProof + AlphaGeometry 2 (IMO 2024)</td>
+<td>28 of 42 points, silver; Lean proofs; some problems took up to three days</td>
+</tr>
+<tr>
+<td>Gemini Deep Think (IMO 2025)</td>
+<td>35 of 42 points, gold; natural language, within 4.5 hours</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Lean: a proof language a computer can check exactly.</li>
+<li>Parallel thinking: explore several candidate solutions at once.</li>
+<li>A checkable reward is what made the RL work.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The other talks, in short</h3><span class="slide-no">10/13</span></div><ul>
+<li>Johnson: post-training = everything after pre-training (instruction tuning, preference tuning, RL).<ul>
+<li>His 2017 paper: one model for many languages, translating pairs never seen together.</li>
 </ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>How is self-consistency different from CoT-decoding?</summary>
-<p>Self-consistency samples whole reasoning paths from a step-by-step prompt and votes. CoT-decoding uses no prompt, branches only on the first word, continues greedily, and picks the most confident answer.</p>
-</details>
-<details>
-<summary>Why does least-to-most help on problems harder than the examples?</summary>
-<p>It breaks the problem into easier pieces the model can handle. Earlier answers feed later ones, so the model never has to solve the whole thing at once.</p>
-</details>
-<details>
-<summary>What made reinforcement learning work for AlphaProof?</summary>
-<p>Lean, a proof language a computer can check exactly. That gave a reliable reward.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the a11 notebook. It compares direct answers with chain of thought on six hard math problems, then runs self-consistency with five samples, least-to-most, and an approximate CoT-decoding. Look at the agreement column: low-agreement answers are the ones to send for review.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+</li>
+<li>Laskin: Algorithm Distillation trains a transformer on an RL algorithm's learning histories; it improves in context, no weight updates.</li>
+<li>Driess: PaLM-E feeds images and robot state into a language model; PaLM-E-562B was state of the art on OK-VQA.<ul>
+<li>π0: vision-language-action model (images + text in, robot actions out), trained on many robot types.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture 20: open problems</h3><span class="slide-no">11/13</span></div><ul>
+<li>Our synthesis, not the lecture's content:<ul>
+<li>Rewards for work with no unit test.</li>
+<li>Long-horizon reliability: 80% horizons are several times shorter than 50% ones.</li>
+<li>Memory that stays correct over months.</li>
+<li>Cheaper inference, so search and voting are affordable.</li>
+<li>Evaluations that keep up (live benchmarks).</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+<li>These tricks need no training. They work on any local model with prompts and a few extra calls.</li>
+<li>Agreement tells the firm which contract answers go straight through and which need a lawyer.</li>
+<li>The firm's labeled contracts are a checkable reward, at small scale.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>Forcing "only the number" on a multi-step problem → let it reason, grade the final answer with code.</li>
+<li>High agreement = correct → agreement measures consistency, not truth.</li>
+<li>CoT-decoding through the chat endpoint → needs raw completion and log-probs.</li>
+<li>Copying the IMO recipe without a checker → RL worked because answers could be verified exactly.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What is the difference between self-consistency and CoT-decoding?</summary><p>Self-consistency samples whole reasoning paths from a CoT prompt and votes. CoT-decoding uses no prompt, branches only on the first token, continues greedily and picks by answer confidence.</p></details>
+
+<details><summary>What made RL work in AlphaProof?</summary><p>Lean, a formal checker that verifies proofs exactly, gave a reliable reward.</p></details>
+
+<details><summary>Were the readings for these talks assigned by the course?</summary><p>No. The course listed only titles and speakers; these are our picks of each speaker&#x27;s public work.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Compare direct vs CoT on 6 seeded hard math problems.</li>
+<li>Run self-consistency with K = 5; check that high-agreement answers are more often right.</li>
+<li>Run least-to-most, then CoT-decoding on one problem; see if your Ollama gives real log-probs.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A guest lectures: Lecture 9 (Oct 20) Melvin Johnson, 15 (Nov 10) Denny Zhou, 16 (Nov 14) Thang Luong, 18 (Nov 21) Misha Laskin, 19 (Dec 1) Danny Driess; Lecture 20 (Dec 5) Future research areas</p>
 

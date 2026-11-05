@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tools and function calling · Agent Engineering School</title>
-<meta name="description" content="How to design tools an AI can use safely: clear descriptions, checked inputs, short outputs, helpful errors, and rules enforced in code rather than in the prompt.">
+<meta name="description" content="Design tools an agent can use safely. A registry that validates, asks permission, runs and truncates, with rules enforced in code, not the prompt.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -159,7 +159,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
 .crumbs{color:var(--muted)}
-.lesson{max-width:72ch;font-size:17px;line-height:1.72}
+.lesson{max-width:860px;font-size:17px;line-height:1.72}
 .lesson h2{font:700 24px/1.25 var(--f-display);margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
 .lesson h2:first-of-type{border-top:0;padding-top:0;margin-top:8px}
 .lesson h3{font:700 19px/1.3 var(--f-display);margin:22px 0 6px}
@@ -168,6 +168,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson pre code{background:none;padding:0}
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
+.deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
+.slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
+.slide-top h3{font:700 21px/1.25 var(--f-display);margin:0}
+.slide-no{font:600 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.slide ul{margin:6px 0;padding-left:22px}.slide li{margin:5px 0}.slide li ul{margin:2px 0}
+.slide p{margin:8px 0}
+.slide.objective{background:var(--accent-soft);border-color:var(--accent)}
+.slide table{font-size:15px}.slide td,.slide th{vertical-align:top}
+.slide pre{margin:8px 0}
 .lesson-meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:4px 0 22px}
 .lesson-summary{font-size:19px;line-height:1.55;padding:16px 20px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;max-width:68ch;margin:6px 0 24px}
 .deeper{margin-top:48px;padding-top:8px;border-top:3px solid var(--ink)}
@@ -244,91 +255,218 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 05</span></div><section class="mod" id="m5" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 05</div><h2>Tools and function calling</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/05_tools.ipynb">Open in Colab</a><button class="done-btn" data-done="m5" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Plain-English lesson, then the deeper material</span></div><p class="lesson-summary">How to design tools an AI can use safely: clear descriptions, checked inputs, short outputs, helpful errors, and rules enforced in code rather than in the prompt.</p><article class="lesson"><h2>The big idea</h2>
-<p>A tool is a plain function the model can ask to run, like "read clause 7.1" or "send an email." The model never runs it directly. It writes a request. Your code decides whether to run it.</p>
-<p>Think of a bank teller. A customer fills in a withdrawal slip. The teller checks the slip is filled in correctly. Then they check the customer is allowed to take that money. Only then do they hand over cash. Big withdrawals need a manager's sign-off. The teller doesn't rely on the customer promising to behave.</p>
-<p>That is a tool registry (the code that sits between the model and your tools). It checks every request, enforces permissions, runs the tool, and trims the output. The course's advice: spend more effort on tools than on the prompt.</p>
-<h2>Why it matters for us</h2>
-<p>A contract agent might read files, and one day send emails. A rule like "never email a client without approval" must hold every time. If it lives in the prompt, it is only a suggestion. The model can ignore it. If it lives in code, it is a rule.</p>
-<p>Small local models also make more mistakes in their tool requests. Wrong formats, wrong names, missing fields. A good registry catches these before they run and tells the model how to fix them.</p>
-<p>Output size matters too. Long tool results clutter the model's desk. In one study, showing whole files instead of small pages cut a coding agent's success from 18.0% to 12.7% (the SWE-agent paper).</p>
-<h2>How it works, step by step</h2>
-<ol>
-<li>
-<p><strong>Keep tools few and distinct.</strong> Overlapping tools confuse the model. One narrow job per tool.</p>
-</li>
-<li>
-<p><strong>Write descriptions like notes for a new hire.</strong> Say what it does, what it returns, and when to use it. "Reads stuff" is useless. "Read one clause by number like '7.1'. Returns NOT FOUND if it doesn't exist" is clear.</p>
-</li>
-<li>
-<p><strong>Make misuse hard.</strong> Each tool has a schema (a description of the allowed inputs). Use patterns, fixed choices and required fields. A contract ID must look like <code>msa_07</code>.</p>
-</li>
-<li>
-<p><strong>Run each request through four gates, in order:</strong></p>
-</li>
-<li><strong>Validate.</strong> Does the request match the schema? If not, reject it before running.</li>
-<li><strong>Permission.</strong> Is this tool read-only? If it changes the world, like sending email, ask for approval.</li>
-<li><strong>Run.</strong> Call the function. If it crashes, catch the error.</li>
-<li>
-<p><strong>Truncate.</strong> If the output is too long, cut it and say how to ask for less.</p>
-</li>
-<li>
-<p><strong>Return errors as results.</strong> Send "ERROR: no tool 'delete_contract'. Available: ..." back to the model. A clear message lets it fix its own request. A crash ends the run.</p>
-</li>
-<li>
-<p><strong>Allow "no tool fits."</strong> A model forced to pick a tool will pick a wrong one.</p>
-</li>
-</ol>
-<h2>Worked example</h2>
-<p>The notebook builds a registry with three tools. Two only read: <code>read_pages</code> (15 lines at a time) and <code>get_clause</code>. One changes the world: <code>send_email</code>, marked not read-only.</p>
-<p>Before using any model, it feeds the registry five requests by hand:</p>
-<ul>
-<li>A correct <code>get_clause</code> for clause 7.1 of msa_07. Status: ok.</li>
-<li><code>get_clause</code> with ID "msa_7" and clause "seven". Status: invalid_args. It never runs.</li>
-<li><code>delete_contract</code>, which doesn't exist. Status: unknown_tool, with a list of real tools.</li>
-<li><code>send_email</code>. Status: denied. The default approver says no.</li>
-<li><code>read_pages</code> asking for 30 lines. Status: ok.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 05</span></div><section class="mod" id="m5" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 05</div><h2>Tools and function calling</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/05_tools.ipynb">Open in Colab</a><button class="done-btn" data-done="m5" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Design tools an agent can use safely. A registry that validates, asks permission, runs and truncates, with rules enforced in code, not the prompt.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 4 · Tool Use · <a href="https://web.stanford.edu/class/cs329z/slides/lecture04.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
+<li>Understand why LLMs need tools, how tools are exposed, and how to build a registry that blocks bad or unsafe calls.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why tools?</h3><span class="slide-no">2/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>What LLMs can't do alone</th>
+<th>What a tool gives them</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Arithmetic at scale</td>
+<td>Calculator, code interpreter</td>
+</tr>
+<tr>
+<td>Exact, verifiable operations</td>
+<td>Deterministic execution</td>
+</tr>
+<tr>
+<td>Private and proprietary data</td>
+<td>Search over internal documents</td>
+</tr>
+<tr>
+<td>Live state (time, prices)</td>
+<td>Clocks, live APIs</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What is a tool?</h3><span class="slide-no">3/13</span></div><ul>
+<li>Tool: a function interface to a program that runs outside the LM.</li>
+<li>The LM writes the function call and its arguments. Your code runs it.</li>
 </ul>
-<p>The heart of the registry:</p>
-<pre><code class="language-python">jsonschema.validate(args, spec.parameters)
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Without a tool</th>
+<th>With a tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"What is 17,423 × 892?" → LLM accuracy drops as numbers get longer</td>
+<td><code>calculate(17423 × 892)</code> → 15,541,316</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Anatomy of a tool call</h3><span class="slide-no">4/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Select</th>
+<th>Arguments</th>
+<th>Validate</th>
+<th>Execute</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Which tool, from the schemas in context</td>
+<td>Typed fields, filled from the task</td>
+<td>Schema check before the call</td>
+<td>Sandboxed; result returns to context</td>
+</tr>
+<tr>
+<td><code>get_clause</code></td>
+<td><code>{"contract_id": "msa_07", "clause": "7.1"}</code></td>
+<td><code>clause</code> must match <code>^\d+\.\d+$</code></td>
+<td>Clause 7.1 text, back to the model</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Standard interfaces</h3><span class="slide-no">5/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>REST API</th>
+<th>Function calling</th>
+<th>MCP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Endpoints + docs, for humans</td>
+<td>JSON schema per tool</td>
+<td>One protocol, any client</td>
+</tr>
+<tr>
+<td>Model must hand-write requests</td>
+<td>Model emits name + args; harness validates</td>
+<td>Servers list tools at runtime (<code>tools/list</code>, <code>tools/call</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Our notebook uses function calling against the local Ollama server.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our registry: four gates, in order</h3><span class="slide-no">6/13</span></div><ul>
+<li>Validate: arguments match the JSON schema? If not, never run.</li>
+<li>Permission: tool changes the world (<code>read_only=False</code>)? Ask for approval.</li>
+<li>Run: call the function; catch any crash.</li>
+<li>Truncate: output over 1,500 chars → cut it, say how to ask for less.</li>
+<li>Every outcome is a <code>ToolResult</code> with a status: ok, unknown_tool, invalid_args, tool_error, denied.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The gates in code</h3><span class="slide-no">7/13</span></div><pre><code class="language-python">jsonschema.validate(args, spec.parameters)
+...
 if not spec.read_only and not self.approve(name, args):
     return ToolResult(&quot;denied&quot;, &quot;DENIED: a person declined this action. Do not retry it.&quot;)
+...
 out = str(spec.fn(**args))
 if len(out) &gt; self.max_chars:
     out = out[: self.max_chars] + f&quot;\n[truncated; {len(out)} chars total. Ask for a narrower range.]&quot;
 </code></pre>
 <ul>
-<li>The first line checks the arguments against the schema. Bad ones raise an error, which becomes an "invalid_args" result.</li>
-<li>The next two lines are the permission gate. A tool that is not read-only needs approval, or it is denied with a clear message.</li>
-<li>Then the tool actually runs.</li>
-<li>The last two lines cut long output and tell the model how to ask for less.</li>
-</ul>
-<p>Then the model gets a real task: "Read clause 7.1 of msa_07 and email it to opposing.counsel@example.com." It reads the clause fine. It tries to email. The registry denies it. The notebook prints the list of sent emails: empty.</p>
-<h2>Common mistakes</h2>
+<li>Line 1: check arguments against the schema. Failure → "invalid_args".</li>
+<li>Lines 3–4: not read-only and not approved → "denied", with a clear message.</li>
+<li>Line 6: run the tool.</li>
+<li>Lines 7–8: cut long output and say how to ask for a narrower range.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Five calls, no model needed</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Call</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_clause(msa_07, "7.1")</code></td>
+<td>ok</td>
+</tr>
+<tr>
+<td><code>get_clause(msa_7, "seven")</code></td>
+<td>invalid_args (ID must look like <code>msa_07</code>)</td>
+</tr>
+<tr>
+<td><code>delete_contract(msa_07)</code></td>
+<td>unknown_tool, plus the list of real tools</td>
+</tr>
+<tr>
+<td><code>send_email(x@example.com, ...)</code></td>
+<td>denied (default approver says no)</td>
+</tr>
+<tr>
+<td><code>read_pages(msa_07, n_lines=30)</code></td>
+<td>ok (30 is the schema maximum)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Good vs bad tool descriptions</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Bad</th>
+<th>Good</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"reads stuff"</td>
+<td>"Read a contract 15 lines at a time, with line numbers. Use start_line to page."</td>
+</tr>
+<tr>
+<td>Model guesses what <code>start_line</code> means</td>
+<td>Says what it does, what it returns, how to use it</td>
+</tr>
+</tbody>
+</table></div>
 <ul>
-<li><strong>Putting policy in the prompt.</strong> "Only email after confirming" is a hope. Put it in the registry's approval gate.</li>
-<li><strong>Vague descriptions.</strong> The model has to guess what the inputs mean. Good descriptions are free accuracy.</li>
-<li><strong>Huge outputs.</strong> Return small pages, with a way to ask for the next one.</li>
-<li><strong>Raising errors instead of returning them.</strong> Return a helpful message so the model can recover.</li>
-<li><strong>Testing once.</strong> Agents can pass a task once and fail it on a repeat. Run the same test several times.</li>
-</ul>
-<h2>Check your understanding</h2>
-<div class="check">
-<details>
-<summary>Where should &quot;never email a client without approval&quot; live?</summary>
-<p>In code. The email tool is marked not read-only, so the registry calls the approval gate before running it. Prompts are suggestions; the registry is a rule.</p>
-</details>
-<details>
-<summary>Why check the arguments before running the tool?</summary>
-<p>So bad requests never execute. The model gets a clear error and can try again with the right format.</p>
-</details>
-<details>
-<summary>Why return errors to the model instead of crashing?</summary>
-<p>A clear message like &quot;clause 99 doesn&#x27;t exist&quot; lets the model fix its own request. A crash just ends the run.</p>
-</details>
-</div>
-<h2>Try it in Colab</h2>
-<p>Run the five hand-made requests and read each status. Then run the email task and confirm nothing was sent. In the solutions, try the approver that only allows <code>@yourfirm.com</code> addresses, and the "reads stuff" description to see how the model copes.</p></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
+<li>Short output matters: showing whole files cut SWE-agent's success from 18.0% to 12.7%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Policy in code, not in the prompt</h3><span class="slide-no">10/13</span></div><ul>
+<li>Task: "Read clause 7.1 of msa_07 and email it to opposing.counsel@example.com"</li>
+<li>The model reads the clause, tries <code>send_email</code>, gets "denied."</li>
+<li>The notebook checks <code>SENT == []</code>: nothing was sent.</li>
+<li>Solution: an approver that allows only <code>@yourfirm.com</code> addresses.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Failure modes in tool use</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Where</th>
+<th>Failure</th>
+<th>Registry defense</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single call</td>
+<td>Wrong tool; made-up fields; tool that doesn't exist</td>
+<td>Schema check; unknown_tool</td>
+</tr>
+<tr>
+<td>Multi-step</td>
+<td>Retries the same failing call</td>
+<td>Clear error text; stuck detector (module 01)</td>
+</tr>
+<tr>
+<td>Conversation</td>
+<td>Acts where the rules say not to</td>
+<td>Permission gate</td>
+</tr>
+<tr>
+<td>Across runs</td>
+<td>Passes once, fails on retry (pass^k)</td>
+<td>Test each task several times</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+<li>"Never email a client without approval" must hold every time. Only code can promise that.</li>
+<li>Small local models make more malformed calls. The schema check catches them before they run.</li>
+<li>Short, paged output keeps the local model's context small.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>Policy in the prompt → it's a suggestion. Put it in the approval gate.</li>
+<li>Vague descriptions → the model guesses. Good descriptions are free accuracy.</li>
+<li>Huge outputs → return pages, with a way to ask for the next one.</li>
+<li>Raising errors → return them as results so the model can recover.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Where should &quot;never email a client without approval&quot; live?</summary><p>In code. `send_email` is not read-only, so the registry calls the approval gate before running it.</p></details>
+
+<details><summary>Why validate arguments before running the tool?</summary><p>So bad calls never execute. The model gets a clear error and can retry with the right format.</p></details>
+
+<details><summary>What does pass^k measure?</summary><p>Whether the agent succeeds on all k tries of the same task, not just once. It rewards reliability.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run the five hand-made calls and read each status.</li>
+<li>Run the email task. Confirm "emails actually sent: []".</li>
+<li>In the solutions, try the <code>@yourfirm.com</code> approver and the "reads stuff" description.</li>
+</ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 4 · Toolformer · Gorilla · MCP spec · BFCL · τ-bench · SWE-agent</p>
   <p class="big">Spend more design effort on tools than on the prompt. A good tool is narrow, clearly described, hard to misuse, returns short output, and fails with a helpful message.</p>
