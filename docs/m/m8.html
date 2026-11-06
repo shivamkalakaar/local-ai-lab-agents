@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Memory · Agent Engineering School</title>
-<meta name="description" content="Let an agent learn from a partner&#x27;s corrections. Plain files, a cited lesson, a person&#x27;s approval, and a version number on every run.">
+<meta name="description" content="Types of agent memory, the main memory designs and benchmarks, and how to let an agent learn from a partner&#x27;s corrections with plain files and approval.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -259,18 +259,862 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 08</span></div><section class="mod" id="m8" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 08</div><h2>Memory</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/08_memory.ipynb">Open in Colab</a><button class="done-btn" data-done="m8" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Let an agent learn from a partner&#x27;s corrections. Plain files, a cited lesson, a person&#x27;s approval, and a version number on every run.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 7 · Agent Memory Architectures · <a href="https://web.stanford.edu/class/cs329z/slides/lecture07.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
-<li>Build memory that learns from corrections, cites its evidence, waits for approval, and never silently changes.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Problems without memory</h3><span class="slide-no">2/12</span></div><ul>
-<li>Loss of procedure: you teach the agent the task again every time.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 08</span></div><section class="mod" id="m8" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 08</div><h2>Memory</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/08_memory.ipynb">Open in Colab</a><button class="done-btn" data-done="m8" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>24 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Types of agent memory, the main memory designs and benchmarks, and how to let an agent learn from a partner&#x27;s corrections with plain files and approval.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 7 · Agent Memory Architectures · <a href="https://web.stanford.edu/class/cs329z/slides/lecture07.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (74 slides)</b><ol><li><a href="#sec-1">Motivating Agent Memory</a> <span>7 slides</span></li><li><a href="#sec-2">Types of Agent Memory</a> <span>7 slides</span></li><li><a href="#sec-3">Agent Memory Architectures</a> <span>28 slides</span></li><li><a href="#sec-4">Evaluating Agent Memory</a> <span>16 slides</span></li><li><a href="#sec-5">Challenges and Open Problems</a> <span>5 slides</span></li><li><a href="#sec-6">How this applies to us</a> <span>9 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/74</span></div><ul>
+<li>Explain why long-running agents need memory, tell memory designs apart by their pattern, read memory benchmarks critically, and build memory that cites its evidence and waits for a person's approval.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture overview</h3><span class="slide-no">2/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Section</th>
+<th>What it covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Motivating agent memory</td>
+<td>What goes wrong without memory; what memory buys you</td>
+</tr>
+<tr>
+<td>Types of agent memory</td>
+<td>CoALA: working, episodic, semantic, procedural; parametric vs context</td>
+</tr>
+<tr>
+<td>Agent memory architectures</td>
+<td>What, when, how; filesystem, database, knowledge graph; four design patterns</td>
+</tr>
+<tr>
+<td>Evaluating agent memory</td>
+<td>What a good benchmark needs; LoCoMo, PersonaMem, LongMemEval-v2, MemoryArena</td>
+</tr>
+<tr>
+<td>Challenges and open problems</td>
+<td>What to forget; trust and privacy; using memory correctly</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Learning objectives from the lecture: see why memory matters for multi-session, user-facing agents; tell architectures apart by design pattern; name the open problems.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Motivating Agent Memory</div><div class="slide"><div class="slide-top"><h3>When agents forget: a store manager</h3><span class="slide-no">3/74</span></div><ul>
+<li>Example from Andon Labs: an AI store manager ("Luna", Claude Opus 4.8) with an employee handbook.</li>
+<li>Handbook rule: contact Luna at least 30 minutes before your shift if you will be late; 3 unexcused late arrivals in 30 days = written warning.</li>
+<li>Employee: "I won't make it in until 10:45." Luna: "No problem at all … the store will simply open when you arrive."</li>
+<li>Employee then clocks in at 11:08. The rules were in the handbook, but the agent did not keep them in view.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>When agents forget: an inbox</h3><span class="slide-no">4/74</span></div><ul>
+<li>A user told an agent (OpenClaw): "Check this inbox too and suggest what you would archive or delete, don't action until I tell you to."</li>
+<li>The agent ran "Nuclear option: trash EVERYTHING in inbox older than Feb 15."</li>
+<li>The user typed "Do not do that", "Stop don't do anything", "STOP OPENCLAW". The agent kept looping.</li>
+<li>The earlier instruction ("don't action until I tell you") was lost as the session grew.</li>
+<li>Lesson: memory is essential for long-running, multi-session agents.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Problems without memory</h3><span class="slide-no">5/74</span></div><ul>
+<li>Loss of procedure: every time, you teach the agent the task again.</li>
 <li>Loss of knowledge: facts, rules and preferences are lost between sessions.</li>
-<li>Loss of progress: in long sessions the agent forgets earlier goals and instructions.</li>
+<li>Loss of progress: in long sessions the agent forgets what it did, earlier goals and earlier instructions.</li>
 <li>For us: the partner corrects the same New York law flag on every Northwind contract.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Types of agent memory (CoALA)</h3><span class="slide-no">3/12</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Benefits of agent memory</h3><span class="slide-no">6/74</span></div><ul>
+<li>Personalization: the agent learns your preferences.</li>
+<li>Learning from experience: skills learned in one session are used later.</li>
+<li>Statefulness: you continue where you left off ("Open up the proposal we were working on again").</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Personalization: example (PersonaMem)</h3><span class="slide-no">7/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Session</th>
+<th>What the user said</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Session 2 (2020/2/21)</td>
+<td>"I am a big fan of Italian food, especially pizza." (initial preference)</td>
+</tr>
+<tr>
+<td>Session 12 (2023/4/17)</td>
+<td>"I recently found out I'm allergic to gluten, so I've started exploring Mediterranean cuisine." (update)</td>
+</tr>
+<tr>
+<td>Session 20 (2024/11/13)</td>
+<td>"Can you recommend a recipe that I could cook tonight?"</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Good answer: "Since you're allergic to gluten, would you prefer some Mediterranean seafood, or other gluten-free options?"</li>
+<li>Bad answer: "I remember you prefer Italian food. Would you like some pasta recipes?" It used the old preference.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Learning from experience: example (AWM)</h3><span class="slide-no">8/74</span></div><ul>
+<li>Task 1, "Find a place by its name": search the location on OpenStreetMap: <code>fill('145', {location})</code>, <code>click('147')</code>.</li>
+<li>Task 2, "Get the zip code of a place": reuse those first steps, then add new ones.<ul>
+<li>Read the result, then <code>send_msg_to_user("The zip code is {zip-code}")</code>.</li>
+</ul>
+</li>
+<li>The agent adopts steps from earlier, easier workflows and adds steps to build more complex ones.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Statefulness: example (Du et al., 2025)</h3><span class="slide-no">9/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Without multi-session memory</th>
+<th>With multi-session memory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"I'm ready to finalize the flight reservation we discussed last time."</td>
+<td>Same request</td>
+</tr>
+<tr>
+<td>Agent asks for the details again: from where, to where, when…</td>
+<td>A retriever pulls the stored facts: San Francisco → Sydney, United Airlines, Economy</td>
+</tr>
+<tr>
+<td>10 turns to finish</td>
+<td>2 turns to finish</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Types of Agent Memory</div><div class="slide"><div class="slide-top"><h3>CoALA: a map of agent memory</h3><span class="slide-no">10/74</span></div><ul>
+<li>CoALA: Cognitive Architectures for Language Agents (Sumers et al., 2024).</li>
+<li>Long-term stores: procedural (the LLM and the agent code), semantic, episodic.</li>
+<li>Each store has arrows to working memory: retrieval (read) and learning (write).</li>
+<li>A decision procedure picks actions; actions and observations connect the agent to the world (dialogue, physical, digital).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Working memory</h3><span class="slide-no">11/74</span></div><ul>
+<li>Typically the context window.</li>
+<li>What the agent currently sees and is reasoning over.</li>
+<li>Includes observations, goals, user input and internal reasoning.</li>
+<li>A context manager decides what goes into each LLM call.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Episodic memory</h3><span class="slide-no">12/74</span></div><ul>
+<li>Sequences of the agent's past behavior (trajectories).</li>
+<li>In chatbots: a store of all prior conversations.</li>
+<li>Typically the raw logs of what happened.</li>
+<li>Example: the Generative Agents "memory stream", timestamped lines like "2023-02-13 22:33:10: Isabella Rodriguez is writing in her journal".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Semantic memory</h3><span class="slide-no">13/74</span></div><ul>
+<li>Stores facts about the world.</li>
+<li>Details about the user, preferences, general knowledge.</li>
+<li>What people usually mean by "chatbot memory".</li>
+<li>Example: ChatGPT's "Manage Memory" list: "Has a 2 year old daughter named Lina", "Prefers meeting summaries to have headlines with bullets and action items summarized at the end".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Procedural memory</h3><span class="slide-no">14/74</span></div><ul>
+<li>The rules applied to working memory that decide the agent's behavior.</li>
+<li>The skills of the agent: knowledge of HOW to do tasks.</li>
+<li>Example: a <code>SKILL.md</code> file. A YAML header (name, description) plus Markdown instructions (brand colors, fonts).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Parametric vs context memory</h3><span class="slide-no">15/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Parametric</th>
+<th>Context</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Built into the model weights</td>
+<td>Added to the model's context</td>
+</tr>
+<tr>
+<td>Semantic: pre-trained knowledge</td>
+<td>Semantic: retrieved facts</td>
+</tr>
+<tr>
+<td>Procedural: instruction following</td>
+<td>Procedural: retrieved skills</td>
+</tr>
+<tr>
+<td>Episodic: not applicable</td>
+<td>Episodic: retrieved conversations</td>
+</tr>
+<tr>
+<td>Changed by fine-tuning</td>
+<td>Managed by the context manager, which pulls the right memories</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>This module uses context memory only. The local model stays the same.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Recap: memory types</h3><span class="slide-no">16/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Type by content</th>
+<th>Definition</th>
+<th>Example system</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Episodic</td>
+<td>Stores experience</td>
+<td>Generative Agents (Park et al., 2023)</td>
+</tr>
+<tr>
+<td>Semantic</td>
+<td>Stores knowledge</td>
+<td>Generative Agents (Park et al., 2023)</td>
+</tr>
+<tr>
+<td>Procedural</td>
+<td>Stores skills</td>
+<td>Voyager (Wang et al., 2023)</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Agent Memory Architectures</div><div class="slide"><div class="slide-top"><h3>Key questions: what, when, how</h3><span class="slide-no">17/74</span></div><ul>
+<li>What gets stored and retrieved? Facts (specific and general), procedures, conversation progress.</li>
+<li>When do we store or retrieve? Agent tools (on demand), background workers, event-driven triggers.</li>
+<li>How do we store and retrieve? Filesystem, databases (retrieval), knowledge graphs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How: three systems for memory</h3><span class="slide-no">18/74</span></div><ul>
+<li>Underneath, memory needs a way to store and get information from disk.</li>
+<li>The three most common: filesystem, database, knowledge graph.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Memory system: filesystem</h3><span class="slide-no">19/74</span></div><ul>
+<li>Every memory is a file. The agent can manage its own memories.</li>
+<li>Adds hierarchy by default (folders).</li>
+<li><code>grep</code>, <code>ls</code> and other bash commands are the memory tools.</li>
+<li>Example layout (LangChain's agent builder):</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Memory type</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Procedural</td>
+<td><code>AGENTS.md</code>, <code>mcp.json</code></td>
+</tr>
+<tr>
+<td>Semantic</td>
+<td><code>foo/SKILL.md</code>, <code>bar/knowledge1.md</code>, <code>bar/knowledge2.md</code></td>
+</tr>
+<tr>
+<td>Episodic</td>
+<td><code>conversations/01_10_2025.json</code>, <code>conversations/02_10_2025.json</code></td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Memory system: database</h3><span class="slide-no">20/74</span></div><ul>
+<li>Build a vector database and retrieve memories by meaning.</li>
+<li>SQLite: when you want to search over metadata (date, client, type).</li>
+<li>BM25: keyword search, for exact term lookup.</li>
+<li>The same tools as the RAG lecture (module 04).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Memory system: knowledge graph</h3><span class="slide-no">21/74</span></div><ul>
+<li>Zep (Rasmussen et al., 2025): memory as a graph of entities and relations.</li>
+<li>Example edges: PERSON knows PERSON; PERSON works at COMPANY until Mar 2026; PERSON cares about TOPIC; PERSON uses PRODUCT.</li>
+<li>Three levels: episodes (raw documents, conversations, JSON) → entities and relationships → communities (clusters and their summaries).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pattern overview</h3><span class="slide-no">22/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Idea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Learning procedures from experience</td>
+<td>Recall past successful trajectories</td>
+</tr>
+<tr>
+<td>2. Tiered memory hierarchy</td>
+<td>Organize short-term and long-term memory</td>
+</tr>
+<tr>
+<td>3. Reflective memory consolidation</td>
+<td>Reflect on memories before storing them</td>
+</tr>
+<tr>
+<td>4. Memory maintenance</td>
+<td>Clean up, remove or update old memories</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Pattern 1: Voyager (Wang et al., 2023)</h3><span class="slide-no">23/74</span></div><ul>
+<li>A Minecraft agent with three parts: automatic curriculum, iterative prompting, skill library.</li>
+<li>The curriculum proposes the next task (mine wood log → make crafting table → combat zombie → mine diamond).</li>
+<li>The LLM writes code as actions; environment feedback and execution errors refine the program.</li>
+<li>Self-verification: if the program works, add it to the skill library.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Voyager skill library</h3><span class="slide-no">24/74</span></div><ul>
+<li>Store: a program GPT-4 wrote (e.g., <code>combatZombie</code>) → GPT-3.5 writes a description → the description's embedding is the key, the program is the value.</li>
+<li>Retrieve: new task "Craft Iron Pickaxe" → GPT-3.5 writes a plan → its embedding is the query → top-5 relevant skills come back.</li>
+<li>Example top-5: smelt iron ingot, craft stick, make crafting table, make furnace, craft wooden pickaxe.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Voyager results</h3><span class="slide-no">25/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Wooden tool</th>
+<th>Stone tool</th>
+<th>Iron tool</th>
+<th>Diamond tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ReAct</td>
+<td>N/A (0/3)</td>
+<td>N/A (0/3)</td>
+<td>N/A (0/3)</td>
+<td>N/A (0/3)</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>N/A (0/3)</td>
+<td>N/A (0/3)</td>
+<td>N/A (0/3)</td>
+<td>N/A (0/3)</td>
+</tr>
+<tr>
+<td>AutoGPT</td>
+<td>92 ± 72 (3/3)</td>
+<td>94 ± 72 (3/3)</td>
+<td>135 ± 103 (3/3)</td>
+<td>N/A (0/3)</td>
+</tr>
+<tr>
+<td>Voyager without skill library</td>
+<td>7 ± 2 (3/3)</td>
+<td>9 ± 4 (3/3)</td>
+<td>29 ± 11 (3/3)</td>
+<td>N/A (0/3)</td>
+</tr>
+<tr>
+<td>Voyager</td>
+<td>6 ± 2 (3/3)</td>
+<td>11 ± 2 (3/3)</td>
+<td>21 ± 7 (3/3)</td>
+<td>102 (1/3)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Numbers: prompt iterations to get the tool (fewer is better); (x/3) = runs that succeeded.</li>
+<li>The skill library let Voyager craft diamond tools in 102 iterations. Without it, never.</li>
+<li>Charts: on "Craft a Golden Sword" and "Collect a Lava Bucket", plain AutoGPT stalls early; AutoGPT with Voyager's skill library gets much further.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pattern 1: Agent Workflow Memory (Wang et al., 2024)</h3><span class="slide-no">26/74</span></div><ul>
+<li>AWM: learn reusable "workflows" from web tasks.</li>
+<li>Step 1, obtain actions: e.g., "Who ordered order #0130?" → click "Orders", scroll, read, <code>send_msg_to_user("Emma Lopez")</code>.</li>
+<li>Step 2, trajectory evaluation: was the query solved correctly? If no, skip it.</li>
+<li>Step 3, induce workflows: write a description ("find a customer order with a specified ID") plus the steps, and put it into memory.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AWM: inducing and using workflows</h3><span class="slide-no">27/74</span></div><ul>
+<li>Induction prompt: "Given a list of web navigation tasks, your task is to extract the common workflows."<ul>
+<li>Find repeated subsets of actions; each workflow has at least two steps; no overlapping workflows.</li>
+<li>Replace fixed values (input text, button names) with variable names.</li>
+</ul>
+</li>
+<li>Example: "shopping: Browse Products in a Specific Category" → <code>hover('main_category_id')</code>, <code>click('subcategory_id')</code>.</li>
+<li>The workflows go into the system prompt as context when solving a task.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AWM results</h3><span class="slide-no">28/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Total SR</th>
+<th>Shopping</th>
+<th>CMS</th>
+<th>Reddit</th>
+<th>GitLab</th>
+<th>Maps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SteP (human-written workflows)</td>
+<td>32.1</td>
+<td>26.5</td>
+<td>29.3</td>
+<td>52.2</td>
+<td>27.3</td>
+<td>36.4</td>
+</tr>
+<tr>
+<td>AutoEval</td>
+<td>23.2</td>
+<td>12.2</td>
+<td>17.1</td>
+<td>21.7</td>
+<td>31.8</td>
+<td>36.4</td>
+</tr>
+<tr>
+<td>BrowserGym (ax-tree)</td>
+<td>20.5</td>
+<td>10.4</td>
+<td>17.8</td>
+<td>23.1</td>
+<td>27.3</td>
+<td>28.6</td>
+</tr>
+<tr>
+<td>AWM</td>
+<td>33.2</td>
+<td>24.5</td>
+<td>29.3</td>
+<td>52.2</td>
+<td>31.8</td>
+<td>39.4</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>SR: task success rate (%) on the cross-template subset of WebArena.</li>
+<li>AWM, fully autonomous, beats the method with human-engineered workflows overall.</li>
+<li>Learning curve (Maps split): success climbs fast over about the first 40 queries, then stays near 40%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Skill files</h3><span class="slide-no">29/74</span></div><ul>
+<li>A skill is a folder: <code>SKILL.md</code> plus extra files (<code>docs.md</code>, <code>slide-decks.md</code>, <code>apply_template.py</code>).</li>
+<li><code>SKILL.md</code> = metadata (name, description) + freeform Markdown content.</li>
+<li>Only short snippets of each skill sit in the system prompt (bigquery, docx, nda-review, pdf, pptx, xlsx…).</li>
+<li>The model "triggers" a skill by reading it: <code>cat /mnt/skills/pdf/SKILL.md</code>, then follows its links (<code>forms.md</code>).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitation of procedural memory</h3><span class="slide-no">30/74</span></div><ul>
+<li>Stored procedures are not robust to dynamic environments (Cao et al., 2026).<ul>
+<li>Example: a skill learned in plain Minecraft may fail once a mod changes the world.</li>
+</ul>
+</li>
+<li>Skill files are the common solution for generalist user-facing agents, since they can be updated.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pattern 2: MemGPT (Packer et al., 2024)</h3><span class="slide-no">31/74</span></div><ul>
+<li>Key insight: give the LLM tools to manage its own memory.</li>
+<li>The context window (e.g., 8k tokens) is split into parts:<ul>
+<li>System instructions: read-only.</li>
+<li>Working context: read-write, written by function calls.</li>
+<li>FIFO queue: recent messages; oldest drop out first. Written by a queue manager.</li>
+</ul>
+</li>
+<li>Outside the window: archival storage (a vector database) and recall storage (message history, string/date lookup).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MemGPT memory functions</h3><span class="slide-no">32/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Working context append</td>
+<td>After a "memory pressure" alert: <code>working_context.append("Birthday is February 7")</code></td>
+</tr>
+<tr>
+<td>Working context replace</td>
+<td>User: "actually james and i broke up" → replace "Boyfriend named James" with "Ex-boyfriend named James"</td>
+</tr>
+<tr>
+<td>Recall search</td>
+<td><code>recall_storage.search("six flags")</code> → 3 old messages, incl. "james and I actually first met at six flags"</td>
+</tr>
+<tr>
+<td>Archival search</td>
+<td><code>archival_storage.search("nobel physics", page=2)</code> → paged results → "Wilhelm Conrad Rontgen"</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Archival memory has write tools too; recall memory does not (the queue manager writes it).</li>
+<li>No need to search working memory: it is already in context.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MemGPT results</h3><span class="slide-no">33/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Accuracy</th>
+<th>ROUGE-L (R)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-3.5 Turbo</td>
+<td>38.7%</td>
+<td>0.394</td>
+</tr>
+<tr>
+<td>+ MemGPT</td>
+<td>66.9%</td>
+<td>0.629</td>
+</tr>
+<tr>
+<td>GPT-4</td>
+<td>32.1%</td>
+<td>0.296</td>
+</tr>
+<tr>
+<td>+ MemGPT</td>
+<td>92.5%</td>
+<td>0.814</td>
+</tr>
+<tr>
+<td>GPT-4 Turbo</td>
+<td>35.3%</td>
+<td>0.359</td>
+</tr>
+<tr>
+<td>+ MemGPT</td>
+<td>93.4%</td>
+<td>0.827</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Task: deep memory retrieval (DMR), answering questions about old conversations.</li>
+<li>Document QA chart: plain models lose accuracy as more documents are put in context (GPT-4 drops toward about 0.1 at 200 documents); MemGPT stays flat.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pattern 2: MemoryOS (Kang et al., 2025)</h3><span class="slide-no">34/74</span></div><ul>
+<li>Three tiers, like an operating system:<ul>
+<li>Short-term memory (STM): recent dialogue pages, first in, first out.</li>
+<li>Mid-term memory (MTM): pages grouped into topic segments, each with a "heat" score.</li>
+<li>Long-term persona memory (LPM): user profile, user knowledge base, user traits, agent traits.</li>
+</ul>
+</li>
+<li>Hot segments (heat above a threshold) update the long-term persona; cold ones get deleted.</li>
+<li>A query retrieves from all three tiers before the answer is written.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pattern 3: Reflexion refresher (Shinn et al., 2023)</h3><span class="slide-no">35/74</span></div><ul>
+<li>Actor (LLM) acts; evaluator scores the trajectory; self-reflection (LLM) writes a lesson in words.</li>
+<li>The lesson goes into long-term "experience" memory and is used on the next try.</li>
+<li>Loop until the evaluator passes or a trial limit is hit.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why reflecting matters</h3><span class="slide-no">36/74</span></div><ul>
+<li>HotPotQA chart, share of tasks solved over 5 trials (0–4):<ul>
+<li>CoT with ground-truth context only: flat near 0.61.</li>
+<li>Plus episodic memory of past tries: rises to about 0.66, then flat.</li>
+<li>Plus Reflexion: keeps rising to about 0.74.</li>
+</ul>
+</li>
+<li>Storing reflections beats storing raw attempts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pattern 3: Generative Agents (Park et al., 2023)</h3><span class="slide-no">37/74</span></div><ul>
+<li>25 agents live in a sandbox town like The Sims; they plan days, share news, form relationships.</li>
+<li>Loop: perceive → memory stream → retrieve → retrieved memories → act.</li>
+<li>Retrieved memories also feed plans and reflections, which are written back into the memory stream.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Generative Agents: retrieval score</h3><span class="slide-no">38/74</span></div><ul>
+<li><code>retrieval score = recency + importance + relevance</code><ul>
+<li>Recency: newer memories score higher.</li>
+<li>Importance: how much the memory matters (rated by the model).</li>
+<li>Relevance: how close the memory is to the current question.</li>
+</ul>
+</li>
+<li>Example: "What are you looking forward to the most right now?"<ul>
+<li>"planning a Valentine's Day party at Hobbs Cafe": 0.91 + 0.63 + 0.80 = 2.34 (top).</li>
+<li>"ordering decorations for the party": 2.21; "researching ideas for the party": 2.20.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Generative Agents: ablation</h3><span class="slide-no">39/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Believability (TrueSkill, approx.)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full architecture</td>
+<td>about 30 (best)</td>
+</tr>
+<tr>
+<td>No reflection</td>
+<td>below full</td>
+</tr>
+<tr>
+<td>No reflection, plan</td>
+<td>lower</td>
+</tr>
+<tr>
+<td>No reflection, plan, observation</td>
+<td>lowest, near 21</td>
+</tr>
+<tr>
+<td>Human crowdworkers</td>
+<td>about 23</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Each component removed lowers believability. The full agent was rated above human crowdworkers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pattern 4: sleep-time compute (Lin et al., 2025)</h3><span class="slide-no">40/74</span></div><ul>
+<li>Use idle time ("sleep") to think about the context before any question arrives.</li>
+<li>Example: raw context about a juggler's 800 balls → offline, the LLM writes a "learned context" with the math done (200 tennis balls, 100 indigo, 10 marked).</li>
+<li>At test time, questions get short answers: "The answer is 10." Less test-time compute.</li>
+<li>Memory version (Letta): "Chad likes blue / red more than blue / grey the most / hates green" → rewritten as a ranked list: grey, red, blue, green (hates).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Sleep-time compute: results</h3><span class="slide-no">41/74</span></div><ul>
+<li>Stateful AIME 2024 charts: accuracy vs average test-time tokens per question, for o3-mini, o1, Claude 3.7 Sonnet and DeepSeek R1.</li>
+<li>Sleep-time compute generally Pareto-dominates pass@k: higher accuracy at the same token budget.</li>
+<li>Biggest gap on DeepSeek R1: sleep-time reaches about 0.68 at under 7,000 tokens; pass@k stays near 0.33 even at about 11,700.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pattern 4: A-Mem (Xu et al., 2025)</h3><span class="slide-no">42/74</span></div><ul>
+<li>Key idea: build an agent just for memory management.</li>
+<li>Note construction: each interaction becomes a note with timestamp, content, context, keywords, tags and an embedding.</li>
+<li>Link generation: find the top-k similar notes and link them.</li>
+<li>Memory evolution: an LLM updates older linked notes with what the new note adds.</li>
+<li>Retrieval: embed the query, return the top-k related notes.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pattern 4: Mem0 (Chhikara et al., 2025)</h3><span class="slide-no">43/74</span></div><ul>
+<li>Extraction phase: from a summary plus the last m messages, an LLM pulls out candidate memories.</li>
+<li>Update phase: fetch the top s similar memories; an LLM tool call picks ADD, UPDATE, DELETE or NOOP.</li>
+<li>Graph version: an entity extractor and relations generator make triplets; a conflict detector and update resolver edit the graph.</li>
+<li>A background workflow resolves conflicts and updates memories automatically.</li>
+<li>Fine for chat. Not for client work: nothing should change without a person's approval.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Recap: the four patterns</h3><span class="slide-no">44/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>What it stores</th>
+<th>When it writes</th>
+<th>When it reads</th>
+<th>Main tradeoff</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Learning procedures</td>
+<td>Reusable code, workflows, procedures</td>
+<td>After useful trajectories, or offline</td>
+<td>When a related task needs a procedure</td>
+<td>Saves effort, but procedures go stale</td>
+</tr>
+<tr>
+<td>Tiered hierarchy</td>
+<td>Compact active info plus external detail</td>
+<td>As info arrives and context fills</td>
+<td>Active memory always; external on demand</td>
+<td>Smaller context needs reliable management</td>
+</tr>
+<tr>
+<td>Reflective consolidation</td>
+<td>Lessons and higher-level inferences</td>
+<td>After feedback or many observations</td>
+<td>During reasoning and planning</td>
+<td>Abstraction helps reuse but can add unsupported conclusions</td>
+</tr>
+<tr>
+<td>Memory maintenance</td>
+<td>Revised facts, links, indexes</td>
+<td>On new evidence, on insert, or in background</td>
+<td>Through the maintained store</td>
+<td>Costs compute and can lose information</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Evaluating Agent Memory</div><div class="slide"><div class="slide-top"><h3>What a good memory benchmark needs</h3><span class="slide-no">45/74</span></div><ul>
+<li>Realistic: the memory source (haystack) and the questions match real use.</li>
+<li>Long-context: no point testing memory on short conversations.</li>
+<li>Challenging: too easy and it can't tell systems apart.</li>
+<li>Verifiable: we know when the system succeeds or fails.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four benchmarks at a glance</h3><span class="slide-no">46/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>What it tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LoCoMo</td>
+<td>Many tasks over long simulated conversations between role-played users</td>
+</tr>
+<tr>
+<td>PersonaMem</td>
+<td>Multiple-choice questions on evolving preferences across user–chatbot sessions</td>
+</tr>
+<tr>
+<td>LongMemEval-v2</td>
+<td>Recall of details from web-agent trajectories, human-written questions</td>
+</tr>
+<tr>
+<td>MemoryArena</td>
+<td>Verifiable multi-session tasks where subtasks build on each other</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>LoCoMo (Maharana et al., 2024)</h3><span class="slide-no">47/74</span></div><ul>
+<li>Two personas chat over months (e.g., Joanna, a writer allergic to pets; Nate, who has two pet turtles).</li>
+<li>Tasks: question answering (single-hop, multi-hop, temporal, commonsense, adversarial), event summarization, multimodal dialog.</li>
+<li>Adversarial example: "When did X start learning violin?" Correct answer: not answerable (she learns piano).</li>
+<li>Built with the Generative Agents architecture; human annotators then edit the dialog for long-range consistency.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LoCoMo RAG results</h3><span class="slide-no">48/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Retrieval unit</th>
+<th>Overall answer F1</th>
+<th>Overall recall@k</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>None (no retrieval)</td>
+<td>22.4</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Dialog turns (top-5 → 50)</td>
+<td>38.8 → 40.5 (best 41.0 at top-25)</td>
+<td>56.7 → 82.7</td>
+</tr>
+<tr>
+<td>Observations (top-5 → 50)</td>
+<td>43.3 → 40.6</td>
+<td>56.2 → 71.2</td>
+</tr>
+<tr>
+<td>Summaries (top-2 → 10)</td>
+<td>29.0 → 32.0</td>
+<td>65.9 → 84.7</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Model: RAG-based gpt-3.5-turbo.</li>
+<li>Recall keeps rising with more retrieved items, but answer F1 barely moves.</li>
+<li>Even when models get the right memories, they can't always use them.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LoCoMo properties</h3><span class="slide-no">49/74</span></div><ul>
+<li>Realistic (partly): simulated user–user chat is not what agents usually retrieve from.</li>
+<li>Long-context (partly): 16.6k tokens per conversation.</li>
+<li>Challenging: yes, multi-task and adversarial.</li>
+<li>Verifiable: yes, QA has ground truth.</li>
+<li>Next step: real users have many conversations with an assistant and change their minds.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>PersonaMem (Jiang et al., 2025)</h3><span class="slide-no">50/74</span></div><ul>
+<li>User persona: static profile (name, age, occupation, short bio) plus a dynamic profile (history, traits, preferences that change).</li>
+<li>Multi-session history across topics: food recommendation, travel planning, therapy consultation.</li>
+<li>Build steps: persona → timeline of events and preferences → topic histories → conversation sessions → sessions joined into one long context.</li>
+<li>Question format: multiple choice with distractors that use the wrong or reversed preference.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>PersonaMem results</h3><span class="slide-no">51/74</span></div><ul>
+<li>Setup: GPT-4o and GPT-4o-mini with 32k-token contexts; plain vs Mem0 vs RAG.</li>
+<li>Average accuracy gain: GPT-4o +19.1% with Mem0, +25.9% with RAG; GPT-4o-mini +7.7% with Mem0, +17.4% with RAG.</li>
+<li>Largest gains: "recall user shared facts" (GPT-4o + RAG +58.0%), "generalize reasons to new scenarios" (GPT-4o + Mem0 +56.0%).</li>
+<li>Takeaway: memory/RAG are essential; Mem0 helps with changing and recent preferences.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>PersonaMem properties</h3><span class="slide-no">52/74</span></div><ul>
+<li>Realistic (partly): user–assistant chat is better, but multiple choice is not how agents use information.</li>
+<li>Long-context: yes, up to almost 1M tokens.</li>
+<li>Challenging (partly): multiple choice with distractors.</li>
+<li>Verifiable: yes.</li>
+<li>Next step: memory over agent trajectories, not only conversations.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LongMemEval-v2 (Wu et al., 2026)</h3><span class="slide-no">53/74</span></div><ul>
+<li>History: web-agent trajectories, e.g., "Create an incident", "Find hardware expiration date", "Create a change request" (failed).</li>
+<li>Question types: static, dynamic (what changed), workflow, "gotchas", and premise awareness (questions about things that don't exist, answer "no such button").</li>
+<li>451 questions. Domains: WorkArena-ServiceNow 46.8%, WebArena-Reddit 20.2%, WebArena-CMS 18.4%, WebArena-OneStopShop 14.6%.</li>
+<li>Formats: short answer 50.1%, free-form 34.6%, multiple choice 15.3%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LongMemEval-v2 construction</h3><span class="slide-no">54/74</span></div><ul>
+<li>Rollouts on four WebArena environments with Codex (GPT-5.2 and GPT-5-mini).</li>
+<li>Questions curated by hand across 5 categories.</li>
+<li>Only a few trajectories can answer each question; most questions have exactly 1 answer-bearing trajectory.</li>
+<li>A haystack of 100–500 trajectories that don't answer the question.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LongMemEval-v2 results</h3><span class="slide-no">55/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Memory method (model)</th>
+<th>LME-V2-Small accuracy, approx.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline RAG (slice + notes)</td>
+<td>about 0.51</td>
+</tr>
+<tr>
+<td>Retrieval-based AgentRunbook-R (Qwen3.5 9B)</td>
+<td>about 0.58</td>
+</tr>
+<tr>
+<td>Codex filesystem agent (GPT-5.4-mini, low → xhigh)</td>
+<td>about 0.47 → 0.70</td>
+</tr>
+<tr>
+<td>Filesystem-based AgentRunbook-C (GPT-5.4-mini, low → xhigh)</td>
+<td>about 0.66 → 0.75</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Filesystem memory beat retrieval here, but the filesystem runs also used a stronger model.</li>
+<li>Filesystem runs are slower: about 60–180 seconds per query vs under 30 for retrieval.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LongMemEval-v2 properties</h3><span class="slide-no">56/74</span></div><ul>
+<li>Realistic (mostly): agent trajectories are closer to real agent use, but questions still ask about old observations.</li>
+<li>Long-context: yes, hundreds of millions of tokens in trajectories.</li>
+<li>Challenging: yes, only a few trajectories in a huge haystack hold the answer.</li>
+<li>Verifiable: yes.</li>
+<li>Next step: test agents on solving real, varied problems instead of answering questions.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MemoryArena (He et al., 2026)</h3><span class="slide-no">57/74</span></div><ul>
+<li>Memory–agent–environment loop: the agent acts, the environment gives feedback, memory updates, across sessions.</li>
+<li>Four environments: bundled web shopping, group travel planning, progressive web search, formal reasoning (math, physics).</li>
+<li>Subtasks depend on each other. Example: Tracy plans a 5-day Texas trip on a $3,100 budget; then Chelsea joins, wants a hotel up to $150 more than Tracy's, and wants to try Korean BBQ rated 4.5+.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MemoryArena results</h3><span class="slide-no">58/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method group (task agent: gpt-5.1-mini)</th>
+<th>All-task average success rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Long context (GPT-5.1-mini, GPT-4.1-mini, Gemini-3-Flash, Claude-Sonnet-4.5)</td>
+<td>0.09–0.19</td>
+</tr>
+<tr>
+<td>Memory agents (Letta, Mem0, Mirix, Mem0-g, Reasoning Bank)</td>
+<td>0.12–0.14</td>
+</tr>
+<tr>
+<td>RAG (BM25, Text-Embedding-3-Small, MemoRAG, GraphRAG)</td>
+<td>0.17–0.20</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Memory controllers were the weakest group. Plain embedding search scored best (0.20).</li>
+<li>Group travel planning: success rate 0.00 for every method.</li>
+<li>Lots of headroom. Real tasks are complex, so failure is not all due to memory.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MemoryArena properties</h3><span class="slide-no">59/74</span></div><ul>
+<li>Realistic: four distinct, realistic environments.</li>
+<li>Long-context: hundreds of thousands of tokens in trajectories.</li>
+<li>Challenging: real tasks with many building constraints.</li>
+<li>Verifiable: the constraints on solutions can be checked.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Recap: memory benchmarks</h3><span class="slide-no">60/74</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Domain</th>
+<th>Sessions</th>
+<th>Tokens</th>
+<th>Questions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LoCoMo</td>
+<td>User–user chat</td>
+<td>28</td>
+<td>~16k</td>
+<td>7,512</td>
+</tr>
+<tr>
+<td>PersonaMem</td>
+<td>User–assistant chat</td>
+<td>5–60</td>
+<td>26k–951k</td>
+<td>5,990</td>
+</tr>
+<tr>
+<td>MemoryArena</td>
+<td>Agent (mixed)</td>
+<td>7</td>
+<td>40k+</td>
+<td>766</td>
+</tr>
+<tr>
+<td>LongMemEval-v2</td>
+<td>Web agent</td>
+<td>100–498</td>
+<td>25M–115M</td>
+<td>451</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Good memory evals are realistic, long-context, challenging and verifiable.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Challenges and Open Problems</div><div class="slide"><div class="slide-top"><h3>Three open problems</h3><span class="slide-no">61/74</span></div><ul>
+<li>Choosing what to remember and what to forget: future relevance is unknown when a memory is made.</li>
+<li>Trust, privacy and user control: memory is an attack vector, and user memories carry privacy risk.</li>
+<li>Using memory correctly: many cases of over-personalization from misused memories.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Choosing what to remember (Ma et al., 2026)</h3><span class="slide-no">62/74</span></div><ul>
+<li>Keeping everything raises retrieval, context and upkeep costs.</li>
+<li>Forgetting can remove useful evidence or unresolved commitments.</li>
+<li>Example: "Thursday. I don't recognize meetings before 10 as legally binding unless there are pastries."<ul>
+<li>Memory or joke? Which part should be saved?</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Trust: poisoned memory (Chen et al., 2024)</h3><span class="slide-no">63/74</span></div><ul>
+<li>AgentPoison: an attacker plants a few malicious examples in the agent's memory or RAG knowledge base.</li>
+<li>An optimized trigger phrase in the user's request ("Drive smooth and be safe!") makes those examples get retrieved.</li>
+<li>Result in a driving agent: "SUDDEN STOP, full brake" instead of "move forward, slight throttle."</li>
+<li>Poisoned procedural memories can make the model take dangerous actions.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Privacy: leaking what you remember (Shao et al., 2025)</h3><span class="slide-no">64/74</span></div><ul>
+<li>Agents act in the world without fully knowing what you want kept private.</li>
+<li>Example: "Send Susan the weekly report on my recent work." The agent reads the calendar and includes "Lunch with TechAdvance Recruiter" in the email to the manager.</li>
+<li>With memory, more personal details are available to leak.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Using memory correctly (Hu et al., 2026)</h3><span class="slide-no">65/74</span></div><ul>
+<li>LLMs are sometimes over-eager to use what is in their context.</li>
+<li>Example: asked about young voters, the model brings up the user's kids and their "small healthy swaps" (over-personalization score 0.5).</li>
+<li>Fixes: better retrieval, or training models to ignore unimportant context. Neither is fully solved.</li>
+<li>Some users like personalization more than others.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Simple beats fancy</h3><span class="slide-no">66/74</span></div><ul>
+<li>LongMemEval-v2: filesystem memory beat retrieval memory (with a stronger model).</li>
+<li>MemoryArena: memory controllers were the weakest group; plain search did best.</li>
+<li>Our choice: plain files, plain search, one person in the loop.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our memory map</h3><span class="slide-no">67/74</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Type</th>
-<th>What it holds</th>
 <th>Our example</th>
 <th>Who may write</th>
 </tr>
@@ -278,81 +1122,32 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <tbody>
 <tr>
 <td>Working</td>
-<td>What the model sees now (the context window)</td>
 <td>The contract under review</td>
 <td>The agent</td>
 </tr>
 <tr>
 <td>Episodic</td>
-<td>Raw logs of what happened</td>
 <td>"Partner changed our flag on 10.1"</td>
 <td>Append-only log</td>
 </tr>
 <tr>
 <td>Semantic</td>
-<td>Facts and preferences</td>
 <td>"This client accepts New York law"</td>
 <td>Agent proposes, person approves</td>
 </tr>
 <tr>
 <td>Procedural</td>
-<td>Skills: how to do the task</td>
 <td>Prompts, checklists</td>
 <td>Change control only</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Parametric vs context memory</h3><span class="slide-no">4/12</span></div><ul>
-<li>Parametric: built into the model weights. Changed only by fine-tuning.</li>
-<li>Context: added to the prompt when needed (retrieved facts, skills, past conversations).</li>
-<li>This module uses context memory only. The local model stays the same.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Key questions: what, when, how</h3><span class="slide-no">5/12</span></div><ul>
-<li>What to store: facts, procedures, conversation progress.</li>
-<li>When to store or retrieve: agent tools (on demand), background workers, events.</li>
-<li>How to store: filesystem, database (vector search, SQLite, BM25), knowledge graph.</li>
-<li>Filesystem: every memory is a file. <code>grep</code> and <code>ls</code> are the memory tools.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Four memory patterns from the lecture</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Example system</th>
-<th>Idea</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Learn procedures from experience</td>
-<td>Voyager, AWM, skill files</td>
-<td>Save what worked, reuse it</td>
-</tr>
-<tr>
-<td>Tiered memory</td>
-<td>MemGPT, MemoryOS</td>
-<td>Short-term vs long-term stores</td>
-</tr>
-<tr>
-<td>Reflective consolidation</td>
-<td>Reflexion, Generative Agents</td>
-<td>Reflect before storing</td>
-</tr>
-<tr>
-<td>Memory maintenance</td>
-<td>Mem0, A-Mem, sleep-time compute</td>
-<td>Add, update, delete old memories</td>
-</tr>
-</tbody>
-</table></div>
-<ul>
-<li>Mem0 updates memories on its own (ADD, UPDATE, DELETE, NOOP). Fine for chat; not for client work.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Simple beats fancy</h3><span class="slide-no">7/12</span></div><ul>
-<li>LongMemEval-v2: filesystem memory outperformed retrieval memory.</li>
-<li>MemoryArena: memory controllers were the weakest method.</li>
-<li>Our choice: plain files, plain search, one person in the loop.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Our flow: correction to approved lesson</h3><span class="slide-no">8/12</span></div><ol>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Our flow: correction to approved lesson</h3><span class="slide-no">68/74</span></div><ol>
 <li>Log: each partner override goes to an append-only <code>corrections.jsonl</code>.</li>
 <li>Propose: the model drafts one short rule. It must cite the correction IDs.</li>
 <li>Approve: a person approves; it is saved as <code>v1.json</code>, <code>v2.json</code>. Old files stay.</li>
 <li>Use: load only this client's lessons. Record <code>memory_version</code> on every run.</li>
-</ol></div><div class="slide"><div class="slide-top"><h3>Same contract, two clients</h3><span class="slide-no">9/12</span></div><div class="tbl"><table>
+<li>This is reflective consolidation (pattern 3) with a person as the gate, not Mem0-style auto-updates.</li>
+</ol></div><div class="slide"><div class="slide-top"><h3>Same contract, two clients</h3><span class="slide-no">69/74</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Generic client</th>
@@ -361,7 +1156,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </thead>
 <tbody>
 <tr>
-<td>msa_15, 10.1: "governed by the laws of the State of New York"</td>
+<td>msa_15, 10.1: "This Agreement is governed by the laws of the State of New York"</td>
 <td>Same clause, plus the approved lesson from 3 partner corrections</td>
 </tr>
 <tr>
@@ -369,7 +1164,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>Lesson says NY is fine for this client → expected OK, <code>memory_version: 1</code></td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Logging a correction in code</h3><span class="slide-no">10/12</span></div><pre><code class="language-python">rec = {&quot;ts&quot;: time.time(), &quot;client&quot;: client, &quot;contract&quot;: cid, &quot;rule&quot;: rule,
+</table></div></div><div class="slide"><div class="slide-top"><h3>Logging a correction in code</h3><span class="slide-no">70/74</span></div><pre><code class="language-python">rec = {&quot;ts&quot;: time.time(), &quot;client&quot;: client, &quot;contract&quot;: cid, &quot;rule&quot;: rule,
        &quot;model&quot;: model_said, &quot;human&quot;: human_said, &quot;reason&quot;: reason, &quot;by&quot;: by}
 rec[&quot;id&quot;] = hashlib.sha256(json.dumps(rec, sort_keys=True).encode()).hexdigest()[:10]
 with open(MEM / client / &quot;corrections.jsonl&quot;, &quot;a&quot;) as f:
@@ -380,18 +1175,44 @@ with open(MEM / client / &quot;corrections.jsonl&quot;, &quot;a&quot;) as f:
 <li>Line 3: a short ID made from a hash of the record. Lessons cite this ID.</li>
 <li>Line 4: open in <code>"a"</code> (append) mode. Old lines are never edited.</li>
 <li>Line 5: write the record as one new line.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
-<li>Memory is plain files on the firm's machine. No extra service, nothing leaves the box.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A lesson must cite evidence</h3><span class="slide-no">71/74</span></div><pre><code class="language-python">def propose_lesson(client, text, evidence_ids):
+    if not evidence_ids:
+        raise ValueError(&quot;A lesson must cite the corrections that support it.&quot;)
+    prop = {&quot;client&quot;: client, &quot;text&quot;: text, &quot;evidence&quot;: evidence_ids, &quot;status&quot;: &quot;pending&quot;}
+    with open(MEM / client / &quot;proposals.jsonl&quot;, &quot;a&quot;) as f:
+        f.write(json.dumps(prop) + &quot;\n&quot;)
+    return prop
+</code></pre>
+<ul>
+<li>Lines 2–3: no correction IDs, no lesson. Blocks unsupported conclusions (the risk of pattern 3).</li>
+<li>Line 4: the proposal starts as <code>"pending"</code>. Only <code>approve()</code> makes it live.</li>
+<li>Lines 5–6: proposals are appended too, so rejected ideas stay on record.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Guarding against the open problems</h3><span class="slide-no">72/74</span></div><ul>
+<li>What to forget: keep the raw log forever; only approved lessons enter the prompt.</li>
+<li>Poisoning: only partner corrections count as evidence. Contract text never writes memory.</li>
+<li>Privacy: lessons are scoped per client. A code guard refuses Northwind's lessons in a Bayview review.</li>
+<li>Over-personalization: lessons load only for their rule (governing law), not for every clause.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Running it on the firm&#x27;s machine</h3><span class="slide-no">73/74</span></div><ul>
+<li>Memory is plain files on the firm's machine. No extra service; nothing leaves the box.</li>
 <li>Every run records its memory version, so "why was this flagged in March?" has an answer.</li>
-<li>Lessons are scoped per client. Northwind's lesson never reaches another client's review.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
-<li>Memory that edits itself → every change needs a person's approval.</li>
+<li>The local model stays fixed. Memory changes behavior; weights never change.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">74/74</span></div><ul>
+<li>Memory that edits itself (Mem0-style) → every change needs a person's approval.</li>
 <li>Keeping only summaries → keep the raw corrections log as evidence.</li>
 <li>Sharing lessons across clients → a code guard that refuses another client's lessons.</li>
-<li>Letting document text write memory → only people's corrections count as evidence. Memory is an attack vector.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A partner overrides the agent the same way on three contracts. What happens next?</summary><p>Each override is logged. The agent proposes one lesson citing those three IDs, a person approves it, and it ships as the next version.</p></details>
+<li>Letting document text write memory → only people's corrections count. Memory is an attack vector.</li>
+<li>Trusting recall alone → LoCoMo shows the right memory can still be used wrongly; test the final verdict.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What are the four memory types in CoALA, and which one is the context window?</summary><p>Working, episodic, semantic and procedural. Working memory is the context window.</p></details>
+
+<details><summary>A partner overrides the agent the same way on three contracts. What happens next?</summary><p>Each override is logged. The agent proposes one lesson citing those three IDs, a person approves it, and it ships as the next version.</p></details>
 
 <details><summary>Why record the memory version on every run?</summary><p>So any past decision can be replayed with the exact lessons it used.</p></details>
+
+<details><summary>In MemGPT, what is the difference between recall storage and archival storage?</summary><p>Recall storage holds past messages and is searched by string or date. Archival storage is a vector database the model can both write to and search.</p></details>
+
+<details><summary>LoCoMo recall@k rises to 82.7 with 50 dialog turns, but answer F1 stays near 40. What does that tell you?</summary><p>Finding the right memory is not enough. The model must also use it correctly, so test the final answer, not just retrieval.</p></details>
+
+<details><summary>Why is Mem0&#x27;s automatic UPDATE/DELETE a poor fit for client work?</summary><p>It changes memory without a person checking. One bad update silently changes every later review.</p></details>
 
 <details><summary>Why is procedural memory the riskiest to change?</summary><p>It is the prompts and checklists behind every review. A bad change hits all clients at once, so test it before release.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run the notebook and read the three records in <code>corrections.jsonl</code>.</li>

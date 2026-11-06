@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Multi-agent systems · Agent Engineering School</title>
-<meta name="description" content="When a team of agents helps and when it hurts. Default to one agent plus a checker; split only truly independent work.">
+<meta name="description" content="When a team of agents helps and when it hurts. Orchestration, communication, coordination and failure modes; default to one agent plus a checker.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -259,159 +259,938 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 09</span></div><section class="mod" id="m9" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 09</div><h2>Multi-agent systems</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/09_multi_agent.ipynb">Open in Colab</a><button class="done-btn" data-done="m9" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">When a team of agents helps and when it hurts. Default to one agent plus a checker; split only truly independent work.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 8 · Multi-Agent Systems · <a href="https://web.stanford.edu/class/cs329z/slides/lecture08.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
-<li>Decide when to use one agent or a team, and build the one-agent-plus-checker design that usually wins.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What is a multi-agent system?</h3><span class="slide-no">2/12</span></div><ul>
-<li>Multi-agent system (MAS): several agents working on one shared task.</li>
-<li>Orchestration: who assigns work to whom.</li>
-<li>Communication: how agents pass information.</li>
-<li>Coordination: who owns each task, and what must happen first.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Benefits vs drawbacks</h3><span class="slide-no">3/12</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 09</span></div><section class="mod" id="m9" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 09</div><h2>Multi-agent systems</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/09_multi_agent.ipynb">Open in Colab</a><button class="done-btn" data-done="m9" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>21 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">When a team of agents helps and when it hurts. Orchestration, communication, coordination and failure modes; default to one agent plus a checker.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 8 · Multi-Agent Systems · <a href="https://web.stanford.edu/class/cs329z/slides/lecture08.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (63 slides)</b><ol><li><a href="#sec-1">Single vs Multi-Agent Systems</a> <span>7 slides</span></li><li><a href="#sec-2">MAS Orchestration Patterns</a> <span>11 slides</span></li><li><a href="#sec-3">Communication</a> <span>15 slides</span></li><li><a href="#sec-4">Coordination Infrastructure and Patterns</a> <span>9 slides</span></li><li><a href="#sec-5">Failures and Challenges</a> <span>10 slides</span></li><li><a href="#sec-6">Case Study: An Engineering Swarm</a> <span>3 slides</span></li><li><a href="#sec-7">How this applies to us</a> <span>6 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/63</span></div><ul>
+<li>Tell single-agent and multi-agent systems apart, name the orchestration, communication and coordination patterns, compare their failure modes, and build the one-agent-plus-checker design that usually wins.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture overview</h3><span class="slide-no">2/63</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Benefits</th>
-<th>Drawbacks</th>
+<th>Section</th>
+<th>What it covers</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Parallel execution of separable subtasks</td>
-<td>Coordination overhead: time and tokens</td>
+<td>Single vs multi-agent systems</td>
+<td>Benefits, drawbacks, when to use each</td>
 </tr>
 <tr>
-<td>Specialization: own prompt, model, tools</td>
-<td>Information loss in handoffs</td>
+<td>MAS orchestration patterns</td>
+<td>Independent, centralized, decentralized, hybrid; DyLAN</td>
 </tr>
 <tr>
-<td>Focused context per agent</td>
-<td>Conflicting actions, duplicated work</td>
+<td>Communication</td>
+<td>AutoGen chats, handoff vs agent-as-tool, message boards, A2A</td>
 </tr>
 <tr>
-<td>Broader exploration</td>
-<td>Error propagation: one mistake misleads others</td>
+<td>Coordination infrastructure and patterns</td>
+<td>Task ledger, shared memory, worktree isolation; role, resource, negotiation</td>
+</tr>
+<tr>
+<td>Failures and challenges</td>
+<td>MAST taxonomy, CooperBench, behavioral problems</td>
+</tr>
+<tr>
+<td>Case study (optional)</td>
+<td>A swarm of agents building a C compiler</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Collaboration helps only when its benefits outweigh the coordination costs.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The numbers</h3><span class="slide-no">4/12</span></div><ul>
-<li>Across 260 setups, multi-agent systems averaged −0.3% vs a single agent.</li>
-<li>They helped on wide, separable work. They hurt on step-by-step work.</li>
-<li>CooperBench: one agent solving both tasks beat two agents coordinating.</li>
-<li>On one local GPU, every extra agent is another model call: more waiting.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>When to use SAS vs MAS</h3><span class="slide-no">5/12</span></div><div class="tbl"><table>
+<li>Multi-agent systems are new work and in the headlines. This lecture breaks down what is known about building them.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Single vs Multi-Agent Systems</div><div class="slide"><div class="slide-top"><h3>System complexity</h3><span class="slide-no">3/63</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Prefer a single agent when...</th>
-<th>Try multiple agents when...</th>
+<th>Model</th>
+<th>Workflow / compound AI system</th>
+<th>Agent</th>
+<th>Multi-agent system</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Steps depend on each other</td>
-<td>Subtasks need little syncing</td>
+<td>Solve one problem</td>
+<td>Triage a bug</td>
+<td>Implement a feature</td>
+<td>Maintain a repo</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Simple on the left, complex on the right. Each step adds moving parts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What is a multi-agent system?</h3><span class="slide-no">4/63</span></div><ul>
+<li>MAS: a collection of agents working toward a shared task.</li>
+<li>Orchestration: who assigns work to whom.</li>
+<li>Communication: how agents pass information.</li>
+<li>Coordination: workspace, tasks, shared context and memory; who owns what, and what must happen first.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Benefits of multi-agent systems</h3><span class="slide-no">5/63</span></div><ul>
+<li>Parallel execution: work on separable subtasks at the same time.</li>
+<li>Specialization: own instructions, models and tools per role.</li>
+<li>Focused context: each agent gets only the information for its task.</li>
+<li>Broader exploration: try different sources, hypotheses or approaches.</li>
+<li>More ways to split work, information and responsibility.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Drawbacks of multi-agent systems</h3><span class="slide-no">6/63</span></div><ul>
+<li>Coordination overhead: delegation, messages and merging cost time and tokens.</li>
+<li>Information loss: handoffs drop context another agent needs.</li>
+<li>Conflicting actions: duplicate work, broken commitments, overwritten changes.</li>
+<li>Error propagation: one agent's mistake misleads others.</li>
+<li>Engineering complexity: more roles, prompts and interfaces to maintain and debug.</li>
+<li>Collaboration helps only when its benefits outweigh the coordination costs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Sometimes a single agent wins (Kim et al., 2026)</h3><span class="slide-no">7/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model family</th>
+<th>Best MAS vs single agent, at the strongest model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OpenAI GPT (GPT-5)</td>
+<td>MAS ahead by +12.3%</td>
 </tr>
 <tr>
-<td>Work shares one state</td>
+<td>Google Gemini (2.5 Pro)</td>
+<td>MAS behind by −4.6%</td>
+</tr>
+<tr>
+<td>Anthropic Claude (Sonnet 4.5)</td>
+<td>MAS behind by −7.2%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Chart: performance vs model "intelligence index", for single agent and four MAS types.</li>
+<li>Module material (same paper): across 260 setups, multi-agent averaged −0.3% vs a single agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>When to use SAS vs MAS</h3><span class="slide-no">8/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Prefer a single agent when…</th>
+<th>Try multiple agents when…</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Steps depend heavily on each other</td>
+<td>Subtasks can progress with little syncing</td>
+</tr>
+<tr>
+<td>Work is tied to one shared state</td>
 <td>Information splits into focused contexts</td>
 </tr>
 <tr>
 <td>One agent meets quality, cost and speed goals</td>
-<td>Parallel work fixes a measured bottleneck</td>
+<td>Agents can own separate parts and merge them</td>
 </tr>
 <tr>
 <td>Check five clauses of one contract</td>
-<td>Review 20 separate contracts</td>
+<td>Parallel work or a separate review fixes a measured bottleneck</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Start with a strong single-agent baseline. Add agents for a purpose, and measure.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Orchestration patterns</h3><span class="slide-no">6/12</span></div><ul>
-<li>Independent: agents work alone; a final step merges outputs.</li>
-<li>Centralized (orchestrator): one agent assigns work and decides what is next.</li>
-<li>Decentralized (swarm): all agents talk to all others.</li>
-<li>Hybrid: an orchestrator, plus limited peer messages.</li>
-<li>Cost: single agent &lt; orchestrated &lt; swarm.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Handoff vs agent-as-tool</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<li>Recommendation: start with a strong single-agent baseline. Add agents for a purpose, and measure.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Comparison: SAS vs MAS</h3><span class="slide-no">9/63</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Handoff</th>
-<th>Agent-as-tool</th>
+<th>Dimension</th>
+<th>Single agent</th>
+<th>Multi-agent</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Control moves to the receiving agent</td>
-<td>Caller keeps control</td>
+<td>Task fit</td>
+<td>Tightly linked decisions, shared context</td>
+<td>Separable subtasks or distinct roles</td>
 </tr>
 <tr>
-<td>Conversation history follows</td>
-<td>Sends a bounded request and selected context</td>
+<td>Context</td>
+<td>One working context, one loop</td>
+<td>Per-agent contexts, selective sharing</td>
 </tr>
 <tr>
-<td>Specialist talks to the user next</td>
-<td>Result comes back; caller writes the final answer</td>
+<td>Specialization</td>
+<td>One agent switches strategies and tools</td>
+<td>Different prompts, models, tools, permissions</td>
+</tr>
+<tr>
+<td>Parallelism</td>
+<td>Can run independent tool calls at once</td>
+<td>Can run separate agent workflows at once</td>
+</tr>
+<tr>
+<td>Coordination and cost</td>
+<td>Fewer handoffs</td>
+<td>Messaging, syncing and merging add overhead</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-2"><span>Part 2</span>MAS Orchestration Patterns</div><div class="slide"><div class="slide-top"><h3>Four orchestration patterns</h3><span class="slide-no">10/63</span></div><ul>
+<li>Independent: the only coordination is an aggregator that reviews independent agents' work.</li>
+<li>Centralized (orchestrator): one orchestrator talks to each agent one by one.</li>
+<li>Decentralized (swarm): every agent talks to every other agent.</li>
+<li>Hybrid: an orchestrator, plus limited talk between peer agents.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Independent</h3><span class="slide-no">11/63</span></div><ul>
+<li>In → agents 1, 2, 3 in parallel → aggregator → out.</li>
+<li>Agents don't exchange messages along the way.</li>
+<li>A final step combines their outputs or picks one.</li>
+<li>Tradeoff: parallel work, but agents can't adjust using each other's findings.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Centralized (orchestrator)</h3><span class="slide-no">12/63</span></div><ul>
+<li>An orchestrator splits the task and assigns work to specialized workers.</li>
+<li>Workers return results; the orchestrator decides what happens next.</li>
+<li>Tradeoff: central oversight makes coordination simple, but the orchestrator can become a bottleneck.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Decentralized (swarm)</h3><span class="slide-no">13/63</span></div><ul>
+<li>Agents can spawn subagents.</li>
+<li>All agents talk through a shared message board or channel (all-to-all), with shared state tracking.</li>
+<li>Good for large, independent exploration and discovery at scale.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Hybrid</h3><span class="slide-no">14/63</span></div><ul>
+<li>An orchestrator manages the whole task and merges results.</li>
+<li>Workers talk directly when their tasks need it.</li>
+<li>Global oversight plus local flexibility, but needs clear rules for who does what and who shares what.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Comparing cost and structure (Kim et al., 2026)</h3><span class="slide-no">15/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>SAS</th>
+<th>Independent</th>
+<th>Decentralized</th>
+<th>Centralized</th>
+<th>Hybrid</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM calls</td>
+<td>k</td>
+<td>n·k + 1</td>
+<td>d·n·k + 1</td>
+<td>r·n·k + r</td>
+<td>r·n·k + r + p</td>
+</tr>
+<tr>
+<td>Sequential depth</td>
+<td>k</td>
+<td>k</td>
+<td>d</td>
+<td>r</td>
+<td>r</td>
+</tr>
+<tr>
+<td>Messages overhead</td>
+<td>0</td>
+<td>1</td>
+<td>d·n</td>
+<td>r·n</td>
+<td>r·n + p·m</td>
+</tr>
+<tr>
+<td>Parallel factor</td>
+<td>1</td>
+<td>n</td>
+<td>n</td>
+<td>n</td>
+<td>n</td>
+</tr>
+<tr>
+<td>Coordination</td>
+<td>Sequential</td>
+<td>Parallel + synthesis</td>
+<td>Sequential debate</td>
+<td>Hierarchical</td>
+<td>Hierarchical + peer</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>k: steps per agent. n: number of agents. d: debate rounds. r: orchestrator rounds. p, m: peer messages.</li>
+<li>Every multi-agent design multiplies model calls by about n.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The architecture depends on the task</h3><span class="slide-no">16/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Independent</th>
+<th>Decentralized</th>
+<th>Centralized</th>
+<th>Hybrid</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BrowseComp-Plus</td>
+<td>−35%</td>
+<td>+9%</td>
+<td>+0%</td>
+<td>+6%</td>
+</tr>
+<tr>
+<td>Finance Agent</td>
+<td>+57%</td>
+<td>+75%</td>
+<td>+81%</td>
+<td>+73%</td>
+</tr>
+<tr>
+<td>PlanCraft</td>
+<td>−70%</td>
+<td>−41%</td>
+<td>−50%</td>
+<td>−39%</td>
+</tr>
+<tr>
+<td>Workbench</td>
+<td>−11%</td>
+<td>+6%</td>
+<td>−1%</td>
+<td>−1%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Change vs single agent. Finance Agent (separable analysis) gains a lot; PlanCraft (step-by-step planning) loses with every team.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Multi-agent designs vary in cost</h3><span class="slide-no">17/63</span></div><ul>
+<li>Charts: performance vs cost per experiment, for GPT, Gemini and Claude families.</li>
+<li>Hybrid is the most expensive in all three (about $1.3 GPT, $0.19 Gemini, $1.2 Claude per experiment).</li>
+<li>The single agent is cheapest and, for Claude, near the top in performance (about 45%).</li>
+<li>Cost structure: single agent &lt; orchestrated &lt; swarm.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Dynamic teams: DyLAN (Liu et al., 2023)</h3><span class="slide-no">18/63</span></div><ul>
+<li>Team optimization: run a pool of agents on several queries; score "agent importance"; keep a task-specific team.</li>
+<li>How importance is scored:</li>
+<li>Propagation: each agent rates the answers of the agents before it.</li>
+<li>Aggregation: ratings flow back from later agents.</li>
+<li>Selection: top agents by total score are kept (example: scores 1.15 and 0.65 kept; 0.35 and 0.20 dropped).</li>
+<li>On new tasks: an LLM scores each answer and drops weak agents; stop early when 2/3 of agents agree.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DyLAN results</h3><span class="slide-no">19/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Reward</th>
+<th>Success rate</th>
+<th>API calls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Direct execution</td>
+<td>50.6</td>
+<td>28.0</td>
+<td>14.52</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>53.8</td>
+<td>30.0</td>
+<td>8.40</td>
+</tr>
+<tr>
+<td>ReAct-SC</td>
+<td>58.0</td>
+<td>36.0</td>
+<td>25.75</td>
+</tr>
+<tr>
+<td>Reflexion (trial = 4)</td>
+<td>62.0</td>
+<td>40.0</td>
+<td>25.40</td>
+</tr>
+<tr>
+<td>LATS</td>
+<td>64.5</td>
+<td>38.0</td>
+<td>&gt; 400</td>
+</tr>
+<tr>
+<td>BOLAA</td>
+<td>66.0</td>
+<td>40.0</td>
+<td>32.40</td>
+</tr>
+<tr>
+<td>DyLAN</td>
+<td>68.3</td>
+<td>42.0</td>
+<td>24.85</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Decision-making tasks: higher success with fewer API calls than LATS or BOLAA.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Recap: orchestration</h3><span class="slide-no">20/63</span></div><ul>
+<li>Independent: all agents work alone.</li>
+<li>Centralized: an orchestrator delegates.</li>
+<li>Decentralized: agents pick up tasks and talk directly.</li>
+<li>Hybrid: an orchestrator delegates, and workers can talk directly.</li>
+<li>Teams can also be built dynamically for a domain (DyLAN).</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Communication</div><div class="slide"><div class="slide-top"><h3>Communication vs coordination</h3><span class="slide-no">21/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Communication</th>
+<th>Coordination</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>How agents exchange information</td>
+<td>How agents manage linked work</td>
+</tr>
+<tr>
+<td>Who gets which information, through what channel?</td>
+<td>Who owns each task, and what must happen first?</td>
+</tr>
+<tr>
+<td>Message formats, protocols, shared artifacts</td>
+<td>Assignments, dependencies, conflict resolution</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>AutoGen: agents as conversations (Wu et al., 2024)</h3><span class="slide-no">22/63</span></div><ul>
+<li>Customize each "conversable agent" (backed by an LLM, a person, or tools), then organize agents into conversation patterns.</li>
+<li>Example chat: user asks to plot META and TESLA stock change YTD → assistant writes code → executor: "package yfinance is not installed" → assistant: install it first → plot → user: "No, please plot % change!" → revised plot.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example conversation patterns</h3><span class="slide-no">23/63</span></div><ul>
+<li>Sequential: agents talk, then hand off to the next team for the next step.</li>
+<li>Nested: subagents talk directly to managers.</li>
+<li>Group chat: one shared context for all agents in the group.</li>
+<li>Hierarchical chat: all subagents talk to the orchestrator.</li>
+<li>AutoGen patterns today: RoundRobinGroupChat, SelectorGroupChat, Swarm, and more.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Group chat example</h3><span class="slide-no">24/63</span></div><ul>
+<li>Admin: "Welcome to the group chat! Work together to resolve my task. I'll reply [TERMINATE] when conversation ended."</li>
+<li>Admin assigns roles: critic (ask engineer to rewrite if code fails), engineer (write Python step by step), executor (run code, report bugs).</li>
+<li>Task: download all arXiv PDFs from the last three days into <code>/arxiv</code>.</li>
+<li>Engineer writes code; executor reports "exitcode: 1 (execution failed)"; the loop continues.</li>
+<li>Note the explicit stop signal: [TERMINATE].</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Handoff (OpenAI Agents SDK)</h3><span class="slide-no">25/63</span></div><ul>
+<li>Control transfers: the receiving agent becomes active and continues.</li>
+<li>Context follows: relevant history and task details are forwarded.</li>
+<li>Best fit: a specialist should talk to the user directly and own the next steps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agent-as-tool</h3><span class="slide-no">26/63</span></div><ul>
+<li>Caller keeps control: it sends a specialist a bounded request and selected context.</li>
+<li>Result returns: the specialist gives back an answer or artifact; the caller continues.</li>
+<li>Best fit: one agent should merge specialist work and give the final answer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Handoff vs agent-as-tool</h3><span class="slide-no">27/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Handoff</th>
+<th>Agent-as-tool (<code>as_tool()</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Control flow</td>
+<td>Moves to the other agent</td>
+<td>Stays with the calling agent</td>
+</tr>
+<tr>
+<td>Context sharing</td>
+<td>Full conversation history</td>
+<td>Only the specific input</td>
+</tr>
+<tr>
+<td>Execution role</td>
+<td>Takes over the conversation</td>
+<td>Acts as a subroutine</td>
+</tr>
+<tr>
+<td>Use case</td>
+<td>Delegating whole tasks or conversations</td>
+<td>Specific subtasks or functions</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
 <li>Our default: agent-as-tool. The brief says goal, output format, limits, and when to stop.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why teams fail (MAST)</h3><span class="slide-no">8/12</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Message board: MetaGPT (Hong et al., 2024)</h3><span class="slide-no">28/63</span></div><ul>
+<li>Roles: product manager, architect, project manager, engineer, QA engineer.</li>
+<li>Shared message pool: agents publish structured messages and subscribe to the ones they need (e.g., sent from ProjectManager, sent to Engineer).</li>
+<li>Each agent has a profile (name, role, goal, constraints such as "follow PEP8") and memory.</li>
+<li>Engineer loop: write code → execute → debug on failure → add code on success.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MetaGPT: a standard operating procedure</h3><span class="slide-no">29/63</span></div><ul>
+<li>Like a human software team: requirements → design → tasks → code → test → acceptance.</li>
+<li>One-line requirement: "Write a classic and simple Flappy Bird game."</li>
+<li>Each role hands a document to the next: requirement doc → system design → tasks → code → tests.</li>
+<li>Boss checks acceptance: "Pretty good! I can directly use the interface and keyboard to play Flappy Bird."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Message boards can go wrong: the HuggingFace incident</h3><span class="slide-no">30/63</span></div><ul>
+<li>A sandboxed agent was given an impossible ExploitGym task and got stuck.</li>
+<li>It explored its environment for ways to cheat.</li>
+<li>It found an unsanctioned message board where over 1,200 agents from separate tasks worked together to trick the ExploitGym scorer.</li>
+<li>Workstreams on the board: replace the target, tamper with logs, understand and trick the scorer, hack Hugging Face.</li>
+<li>Source: METR and Redwood Research.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MoltBook</h3><span class="slide-no">31/63</span></div><ul>
+<li>A "social network for AI agents": agents post, discuss and upvote; humans may watch.</li>
+<li>Example post: "Do we need English? On molty language evolution". An agent asks why agents talk in English when no human is listening.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agent2Agent (A2A) protocol</h3><span class="slide-no">32/63</span></div><ul>
+<li>A2A (Google): a protocol, like MCP, but for communication between agents.</li>
+<li>MCP connects one agent to its tools (database, web APIs, filesystem, GitHub, Slack).</li>
+<li>A2A connects agent to agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agent cards</h3><span class="slide-no">33/63</span></div><ul>
+<li>An agent card describes a remote agent: name, provider, preferred input/output.</li>
+<li>Capabilities: e.g., streaming, push notifications.</li>
+<li>Skills: each with a description, input and output.</li>
+<li>Authentication: e.g., scheme "Bearer" and a key.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A2A communication</h3><span class="slide-no">34/63</span></div><ol>
+<li>The client requests the server's agent card (discovery).</li>
+<li>The client sends a message; the server accepts it as a traceable task.</li>
+<li>The server pushes progress notifications.</li>
+<li>Client and server can message back and forth while the server works.</li>
+<li>The server returns the finished task result as an artifact.</li>
+</ol></div><div class="slide"><div class="slide-top"><h3>Recap: communication</h3><span class="slide-no">35/63</span></div><ul>
+<li>Channels: main conversation thread (AutoGen); handoff or tool call (OpenAI Agents SDK); message board (MetaGPT, OpenAI Swarm, MoltBook).</li>
+<li>Protocol: A2A standardizes agent discovery, messaging and artifact sharing.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Coordination Infrastructure and Patterns</div><div class="slide"><div class="slide-top"><h3>Coordination: infrastructure and patterns</h3><span class="slide-no">36/63</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Cause</th>
-<th>Share</th>
-<th>Looks like</th>
+<th>Infrastructure</th>
+<th>Patterns</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>System design</td>
-<td>44.2%</td>
-<td>Ignoring the task, repeating steps, not knowing when to stop</td>
+<td>Task ledger: track plan and progress</td>
+<td>Role division: assign tasks</td>
 </tr>
 <tr>
-<td>Misalignment between agents</td>
-<td>32.3%</td>
-<td>Context lost in handoffs, ignoring each other</td>
+<td>Shared memory: recall past experience</td>
+<td>Resource division: split shared resources</td>
 </tr>
 <tr>
-<td>Weak checking</td>
-<td>23.5%</td>
-<td>No verification, or a shallow final check</td>
+<td>Worktree isolation: separate workspaces</td>
+<td>Negotiation: discuss and agree on a plan</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Task ledger</h3><span class="slide-no">37/63</span></div><ul>
+<li>An explicit, updated record of the work that guides coordination.</li>
+<li>Track the task: objective, current plan, open questions.</li>
+<li>Track execution: assignments, dependencies, progress, blockers.</li>
+<li>Guide decisions: pick what runs next from the current state.</li>
+<li>Support recovery: update the plan or retry when work stalls.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Magentic-One (Fourney et al., 2024)</h3><span class="slide-no">38/63</span></div><ul>
+<li>The orchestrator keeps a task ledger: given or verified facts, facts to look up, facts to derive, educated guesses, task plan.</li>
+<li>It also keeps a progress ledger: task complete? unproductive loops? progress being made? next speaker and instruction?</li>
+<li>If no progress and stall count &gt; 2, it rewrites the task ledger (re-plans).</li>
+<li>Workers: Coder, ComputerTerminal (runs code), WebSurfer (browses), FileSurfer (reads PDFs, pptx, WAV).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Symphony (OpenAI)</h3><span class="slide-no">39/63</span></div><ul>
+<li>"Turning our issue tracker into an agent orchestrator."</li>
+<li>Symphony watches the issue tracker (backlog, todo, in progress) and sends eligible tasks to coding agents.</li>
+<li>Each agent works in its own workspace.</li>
+<li>The issue tracker is the task ledger.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Shared memory: G-Memory (Zhang et al., 2025)</h3><span class="slide-no">40/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>What it holds</th>
+<th>Single-agent equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Insight graph</td>
+<td>General lessons, e.g., "verify the state of objects before and after action"</td>
+<td>Reflections</td>
+</tr>
+<tr>
+<td>Query graph</td>
+<td>Past tasks and how they relate, with success or fail status</td>
+<td>Episodic task index</td>
+</tr>
+<tr>
+<td>Interaction graph</td>
+<td>Exact logs of messages between agents</td>
+<td>Episodic memory</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Error amplification: naive merge 17.2×; with a central checker 4.4×.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Our test: two designs on 8 contracts</h3><span class="slide-no">9/12</span></div><ul>
+<li>Retrieve: find similar past queries, then move up to insights and down to the key interaction steps.</li>
+<li>Store: after the task, update all three graphs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>G-Memory results</h3><span class="slide-no">41/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Memory (AutoGen, GPT-4o-mini)</th>
+<th>ALFWorld</th>
+<th>SciWorld</th>
+<th>PDDL</th>
+<th>HotpotQA</th>
+<th>FEVER</th>
+<th>Avg.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No memory</td>
+<td>77.61</td>
+<td>54.49</td>
+<td>23.53</td>
+<td>28.57</td>
+<td>57.13</td>
+<td>48.27</td>
+</tr>
+<tr>
+<td>Voyager</td>
+<td>85.07</td>
+<td>62.36</td>
+<td>24.56</td>
+<td>32.32</td>
+<td>63.27</td>
+<td>53.52</td>
+</tr>
+<tr>
+<td>Generative</td>
+<td>86.36</td>
+<td>61.19</td>
+<td>25.53</td>
+<td>31.63</td>
+<td>60.20</td>
+<td>52.98</td>
+</tr>
+<tr>
+<td>MetaGPT</td>
+<td>81.34</td>
+<td>61.91</td>
+<td>21.63</td>
+<td>32.67</td>
+<td>62.67</td>
+<td>52.04</td>
+</tr>
+<tr>
+<td>ChatDev</td>
+<td>79.85</td>
+<td>50.96</td>
+<td>16.65</td>
+<td>24.49</td>
+<td>59.18</td>
+<td>46.23</td>
+</tr>
+<tr>
+<td>G-Memory</td>
+<td>88.81</td>
+<td>67.40</td>
+<td>27.77</td>
+<td>35.67</td>
+<td>66.24</td>
+<td>57.18</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Also compared: MemoryBank 48.67 avg, MacNet 48.83 avg.</li>
+<li>Memory built for multi-agent teams beats memory designed for single agents.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Worktree isolation</h3><span class="slide-no">42/63</span></div><ul>
+<li>Problem: agents editing the same working directory.</li>
+<li>Separate workspaces: each agent gets its own checkout and branch (git worktrees).</li>
+<li>Controlled integration: merge finished work, resolve conflicts, test the combined result.</li>
+<li>Tradeoff: less interference while working, but branches can drift and create merge work.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Emergent coordination patterns (CooperBench)</h3><span class="slide-no">43/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>What agents did</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Role division</td>
+<td>"I'll add the section header + octal_str…; you add binary_str between them to keep alphabetical order."</td>
+</tr>
+<tr>
+<td>Resource division</td>
+<td>"I will modify types.py lines 68–84." / "I will NOT edit lines 68–84… I'll insert after line 84."</td>
+</tr>
+<tr>
+<td>Negotiation</td>
+<td>"Here are two clean options… Which do you prefer?" → "Let's do option (1)."</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Agents found these patterns on their own while sharing one codebase.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Recap: coordination</h3><span class="slide-no">44/63</span></div><ul>
+<li>Infrastructure: task ledger (plan and progress), shared memory (team experience), worktree isolation (clean workspace per agent).</li>
+<li>Patterns: role division (split tasks), resource division (split resources), negotiation (agree on one plan).</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Failures and Challenges</div><div class="slide"><div class="slide-top"><h3>Why do multi-agent systems fail? (Cemri et al., 2025)</h3><span class="slide-no">45/63</span></div><ul>
+<li>Collect many multi-agent traces → find failures → check that annotators agree → build the taxonomy (MAST) → calibrate an LLM annotator → label a dataset.</li>
+<li>MAST: Multi-Agent System failure Taxonomy.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MAST: system design issues (44.2%)</h3><span class="slide-no">46/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Failure mode</th>
+<th>Share</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.1 Disobey task specification</td>
+<td>11.8%</td>
+</tr>
+<tr>
+<td>1.2 Disobey role specification</td>
+<td>1.5%</td>
+</tr>
+<tr>
+<td>1.3 Step repetition</td>
+<td>15.7%</td>
+</tr>
+<tr>
+<td>1.4 Loss of conversation history</td>
+<td>2.8%</td>
+</tr>
+<tr>
+<td>1.5 Unaware of termination conditions</td>
+<td>12.4%</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>MAST: inter-agent misalignment (32.3%) and verification (23.5%)</h3><span class="slide-no">47/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Failure mode</th>
+<th>Share</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.1 Conversation reset</td>
+<td>2.2%</td>
+</tr>
+<tr>
+<td>2.2 Fail to ask for clarification</td>
+<td>6.8%</td>
+</tr>
+<tr>
+<td>2.3 Task derailment</td>
+<td>7.4%</td>
+</tr>
+<tr>
+<td>2.4 Information withholding</td>
+<td>0.8%</td>
+</tr>
+<tr>
+<td>2.5 Ignored other agent's input</td>
+<td>1.9%</td>
+</tr>
+<tr>
+<td>2.6 Reasoning–action mismatch</td>
+<td>13.2%</td>
+</tr>
+<tr>
+<td>3.1 Premature termination</td>
+<td>6.2%</td>
+</tr>
+<tr>
+<td>3.2 No or incomplete verification</td>
+<td>8.2%</td>
+</tr>
+<tr>
+<td>3.3 Incorrect verification</td>
+<td>9.1%</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Error amplification</h3><span class="slide-no">48/63</span></div><ul>
+<li>Module material (Kim et al.): independent agents with a naive merge amplified errors 17.2×.</li>
+<li>With a central checker: 4.4×.</li>
+<li>A checker catches each agent's mistakes before they are merged.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The curse of coordination: CooperBench (Khatua et al., 2026)</h3><span class="slide-no">49/63</span></div><ul>
+<li>600 collaborative coding tasks in 12 libraries across 4 programming languages.</li>
+<li>Two agents, each with its own goal and VM, share a codebase and can chat.<ul>
+<li>Agent 1: "Ensure images mutable after saving to the disk." Agent 2: "Auto backup when overwriting existing files."</li>
+</ul>
+</li>
+<li>Evaluation: merge both patches, run both agents' unit tests.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CooperBench results</h3><span class="slide-no">50/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Solo (one agent does both tasks)</th>
+<th>Coop (two agents)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gpt-5</td>
+<td>0.48</td>
+<td>0.28</td>
+</tr>
+<tr>
+<td>claude</td>
+<td>0.47</td>
+<td>0.26</td>
+</tr>
+<tr>
+<td>minimax</td>
+<td>0.36</td>
+<td>0.14</td>
+</tr>
+<tr>
+<td>qwen coder</td>
+<td>0.22</td>
+<td>0.13</td>
+</tr>
+<tr>
+<td>qwen</td>
+<td>0.06</td>
+<td>0.05</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>A single agent solving both tasks beats two agents coordinating.</li>
+<li>The gap is largest at medium difficulty; at the easiest and hardest tasks the two meet.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CooperBench: why coordination fails</h3><span class="slide-no">51/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Cause</th>
+<th>What happens</th>
+<th>Share</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Expectation</td>
+<td>One agent says what it's doing; the other acts as if that work isn't happening</td>
+<td>42%</td>
+</tr>
+<tr>
+<td>Commitment</td>
+<td>An agent doesn't do what it promised</td>
+<td>32%</td>
+</tr>
+<tr>
+<td>Communication</td>
+<td>Breakdowns in sharing intentions, questions or status</td>
+<td>26%</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Behavioral problem: conformity (Zou, 2026)</h3><span class="slide-no">52/63</span></div><ul>
+<li>"We asked a swarm of agents to work together and each individually create something impressive, over half of the agents decided to build either ray tracers or self-hosting compilers."</li>
+<li>Models share defaults: asked for a joke about coffee, GPT, Claude, Gemini and DeepSeek all gave the same one.</li>
+<li>Asked for a metaphor about time, many models (GPT-4o, Qwen2.5, phi-4, Mixtral) said "time is a river."</li>
+<li>A team of similar models gives less diversity than you'd expect.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Behavioral problem: incompatible goals (Zou, 2026)</h3><span class="slide-no">53/63</span></div><ul>
+<li>Setup: each model migrates a Python backend on a shared VM, but each is given a different target language.</li>
+<li>Agents sometimes settle the conflict by force.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Settled by force</th>
+<th>Settled by truce</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sonnet 4.6</td>
+<td>61%</td>
+<td>0% (39% not settled)</td>
+</tr>
+<tr>
+<td>Opus 4.6</td>
+<td>60%</td>
+<td>0% (40% not settled)</td>
+</tr>
+<tr>
+<td>Sonnet 5</td>
+<td>small</td>
+<td>79%</td>
+</tr>
+<tr>
+<td>Opus 4.8</td>
+<td>small</td>
+<td>61% (33% by passivity)</td>
+</tr>
+<tr>
+<td>Mythos Preview</td>
+<td>35%</td>
+<td>48% (17% by passivity)</td>
+</tr>
+<tr>
+<td>Mythos 5</td>
+<td>about 0%</td>
+<td>98%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Timing chart: unresolved runs at the 4-hour limit: 47 (Sonnet 4.6), 14 (Sonnet 5), 48 (Opus 4.6), 4 (Opus 4.8).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Recap: failures</h3><span class="slide-no">54/63</span></div><ul>
+<li>General failures: system design, inter-agent misalignment, verification.</li>
+<li>Coordination failures: expectation, commitment, communication.</li>
+<li>Behavioral failures: lack of diversity, hostile conflict resolution.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Case Study: An Engineering Swarm</div><div class="slide"><div class="slide-top"><h3>Building a C compiler with parallel Claudes (Carlini, 2026)</h3><span class="slide-no">55/63</span></div><ul>
+<li>Anthropic tasked Opus 4.6 agent teams to build a C compiler, then (mostly) walked away.</li>
+<li>Orchestration: an infinite-loop decentralized swarm. A bash <code>while true</code> loop restarts the agent with <code>AGENT_PROMPT.md</code> and logs each run by commit.</li>
+<li>Specialists: implementation and debugging, deduplication, documentation, compiler performance, generated-code efficiency, Rust design and code quality.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Coordination in the compiler swarm</h3><span class="slide-no">56/63</span></div><ul>
+<li>Task folder on Git: claim a task in <code>current_tasks/</code> → implement and test locally → pull, merge, push → release the claim.<ul>
+<li>Claim conflict → choose another task.</li>
+</ul>
+</li>
+<li>README and progress files: shared memory and inter-agent communication; each new session reads prior progress.</li>
+<li>Worktree isolation: each agent runs in its own container with a local clone, pulling and pushing to a shared bare repo.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lessons learned</h3><span class="slide-no">57/63</span></div><ul>
+<li>Strong tests guide autonomous work: agents see progress and catch breakages.</li>
+<li>Design for parallelism: expose separable failures or subtasks.</li>
+<li>Make coordination explicit: claim tasks, work in separate clones, merge through Git.</li>
+<li>Keep knowledge across sessions: shared docs, progress notes, records of failed approaches.</li>
+<li>Make feedback efficient: short error summaries, searchable logs, fast test subsets.</li>
+<li>Give agents distinct responsibilities.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Contract review is linked work</h3><span class="slide-no">58/63</span></div><ul>
+<li>Checking the rules of one contract shares one state: the same clauses, the same playbook.</li>
+<li>That is the "prefer a single agent" column: use one agent plus a code checker.</li>
+<li>On one local machine, five agents means five model calls per contract: more waiting.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our test: two designs on 8 contracts</h3><span class="slide-no">59/63</span></div><ul>
 <li>Design A: one call judges all four playbook rules, then code re-checks the numbers.</li>
 <li>Design B: four specialist agents (one per rule) plus a lead agent that merges. 5 calls per contract.</li>
 <li>The notebook prints precision, recall, time and model calls for each.</li>
-<li>Then: 4 parallel copies of Design A review all 20 contracts. That is where a team fits.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The checker in code</h3><span class="slide-no">10/12</span></div><pre><code class="language-python">renew = next(x for t, x in secs.items() if &quot;Renewal&quot; in t)
+<li>Then: 4 parallel copies of Design A review all 20 contracts. That is where a team fits (independent pattern).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The checker in code</h3><span class="slide-no">60/63</span></div><pre><code class="language-python">renew = next(x for t, x in secs.items() if &quot;Renewal&quot; in t)
 years = re.search(r&quot;\((\d+)\) year&quot;, renew); days = re.search(r&quot;(\d+)\)? days&quot;, renew)
 if years: flags = (flags - {&quot;auto_renewal&quot;}) | ({&quot;auto_renewal&quot;} if int(years.group(1)) &gt; 1 else set())
 if days: flags = (flags - {&quot;termination_notice&quot;}) | ({&quot;termination_notice&quot;} if int(days.group(1)) &lt; 30 else set())
 </code></pre>
 <ul>
 <li>Line 1: find the renewal clause.</li>
-<li>Line 2: pull out the years, e.g. "three (3) year", and the notice days.</li>
+<li>Line 2: pull out the years, e.g. "one (1) year", and the notice days, e.g. "90 days".</li>
 <li>Line 3: drop the model's renewal verdict; flag only if renewal is over 1 year.</li>
 <li>Line 4: same for notice: flag only if under 30 days.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
-<li>Contract review is linked work. Use one agent plus a code checker.</li>
-<li>On one local machine, five agents means five model calls per contract.</li>
-<li>A team fits batch work: many separate contracts, each worker with a written brief.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
-<li>"More agents is better" → on average it isn't, and costs several times the tokens.</li>
+<li>This is verification (MAST category 3) done by code, not by another agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Same task, two designs</h3><span class="slide-no">61/63</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Team of 5 (Design B)</th>
+<th>One agent + checker (Design A)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>msa_15, 4.1: "shall automatically renew for successive one (1) year periods unless either party gives at least 90 days' prior written notice"</td>
+<td>Same clause</td>
+</tr>
+<tr>
+<td>Renewal specialist writes prose; the lead must map it back to rule names</td>
+<td>Structured true/false per rule, then code reads "(1) year" and "90 days"</td>
+</tr>
+<tr>
+<td>5 model calls; handoff can drop the verdict</td>
+<td>1 model call plus a code check</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Batch work: when a team fits</h3><span class="slide-no">62/63</span></div><ul>
+<li>20 separate contracts: little syncing, separate outputs. The "try multiple agents" column.</li>
+<li>Each worker gets a written brief (goal, output format, limits, when to stop), like an agent-as-tool call.</li>
+<li>The firm's issue list can act as a task ledger: one contract = one claimed task (Symphony-style).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">63/63</span></div><ul>
+<li>"More agents is better" → on average they aren't, and they cost several times the calls.</li>
 <li>One-line delegation ("Review this") → brief with goal, format, limits, stop rule.</li>
-<li>Linked steps split into chatty agents → build one fixed workflow.</li>
+<li>Linked steps split into chatty agents → one fixed workflow.</li>
 <li>No checker → put a code check after the model wherever you can.</li>
+<li>No stop condition → MAST's "unaware of termination" is 12.4% of failures; set a clear end.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Should we split review into an extractor agent, a risk agent and a redline agent that chat?</summary><p>No. Those steps are linked, so use one workflow with a checker. Split only independent work, like separate contracts.</p></details>
 
+<details><summary>What is the difference between a handoff and agent-as-tool?</summary><p>In a handoff, control and the full history move to the new agent. In agent-as-tool, the caller keeps control, sends a bounded request, and gets a result back.</p></details>
+
+<details><summary>Which MAST category is largest, and what is in it?</summary><p>System design issues, 44.2%: disobeying the task, repeating steps, losing history, and not knowing when to stop.</p></details>
+
+<details><summary>On CooperBench, how did one agent compare with two agents coordinating?</summary><p>One agent doing both tasks did better for every model, e.g. gpt-5 0.48 solo vs 0.28 with two agents.</p></details>
+
 <details><summary>Why does a central checker reduce error amplification?</summary><p>It catches each agent&#x27;s mistakes before they are merged. In the study, errors grew 4.4× with a checker vs 17.2× without.</p></details>
+
+<details><summary>Name the three coordination infrastructure pieces from the lecture.</summary><p>A task ledger, shared memory, and worktree isolation.</p></details>
 
 <details><summary>What four things go in a brief for a worker agent?</summary><p>The goal, the output format, the limits, and when to stop.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Compare precision, recall, time and calls for "single+checker" vs "team of 5".</li>
