@@ -47,6 +47,10 @@ PAGE_CSS = """
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -137,30 +141,45 @@ def read_lesson(mid):
         return (f'<details><summary>{html.escape(mm.group(1).strip())}</summary>'
                 f'<p>{html.escape(mm.group(2).strip())}</p></details>\n')
     md = lambda s: re.sub(r"<table>", '<div class="tbl"><table>',
-                          markdown.markdown(re.sub(r"(?m)^  (?=[-*] )", "    ", s), extensions=["tables", "fenced_code", "md_in_html"])).replace("</table>", "</table></div>")
-    parts = re.split(r"(?m)^## ", text)
-    slides, tail = [], []
-    for part in parts[1:]:
-        head, _, body = part.partition("\n")
-        low = head.lower().strip()
+                          markdown.markdown(re.sub(r"(?m)^(?!\|)(.+)\n(?=\|.*\|\s*\n\|[-: |]+\|)", r"\1\n\n", re.sub(r"(?m)^  (?=[-*] )", "    ", s)), extensions=["tables", "fenced_code", "md_in_html"])).replace("</table>", "</table></div>")
+    # "# Section" lines divide the deck; "## Title" lines are slides.
+    tokens = re.split(r"(?m)^(#{1,2}) (.*)$", text)
+    pre = tokens[0]
+    slides, tail, sections = [], [], []   # slides: (section_index, head, html)
+    for j in range(1, len(tokens), 3):
+        level, head, body = tokens[j], tokens[j + 1].strip(), tokens[j + 2]
+        if level == "#":
+            sections.append(head)
+            continue
+        low = head.lower()
         if low.startswith("check your understanding"):
             body = re.sub(r"\*\*Q:\s*(.+?)\*\*\s*\n\s*A:\s*(.+?)(?=\n\s*\n|\n\*\*Q:|\Z)", qa, body, flags=re.S)
-            tail.append(f'<h2>{html.escape(head.strip())}</h2><div class="check">{md(body)}</div>')
+            tail.append(f'<h2>{html.escape(head)}</h2><div class="check">{md(body)}</div>')
         elif low.startswith("try it in colab"):
-            tail.append(f'<h2>{html.escape(head.strip())}</h2>{md(body)}')
+            tail.append(f'<h2>{html.escape(head)}</h2>{md(body)}')
         else:
-            slides.append((head.strip(), md(body)))
+            slides.append((len(sections) - 1, head, md(body)))
     n = len(slides)
-    deck = "".join(
-        f'<div class="slide{" objective" if h.lower().startswith("learning objective") else ""}">'
-        f'<div class="slide-top"><h3>{html.escape(h)}</h3><span class="slide-no">{k}/{n}</span></div>{b}</div>'
-        for k, (h, b) in enumerate(slides, 1))
+    parts_html, cur = [], -2
+    for k, (sec, h, b) in enumerate(slides, 1):
+        if sec != cur and sec >= 0:
+            parts_html.append(f'<div class="deck-sec" id="sec-{sec + 1}"><span>Part {sec + 1}</span>{html.escape(sections[sec])}</div>')
+        cur = sec
+        parts_html.append(
+            f'<div class="slide{" objective" if h.lower().startswith("learning objective") else ""}">'
+            f'<div class="slide-top"><h3>{html.escape(h)}</h3><span class="slide-no">{k}/{n}</span></div>{b}</div>')
+    deck = "".join(parts_html)
+    if len(sections) > 1:
+        counts = [sum(1 for s in slides if s[0] == i) for i in range(len(sections))]
+        toc = "".join(f'<li><a href="#sec-{i + 1}">{html.escape(s)}</a> <span>{c} slides</span></li>'
+                      for i, (s, c) in enumerate(zip(sections, counts)))
+        deck = f'<nav class="deck-toc"><b>In this lesson ({n} slides)</b><ol>{toc}</ol></nav>' + deck
     src = ""
     if meta.get("source"):
         link = (f' · <a href="{html.escape(meta["slides"])}" target="_blank" rel="noopener">'
                 f'{"original slides (PDF)" if "cs329z/slides" in meta.get("slides", "") else "main paper"}</a>') if meta.get("slides") else ""
         src = f'<p class="deck-src">Based on {html.escape(meta["source"])}{link}</p>'
-    body_html = md(parts[0]) + src + f'<div class="deck">{deck}</div>' + "".join(tail)
+    body_html = md(pre) + src + f'<div class="deck">{deck}</div>' + "".join(tail)
     return meta, body_html
 
 

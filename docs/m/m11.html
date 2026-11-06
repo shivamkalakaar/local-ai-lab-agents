@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Optimization: prompts, then weights · Agent Engineering School</title>
-<meta name="description" content="Make a small local model better at one job by letting a bigger local model rewrite its instructions (GEPA), before any training.">
+<meta name="description" content="When to optimize an AI system, and how: tune prompts (GEPA, MIPROv2), then weights (SFT, GRPO, on-policy distillation), or let agents optimize.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,71 +259,1243 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 11</span></div><section class="mod" id="m11" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 11</div><h2>Optimization: prompts, then weights</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/11_optimization_gepa.ipynb">Open in Colab</a><button class="done-btn" data-done="m11" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Make a small local model better at one job by letting a bigger local model rewrite its instructions (GEPA), before any training.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 9 · Optimization · <a href="https://web.stanford.edu/class/cs329z/slides/lecture09.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
-<li>Improve a small local model's prompt with GEPA, and know when to move on to training.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Prompt wording matters</h3><span class="slide-no">2/12</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 11</span></div><section class="mod" id="m11" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 11</div><h2>Optimization: prompts, then weights</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/11_optimization_gepa.ipynb">Open in Colab</a><button class="done-btn" data-done="m11" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>30 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">When to optimize an AI system, and how: tune prompts (GEPA, MIPROv2), then weights (SFT, GRPO, on-policy distillation), or let agents optimize.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 9 · Optimization · <a href="https://web.stanford.edu/class/cs329z/slides/lecture09.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (85 slides)</b><ol><li><a href="#sec-1">Conditions for optimization</a> <span>6 slides</span></li><li><a href="#sec-2">Context optimization</a> <span>26 slides</span></li><li><a href="#sec-3">Weight optimization</a> <span>29 slides</span></li><li><a href="#sec-4">Optimization with agents</a> <span>9 slides</span></li><li><a href="#sec-5">Which strategy to use</a> <span>6 slides</span></li><li><a href="#sec-6">How this applies to us</a> <span>7 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/85</span></div><ul>
+<li>Know when optimization pays off, how the main prompt and weight methods work, and which one to pick. Then improve a small local model's prompt with GEPA.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture overview</h3><span class="slide-no">2/85</span></div><ul>
+<li>Conditions for optimization: what you need before you start.</li>
+<li>Context optimization: better prompts and examples.</li>
+<li>Weight optimization: SFT, RL, on-policy distillation.</li>
+<li>Optimization with agents: agents that improve themselves or other code.</li>
+<li>Which strategy to use.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Conditions for optimization</div><div class="slide"><div class="slide-top"><h3>Quick poll: which prompt is best?</h3><span class="slide-no">3/85</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Prompt for PaLM 2-L-IT (math)</th>
-<th>Score</th>
+<th>Prompt (math problems, scored on PaLM 2)</th>
+<th>Accuracy</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>"Let's think step by step."</td>
+<td>A. "Let's think step by step."</td>
 <td>71.8%</td>
 </tr>
 <tr>
-<td>"Let's combine our numerical command and clear thinking..."</td>
-<td>74.5%</td>
+<td>B. "Take a deep breath and work on this problem step-by-step."</td>
+<td>80.2%</td>
 </tr>
 <tr>
-<td>"Take a deep breath and work on this problem step-by-step."</td>
-<td>80.2%</td>
+<td>C. "Let's combine our numerical command and clear thinking to quickly and accurately decipher the answer."</td>
+<td>74.5%</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Small wording changes move the score. An optimizer can search for the best wording.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Three pillars of optimization</h3><span class="slide-no">3/12</span></div><ul>
-<li>Data: training examples, rollouts, human feedback.</li>
-<li>System: the model, workflow or agent you tune.</li>
-<li>Metric: pass rate, exact match, LLM judge, cost.</li>
-<li>You need all three. No trustworthy metric, no optimization.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Context vs weight optimization</h3><span class="slide-no">4/12</span></div><div class="tbl"><table>
+<li>B wins. Nobody would guess that by hand.</li>
+<li>Small wording changes move the score by points. A search can find wording people would not.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The idea of optimization</h3><span class="slide-no">4/85</span></div><ul>
+<li>Optimization: you state your intent through <strong>data and evals</strong>, and a method improves the system to match.</li>
+<li>You stop hand-tuning prompts. You tune the eval, and the optimizer tunes the system.</li>
+<li>This lecture: the common algorithms and when to use each.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three pillars of AI systems</h3><span class="slide-no">5/85</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Context (prompt) optimization</th>
-<th>Weight optimization</th>
+<th>Data</th>
+<th>System or model</th>
+<th>Evaluation + metric</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Changes the instructions and examples</td>
-<td>Changes the model's numbers by training</td>
+<td>Training data</td>
+<td>Language model</td>
+<td>Pass rate</td>
 </tr>
 <tr>
-<td>Sample-efficient; fast; simple setup</td>
-<td>Data hungry; grows with thousands of examples</td>
+<td>Rollouts</td>
+<td>Compound AI system / workflow</td>
+<td>Exact match</td>
 </tr>
 <tr>
-<td>Works with API-only models</td>
-<td>Needs a model you can train</td>
+<td>Demonstrations</td>
+<td>Agentic system</td>
+<td>LLM judge</td>
 </tr>
 <tr>
-<td>Our case: a better prompt for Llama 3.2 3B</td>
-<td>Fallback if prompts plateau</td>
+<td>Human feedback</td>
+<td>...</td>
+<td>Cost / latency</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Try prompts first. They are cheaper.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>GEPA: reflective prompt evolution</h3><span class="slide-no">5/12</span></div><ul>
-<li>Student: the small fast model doing the task (Llama 3.2 3B).</li>
-<li>Reflection model: a bigger model that reads the student's mistakes and rewrites the instructions (Llama 3.1 8B).</li>
-<li>Pareto set: GEPA keeps several strong candidates, not just one.</li>
-<li>Course demo: Gemma 3 12B went from 55% to 100% on a held-out set. Only the instruction text changed.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Our task: three numbers from two clauses</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<li>To optimize an AI system you need all three.</li>
+<li>Rollout: one full run of the system on a task, start to finish.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Is context optimization still needed?</h3><span class="slide-no">6/85</span></div><ul>
+<li>"Won't models just get better with scale?"</li>
+<li>Optimization is for <strong>last-mile adaptation</strong>.</li>
+<li>Models give a great general solution. Once we know your exact setting, we adapt to its specifics.</li>
+<li>Example: a strong model knows contracts. It does not know the firm's rule "liability cap at most 12 months of fees".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>When to optimize</h3><span class="slide-no">7/85</span></div><ul>
+<li>You have data and evals that suit your domain.</li>
+<li>Examples and feedback can say what a prompt can't fully say.<ul>
+<li>Sometimes a good eval conveys intent better than any instruction. Tune the system to the eval.</li>
+</ul>
+</li>
+<li>The system has many parts that are hard to tune by hand (several prompts, tools, models).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Benefits of optimization</h3><span class="slide-no">8/85</span></div><ul>
+<li>Greater reliability: fewer repeated errors, more consistent across tasks.</li>
+<li>Domain adaptation: better on specialized tasks, workflows and rules.</li>
+<li>Lower cost and latency: same quality with smaller models, shorter prompts or fewer tool calls.</li>
+<li>Learning from experience: turn good runs and failure feedback into lasting fixes.</li>
+<li>Adaptability: adjust when models, tools or tasks change.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Context optimization</div><div class="slide"><div class="slide-top"><h3>Two families of context optimization</h3><span class="slide-no">9/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Few-shot optimization</th>
+<th>Reflective optimization</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pick and order the best examples to show the model</td>
+<td>Run the task, reflect on what went wrong, rewrite the instruction</td>
+</tr>
+<tr>
+<td>Lu et al., STaR, DSPy bootstrapping</td>
+<td>OPRO, MIPROv2, TextGrad, GEPA</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Few-shot prompting</h3><span class="slide-no">10/85</span></div><ul>
+<li>Few-shot: besides the task description, the model sees a few worked examples. No training happens.</li>
+<li>From the GPT-3 paper (Brown et al., 2020):</li>
+</ul>
+<pre><code>Translate English to French:     ← task description
+sea otter =&gt; loutre de mer       ← examples
+peppermint =&gt; menthe poivrée
+plush girafe =&gt; girafe peluche
+cheese =&gt;                        ← prompt
+</code></pre>
+<ul>
+<li>Open questions: which examples, and in what order?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Order matters: Fantastically Ordered Prompts (Lu et al., 2022)</h3><span class="slide-no">11/85</span></div><ul>
+<li>Same examples in a different order can give very different scores.</li>
+<li>Method: try many orderings of the training examples.</li>
+<li>Each ordering labels a <strong>probing set</strong>: sentences the model generates itself.</li>
+<li>Ground-truth labels on the probing set are ignored. You only look at what the model predicts.</li>
+<li>Pick the orderings whose predictions look healthy (next two slides).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Global entropy: are the labels balanced?</h3><span class="slide-no">12/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>High global entropy (good)</th>
+<th>Low global entropy (bad)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"the ending is universally panned" → 0</td>
+<td>→ 0</td>
+</tr>
+<tr>
+<td>"features multiple endings" → 1</td>
+<td>→ 0</td>
+</tr>
+<tr>
+<td>"quite hard to sit through" → 0</td>
+<td>→ 0</td>
+</tr>
+<tr>
+<td>"nice movie" → 1</td>
+<td>→ 0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Formula: <code>GlobalE = Σ over labels v of −p(v)·log p(v)</code><ul>
+<li>p(v): share of probing sentences that got label v.</li>
+</ul>
+</li>
+<li>A bad ordering makes the model say the same label for everything. Low entropy flags that.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Local entropy: is the model unsure per example?</h3><span class="slide-no">13/85</span></div><ul>
+<li>Formula: <code>LocalE = (1/|D|) · Σ over examples i of Σ over labels v of −p(i,v)·log p(i,v)</code><ul>
+<li>p(i,v): the model's probability of label v on example i.</li>
+<li>|D|: size of the probing set. So it is the average over the probe set.</li>
+</ul>
+</li>
+<li>High local entropy: on "the ending is universally panned", 0 and 1 get about equal probability.</li>
+<li>Low local entropy: one label clearly wins.</li>
+<li>Pick orderings that score well by global or local entropy.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lu et al. results</h3><span class="slide-no">14/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>GPT-3 2.7B</th>
+<th>SST-2</th>
+<th>AGNews</th>
+<th>MR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No selection</td>
+<td>78.0</td>
+<td>72.9</td>
+<td>68.0</td>
+</tr>
+<tr>
+<td>LocalE</td>
+<td>81.0</td>
+<td>72.3</td>
+<td>75.6</td>
+</tr>
+<tr>
+<td>GlobalE</td>
+<td>80.2</td>
+<td>78.1</td>
+<td>76.1</td>
+</tr>
+<tr>
+<td>Oracle (best order on the dev set)</td>
+<td>89.8</td>
+<td>81.3</td>
+<td>87.4</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Entropy picks move toward the oracle without using any labels.</li>
+<li>GPT-3 175B on SST-2: 93.9 → 93.9 (GlobalE), oracle 94.7. The big model cares less about order.</li>
+<li>Table covers 11 tasks; majority-class and full fine-tuning rows are given for reference.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Bootstrap reasoning: the problem</h3><span class="slide-no">15/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Standard prompting</th>
+<th>Chain-of-thought prompting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Example: "A: The answer is 11."</td>
+<td>Example: "Roger started with 5 balls. 2 cans of 3 is 6. 5 + 6 = 11. The answer is 11."</td>
+</tr>
+<tr>
+<td>Cafeteria question → "The answer is 27." ✗</td>
+<td>→ "23 − 20 = 3 ... 3 + 6 = 9. The answer is 9." ✓</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Chain of thought (CoT): the model writes its reasoning before the answer (Wei et al., 2022).</li>
+<li>But labeled examples usually have answers only, no reasoning. Where do we get the reasoning?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>STaR (Zelikman et al., 2022)</h3><span class="slide-no">16/85</span></div><ul>
+<li>Self-Taught Reasoner: mine reasoning traces by <strong>rejection sampling</strong>.</li>
+<li>Rejection sampling: generate many tries, keep only the ones that pass a check.</li>
+<li>Loop:<ul>
+<li>Model writes a rationale + answer for each question.</li>
+<li>Correct answer → keep (question, rationale, answer).</li>
+<li>Wrong answer → give a hint (the right answer) and ask it to rationalize; keep if now correct.</li>
+<li>Fine-tune on what was kept. Repeat.</li>
+</ul>
+</li>
+<li>Example: "What can be used to carry a small dog?" → "Baskets are designed to hold things. Therefore, the answer is basket (b)."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSPy bootstrapping (Khattab et al., 2023)</h3><span class="slide-no">17/85</span></div><ul>
+<li>Same idea, no fine-tuning: just rejection-sample successful reasoning into the prompt.</li>
+<li>Input → model → reasoning + output → metric.<ul>
+<li>High metric score: keep the trace as a few-shot demo.</li>
+<li>Low score: discard.</li>
+</ul>
+</li>
+<li>Then try combinations of kept demos on the dev set. Keep the best-performing set.</li>
+<li>"Bootstrap Random Search": (1) bootstrap demos for each module, (2) randomly search combinations.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSPy results on GSM8K math</h3><span class="slide-no">18/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Program · compilation</th>
+<th>GPT-3.5 dev / test</th>
+<th>Llama2-13b-chat dev / test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vanilla · none</td>
+<td>24.0 / 25.2</td>
+<td>7.0 / 9.4</td>
+</tr>
+<tr>
+<td>Vanilla · bootstrap ×2</td>
+<td>64.7 / 61.7</td>
+<td>37.3 / 36.5</td>
+</tr>
+<tr>
+<td>CoT · none</td>
+<td>50.0 / –</td>
+<td>26.7 / –</td>
+</tr>
+<tr>
+<td>CoT · few-shot + human CoT</td>
+<td>78.6 / 72.4</td>
+<td>34.3 / 33.7</td>
+</tr>
+<tr>
+<td>CoT · bootstrap</td>
+<td>80.3 / 72.9</td>
+<td>43.3 / –</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Bootstrapped reasoning plus random search beat human-written reasoning and gold labels.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reflective optimization: LLMs as Optimizers (OPRO, Yang et al., 2024)</h3><span class="slide-no">19/85</span></div><ul>
+<li>Let the LLM see past instructions and their scores. Ask it to write a new, better one.</li>
+<li>Meta-prompt holds:<ul>
+<li>Solution-score pairs, sorted from low to high: "Let's figure it out!" → 61, "Let's solve the problem." → 63, ...</li>
+<li>Task examples with <code>&lt;INS&gt;</code> where the instruction goes.</li>
+<li>"Write your new text that is different from the old ones and has a score as high as possible."</li>
+</ul>
+</li>
+<li>Loop: generate → score → add to meta-prompt → repeat. Return the top instructions at the end.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>OPRO results: GSM8K, zero-shot</h3><span class="slide-no">20/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Instruction</th>
+<th>Acc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline (Kojima et al.)</td>
+<td>"Let's think step by step."</td>
+<td>71.8</td>
+</tr>
+<tr>
+<td>Baseline (Zhou et al.)</td>
+<td>"Let's work this out in a step by step way to be sure we have the right answer."</td>
+<td>58.8</td>
+</tr>
+<tr>
+<td>Baseline</td>
+<td>(empty string)</td>
+<td>34.0</td>
+</tr>
+<tr>
+<td>PaLM 2-L-IT</td>
+<td>"Take a deep breath and work on this problem step-by-step."</td>
+<td>80.2</td>
+</tr>
+<tr>
+<td>PaLM 2-L</td>
+<td>"Break this down."</td>
+<td>79.9</td>
+</tr>
+<tr>
+<td>gpt-3.5-turbo</td>
+<td>"A little bit of arithmetic and a logical approach will help us quickly arrive at the solution to this problem."</td>
+<td>78.5</td>
+</tr>
+<tr>
+<td>gpt-4</td>
+<td>"Let's combine our numerical command and clear thinking..."</td>
+<td>74.5</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Source = the optimizer LLM. All scored with pre-trained PaLM 2-L.</li>
+<li>OPRO finds odd strategies like "Take a deep breath...".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MIPROv2 (Opsahl-Ong et al., 2024)</h3><span class="slide-no">21/85</span></div><ul>
+<li>Three steps:</li>
+<li>Bootstrap demonstrations (reasoning + output if the program uses CoT).</li>
+<li>Propose instructions grounded in the task (reflection).</li>
+<li>Search the combinations of instructions and demos.</li>
+<li>Walk-through example: an LM program <code>classify_iris(petal_len, petal_wid, sepal_len, sepal_wid)</code> that predicts the iris species.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MIPROv2 step 1: bootstrap few-shot demos</h3><span class="slide-no">22/85</span></div><ul>
+<li>Run training examples through the program several times.</li>
+<li>Score each output with the metric.<ul>
+<li>Scores poorly → discard the trace.</li>
+<li>Scores highly → keep it as a demo.</li>
+</ul>
+</li>
+<li>Kept demo: petal_length "1.4", petal_width "0.2", sepal_length "4.6", sepal_width "3.2".<ul>
+<li>Rationale: "...the petal length is 1.4 cm, which is relatively short... we can conclude that the iris species is likely to be setosa."</li>
+<li>Answer: "setosa".</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MIPROv2 step 2: what the proposer sees</h3><span class="slide-no">23/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Input to the proposer LM</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Program summary</td>
+<td>"Classifying iris flowers into one of three species... based on the dimensions of their petals and sepals."</td>
+</tr>
+<tr>
+<td>2. Data summary</td>
+<td>"Each of the classes has a distinct distribution on petal_length and petal_width... sepal variables appear to have less clear cut trends."</td>
+</tr>
+<tr>
+<td>3. Successful traces</td>
+<td>classify_iris(5.1, 1.8, 5.9, 3.0) → step-by-step rationale → "virginica"</td>
+</tr>
+<tr>
+<td>4. A prompting tip</td>
+<td>"Keep the instruction clear and concise."</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Program-aware and data-aware grounding: the LM reads the code and the dataset, then summarizes.</li>
+<li>Only one tip is shown at a time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MIPROv2 step 2: the tips</h3><span class="slide-no">24/85</span></div><ul>
+<li>"Don't be afraid to be creative."</li>
+<li>"The instruction should include a high stakes scenario in which the LM must solve the task!"</li>
+<li>"Provide the LM with a persona that is relevant to the task (ie. "You are a …")."</li>
+<li>"Keep the instruction clear and concise."</li>
+<li>Different tips push the proposer toward different styles. This gives variety.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MIPROv2 step 2: proposed instructions</h3><span class="slide-no">25/85</span></div><ul>
+<li>"Using the provided petal length, petal width, sepal length, and sepal width measurements in cm, predict the iris species accurately to save a critically endangered species from extinction."</li>
+<li>"Given the petal length, petal width, sepal length, and sepal width in centimeters, predict the species of the iris flower (setosa, versicolour, or virginica). Provide a step-by-step reasoning..."</li>
+<li>"Given the critical situation in which a rare species of iris is on the brink of extinction, predict the iris species..."</li>
+<li>Many candidates. Step 3 decides which one works.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MIPROv2 step 3: search the combinations</h3><span class="slide-no">26/85</span></div><ul>
+<li>Pool: instructions 1..N and demo sets 1..N from steps 1–2.</li>
+<li>Bayesian surrogate model: keeps a belief of how good each instruction and each demo set is.</li>
+<li>Loop:<ul>
+<li>Sample an instruction + demo set from the beliefs (e.g., Instruction 1 + Demo Set 2).</li>
+<li>Slot them into the program.</li>
+<li>Run a minibatch of training data. Score it.</li>
+<li>Update the beliefs.</li>
+</ul>
+</li>
+<li>Repeat <code>num_batches</code> times. Every few iterations, do a full evaluation.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MIPROv2: an optimized module</h3><span class="slide-no">27/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Before</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Given the petal and sepal dimensions in cm, predict the iris species."</td>
+<td>"Given the critical situation in which a rare species of iris is on the brink of extinction, predict the iris species based on the dimensions of the petals and sepals in order to save it from extinction."</td>
+</tr>
+<tr>
+<td>No demos</td>
+<td>+ a bootstrapped demo: 1.5 / 0.1 / 5.2 / 4.1 → rationale → "setosa"</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The result is still plain text: one instruction plus demos.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>TextGrad (Yuksekgonul et al., 2024)</h3><span class="slide-no">28/85</span></div><ul>
+<li>Feedback gradients: an LLM says how an output could be better ("this response can be improved by...").</li>
+<li>That feedback is passed backward through the system to each prompt ("this prompt can be improved by...").</li>
+<li>Works on systems with many parts: prompt → LLM, query → search engine, tool prompt → tool caller.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Prompt at start (77.8%)</th>
+<th>Prompt after optimization (91.9%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"You will answer a reasoning question. Think step by step. The last line ... 'Answer: $VALUE'..."</td>
+<td>"...List each item and its quantity in a clear and consistent format, such as '- Item: Quantity'. Sum the values directly from the list... Double-check the final count to ensure accuracy."</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>GEPA: Genetic Pareto prompt evolution (Agrawal et al., 2026)</h3><span class="slide-no">29/85</span></div><ul>
+<li>Keep a pool of candidate programs. While budget &gt; 0:<ul>
+<li>Pick a candidate (Pareto rule, next slide).</li>
+<li>Propose a new one by <strong>reflective mutation</strong> or <strong>merge</strong>.</li>
+<li>Run a minibatch. Improved? Yes → evaluate on all tasks, add to pool. No → discard.</li>
+</ul>
+</li>
+<li>Reflective mutation: run the candidate on a minibatch, collect <strong>text feedback</strong> from the metric, have an LLM reflect and write a new prompt.</li>
+<li>System-aware merge: take two candidates; for each module, pick the prompt that evolved in one but not the other.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GEPA: Pareto-based selection</h3><span class="slide-no">30/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>P0</th>
+<th>P1</th>
+<th>P2</th>
+<th>P3</th>
+<th>P4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Task 1</td>
+<td>✗</td>
+<td>✗</td>
+<td>✗</td>
+<td>✓</td>
+<td>✗</td>
+</tr>
+<tr>
+<td>Task 2</td>
+<td>✗</td>
+<td>✓</td>
+<td>✓</td>
+<td>✗</td>
+<td>✗</td>
+</tr>
+<tr>
+<td>Task 3</td>
+<td>✗</td>
+<td>✗</td>
+<td>✓</td>
+<td>✗</td>
+<td>✗</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Keep every candidate that is best on at least one task: P3, P1, P2. This is the Pareto frontier.</li>
+<li>Drop candidates that win nowhere (P0, P4).</li>
+<li>Why: a prompt that is best on one hard case holds a useful idea, even if its average is lower.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GEPA example: PAPILLON (Siyan et al., 2025)</h3><span class="slide-no">31/85</span></div><ul>
+<li>A privacy pipeline:</li>
+<li>Prompt creator: turns a private user query into a privacy-preserving request.</li>
+<li>An API-based LLM answers the request.</li>
+<li>Information aggregator: combines the answer with the original query.</li>
+<li>Baseline prompts (from the GEPA paper):<ul>
+<li>Module 1: "Given a private user query, create a privacy-preserving request for a powerful external LLM. The LLM may assist without learning private information about the user."</li>
+<li>Module 3: "Respond to a user query. For inspiration, we found a potentially related request to a powerful external LLM and its response."</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GEPA example: how the prompt evolved</h3><span class="slide-no">32/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Node (score)</th>
+<th>What reflection added</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 (82.26)</td>
+<td>Base instruction</td>
+</tr>
+<tr>
+<td>2 (90.99)</td>
+<td>Expanded privacy strategies: identify and generalize PII; analyze query intent</td>
+</tr>
+<tr>
+<td>4 (94.44)</td>
+<td>Structured output: split into Reasoning and Request; bans names/codes</td>
+</tr>
+<tr>
+<td>5 (94.67)</td>
+<td>Transparent rationale: details location/name removal, fictional characters</td>
+</tr>
+<tr>
+<td>11 (97.6)</td>
+<td>Strict, stepwise PII abstraction; bans partial redaction; "zero leakage tolerated"</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Other branches scored 85.74 to 94.33. GEPA keeps them as a tree, not one line.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GEPA results (GPT-4.1 Mini)</h3><span class="slide-no">33/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>HotpotQA</th>
+<th>IFBench</th>
+<th>PUPA</th>
+<th>AIME-2025</th>
+<th>Aggregate</th>
+<th>Gain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td>38.00</td>
+<td>47.79</td>
+<td>78.57</td>
+<td>49.33</td>
+<td>53.03</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Trace (OptoPrime)</td>
+<td>60.33</td>
+<td>51.19</td>
+<td>74.18</td>
+<td>45.33</td>
+<td>56.30</td>
+<td>+3.27</td>
+</tr>
+<tr>
+<td>MIPROv2-No-Demos</td>
+<td>38.00</td>
+<td>52.04</td>
+<td>91.85</td>
+<td>48.67</td>
+<td>57.14</td>
+<td>+4.11</td>
+</tr>
+<tr>
+<td>MIPROv2</td>
+<td>58.00</td>
+<td>49.15</td>
+<td>83.37</td>
+<td>51.33</td>
+<td>58.67</td>
+<td>+5.64</td>
+</tr>
+<tr>
+<td>TextGrad</td>
+<td>62.33</td>
+<td>48.64</td>
+<td>85.68</td>
+<td>46.67</td>
+<td>59.14</td>
+<td>+6.11</td>
+</tr>
+<tr>
+<td>GEPA</td>
+<td>69.00</td>
+<td>52.72</td>
+<td>94.47</td>
+<td>59.33</td>
+<td>65.22</td>
+<td>+12.19</td>
+</tr>
+<tr>
+<td>GEPA+Merge</td>
+<td>65.67</td>
+<td>55.95</td>
+<td>96.46</td>
+<td>59.33</td>
+<td>66.36</td>
+<td>+13.33</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Also run on Hover and LiveBench-Math (in the aggregate).</li>
+<li>Prompts optimized with Qwen3-8B, then used on GPT-4.1 Mini: 62.03 (+9.00). Prompts transfer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context optimization summary</h3><span class="slide-no">34/85</span></div><ul>
+<li>Few-shot optimization: bootstrap reasoning/outputs and search for useful demos. A strong pattern.</li>
+<li>Reflective optimization: run the task, reflect on what to change, put that into the prompt.</li>
+<li>Evolving the prompt along the Pareto frontier also helps.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Weight optimization</div><div class="slide"><div class="slide-top"><h3>Three ways to change the weights</h3><span class="slide-no">35/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Who writes the training text</th>
+<th>Signal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Supervised fine-tuning (SFT)</td>
+<td>A teacher (or humans)</td>
+<td>Copy every token</td>
+</tr>
+<tr>
+<td>Reinforcement learning (RL)</td>
+<td>The student itself</td>
+<td>One reward per answer</td>
+</tr>
+<tr>
+<td>On-policy distillation</td>
+<td>The student itself</td>
+<td>Teacher grades every token</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Recall: cross-entropy loss</h3><span class="slide-no">36/85</span></div><ul>
+<li>Formula: <code>L = − Σ over every token i in the vocabulary of y(i) · log p(i)</code><ul>
+<li>y(i): 1 when this is the token in the data, 0 otherwise.</li>
+<li>log p(i): the model's log probability of that token.</li>
+</ul>
+</li>
+<li>So the loss is just "−log probability of the correct next token".</li>
+<li>SFT minimizes this over your training text.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Recall: instruction fine-tuning (Flan)</h3><span class="slide-no">37/85</span></div><ul>
+<li>Train on many tasks written as instructions:<ul>
+<li>"Please answer the following question. What is the boiling point of Nitrogen?" → "-320.4F"</li>
+<li>Chain-of-thought fine-tuning: "Answer ... by reasoning step-by-step" → worked reasoning.</li>
+</ul>
+</li>
+<li>Multi-task: 1.8K tasks.</li>
+<li>Result: the model generalizes to unseen tasks ("Can Geoffrey Hinton have a conversation with George Washington?" → reasons → "no").</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SFT for agents</h3><span class="slide-no">38/85</span></div><ul>
+<li>Roll out a teacher on agentic tasks.</li>
+<li>Keep the successful trajectories (trajectory: the full run, every step and tool call).</li>
+<li>Fine-tune the student on them.</li>
+<li>Focus on diversity of tasks and environments.</li>
+<li>The student learns task execution.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What a teacher rollout looks like</h3><span class="slide-no">39/85</span></div><ul>
+<li>Task (OpenThoughts-Agent, task_1087): "Locate all files (case-insensitive) whose names end with .example.com ... but ignore anything inside the beta subdirectory; capture both stdout and stderr..."</li>
+<li>Agent: runs <code>find . -type f -iname '*.example.com' ! -path './beta/*' &gt; /output/command_capture.txt 2&gt;&amp;1</code></li>
+<li>Terminal: <code>48 /output/command_capture.txt</code></li>
+<li>Agent checks the file with <code>cat</code>, sees two files, ends with <code>"task_complete": true</code>.</li>
+<li>Train on runs like this. You can also verify each output and keep only passing runs (rejection sampling).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>OpenThoughts-Agent (Raoof et al., 2026): the data pipeline</h3><span class="slide-no">40/85</span></div><ul>
+<li>Six-stage SFT data pipeline:</li>
+<li>Source tasks</li>
+<li>Mix tasks</li>
+<li>Filter tasks</li>
+<li>Generate rollouts (with a selected teacher)</li>
+<li>Filter rollouts</li>
+<li>Final recipe</li>
+<li>Each stage was tested on its own. (More in the agent data lectures, m12.)</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>OpenThoughts-Agent: results</h3><span class="slide-no">41/85</span></div><ul>
+<li>x-axis: dataset size, 316 to 100K examples. y-axis: accuracy.</li>
+<li>OT-Agent Qwen3-32B (red line, the best overall):<ul>
+<li>SWE-Bench Verified (100-task subset): about 16% → about 56%.</li>
+<li>Terminal-Bench 2.0: about 13% → about 26%.</li>
+<li>Average over seven benchmarks: about 25% → about 45%.</li>
+</ul>
+</li>
+<li>Base Qwen3-32B without this data: about 16% average.</li>
+<li>Lines keep rising with more data. Fine-tuning on a strong teacher's rollouts helps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>FireAct (Chen et al., 2023): method</h3><span class="slide-no">42/85</span></div><ul>
+<li>Fine-tune Llama 2 on GPT-4 rollouts.</li>
+<li>Questions from HotpotQA, StrategyQA, MMLU × prompt styles CoT, ReAct, Reflexion.</li>
+<li>Keep correct trajectories; remove incorrect ones. Reformat all into ReAct format.</li>
+<li>At inference the fine-tuned model picks how to reason by itself (e.g., short CoT for "3+4+5=?").</li>
+<li>ReAct: the model alternates Thought → Action (tool call) → Observation.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>FireAct: results (exact match)</h3><span class="slide-no">43/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Prompted (ReAct)</th>
+<th>Fine-tuned (FireAct)</th>
+<th>Gain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama-2-7B</td>
+<td>14.8</td>
+<td>26.2</td>
+<td>+11.4 / 77%</td>
+</tr>
+<tr>
+<td>Llama-2-13B</td>
+<td>21.2</td>
+<td>34.4</td>
+<td>+13.1 / 62%</td>
+</tr>
+<tr>
+<td>CodeLlama-7B</td>
+<td>17.4</td>
+<td>27.8</td>
+<td>+10.4 / 60%</td>
+</tr>
+<tr>
+<td>CodeLlama-13B</td>
+<td>20.8</td>
+<td>29.0</td>
+<td>+8.2 / 39%</td>
+</tr>
+<tr>
+<td>CodeLlama-34B</td>
+<td>22.2</td>
+<td>27.8</td>
+<td>+5.6 / 25%</td>
+</tr>
+<tr>
+<td>GPT-3.5</td>
+<td>31.4</td>
+<td>39.2</td>
+<td>+7.8 / 25%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Prompted GPT-4: IO 37.2, CoT 45.0, ReAct 42.0. Prompted GPT-3.5 ReAct: 31.4.</li>
+<li>Fine-tuned Llama-2-13B (34.4) beats prompted GPT-3.5 (31.4).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RL for agents</h3><span class="slide-no">44/85</span></div><ul>
+<li>Roll out the <strong>student</strong> on agentic tasks.</li>
+<li>Reward it for completing the task.</li>
+<li>Focus on varying environments and task difficulty.</li>
+<li>Verifiability is key: you need an automatic check of success.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>An RL environment</h3><span class="slide-no">45/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Task</td>
+<td>Same file-finding task (task_1087)</td>
+</tr>
+<tr>
+<td>Agent</td>
+<td><code>find ...</code> then <code>cat</code> to check, then <code>"task_complete": true</code></td>
+</tr>
+<tr>
+<td>Verifier</td>
+<td><code>cmp -s "$EXPECTED" "$OUTPUT"</code>: exact match to reference output</td>
+</tr>
+<tr>
+<td>Terminal reward</td>
+<td>1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>An external reward checks whether the task was done.</li>
+<li>Run each task several times (a group), and several groups per batch.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>PPO vs GRPO</h3><span class="slide-no">46/85</span></div><ul>
+<li>PPO (proximal policy optimization): the classic RL method for LLMs.</li>
+<li>GRPO (group relative policy optimization): from DeepSeekMath (Shao et al., 2024).</li>
+<li>GRPO drops PPO's value model. It estimates the baseline from the scores of a group of answers instead.</li>
+<li>That cuts training resources a lot.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How PPO works</h3><span class="slide-no">47/85</span></div><ul>
+<li>Policy model: the model being trained. It writes one output o for question q.</li>
+<li>Reward model: one reward for the entire output.</li>
+<li>Reference model: a frozen copy. A KL penalty per token keeps the policy close to it.<ul>
+<li>KL divergence: how different two probability distributions are.</li>
+</ul>
+</li>
+<li>Value model: predicts a value for every token.</li>
+<li>GAE (generalized advantage estimate): how useful was this token compared to other possible tokens?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The cost of PPO</h3><span class="slide-no">48/85</span></div><ul>
+<li>Four models to keep in memory: policy, reference, reward, value.</li>
+<li>Two models to train every step: policy and value.</li>
+<li>Several expensive per-token steps: per-token KL, per-token reward, per-token value, GAE.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How GRPO works</h3><span class="slide-no">49/85</span></div><ul>
+<li>Generate a group of outputs o1...oG for the same question.</li>
+<li>Per-output rewards r1...rG.</li>
+<li>Group advantage: compare each reward to the group.</li>
+<li>Token-level KL to the reference model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The cost of GRPO</h3><span class="slide-no">50/85</span></div><ul>
+<li>Three models in memory: policy, reference, reward.<ul>
+<li>The "reward model" doesn't have to be a model. It can be a checker (like <code>cmp</code> above, or our field-by-field grader).</li>
+</ul>
+</li>
+<li>One model to train every step: the policy.</li>
+<li>Only the KL is per token. Everything else is per sequence.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GRPO advantage: a z-score</h3><span class="slide-no">51/85</span></div><ul>
+<li>Formula: <code>A(i) = (R(i) − mean(R1...RG)) / std(R1...RG)</code><ul>
+<li>R(i): reward of answer i.</li>
+<li>mean and std: over the group of G answers to the same prompt.</li>
+</ul>
+</li>
+<li>Above-average answers get a positive advantage: make them more likely.</li>
+<li>Below-average: make them less likely.</li>
+<li>If every answer gets the same reward, all advantages are 0: nothing to learn.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GRPO advantage in code</h3><span class="slide-no">52/85</span></div><pre><code class="language-python">import numpy as np
+rewards = np.array([1.0, 0.67, 0.67, 0.33, 1.0, 0.0])        # 6 answers to one contract, scored by our metric
+advantages = (rewards - rewards.mean()) / (rewards.std() + 1e-6)
+print(advantages.round(2), &quot;&lt;- raise the probability of the positive ones&quot;)
+</code></pre>
+<ul>
+<li>Line 1: numpy for the math.</li>
+<li>Line 2: six answers to one contract, scored by our 3-field metric (1.0 = all three numbers right).</li>
+<li>Line 3: the z-score; <code>1e-6</code> avoids dividing by zero when all rewards match.</li>
+<li>Line 4: positive values are the answers GRPO pushes toward.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The GRPO objective</h3><span class="slide-no">53/85</span></div><ul>
+<li>Formula: <code>J(θ) = E[ (1/G) Σ_i (1/|o_i|) Σ_t min( ratio·A, clip(ratio, 1−ε, 1+ε)·A ) − β·KL(π_θ ‖ π_ref) ]</code><ul>
+<li>E[...]: average over prompts from the dataset and a group of outputs sampled for each.</li>
+<li>(1/G) Σ_i: average over the group. (1/|o_i|) Σ_t: average over tokens in each response.</li>
+<li>ratio = π_θ / π_old: how important this token is under the new policy vs the old one.</li>
+<li>clip(..., 1−ε, 1+ε): don't over-update on any one token.</li>
+<li>A: the advantage from the last slide.</li>
+<li>β·KL: don't drift too far from the reference model.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Real-world example: DeepSeek-R1</h3><span class="slide-no">54/85</span></div><ul>
+<li>DeepSeek V3 Base → RL on reasoning prompts (accuracy &amp; format rewards) → <strong>R1 Zero</strong>.</li>
+<li>Sample from R1 Zero; filter by accuracy &amp; format; refine with DeepSeek V3 + humans → "cold start" long-CoT data.</li>
+<li>V3 Base → SFT on cold start → R1 Dev-1 → RL (rule-based reward + language consistency) → R1 Dev-2.</li>
+<li>Sample from Dev-2 (reasoning) and V3 (non-reasoning) → SFT on V3 Base → R1 Dev-3.</li>
+<li>RL on diverse prompts (rule-based + preference reward) → <strong>DeepSeek-R1</strong>.</li>
+<li>SFT and RL alternate several times.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GRPO vs PPO on MATH</h3><span class="slide-no">55/85</span></div><ul>
+<li>x-axis: training steps (up to about 2,400). y-axis: MATH accuracy.</li>
+<li>GRPO: from about 0.44 to about 0.555. Highest line almost the whole way.</li>
+<li>PPO (λ=1.0): close behind, ends about 0.535.</li>
+<li>PPO (λ=0.95): lowest, ends about 0.50.</li>
+<li>GRPO matches or beats PPO while using fewer models.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>On-policy distillation: the idea</h3><span class="slide-no">56/85</span></div><ul>
+<li>Chess analogy: coaching on a game <strong>you actually played</strong> helps more than reviewing a game you only watched.</li>
+<li>SFT is "watching": the student copies the teacher's moves, then makes its own mistakes alone at test time.</li>
+<li>On-policy: the student plays, the teacher comments on each move.</li>
+<li>From Thinking Machines (blog, "On-Policy Distillation").</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SFT vs RL vs on-policy distillation</h3><span class="slide-no">57/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Example on "What is 5 + (2 × 3)?"</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SFT</td>
+<td>Train on the teacher's text "2 × 3 equals 6, add 5 to get 11." Student probabilities shown per token (20%, 80%, ...).</td>
+</tr>
+<tr>
+<td>RL</td>
+<td>Student writes "5 + 2 is 7, and 7 × 3 is 21." Reward: 0. One number for the whole answer.</td>
+</tr>
+<tr>
+<td>On-policy distillation</td>
+<td>Same student text. Teacher gives each token a probability: "2" gets 5%, "is" 15%, most others 99%.</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>On-policy distillation shows <strong>where</strong> the answer went wrong (adding 5 + 2 first).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Sampling and signal</h3><span class="slide-no">58/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Sampling</th>
+<th>Reward signal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Supervised fine-tuning</td>
+<td>off-policy</td>
+<td>dense</td>
+</tr>
+<tr>
+<td>Reinforcement learning</td>
+<td>on-policy</td>
+<td>sparse</td>
+</tr>
+<tr>
+<td>On-policy distillation</td>
+<td>on-policy</td>
+<td>dense</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>On-policy: training text comes from the student itself.</li>
+<li>Dense: feedback on every token. Sparse: one reward per answer.</li>
+<li>On-policy distillation gets the best of both.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>On-policy distillation loss</h3><span class="slide-no">59/85</span></div><ul>
+<li>Formula: <code>KL(π_θ ‖ π_teacher) = E over x sampled from the student [ log π_θ(x_t+1 | x_1..t) − log π_teacher(x_t+1 | x_1..t) ]</code><ul>
+<li>E over x from the student: the response is written by the student (on-policy).</li>
+<li>Student log-prob minus teacher log-prob, for each token.</li>
+</ul>
+</li>
+<li>Minimize it: the student moves toward what the teacher would say, on the student's own path.</li>
+<li>Needs the teacher's probability for every token. So the teacher must be a model you can run (open weights).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>On-policy distillation example</h3><span class="slide-no">60/85</span></div><ul>
+<li>Ice-cube puzzle: "Beth places four whole ice cubes in a frying pan ... while it was frying a crispy egg ... how many whole ice cubes can be found in the pan at the end of the third minute?"</li>
+<li>The student answers "4 + 5 + 11 = 20", final "C. 20".</li>
+<li>Teacher shades each token by how much it disagrees.</li>
+<li>Darkest tokens: "Note:", "removed", "melted", "added": the spots where the student ignores that ice melts in a hot pan.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Real model example: Qwen3</h3><span class="slide-no">61/85</span></div><ul>
+<li>Flagship models (Qwen3-235B-A22B, Qwen3-32B): four stages.</li>
+<li>Long-CoT cold start</li>
+<li>Reasoning RL</li>
+<li>Thinking mode fusion</li>
+<li>General RL</li>
+<li>Lightweight models (Qwen3-30B-A3B, 14B, 8B, 4B, 1.7B, 0.6B): <strong>strong-to-weak distillation</strong> from the flagships.</li>
+<li>The small models are not trained with the full RL pipeline.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>On-policy distillation results (Qwen3 report)</h3><span class="slide-no">62/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>AIME'24</th>
+<th>GPQA-Diamond</th>
+<th>GPU hours</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Off-policy distillation</td>
+<td>55.0%</td>
+<td>55.6%</td>
+<td>Unreported</td>
+</tr>
+<tr>
+<td>+ Reinforcement learning</td>
+<td>67.6%</td>
+<td>61.3%</td>
+<td>17,920</td>
+</tr>
+<tr>
+<td>+ On-policy distillation</td>
+<td>74.4%</td>
+<td>63.3%</td>
+<td>1,800</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>On-policy distillation: higher scores at about a tenth of RL's GPU hours.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Weight optimization summary</h3><span class="slide-no">63/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Trajectory source</th>
+<th>Learning signal</th>
+<th>Training objective</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Supervised fine-tuning</td>
+<td>Collected demonstrations</td>
+<td>Reference tokens and actions</td>
+<td>Maximize the likelihood of demonstrated behavior</td>
+</tr>
+<tr>
+<td>Reinforcement learning</td>
+<td>Student-generated trajectories</td>
+<td>Task rewards</td>
+<td>Maximize expected reward</td>
+</tr>
+<tr>
+<td>On-policy distillation</td>
+<td>Student-generated trajectories</td>
+<td>Teacher token probabilities at student-generated prefixes</td>
+<td>Minimize divergence from the teacher on student-generated trajectories</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Optimization with agents</div><div class="slide"><div class="slide-top"><h3>Self-improvement: Darwin Gödel Machine (Zhang et al., 2026)</h3><span class="slide-no">64/85</span></div><ul>
+<li>A coding agent edits <strong>its own code</strong> to get better.</li>
+<li>Loop:<ul>
+<li>Select a parent from an archive of past agents.</li>
+<li>Self-modify: the parent reads its own repo + a self-improve instruction, writes a code diff.</li>
+<li>Evaluate the new agent on a coding benchmark (GitHub issues).</li>
+<li>Add it to the archive.</li>
+</ul>
+</li>
+<li>Parent choice: in proportion to performance, and inversely to how many children it already has.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DGM: archive and progress</h3><span class="slide-no">65/85</span></div><ul>
+<li>Archive tree: about 80 agents. Staged evaluation:<ul>
+<li>10 tasks (screens out agents with no basic function), 60 tasks, then 200 tasks for the best (score ≥ 0.4 and top two).</li>
+</ul>
+</li>
+<li>SWE-bench score of the best agent: 0.20 → 0.50 over 80 iterations.</li>
+<li>Features it invented on the path to the best agent:<ul>
+<li>More granular file viewing via lines; non-empty patch validation and retry.</li>
+<li>More granular file editing via string replacement; auto-summarize on context limit.</li>
+<li>Multiple patch generations and ranking; history-aware patch generation and ranking.</li>
+</ul>
+</li>
+<li>The path dips below the start once (about 0.17) before climbing. Keeping old agents allows that.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DGM: what mattered</h3><span class="slide-no">66/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>SWE-bench (best agent)</th>
+<th>Polyglot (best agent)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DGM</td>
+<td>about 0.50</td>
+<td>about 0.38</td>
+</tr>
+<tr>
+<td>Without self-improvement (a fixed meta-agent edits)</td>
+<td>about 0.39</td>
+<td>about 0.28</td>
+</tr>
+<tr>
+<td>Without open-ended exploration (always build on latest)</td>
+<td>about 0.23</td>
+<td>about 0.18</td>
+</tr>
+<tr>
+<td>Reference</td>
+<td>Checked open-source SOTA: about 0.51</td>
+<td>Aider baseline: about 0.16</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Both were critical: the parent improving itself, and returning to older parents instead of only the latest.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Meta-Harness</h3><span class="slide-no">67/85</span></div><ul>
+<li>Harness: the code around the model (prompts, tools, loop, memory).</li>
+<li>A meta-agent sees <strong>all</strong> prior experience in a filesystem and decides what to edit next.</li>
+<li>Loop:</li>
+<li>Propose harness code (goal: maximize the score).</li>
+<li>Evaluate harness + frozen LLM on the tasks.</li>
+<li>Store all logs: proposed code, reasoning traces, eval score.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Meta-Harness: results</h3><span class="slide-no">68/85</span></div><ul>
+<li>Search progress (best score vs harness evaluations, 0–40):<ul>
+<li>Meta-Harness: about 33% → about 56%. Reaches about 55% within about 8 evaluations.</li>
+<li>TTT-Discover about 45%, OpenEvolve about 43%, ACE about 41%. Few-shot about 36%, zero-shot about 33%.</li>
+</ul>
+</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>TerminalBench-2 harness</th>
+<th>Pass rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Meta-Harness (model-optimized)</td>
+<td>37.6%</td>
+</tr>
+<tr>
+<td>Goose</td>
+<td>35.5%</td>
+</tr>
+<tr>
+<td>Terminus-KIRA</td>
+<td>33.7%</td>
+</tr>
+<tr>
+<td>Mini-SWE-Agent</td>
+<td>29.8%</td>
+</tr>
+<tr>
+<td>Terminus-2</td>
+<td>28.3%</td>
+</tr>
+<tr>
+<td>Claude Code</td>
+<td>27.5%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Over time the meta-agent builds better and better harnesses for domain-targeted problems.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Auto-research: optimize anything</h3><span class="slide-no">69/85</span></div><ul>
+<li>Give an agent access to a repository.</li>
+<li>Loop: read context → propose change → commit and train → metrics improved?<ul>
+<li>Yes: accept (keep the change).</li>
+<li>No: revert (<code>git reset</code>).</li>
+</ul>
+</li>
+<li>Log every result to <code>results.tsv</code>. Repeat.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The auto-research prompt (karpathy/autoresearch)</h3><span class="slide-no">70/85</span></div><ul>
+<li>Runs on a dedicated branch. LOOP FOREVER:</li>
+<li>Look at the git state.</li>
+<li>Tune <code>train.py</code> with an experimental idea by directly hacking the code.</li>
+<li><code>git commit</code></li>
+<li>Run <code>uv run train.py &gt; run.log 2&gt;&amp;1</code> (don't let output flood your context).</li>
+<li>Read results: <code>grep "^val_bpb:\|^peak_vram_mb:" run.log</code></li>
+<li>Empty output = crash. Read <code>tail -n 50 run.log</code>, try to fix; give up after a few attempts.</li>
+<li>Record results in the tsv (untracked by git).</li>
+<li>val_bpb improved (lower)? Keep the commit. 9. Equal or worse? <code>git reset</code>.</li>
+<li>"You are a completely autonomous researcher trying things out."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Auto-research: one run</h3><span class="slide-no">71/85</span></div><ul>
+<li>83 experiments, 15 kept improvements.</li>
+<li>Validation BPB (bits per byte; lower is better): about 0.998 → about 0.977.</li>
+<li>Kept changes include: halve total batch 524K→262K, warmdown 0.5→0.7, add 5% warmup, depth 9, RoPE base frequency raised in steps, random seed 42→137.</li>
+<li>A seed change counted as an "improvement": a reminder that the loop chases the metric, noise included.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Optimization with agents: summary</h3><span class="slide-no">72/85</span></div><ul>
+<li>Agents are fairly capable optimizers.</li>
+<li>Give them an environment to log results, come up with ideas and run them. They can optimize almost anything that runs on software.</li>
+<li>The metric and evals become the most critical part to control.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Which strategy to use</div><div class="slide"><div class="slide-top"><h3>BetterTogether (Soylu et al., 2024)</h3><span class="slide-no">73/85</span></div><ul>
+<li>Alternate: optimize prompts (Π), then fine-tune weights (Θ), then optimize prompts again.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>mistral-7b HotPotQA</th>
+<th>llama-2-7b HotPotQA</th>
+<th>llama-3-8b HotPotQA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vanilla zero-shot</td>
+<td>17.2</td>
+<td>13.2</td>
+<td>31.6</td>
+</tr>
+<tr>
+<td>Prompt optimization (Π)</td>
+<td>33.8</td>
+<td>33.3</td>
+<td>46.9</td>
+</tr>
+<tr>
+<td>Weight optimization (Θ)</td>
+<td>22.9</td>
+<td>12.2</td>
+<td>34.8</td>
+</tr>
+<tr>
+<td>Π → Θ</td>
+<td>36.3</td>
+<td>32.7</td>
+<td>42.8</td>
+</tr>
+<tr>
+<td>Π → Θ → Π</td>
+<td>37.6</td>
+<td>34.8</td>
+<td>46.7</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Sometimes prompts → weights → prompts is best. Not always: on llama-3-8b, prompts alone tied it.</li>
+<li>Also tested on GSM8K and Iris (e.g., mistral GSM8K best with Θ → Π: 48.3).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Prompts are sample-efficient (GEPA vs GRPO)</h3><span class="slide-no">74/85</span></div><ul>
+<li>Qwen3 8B. x-axis: number of rollouts (0–25,000).</li>
+<li>HotpotQA: GEPA reaches about 60 within about 7,000 rollouts. GRPO is about 52 after about 24,000.</li>
+<li>IFBench: GEPA about 79 within about 3,500 rollouts. GRPO about 63.5 after about 24,000.</li>
+<li>MIPROv2 sits between them.</li>
+<li>Prompt optimization is much more sample-efficient than RL.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Weights scale with data (OpenThoughts-Agent)</h3><span class="slide-no">75/85</span></div><ul>
+<li>Same curves as before: accuracy keeps rising from 316 to 100K examples.</li>
+<li>Weight optimization is more data hungry, but it keeps growing with thousands and thousands of examples.</li>
+<li>Prompt optimization usually plateaus much sooner.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reasons to use context optimization</h3><span class="slide-no">76/85</span></div><ul>
+<li>API-only models: some strong models don't offer fine-tuning.</li>
+<li>You need to rerun optimization often and fast. It runs faster and on simpler infrastructure.</li>
+<li>Environment interactions are expensive. Context optimization needs far fewer samples.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reasons to use weight optimization</h3><span class="slide-no">77/85</span></div><ul>
+<li>Context optimization fails. Small models sometimes have weak instruction following.</li>
+<li>You have a capable teacher and want a cheaper model. Distilling into a student often works well.</li>
+<li>The context is getting too long. Prompt optimization adds text; training avoids context bloat.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The decision in one table</h3><span class="slide-no">78/85</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API model, few examples, need fast iteration</td>
+<td>Context (GEPA, MIPROv2)</td>
+</tr>
+<tr>
+<td>Small open model that ignores instructions</td>
+<td>Weights (SFT, then on-policy distillation)</td>
+</tr>
+<tr>
+<td>Strong teacher, want a cheap student</td>
+<td>On-policy distillation</td>
+</tr>
+<tr>
+<td>Answers can be checked automatically, student sometimes succeeds</td>
+<td>RL (GRPO)</td>
+</tr>
+<tr>
+<td>Have both prompts and weights to tune</td>
+<td>Alternate (BetterTogether)</td>
+</tr>
+<tr>
+<td>Whole codebase or harness to improve, trusted metric</td>
+<td>Agent loops (auto-research, Meta-Harness)</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-6"><span>Part 6</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Our task: three numbers from two clauses</h3><span class="slide-no">79/85</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Clause (msa_13)</th>
@@ -328,18 +1504,20 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </thead>
 <tbody>
 <tr>
-<td>"...automatically renew for successive one (1) year periods unless either party gives at least 15 days' prior written notice..."</td>
+<td>"...shall automatically renew for successive one (1) year periods unless either party gives at least 15 days' prior written notice of non-renewal."</td>
 <td>renewal_years = 1, notice_days = 15</td>
 </tr>
 <tr>
-<td>"...SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE 12 MONTHS PRECEDING THE CLAIM."</td>
+<td>"EACH PARTY'S TOTAL LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE 12 MONTHS PRECEDING THE CLAIM."</td>
 <td>cap_months = 12</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
 <li>cap_months is 0 if liability is unlimited.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Feedback, not just a score</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<li>Student: Llama 3.2 3B (fast, weak). Reflection model: Llama 3.1 8B. Both run on the firm's machine.</li>
+<li>Course demo for comparison: GEPA took Gemma 3 12B from 55% to 100% on a held-out set, changing only the instruction text.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Feedback, not just a score</h3><span class="slide-no">80/85</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Bare score</th>
@@ -358,13 +1536,14 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
-<li>GEPA learns from the text. Vague "Wrong." usually gives smaller gains.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Three data splits</h3><span class="slide-no">8/12</span></div><ul>
+<li>GEPA's reflective mutation reads this text. Vague "wrong" usually gives smaller gains.</li>
+<li>The metric grades exactly, field by field: score = 1 − (wrong fields / 3).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three data splits</h3><span class="slide-no">81/85</span></div><ul>
 <li>Train: 7 contracts. GEPA learns from these.</li>
-<li>Validation: 4 contracts. GEPA picks the best candidate on these.</li>
+<li>Validation: 4 contracts. GEPA picks the best candidate on these (its Pareto frontier).</li>
 <li>Test: 9 contracts. Hidden until the end. This is the honest score.</li>
-<li>Budget: <code>max_metric_calls</code>, how many times the metric may run.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Running GEPA in code</h3><span class="slide-no">9/12</span></div><pre><code class="language-python">gepa = dspy.GEPA(metric=metric, max_metric_calls=60, reflection_lm=teacher, track_stats=True)
+<li>Budget: <code>max_metric_calls</code>, how many times the metric may run. 60 in the demo.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Running GEPA in code</h3><span class="slide-no">82/85</span></div><pre><code class="language-python">gepa = dspy.GEPA(metric=metric, max_metric_calls=60, reflection_lm=teacher, track_stats=True)
 optimized = gepa.compile(program, trainset=train, valset=val)
 after = evaluate(optimized, test)
 print(f&quot;held-out test: {before:.0%} -&gt; {after:.0%}&quot;)
@@ -374,27 +1553,38 @@ print(f&quot;held-out test: {before:.0%} -&gt; {after:.0%}&quot;)
 <li>Line 2: learn on train, pick the winner on validation.</li>
 <li>Line 3: score the winner on the hidden test set.</li>
 <li>Line 4: print before and after. About 10–15 minutes on a T4.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The ladder after prompts</h3><span class="slide-no">10/12</span></div><ul>
-<li>SFT (supervised fine-tuning): train on a teacher's outputs that pass your checker.</li>
-<li>On-policy distillation: the student writes, the teacher scores every token. Needs an open-weight teacher.</li>
-<li>RL with GRPO: sample a group of answers; push toward those above the group average. Only where answers can be checked automatically.</li>
-<li>Then re-tune prompts on the new model (prompts → weights → prompts).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
-<li>Student and reflection model both run on the firm's machine. No client data leaves.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why this fits a firm&#x27;s own machine</h3><span class="slide-no">83/85</span></div><ul>
+<li>No client contract leaves the building: student and reflection model both run locally.</li>
 <li>The result is text: read it, version it (<code>renewal_terms_gepa.json</code>), roll it back.</li>
-<li>A tuned small model is faster and cheaper to run in-house.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
-<li>Optimizing on a weak metric → the optimizer finds every loophole. Fix the metric first.</li>
+<li>A tuned small model is faster and cheaper to run in-house than a big one.</li>
+<li>On-policy distillation needs per-token teacher scores. A local open-weight teacher gives them; closed APIs don't.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The ladder for the firm</h3><span class="slide-no">84/85</span></div><ol>
+<li>Prompt optimization (GEPA): cheap; tells you if you need training at all.</li>
+<li>SFT on a local teacher's outputs that pass our checker (rejection sampling).</li>
+<li>On-policy distillation: the student writes, the open-weight teacher scores every token.</li>
+<li>RL (GRPO) only where answers can be checked automatically, like our 3-field grader.</li>
+<li>Re-tune prompts on the new model (prompts → weights → prompts).</li>
+</ol></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">85/85</span></div><ul>
+<li>Optimizing on a weak metric → the optimizer (or agent) finds every loophole. Fix the metric first.</li>
 <li>Feedback that only says "wrong" → say what was expected and what came back.</li>
-<li>Peeking at the test set → GEPA uses train and validation only.</li>
-<li>Training too early → in one course example, instruction-following fell from 85% to 45% after narrow training. Run a general check.</li>
+<li>Peeking at the test set → optimize on train, select on validation, report test once.</li>
+<li>Training too early → prompts are far more sample-efficient. And check general skills after narrow training: in one course example, instruction-following fell from 85% to 45%.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Our local model gets 70% on clause extraction. What do we try first?</summary><p>GEPA prompt optimization with a metric that gives text feedback. Build a training set only if that plateaus.</p></details>
 
 <details><summary>Why does the metric return a sentence, not just a number?</summary><p>&quot;Expected 15, got 30&quot; shows the reflection model what to fix. A number only says something is wrong.</p></details>
 
-<details><summary>Why does on-policy distillation need an open-weight teacher?</summary><p>It needs the teacher&#x27;s score for every token. Closed APIs don&#x27;t return those.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>Why does GEPA keep several candidates instead of only the top scorer?</summary><p>A candidate that is best on even one task holds a useful idea. Keeping the Pareto frontier avoids getting stuck on one prompt.</p></details>
+
+<details><summary>What does GRPO remove compared to PPO, and what replaces it?</summary><p>It removes the value model. The baseline comes from the group: each answer&#x27;s reward minus the group mean, divided by the group std.</p></details>
+
+<details><summary>Why does on-policy distillation need an open-weight teacher?</summary><p>It needs the teacher&#x27;s probability for every token the student wrote. Closed APIs don&#x27;t return those.</p></details>
+
+<details><summary>In the Qwen3 report, how did on-policy distillation compare to RL?</summary><p>Higher scores (74.4% vs 67.6% on AIME&#x27;24) with 1,800 vs 17,920 GPU hours.</p></details>
+
+<details><summary>In auto-research or the Darwin Gödel Machine, what must you control most carefully?</summary><p>The metric. Agents chase whatever it rewards, including noise like a lucky random seed.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Note the baseline and after-GEPA scores on the held-out test.</li>
 <li>Read the printed instructions: that text is the whole change.</li>
+<li>Run the GRPO cell and check which answers get positive advantages.</li>
 <li>Solutions (off by default): budget 150, and vague feedback.</li>
 </ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   

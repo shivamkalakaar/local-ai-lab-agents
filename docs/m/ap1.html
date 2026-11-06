@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,18 +259,23 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP1</span></div><section class="mod" id="ap1" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP1</div><h2>AppBench: Benchmarking AI-Generated Web Applications</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap1_appbench.ipynb">Open in Colab</a><button class="done-btn" data-done="ap1" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How a Stanford team graded AI-built web apps by what a user can do, and how to check the grader first.</p><article class="lesson"><p class="deck-src">Based on CS329A past project · AppBench · <a href="https://cs329a.stanford.edu/winter2025projects/appbench.pdf" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
-<li>Build a checklist grader for AI-built apps, and test the grader before you trust it.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">2/13</span></div><ul>
-<li>AI tools can build a whole web app from one request.</li>
-<li>Code benchmarks check single functions with unit tests.</li>
-<li>Nothing checked if the app is usable:<ul>
-<li>Does navigation work?</li>
-<li>Does saved state survive a refresh?</li>
-<li>Are errors handled?</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP1</span></div><section class="mod" id="ap1" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP1</div><h2>AppBench: Benchmarking AI-Generated Web Applications</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap1_appbench.ipynb">Open in Colab</a><button class="done-btn" data-done="ap1" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>19 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How a Stanford team graded AI-built web apps by what a user can do, and how to check the grader first.</p><article class="lesson"><p class="deck-src">Based on CS329A past project · AppBench · <a href="https://cs329a.stanford.edu/winter2025projects/appbench.pdf" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (54 slides)</b><ol><li><a href="#sec-1">The problem and why it matters</a> <span>5 slides</span></li><li><a href="#sec-2">Background they build on</a> <span>4 slides</span></li><li><a href="#sec-3">The method, step by step</a> <span>15 slides</span></li><li><a href="#sec-4">Setup</a> <span>3 slides</span></li><li><a href="#sec-5">Results</a> <span>8 slides</span></li><li><a href="#sec-6">Analysis and discussion</a> <span>4 slides</span></li><li><a href="#sec-7">Limitations and future work</a> <span>2 slides</span></li><li><a href="#sec-8">Our smaller Colab rebuild</a> <span>7 slides</span></li><li><a href="#sec-9">How this applies to us</a> <span>5 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/54</span></div><ul>
+<li>Build a checklist grader for AI-built apps from a plain request, and test the grader against people before you trust it.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>The problem and why it matters</div><div class="slide"><div class="slide-top"><h3>The project at a glance</h3><span class="slide-no">2/54</span></div><ul>
+<li>AppBench: Benchmarking AI-Generated Web Applications.</li>
+<li>Team: Ethan Hellman, Brendan McLaughlin, Abhinav Lalwani, Belinda Mo (CS329A, Winter 2025).</li>
+<li>Sources: the 12-page report and the poster.</li>
+<li>Claim: "to our knowledge, the first comprehensive framework" to grade AI-built web interfaces in a scalable, automatic, user-centric way.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The gap they saw</h3><span class="slide-no">3/54</span></div><ul>
+<li>LLMs now write multi-file programs and fix real GitHub issues.</li>
+<li>Tools can scaffold a whole web app from one sentence.</li>
+<li>Benchmarks did not keep up:<ul>
+<li>Most check function-level correctness or project-scale bug fixes.</li>
+<li>None check if an interactive app is usable.</li>
 </ul>
 </li>
-</ul></div><div class="slide"><div class="slide-top"><h3>&quot;It compiles&quot; vs &quot;a user can use it&quot;</h3><span class="slide-no">3/13</span></div><div class="tbl"><table>
+<li>"A web app is more than just working code — it's an experience."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>&quot;It compiles&quot; vs &quot;a user can use it&quot;</h3><span class="slide-no">4/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Unit test</th>
@@ -280,39 +289,421 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tr>
 <tr>
 <td>The page loads</td>
-<td>Add two tasks, refresh, both are still there</td>
+<td>Add two items to the cart, refresh, both are still there</td>
 </tr>
 <tr>
 <td>Passes on the happy path</td>
-<td>A blank task is ignored</td>
+<td>An empty search shows a clear error</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>What the students built: AppBench</h3><span class="slide-no">4/13</span></div><ul>
-<li>Team: Ethan Hellman, Brendan McLaughlin, Abhinav Lalwani, Belinda Mo (CS329A, Winter 2025).</li>
-<li>9 app requests, from L0 (static page) to L4 (live shared whiteboard).</li>
-<li>Six axes: UI, features, state, API integration, cross-page navigation, data processing.</li>
-<li>7 builders, one shot each: Replit, Bolt, Cursor Agent, Lovable, Claude Sonnet 3.7, GPT-4.5, OpenHands CodeAct 2.1.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How the checklist works</h3><span class="slide-no">5/13</span></div><ul>
-<li>Explicit check: what the user asked for.</li>
-<li>Implicit check: what a good app would also do (a back button, ignore blank input).</li>
-<li>Dependency graph: which check needs which other check to pass first.<ul>
-<li>Parent fails → children are skipped and score 0.</li>
-<li>One root failure shows once, not ten times.</li>
-</ul>
+</table></div>
+<ul>
+<li>Usability needs intuitive interaction, logical navigation and visual coherence.</li>
+<li>Measuring that needs reasoning about how real users use the app, not unit tests.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The two questions (poster)</h3><span class="slide-no">5/54</span></div><ul>
+<li>
+<ol>
+<li>How do you build a dataset that tests whether frontier models can build high-quality web apps?</li>
+</ol>
 </li>
-<li>Weighted scores, scaled to 0–100.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How each check runs</h3><span class="slide-no">6/13</span></div><ul>
-<li>Screenshot + multimodal LLM: a model that reads images judges the look.</li>
-<li>LLM-driven browser (Stagehand on Playwright): clicks through the app.</li>
-<li>Network interception: fakes server errors to test error handling.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What they found</h3><span class="slide-no">7/13</span></div><div class="tbl"><table>
+<li>
+<ol>
+<li>How do you build a system that fairly grades app quality and match to the user's request?</li>
+</ol>
+</li>
+<li>Dataset rules: (a) must be feasible to grade automatically; (b) must span the diversity of real web apps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Their three contributions</h3><span class="slide-no">6/54</span></div><ul>
+<li>Name a gap: no benchmark for interactive, user-facing apps.</li>
+<li>A new simulation-based grader: scripted task plans plus heuristics that act like a user.</li>
+<li>Show automatic UX grading is feasible: strong agreement with human scores across models and agent systems.</li>
+<li>UX: user experience; how easy and pleasant an app is to use.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Background they build on</div><div class="slide"><div class="slide-top"><h3>Code-generation benchmarks</h3><span class="slide-no">7/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Grader vs. 3 human raters</th>
+<th>Benchmark</th>
+<th>What it checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HumanEval, APPS</td>
+<td>Single functions, judged by test cases</td>
+</tr>
+<tr>
+<td>CodeXGLUE, DS-1000, MultiPL-E</td>
+<td>Many languages, data-science code, varied tasks</td>
+</tr>
+<tr>
+<td>SWE-bench, ClassEval, InterCode</td>
+<td>Project-scale bug fixing, class-level code, interactive coding</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>All still judge by test cases or unit assertions.</li>
+<li>Critics: a high pass rate may not mean reliable software, especially when users touch it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Web-agent benchmarks</h3><span class="slide-no">8/54</span></div><ul>
+<li>WebArena, Mind2Web, AgentBench, WebShop: test an LLM acting inside a browser.<ul>
+<li>Navigation, search, finishing a goal on a website.</li>
+</ul>
+</li>
+<li>The gap: they test using the web, not building a usable app.</li>
+<li>They also assume fixed, pre-designed pages.</li>
+<li>AppBench asks: can the model create the interface from scratch?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>UX research (HCI)</h3><span class="slide-no">9/54</span></div><ul>
+<li>HCI: human-computer interaction, the field that studies usability.</li>
+<li>Decades of work: heuristic evaluation (Nielsen and Molich, 1990), automated usability testing, design scoring.</li>
+<li>WebQEM and layout-quality methods: structured ways to score effectiveness, efficiency, looks.</li>
+<li>UIcrit: a dataset of UI design critiques.<ul>
+<li>Limit: static screenshots or human labels, so it does not scale.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Simulation-based evaluation</h3><span class="slide-no">10/54</span></div><ul>
+<li>Idea: grade a system by acting out tasks, not by fixed metrics.</li>
+<li>Used in NLP (Dynabench), agent benchmarks (AgentBench), test writing (LMUnit, HITS).</li>
+<li>SimulBench: simulation tasks to test creativity and procedure.</li>
+<li>AppBench applies this to web apps: an agent plays the user and grades the app as an experience.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>The method, step by step</div><div class="slide"><div class="slide-top"><h3>What one task contains</h3><span class="slide-no">11/54</span></div><ul>
+<li>A natural-language user request.</li>
+<li>An executable grading script written for that request.</li>
+<li>The script outputs:<ul>
+<li>A single 0–100 quality score.</li>
+<li>A plain-language reason for the score.</li>
+</ul>
+</li>
+<li>Each script is tuned to match human judgment.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Six axes of web development</h3><span class="slide-no">12/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Axis</th>
+<th>What it tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>UI complexity</td>
+<td>Visual and structural sophistication</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Feature coverage</td>
+<td>Breadth of capabilities</td>
+</tr>
+<tr>
+<td>3</td>
+<td>State management</td>
+<td>User actions and saved data</td>
+</tr>
+<tr>
+<td>4</td>
+<td>API integration</td>
+<td>Calling outside services</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Cross-page functionality</td>
+<td>Navigation, multi-page flows</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Data processing</td>
+<td>Handling structured data</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>They note the axes should later be weighted by real-world importance.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Five difficulty levels</h3><span class="slide-no">13/54</span></div><ul>
+<li>L0: static app, almost no interaction.</li>
+<li>L1: basic interaction, simple state.</li>
+<li>L2: multi-page, navigation, moderate state.</li>
+<li>L3: complex state across views, plus an outside API.</li>
+<li>L4: advanced state, real-time updates, complex interaction.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The nine tasks (Table 4)</h3><span class="slide-no">14/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Level</th>
+<th>Axes</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>l0-about-us</td>
+<td>L0</td>
+<td>1, 2</td>
+<td>Static about page, responsive</td>
+</tr>
+<tr>
+<td>l0-welcome-page</td>
+<td>L0</td>
+<td>1, 2</td>
+<td>Landing page with hero section</td>
+</tr>
+<tr>
+<td>l1-color-switcher</td>
+<td>L1</td>
+<td>1, 2, 3</td>
+<td>Theme switcher</td>
+</tr>
+<tr>
+<td>l1-weather-search</td>
+<td>L1</td>
+<td>1, 3, 4</td>
+<td>Weather app with an API</td>
+</tr>
+<tr>
+<td>l2-bookstore</td>
+<td>L2</td>
+<td>1, 2, 5, 6</td>
+<td>Multi-page book catalog</td>
+</tr>
+<tr>
+<td>l2-add-to-cart</td>
+<td>L2</td>
+<td>1, 3, 5</td>
+<td>Shop with a cart</td>
+</tr>
+<tr>
+<td>l3-food-order</td>
+<td>L3</td>
+<td>1, 2, 3, 5, 6</td>
+<td>Restaurant menu with an order</td>
+</tr>
+<tr>
+<td>l3-newsletter</td>
+<td>L3</td>
+<td>1, 3, 4</td>
+<td>Sign-up that sends an email</td>
+</tr>
+<tr>
+<td>l4-whiteboard</td>
+<td>L4</td>
+<td>1, 2, 3, 4, 6</td>
+<td>Live shared drawing board</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Caveat: the task labels don&#x27;t agree</h3><span class="slide-no">15/54</span></div><ul>
+<li>Table 5 (full requests) uses other labels for five tasks:<ul>
+<li>l1-food-order, l2-newsletter, l2-weather-search, l3-add-to-cart, l3-bookstore.</li>
+</ul>
+</li>
+<li>Figure 3 also says "l3-add-to-cart"; Tables 3 and 4 say l2.</li>
+<li>The poster calls the weather request an L2 example.</li>
+<li>Its L4 example (live stock prices) is not one of the nine report tasks.</li>
+<li>We use the Table 4 labels, as Table 3 does.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example requests (Table 5)</h3><span class="slide-no">16/54</span></div><ul>
+<li>L0 welcome page: "a header, a centered welcome message, and a footer... a warm, welcoming landing page."</li>
+<li>Theme switcher: three buttons (light, dark, blue); the whole page updates at once; "no backend... just simple state management."</li>
+<li>Newsletter: name and email, submit, "receive a welcome email" through the MailSlurp email service.</li>
+<li>Whiteboard: draw with the mouse, at least 3 colors, a connected-users list, an invite link; see other users' strokes live.</li>
+<li>For private APIs, the request includes the login keys.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 1: request → checklist</h3><span class="slide-no">17/54</span></div><ul>
+<li>Example request (add-to-cart): product list from an API, detail page with "Add to Cart", a cart icon in the header, cart survives navigation and refresh.</li>
+<li>Human evaluators turned it into an ordered checklist.</li>
+<li>Two kinds of items:<ul>
+<li>Core (explicit): what the user asked for.</li>
+<li>Quality-enhancing (implicit): what a good app would also do.</li>
+</ul>
+</li>
+<li>The checklist sits between the request and the final grading graph.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The add-to-cart checklist (Figure 2)</h3><span class="slide-no">18/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Core (explicit)</th>
+<th>Quality-enhancing (implicit)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Home page lists products</td>
+<td>A sensible site title</td>
+</tr>
+<tr>
+<td>Each shows name, price, thumbnail</td>
+<td>A back button to the home page</td>
+</tr>
+<tr>
+<td>Persistent header with cart</td>
+<td>Add several items with a quantity control</td>
+</tr>
+<tr>
+<td>Clicking a product opens a new page</td>
+<td>View items in the cart</td>
+</tr>
+<tr>
+<td>Detail page: description, big image, add button</td>
+<td>Remove items from the cart</td>
+</tr>
+<tr>
+<td>Cart icon still in header on detail page</td>
+<td></td>
+</tr>
+<tr>
+<td>Add to cart → icon shows 1</td>
+<td></td>
+</tr>
+<tr>
+<td>Refresh or go back → cart persists</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Each item is tagged UI, navigation, or state.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 2: checklist → dependency graph</h3><span class="slide-no">19/54</span></div><ul>
+<li>Some checks need others first.<ul>
+<li>"Add to cart" needs the detail page to open.</li>
+<li>The detail page needs clickable products on the home page.</li>
+</ul>
+</li>
+<li>Graph: each node = one testable requirement; each edge = "needs this first".</li>
+<li>The graph models a user's path through the app.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The add-to-cart graph (Figure 3)</h3><span class="slide-no">20/54</span></div><ul>
+<li>Root: "Has home page with list of products".</li>
+<li>Its children: name/price/thumbnail, header with cart icon, site title (implicit), clicking opens detail page.</li>
+<li>Under "detail page": description + big image + add button, cart icon on detail page, back button (implicit).</li>
+<li>Under "add button": cart count updates, view cart (implicit).</li>
+<li>Leaves: cart persists on refresh; add several at once (implicit); remove from cart (implicit).</li>
+<li>Pink nodes = core, scored first. Purple = implicit, extra points.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 3: graph → script (the harness)</h3><span class="slide-no">21/54</span></div><ul>
+<li>Harness: a shared toolbox of grading tools, chained per node.</li>
+<li>All tools run on Playwright (a library that drives a real browser).</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Multimodal LLM reasoning</td>
+<td>A model reads a screenshot plus a question; no need to parse the page code</td>
+</tr>
+<tr>
+<td>LLM-driven browser (Stagehand)</td>
+<td>Plain commands like "click the add to cart button"</td>
+</tr>
+<tr>
+<td>Network interception</td>
+<td>Blocks or breaks API calls to test error screens</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Screenshot checks with a fixed answer shape (A.3.1)</h3><span class="slide-no">22/54</span></div><ul>
+<li>The judge must fill a typed schema, so its answer is a number, not prose.</li>
+<li>Weather UI schema fields:<ul>
+<li>has_search, has_button, has_title: yes/no.</li>
+<li>layout_score: a number from 0 to the layout maximum.</li>
+<li>reasoning: text.</li>
+</ul>
+</li>
+<li>Error states use a separate check, e.g. "empty search submission".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Skip children of failed parents (A.3.3)</h3><span class="slide-no">23/54</span></div><ul>
+<li>Weather example: run the weather-display and error tests only if the UI score is at least 4.</li>
+<li>Otherwise log "Skipping weather tests due to insufficient UI score".</li>
+<li>Why: stops cascading failures when a basic requirement is missing.</li>
+<li>It "mirrors how human testers would approach" an app.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Weighted scoring config (A.4)</h3><span class="slide-no">24/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Max</th>
+<th>Subcategories (max)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Initial UI</td>
+<td>8</td>
+<td>Search input 2.5, search button 2.5, layout 2, title 1</td>
+</tr>
+<tr>
+<td>Weather display</td>
+<td>15</td>
+<td>Temperature 4, condition 3, extra data 3, display quality 5</td>
+</tr>
+<tr>
+<td>Error handling</td>
+<td>4</td>
+<td>Empty search 2, invalid city 2</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Weights are declared at the top of each script, mapped to the graph.</li>
+<li>Retuning weights to match humans is a one-line change.</li>
+<li>Scores are scaled to 0–100 so tasks of different size compare.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A graded example (poster)</h3><span class="slide-no">25/54</span></div><ul>
+<li>Mobile landing page UI: 6.8 / 7.</li>
+<li>Search input found, search button found, page title found in mobile view.</li>
+<li>Note: "Clear, well-organized layout."</li>
+<li>Lost points: an "Edit with lovable" button overlaps the page.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Setup</div><div class="slide"><div class="slide-top"><h3>Seven builders, one shot each</h3><span class="slide-no">26/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Builders</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Closed-source agent products</td>
+<td>Replit, Bolt, Cursor Agent, Lovable</td>
+</tr>
+<tr>
+<td>Zero-shot models</td>
+<td>Claude Sonnet 3.7, GPT-4.5</td>
+</tr>
+<tr>
+<td>Open-source agent</td>
+<td>OpenHands CodeAct 2.1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>One-shot: same prompt, one turn to build a working app.</li>
+<li>The report's tables call the four products "Service 1–4" and don't map names to numbers.</li>
+<li>The poster's chart lists Replit, Bolt, Cursor Agent, Lovable in the same order and colors.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Helping the plain models (A.5)</h3><span class="slide-no">27/54</span></div><ul>
+<li>Claude 3.7 and GPT-4.5 first got a description of a starter Next.js project.<ul>
+<li>Next.js 15.2.3, TypeScript, Tailwind CSS, ESLint, React 19.</li>
+<li>The folder layout: src/pages, src/styles, public, config files.</li>
+</ul>
+</li>
+<li>Then: "Build the following application as described starting from the default code."</li>
+<li>Why: avoid apps "overly simplistic" next to the agent products.</li>
+<li>Every app was then graded by the same task script.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Human check of the grader</h3><span class="slide-no">28/54</span></div><ul>
+<li>3 independent human raters scored every generated app.</li>
+<li>They did not see the automatic scores.</li>
+<li>Compare grader vs. human: MSE, MAE, Pearson, Spearman.<ul>
+<li>MSE: mean squared error (0–1 scale, lower is better).</li>
+<li>MAE: mean absolute error.</li>
+<li>Pearson: do the scores rise together in a straight line?</li>
+<li>Spearman: do the two rank the apps in the same order?</li>
+</ul>
+</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Results</div><div class="slide"><div class="slide-top"><h3>Grader vs. humans (Table 1)</h3><span class="slide-no">29/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Metric</th>
 <th>Value</th>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>Mean MSE</td>
+<td>0.0302</td>
+</tr>
+<tr>
+<td>Mean MAE</td>
+<td>0.1313</td>
+</tr>
 <tr>
 <td>Pearson correlation</td>
 <td>0.8173</td>
@@ -321,17 +712,163 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>Spearman correlation</td>
 <td>0.6827</td>
 </tr>
+</tbody>
+</table></div>
+<ul>
+<li>An MAE of 0.1313 means the grader is off by about 13 points out of 100 on average.</li>
+<li>Pearson higher than Spearman: the overall trend matches better than the exact ordering.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Error per builder (Table 2)</h3><span class="slide-no">30/54</span></div><div class="tbl"><table>
+<thead>
 <tr>
-<td>Mean MSE / MAE</td>
-<td>0.0302 / 0.1313</td>
+<th>Builder</th>
+<th>MSE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Service 1</td>
+<td>0.0466</td>
+</tr>
+<tr>
+<td>Service 2</td>
+<td>0.0307</td>
+</tr>
+<tr>
+<td>Service 3</td>
+<td>0.0303</td>
+</tr>
+<tr>
+<td>Service 4</td>
+<td>0.0160</td>
+</tr>
+<tr>
+<td>Claude 3.7</td>
+<td>0.0199</td>
+</tr>
+<tr>
+<td>GPT 4.5</td>
+<td>0.0179</td>
+</tr>
+<tr>
+<td>CodeAct</td>
+<td>0.0501</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>All builders scored above 75% up to L2. Scores fell at L3 and dropped sharply at L4.</li>
-<li>2 of 7 builders failed to produce a compiling app for one L3 and one L4 task.</li>
-<li>One-shot models were close to full agent products. Lovable and Bolt were top.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Our Colab rebuild: smaller</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<li>The grader agreed least with humans on CodeAct and Service 1.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Error per task (Table 3)</h3><span class="slide-no">31/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>MSE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>l0-about-us</td>
+<td>0.0194</td>
+</tr>
+<tr>
+<td>l0-welcome-page</td>
+<td>0.0179</td>
+</tr>
+<tr>
+<td>l1-color-switcher</td>
+<td>0.0194</td>
+</tr>
+<tr>
+<td>l1-weather-search</td>
+<td>0.0163</td>
+</tr>
+<tr>
+<td>l2-bookstore</td>
+<td>0.0212</td>
+</tr>
+<tr>
+<td>l2-add-to-cart</td>
+<td>0.0042</td>
+</tr>
+<tr>
+<td>l3-food-order</td>
+<td>0.0751</td>
+</tr>
+<tr>
+<td>l3-newsletter</td>
+<td>0.0653</td>
+</tr>
+<tr>
+<td>l4-whiteboard</td>
+<td>0.0334</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Best agreement on add-to-cart, the task with the worked-out graph. Worst on the two L3 tasks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Human vs. grader scatter (Figure 6)</h3><span class="slide-no">32/54</span></div><ul>
+<li>x-axis: human score (0–1). y-axis: grader score (0–1). Dotted line: perfect agreement.</li>
+<li>Most points cluster in the top-right: both rate the app highly.</li>
+<li>Lower-scored apps scatter more widely around the line.</li>
+<li>A few points sit well below the line: the grader was harsher than the humans.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scores per builder per task (Figure 4)</h3><span class="slide-no">33/54</span></div><ul>
+<li>Bar chart: one group per task, one bar per builder, score 0–1.</li>
+<li>L0–L2 tasks: most bars high.</li>
+<li>l3-food-order and l3-newsletter: lower and more mixed.</li>
+<li>l4-whiteboard: most bars low; some builders have almost no bar.</li>
+<li>Poster: 2 of 7 builders produced no compiling app for one L3 and one L4 task.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scores by builder type and level (Figure 5)</h3><span class="slide-no">34/54</span></div><ul>
+<li>Three lines over L0–L4: closed-source agents, zero-shot models, open-source agent.</li>
+<li>All three fall as the level rises; all drop steeply at L4.</li>
+<li>Zero-shot models are on par with or above the agent products up to L1, then fall below.</li>
+<li>The open-source agent dips at L2, then is lowest at L4.</li>
+<li>Closed-source agents end highest at L4, but still low.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Closed-source products compared (poster)</h3><span class="slide-no">35/54</span></div><ul>
+<li>A poster chart compares Replit, Bolt, Cursor Agent and Lovable by level.</li>
+<li>Lovable stays the steadiest through L3–L4.</li>
+<li>Cursor Agent falls to near zero at L4.</li>
+<li>Poster verdict: "Loveable and Bolt emerge as the top-performing agents."</li>
+<li>Qualitative table: whiteboard screenshots from Replit, Lovable, Claude Sonnet 3.7 and CodeAct differ a lot in polish.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The headline findings (poster)</h3><span class="slide-no">36/54</span></div><ul>
+<li>All builder types score above 75% up to L2.</li>
+<li>Scores start to drop at L3 and fall sharply at L4.</li>
+<li>2 of 7 builders could not produce a compiling app for 1 L3 and 1 L4 task.</li>
+<li>The gap between builder types narrows at higher levels: a sign of shared limits.</li>
+<li>Zero-shot models are "surprisingly competitive" despite a simpler design and lower compute.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Analysis and discussion</div><div class="slide"><div class="slide-top"><h3>Do agent frameworks pay off?</h3><span class="slide-no">37/54</span></div><ul>
+<li>Expected: agent products far ahead of single prompts, especially on hard tasks.</li>
+<li>Found: the gap was "modest, and in some cases negligible".</li>
+<li>Their question: are agent pipelines worth the added complexity and cost?</li>
+<li>Or are returns shrinking without better design or supervision?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why L4 erases differences</h3><span class="slide-no">38/54</span></div><ul>
+<li>At L4 most systems can't build a usable app.</li>
+<li>"Partially functional" vs "completely broken" no longer matters to a user.</li>
+<li>Agents sometimes write cleaner code or better structure.</li>
+<li>That does not make the app more usable.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Looks vs. usability</h3><span class="slide-no">39/54</span></div><ul>
+<li>Closed-source agent products tend to make more polished pages.</li>
+<li>They do not finish user tasks much better than zero-shot models.</li>
+<li>Lesson: visual appeal and functional usability are separate axes of quality.</li>
+<li>Agent infrastructure alone does not close the gap.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the grader result shows</h3><span class="slide-no">40/54</span></div><ul>
+<li>Strong correlation with humans: simulated UX grading can approximate people.</li>
+<li>Their point: automation and user-centered design can work together.</li>
+<li>Weakest spot: the middle band, apps neither clearly working nor clearly broken.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>Limitations and future work</div><div class="slide"><div class="slide-top"><h3>Limitations they state</h3><span class="slide-no">41/54</span></div><ul>
+<li>Only 9 tasks: "premature to draw strong generalizations".</li>
+<li>Grading scripts were written by hand per task.</li>
+<li>Graders need calibration with expert UX reviewers.<ul>
+<li>Sharper thresholds, better detection of failure types.</li>
+<li>Better separation of builders in the middle band.</li>
+</ul>
+</li>
+<li>Plus our note: one run per builder, 3 raters, and the label mix-up between Tables 4 and 5.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Future work they list</h3><span class="slide-no">42/54</span></div><ul>
+<li>More request–grader pairs for wider coverage.</li>
+<li>Better grading scripts: more tools, stricter criteria.</li>
+<li>A more accurate grader agent.</li>
+<li>Automatic construction of graders.</li>
+<li>Finer experiments that score each of the six axes.</li>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>Our smaller Colab rebuild</div><div class="slide"><div class="slide-top"><h3>What we change</h3><span class="slide-no">43/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>AppBench</th>
@@ -344,8 +881,12 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>5 single-file HTML apps, L0–L3</td>
 </tr>
 <tr>
-<td>Real browser</td>
+<td>Real browser (Playwright, Stagehand)</td>
 <td>No browser: Node.js runs the app's script in a fake page</td>
+</tr>
+<tr>
+<td>Screenshot LLM judge</td>
+<td>Python HTML parser for structure; LLM judge only in solutions</td>
 </tr>
 <tr>
 <td>7 commercial builders</td>
@@ -353,14 +894,48 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tr>
 <tr>
 <td>3 human raters</td>
-<td>Known-good and known-broken apps (hand score + LLM judge in solutions)</td>
+<td>Known-good, known-broken, crashing apps; your own hand scores in solutions</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Each app exposes its logic as functions on <code>window.app</code>.</li>
-<li>Python's HTML parser checks structure.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The checklist in code (L3 to-do app)</h3><span class="slide-no">9/13</span></div><pre><code class="language-python">(&quot;app loads&quot;, 1, True, [], APP_LOADS),
+<li>Each app must expose its logic as functions on <code>window.app</code>, so code can "click" it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our five apps</h3><span class="slide-no">44/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>App</th>
+<th>Level</th>
+<th>Key checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>l0-about-us</td>
+<td>L0</td>
+<td>header names Acme Labs, 2+ paragraphs, footer address</td>
+</tr>
+<tr>
+<td>l1-theme-switcher</td>
+<td>L1</td>
+<td>default light, setTheme works, unknown theme ignored</td>
+</tr>
+<tr>
+<td>l1-tip-calculator</td>
+<td>L1</td>
+<td>tip(50, 20) = 10, total(80, 15) = 92, rounds to cents</td>
+</tr>
+<tr>
+<td>l2-food-order</td>
+<td>L2</td>
+<td>2 Burgers + Soda = 18.75, remove never below zero</td>
+</tr>
+<tr>
+<td>l3-todo-saved</td>
+<td>L3</td>
+<td>saved under 'todos', survives a refresh</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The checklist in code (L3 to-do app)</h3><span class="slide-no">45/54</span></div><pre><code class="language-python">(&quot;app loads&quot;, 1, True, [], APP_LOADS),
 (&quot;add + toggle + remaining&quot;, 3, True, [&quot;app loads&quot;], js([[&quot;app.addTask('a')&quot;, &quot;app.addTask('b')&quot;, &quot;app.toggle(0)&quot;, &quot;app.remaining()&quot;]], 1)),
 (&quot;saves JSON under 'todos'&quot;, 2, True, [&quot;add + toggle + remaining&quot;], js([[&quot;app.addTask('a')&quot;, &quot;JSON.parse(localStorage.getItem('todos')).length&quot;]], 1)),
 (&quot;survives a refresh&quot;, 3, True, [&quot;saves JSON under 'todos'&quot;], js([[&quot;app.addTask('a')&quot;, &quot;app.addTask('b')&quot;], [&quot;app.remaining()&quot;]], 2)),
@@ -373,12 +948,19 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <li>Line 3: look in <code>localStorage</code> (the browser's small storage) for the saved list.</li>
 <li>Line 4: two inner lists = two page loads. Reload, expect 2 tasks.</li>
 <li>Line 5: implicit; nobody asked, but blank tasks should be ignored.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Test the grader first</h3><span class="slide-no">10/13</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Skipping children, in code</h3><span class="slide-no">46/54</span></div><pre><code class="language-python">if any(not results.get(d, (False,))[0] for d in deps):
+    results[cname] = (False, &quot;skipped: depends on &quot; + &quot;, &quot;.join(deps))
+</code></pre>
+<ul>
+<li><code>deps</code>: the parent checks listed in the tuple.</li>
+<li>If any parent failed, this check is not run.</li>
+<li>It scores 0 and says which parent blocked it, like AppBench's "insufficient UI score" skip.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Test the grader first</h3><span class="slide-no">47/54</span></div><ul>
 <li>Known-good tip calculator: must score 100.</li>
-<li>Known-broken one (no labels, wrong math, wrong button id): must score under 60.</li>
-<li>Crashing script: behavior checks must fail.</li>
+<li>Known-broken one (labels removed, tip not divided by 100, button id changed): must score under 60.</li>
+<li>Crashing script (calls an undefined function first): core behavior score under 50.</li>
 <li>Only then grade the model's apps.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>One shot vs one fix round</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>One shot vs one fix round</h3><span class="slide-no">48/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>One shot</th>
@@ -398,21 +980,70 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>Our checks name the exact problem, so the fix round often helps.</li>
-<li>AppBench agents got no such feedback.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
-<li>A firm will ask a local model for small tools: a deadline tracker, a fee calculator, a playbook-breach list.</li>
-<li>Grade them on the firm's own machine with a checklist like this: "deadlines survive a refresh", "liability cap over 12 months is flagged".</li>
-<li>Check the grader on a known-good and known-broken tool before trusting it.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>AppBench builders got no such feedback; one reason their agents' edge was small.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Solutions: three extensions</h3><span class="slide-no">49/54</span></div><ul>
+<li>Add an implicit "clear the order" check nobody asked for; most apps fail it.</li>
+<li>Score apps by hand and compute Spearman with the grader (AppBench: 0.68 with 3 humans).</li>
+<li>A text-only LLM judge scores each file 0–10.<ul>
+<li>It often rates broken logic highly: reading code is not clicking.</li>
+</ul>
+</li>
+</ul></div><div class="deck-sec" id="sec-9"><span>Part 9</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Small tools a firm will ask for</h3><span class="slide-no">50/54</span></div><ul>
+<li>A deadline tracker, a fee calculator, a playbook-breach list.</li>
+<li>A local model can build each one as a single page.</li>
+<li>The question is not "does it load" but "can a lawyer use it".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A checklist for a contract tool</h3><span class="slide-no">51/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Core (explicit)</th>
+<th>Implicit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Upload a contract, see its liability clause</td>
+<td>Blank upload shows an error</td>
+</tr>
+<tr>
+<td>"Liability cap over 12 months of fees" is flagged</td>
+<td>Flag links to the clause text</td>
+</tr>
+<tr>
+<td>Flags survive a refresh</td>
+<td>Export the flag list</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Parents first: no clause found → skip the "flagged" check.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Check the grader on your own machine</h3><span class="slide-no">52/54</span></div><ul>
+<li>Keep a known-good and a known-broken tool next to the grader.</li>
+<li>Known-good must score 100, known-broken low, before each run.</li>
+<li>Then have one or two lawyers score a few tools by hand; compute Spearman.</li>
+<li>Everything runs locally: Node.js, Python, a local model. No contract leaves the machine.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Is an agent loop worth it for us?</h3><span class="slide-no">53/54</span></div><ul>
+<li>AppBench: big agent products barely beat one-shot models.</li>
+<li>Our cheap version of an agent: one fix round with named failures.</li>
+<li>Measure both on your tasks before paying for more calls.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">54/54</span></div><ul>
 <li>Grading by "it compiles" → test what a user does, including a refresh.</li>
 <li>Only explicit checks → add implicit ones, weighted lower.</li>
 <li>One failure cascades into ten → skip children of failed parents.</li>
 <li>Trusting the grader blindly → known-good must score 100, known-broken low; then compare with a human.</li>
+<li>Treating a good-looking page as a working one → polish and usability are separate axes.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why does AppBench skip a check when its parent check fails?</summary><p>So one root problem shows up once. Otherwise one missing feature causes a pile of confusing failures.</p></details>
 
-<details><summary>What is the difference between an explicit and an implicit check?</summary><p>Explicit tests what the user asked for. Implicit tests what a good app would also do, like ignoring blank input.</p></details>
+<details><summary>What is the difference between an explicit and an implicit check?</summary><p>Explicit tests what the user asked for. Implicit tests what a good app would also do, like a back button.</p></details>
 
-<details><summary>How did the team know their grader was any good?</summary><p>They compared it with three human raters. Pearson correlation was 0.8173.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>How did the team know their grader was any good?</summary><p>Three humans scored every app blind. The grader&#x27;s Pearson correlation with them was 0.8173 (Table 1).</p></details>
+
+<details><summary>Why is Spearman (0.6827) lower than Pearson (0.8173)?</summary><p>The overall trend matches, but the grader often orders close apps differently from the humans.</p></details>
+
+<details><summary>Which task did the grader match humans on best, and worst?</summary><p>Best on l2-add-to-cart (MSE 0.0042); worst on l3-food-order (MSE 0.0751), Table 3.</p></details>
+
+<details><summary>Did agent products beat one-shot models?</summary><p>Only modestly, sometimes not at all. At L4 nearly everything failed, so the gap disappeared.</p></details>
+
+<details><summary>Why does our rebuild need `window.app`?</summary><p>Colab has no browser. Exposed functions let Node.js call the app&#x27;s logic like a user&#x27;s clicks would.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Grade the known-good, known-broken and crashing tip calculators; check the scores.</li>
 <li>Let the local model build all five apps; see which checks fail as the level rises.</li>
 <li>Run the fix round and compare the one-shot and after-fix scores.</li>

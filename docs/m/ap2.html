@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,13 +259,23 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP2</span></div><section class="mod" id="ap2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP2</div><h2>PRIME: Planning with Reflective Iterative Multi-Agentic Exploration</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap2_prime.ipynb">Open in Colab</a><button class="done-btn" data-done="ap2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How a Stanford team let an agent pick the reasoning trick for each step, and why you compare at equal call budgets.</p><article class="lesson"><p class="deck-src">Based on CS329A past project · PRIME · <a href="https://cs329a.stanford.edu/winter2025projects/prime.pdf" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
-<li>Use tree search to pick a reasoning trick per subgoal, and compare it fairly at the same call budget.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">2/13</span></div><ul>
-<li>Many tricks make a model reason better: reflection, refinement, debate, voting.</li>
-<li>Teams apply them ad hoc: one trick, used the same way on every step.</li>
-<li>No principled way to pick the right trick for each step of a multi-step plan.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>One trick everywhere vs. one trick per step</h3><span class="slide-no">3/13</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP2</span></div><section class="mod" id="ap2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP2</div><h2>PRIME: Planning with Reflective Iterative Multi-Agentic Exploration</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap2_prime.ipynb">Open in Colab</a><button class="done-btn" data-done="ap2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>15 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How a Stanford team let an agent pick the reasoning trick for each step, and why you compare at equal call budgets.</p><article class="lesson"><p class="deck-src">Based on CS329A past project · PRIME · <a href="https://cs329a.stanford.edu/winter2025projects/prime.pdf" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (42 slides)</b><ol><li><a href="#sec-1">The problem and why it matters</a> <span>4 slides</span></li><li><a href="#sec-2">Background they build on</a> <span>5 slides</span></li><li><a href="#sec-3">The method, step by step</a> <span>6 slides</span></li><li><a href="#sec-4">Setup</a> <span>3 slides</span></li><li><a href="#sec-5">Results</a> <span>5 slides</span></li><li><a href="#sec-6">Analysis</a> <span>5 slides</span></li><li><a href="#sec-7">Limitations and future work</a> <span>2 slides</span></li><li><a href="#sec-8">Our smaller Colab rebuild</a> <span>7 slides</span></li><li><a href="#sec-9">How this applies to us</a> <span>4 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/42</span></div><ul>
+<li>Use tree search to pick a reasoning trick per subgoal, read its results with care, and compare it fairly at the same call budget.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>The problem and why it matters</div><div class="slide"><div class="slide-top"><h3>The project at a glance</h3><span class="slide-no">2/42</span></div><ul>
+<li>PRIME: Planning with Reflective, Iterative, Multi-agentic Exploration.</li>
+<li>Report authors: Chelsea Zou, Samuel Liu, Jui Khankari.</li>
+<li>The poster lists Chelsea Zou, Jui Khankari, Miriam Cheng.</li>
+<li>CS329A, Winter 2025. Sources: the 7-page report and the poster.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Top-down planning is unsolved</h3><span class="slide-no">3/42</span></div><ul>
+<li>Many ways reach a goal, so the number of plans explodes.</li>
+<li>Most research instead searches step by step, bottom-up.</li>
+<li>Tricks that help multi-step reasoning: reflexion, debate, voting, self-feedback.</li>
+<li>Used alone, they are applied "ad hoc":<ul>
+<li>No principled way to know which trick suits which problem.</li>
+<li>Vague signals about whether a step moves toward the goal.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One trick everywhere vs. one trick per step</h3><span class="slide-no">4/42</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Fixed strategy</th>
@@ -275,34 +289,175 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tr>
 <tr>
 <td>Same effort on easy and hard steps</td>
-<td>Hard step: reflect, or drill down</td>
+<td>Hard step: reflect, debate, or drill down</td>
 </tr>
 <tr>
 <td>Nothing learned between tasks</td>
 <td>Keeps stats on which trick worked</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>What the students built: PRIME</h3><span class="slide-no">4/13</span></div><ul>
-<li>Team: Chelsea Zou, Samuel Liu, Jui Khankari (the poster lists Chelsea Zou, Jui Khankari, Miriam Cheng).</li>
-<li>Option: one reasoning technique, treated as a reusable move.</li>
-<li>MCTS (Monte Carlo Tree Search): try promising moves, keep score, spend more on winners.</li>
-<li>Built on LATS (Language Agent Tree Search), an earlier tree-search agent.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How it works</h3><span class="slide-no">5/13</span></div><ul>
-<li>Planner: splits the task into subgoals.</li>
-<li>At each node, three actions:<ul>
-<li>Drill down: split the subgoal further</li>
-<li>Solve: call a tool (self-reflection, self-refinement, debate)</li>
-<li>Backtrack: drop a useless subgoal</li>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Their idea in one line</h3><span class="slide-no">5/42</span></div><ul>
+<li>Treat each reasoning technique as an "option" and search over them with MCTS.</li>
+<li>Option: a reusable sub-policy from reinforcement learning (RL); here, one reasoning trick.</li>
+<li>Hypothesis: choosing tricks per subtask beats mixing them blindly, especially for small models with small budgets.</li>
+<li>Main claim: a structured, learnable way to combine tricks instead of trial and error.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Background they build on</div><div class="slide"><div class="slide-top"><h3>Option discovery (Wan and Sutton, 2022)</h3><span class="slide-no">6/42</span></div><ul>
+<li>A new RL objective that makes planning faster.</li>
+<li>At each step, choose from a better subset of actions ("options") instead of every single action.</li>
+<li>Improved planning speed in four-room grid worlds.</li>
+<li>PRIME borrows the idea: search for the best reflective tool at each subgoal.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Chain-of-thought and ReAct</h3><span class="slide-no">7/42</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>What it does</th>
+<th>Gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chain-of-Thought (Wei et al., 2022)</td>
+<td>Write steps before the answer</td>
+<td>No acting, no search</td>
+</tr>
+<tr>
+<td>ReAct (Yao et al., 2023)</td>
+<td>Interleave reasoning with actions in an environment</td>
+<td>No structured search</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>CoT improved math, commonsense and symbolic logic.</li>
+<li>ReAct beat CoT on question answering and web navigation.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LATS: tree search for agents (Zhou et al., 2024)</h3><span class="slide-no">8/42</span></div><ul>
+<li>LATS: Language Agent Tree Search.</li>
+<li>MCTS + self-reflection + outside feedback.</li>
+<li>Explores several reasoning paths, backtracks, refines.</li>
+<li>PRIME's critique:<ul>
+<li>Picks reasoning strategies by fixed heuristics.</li>
+<li>Does not split problems into reusable subtasks.</li>
 </ul>
 </li>
-<li>UCT: score = how well a move did + a bonus for moves tried rarely.</li>
-<li>Running mean: a move's value = average of all its rewards so far.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Setup</h3><span class="slide-no">6/13</span></div><ul>
-<li>GPT-4o-mini inside PRIME.</li>
-<li>Compared with LATS, plain GPT-4o-mini and one-shot GPT-o1.</li>
-<li>60 sampled questions each from PlanBench, WebShop and Game of 24.</li>
-<li>Reverse ablation: upgrade only the planner, or only the executor, to a stronger model.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What they found (Table 1, success rate)</h3><span class="slide-no">7/13</span></div><div class="tbl"><table>
+<li>PRIME extends LATS: choose the reflective strategy per state, not one for all.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MCTS in four moves</h3><span class="slide-no">9/42</span></div><ul>
+<li>MCTS (Monte Carlo Tree Search): grow a tree of choices; spend more tries on branches that pay off.</li>
+<li>Select: walk down by a score that mixes "worked before" and "rarely tried".</li>
+<li>Expand: add children (here: subgoals).</li>
+<li>Evaluate: score the new node (a checker, or a model's judgment).</li>
+<li>Backpropagate: push the result up so parents' values update.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The three benchmarks</h3><span class="slide-no">10/42</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>What the agent does</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PlanBench (Valmeekam et al., 2022)</td>
+<td>Write a plan in a block-style world with given action rules</td>
+<td>Sequential decisions</td>
+</tr>
+<tr>
+<td>WebShop (Yao et al., 2022)</td>
+<td>Search and click in a store to buy an item that fits a request</td>
+<td>Real-world decisions</td>
+</tr>
+<tr>
+<td>Game of 24 (Yao et al., 2023)</td>
+<td>Combine 4 numbers with + − × ÷ to make 24</td>
+<td>Pure reasoning</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>WebShop: 1.18 million real products, 12,000 human-written instructions.</li>
+<li>WebShop success: share of tasks where the chosen item meets every criterion.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>The method, step by step</div><div class="slide"><div class="slide-top"><h3>Planning framework (Figure 1)</h3><span class="slide-no">11/42</span></div><ul>
+<li>Root: "Problem". Three subgoal children: 1, 2, 3.</li>
+<li>Node 1 → "Backtrack"; its child 4 is crossed out.</li>
+<li>Node 2 → "Drill down" → node 5 "Solve", score 7.</li>
+<li>Node 3 → "Drill down" → 6 → 7 (drill down) → 8 "Solve", score 10.</li>
+<li>"Best path is 3 → 6 → 7 → 8!"</li>
+<li>At each node a self-reflective agent uses "the best tool to determine the next action".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 1: planning decomposition</h3><span class="slide-no">12/42</span></div><ul>
+<li>A language model writes N plausible, actionable subgoals.</li>
+<li>Together they should reach the final goal.</li>
+<li>These become child nodes of a new tree.</li>
+<li>At each node the planner: checks its state, picks a reflection tool, picks one of three actions.</li>
+<li>Tools: self-reflection, self-refinement, debate.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 2: three actions at each node</h3><span class="slide-no">13/42</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>When</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drill down</td>
+<td>Subgoal too broad or vague</td>
+<td>Split into finer subgoals, until atomic</td>
+</tr>
+<tr>
+<td>Solve</td>
+<td>Node is a base case (a leaf)</td>
+<td>Ask the best-suited tool to solve it</td>
+</tr>
+<tr>
+<td>Backtrack</td>
+<td>Subgoal irrelevant or unhelpful</td>
+<td>Drop it, explore other subgoals</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Tool choice prompt: "What is the best tool from the following set to accomplish this subgoal?"</li>
+<li>A leaf is decided by ground truth, or by the value function for subjective plans.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 3: backpropagation</h3><span class="slide-no">14/42</span></div><ul>
+<li>Formula: <code>N(s_i) = N(s_(i−1)) + 1</code> and <code>V(s_i) = (V(s_(i−1)) · N(s_(i−1)) + r) / N(s_i)</code>.</li>
+<li>N: number of visits to the node.</li>
+<li>V: the node's value.</li>
+<li>r: reward for reaching the end state.</li>
+<li>In words: the new value is the running mean of all rewards so far.</li>
+<li>Effect: good strategies get stronger, bad ones weaker.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 4: pick the next node with UCT</h3><span class="slide-no">15/42</span></div><ul>
+<li>Formula: <code>UCT(s) = w_i / n_i + C · sqrt( ln N(s) / n_i )</code>.</li>
+<li>w_i / n_i: average reward of child i (exploit what works).</li>
+<li>sqrt(ln N / n_i): large when child i was rarely tried (explore).</li>
+<li>N(s): visits to the parent. C: exploration constant, how curious to be.</li>
+<li>Repeat until the best plan is found.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 5: the value function</h3><span class="slide-no">16/42</span></div><ul>
+<li>Leaves: a model judges how well-defined the subgoal is toward the goal ("self-judgement").</li>
+<li>Non-leaf nodes: <code>V(s) = λ · LM(s) + (1 − λ) · SC(s)</code>.</li>
+<li>LM(s): the language model's score for the state.</li>
+<li>SC(s): self-consistency score; do repeated samples agree?</li>
+<li>λ: a weight that balances the two. The report gives no value for λ.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Setup</div><div class="slide"><div class="slide-top"><h3>Methods compared</h3><span class="slide-no">17/42</span></div><ul>
+<li>PRIME with GPT-4o-mini.</li>
+<li>LATS with GPT-4o-mini.</li>
+<li>GPT-4o-mini alone (called "brute force" in the text).</li>
+<li>GPT-o1, one shot.</li>
+<li>Reverse ablation: PRIME with only the planner upgraded, or only the executor.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Data and run times</h3><span class="slide-no">18/42</span></div><ul>
+<li>60 randomly sampled questions per benchmark ("60 runs" of Game of 24), due to limited compute.</li>
+<li>PlanBench: about 3 hours.</li>
+<li>WebShop: about 30 minutes.</li>
+<li>Game of 24: about 5 minutes.</li>
+<li>WebShop actions: search and click; observations: browser feedback plus the agent's own reflections.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two extra evaluations</h3><span class="slide-no">19/42</span></div><ul>
+<li>Counterfactual evaluation: change early plan steps on purpose; does the change carry through to the output?<ul>
+<li>Tests that plans really steer reasoning, not just justify it after the fact.</li>
+</ul>
+</li>
+<li>Reverse ablation: upgrade one component at a time, keep the rest on 4o-mini.<ul>
+<li>Shows which part gains most from a better model.</li>
+</ul>
+</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Results</div><div class="slide"><div class="slide-top"><h3>Table 1: success rates</h3><span class="slide-no">20/42</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Method</th>
@@ -313,13 +468,13 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </thead>
 <tbody>
 <tr>
-<td>PRIME (4o-mini)</td>
+<td>PRIME</td>
 <td>36.2%</td>
 <td>40%</td>
 <td>75%</td>
 </tr>
 <tr>
-<td>LATS (4o-mini)</td>
+<td>LATS</td>
 <td>2.2%</td>
 <td>38%</td>
 <td>44%</td>
@@ -337,13 +492,13 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>100%</td>
 </tr>
 <tr>
-<td>PRIME, upgraded planner</td>
+<td>PRIME upgraded planner (4o)</td>
 <td>95%</td>
 <td>94%</td>
 <td>100%</td>
 </tr>
 <tr>
-<td>PRIME, upgraded executor</td>
+<td>PRIME upgraded execution (4o)</td>
 <td>96%</td>
 <td>92%</td>
 <td>100%</td>
@@ -351,13 +506,119 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
-<li>Caution: the paper's text gives different numbers for some cells.</li>
-<li>About 4x cheaper than o1, despite more calls (their estimate).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Where it struggled</h3><span class="slide-no">8/13</span></div><ul>
-<li>WebShop: PRIME and LATS nearly tied; reflections were generic.</li>
-<li>Unclear step value (obfuscated PlanBench): the search wandered.</li>
-<li>Tree search shines when each step's result is clear and checkable.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Our Colab rebuild: smaller</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+<li>The poster shows the same table.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the text says (Section 4.4)</h3><span class="slide-no">21/42</span></div><ul>
+<li>PlanBench: PRIME 36.2%, "a 2.2% improvement over LATS"; 4o-mini 0%; o1 37.3% (cited from Valmeekam et al.).</li>
+<li>WebShop: PRIME 40%; o1 80%; LATS 38% (cited from the LATS paper).</li>
+<li>Game of 24: PRIME 75%; LATS 44% (cited); o1 100%.</li>
+<li>"Sometimes matching" o1 despite "approximately 10x less parameter count" for 4o-mini.</li>
+<li>More API calls than o1, but an estimated 4x lower cost (OpenAI prices, December 2024).<ul>
+<li>Footnote: the exact gap depends on tokens and steps per question.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Caveat: the numbers disagree with each other</h3><span class="slide-no">22/42</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Cell</th>
+<th>Table 1</th>
+<th>Text</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LATS, PlanBench</td>
+<td>2.2%</td>
+<td>PRIME is "2.2% improvement over LATS" → LATS ≈ 34%</td>
+</tr>
+<tr>
+<td>o1, PlanBench</td>
+<td>100%</td>
+<td>37.3%</td>
+</tr>
+<tr>
+<td>o1, WebShop</td>
+<td>100%</td>
+<td>80%</td>
+</tr>
+<tr>
+<td>Upgrade model</td>
+<td>"(4o)"</td>
+<td>"GPT-o1"</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>We can't tell which is right. Treat every cell as uncertain.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Caveat: were the LATS rows rerun?</h3><span class="slide-no">23/42</span></div><ul>
+<li>The text says LATS was run with 4o-mini, but cites the LATS paper for its numbers.</li>
+<li>The LATS paper reports exactly 38.0% WebShop success and 0.44 on Game of 24, both with GPT-3.5.</li>
+<li>So the LATS rows may be copied from a different model, not rerun.</li>
+<li>The "10x fewer parameters" claim is also unsupported; OpenAI does not publish model sizes.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reading the reverse ablation</h3><span class="slide-no">24/42</span></div><ul>
+<li>Upgrading only the planner: 95% / 94% / 100%.</li>
+<li>Upgrading only the executor: 96% / 92% / 100%.</li>
+<li>Both jump far above PRIME's 36.2% / 40% / 75%.</li>
+<li>Takeaway: both parts are bottlenecks; neither alone explains the gap.</li>
+<li>Poster: run "to identify performance bottlenecks".</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Analysis</div><div class="slide"><div class="slide-top"><h3>PlanBench: what helped</h3><span class="slide-no">25/42</span></div><ul>
+<li>Planning helped a little on reasoning questions.</li>
+<li>Bigger gains came from search: more samples, more paths explored.</li>
+<li>More nodes n → consistently better, at more cost (for both LATS and PRIME).</li>
+<li>PRIME beat LATS by combining top-down subgoals with tree search.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>PlanBench: clear vs. unclear actions</h3><span class="slide-no">26/42</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Unclear action outcomes ("obfuscated", Figure 2)</th>
+<th>Clear outcomes ("non-obfuscated", Figure 3)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Actions like "paltry", "sip", "clip" with only fact rules</td>
+<td>Same kind of world, action effects easy to follow</td>
+</tr>
+<tr>
+<td>Output: "No plan found for subgoal: 1. Understand the given initial conditions."</td>
+<td>Output: a full [PLAN] of clip / wretched / tightfisted / sip steps</td>
+</tr>
+<tr>
+<td>Search wanders tree to tree, stuck in local minima</td>
+<td>Plan found despite many steps</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Their guess: the tree can't be "unrolled" when it's unclear where an action leads.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>WebShop: no real gain</h3><span class="slide-no">27/42</span></div><ul>
+<li>With k = 60 trajectories, PRIME and LATS scored about the same.</li>
+<li>Subgoals help less in complex, multi-input settings like shopping.</li>
+<li>Reflections were often generic and gave no useful feedback.</li>
+<li>The agent got stuck in local minima.</li>
+<li>(The report calls the method "PRISM" in this paragraph, likely an old name.)</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Game of 24: the clear win</h3><span class="slide-no">28/42</span></div><ul>
+<li>PRIME picks tools per puzzle; LATS uses one approach for all.</li>
+<li>Drill down: split hard number combinations into smaller steps.</li>
+<li>Solve: compute simple expressions directly.</li>
+<li>Works because every step's result is exact and checkable.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Counterfactual analysis</h3><span class="slide-no">29/42</span></div><ul>
+<li>Changing early plan steps changed both the subgoals and the final outputs.</li>
+<li>So sub-agents really follow the planner.</li>
+<li>Open question: does the plan's wording mean to the model what it means to a person?</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>Limitations and future work</div><div class="slide"><div class="slide-top"><h3>Limitations</h3><span class="slide-no">30/42</span></div><ul>
+<li>Stated: wanders when action value is unclear; generic reflections on WebShop.</li>
+<li>Stated: more nodes cost more compute.</li>
+<li>Our notes:<ul>
+<li>Only 60 questions per benchmark, one run, no error bars.</li>
+<li>Table and text disagree; LATS rows may come from another paper and model.</li>
+<li>No equal-budget comparison: PRIME uses more calls than single shots.</li>
+<li>λ, C and N not reported.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Future work they list</h3><span class="slide-no">31/42</span></div><ul>
+<li>Cluster problems: label training-problem types, learn the best tool set per cluster, reuse at test time.</li>
+<li>Better self-reflection: more tools, "meta-cognitive" reasoning.</li>
+<li>Adaptive value function: change how subgoals are judged as more problems are seen.</li>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>Our smaller Colab rebuild</div><div class="slide"><div class="slide-top"><h3>What we change</h3><span class="slide-no">32/42</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>PRIME</th>
@@ -381,13 +642,52 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>LM score + self-consistency</td>
 <td>Exact checker: reward 1 or 0</td>
 </tr>
+<tr>
+<td>GPT-4o-mini, o1</td>
+<td>Local llama models; 3B for the reverse ablation</td>
+</tr>
 </tbody>
 </table></div>
 <ul>
 <li>Game of 24: use four numbers once each, with + − × ÷, to make 24.</li>
 <li>Code drops impossible steps for free (backtrack).</li>
 <li>Tool stats carry over from puzzle to puzzle.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The selection loop in code</h3><span class="slide-no">10/13</span></div><pre><code class="language-python">uct = lambda a: a[&quot;V&quot;] + C * math.sqrt(math.log(total) / a[&quot;N&quot;])
+</ul></div><div class="slide"><div class="slide-top"><h3>The exact checker</h3><span class="slide-no">33/42</span></div><ul>
+<li>Parses the answer with Python's <code>ast</code> module, never <code>eval</code>.</li>
+<li>Checks the numbers used match the puzzle exactly.</li>
+<li>Computes with exact fractions, so 8 / 3 stays exact.</li>
+<li>Returns a message the reflecting agent sees: "it equals 23, not 24".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our three tools</h3><span class="slide-no">34/42</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Calls</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>solve</td>
+<td>1</td>
+<td>Follow the plan step, write one expression</td>
+</tr>
+<tr>
+<td>reflect</td>
+<td>up to 2</td>
+<td>Solve; if the checker says no, fix once</td>
+</tr>
+<tr>
+<td>drill</td>
+<td>2</td>
+<td>Propose the next step (code checks it), then solve with both steps</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Starting value of an arm</h3><span class="slide-no">35/42</span></div><ul>
+<li><code>prior = 0.5 * confidence / 10 + 0.5 * successes / tries</code>.</li>
+<li>Our version of <code>V = λ·LM + (1−λ)·SC</code> with λ = 0.5.</li>
+<li>LM part: the planner's own confidence (1–10).</li>
+<li>Second part: how this tool did on earlier puzzles (instead of self-consistency).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The selection loop in code</h3><span class="slide-no">36/42</span></div><pre><code class="language-python">uct = lambda a: a[&quot;V&quot;] + C * math.sqrt(math.log(total) / a[&quot;N&quot;])
 arm = max(arms, key=uct)
 ok, used = run_tool(arm[&quot;tool&quot;], nums, steps, arm[&quot;left&quot;], budget - calls)
 calls += used
@@ -400,8 +700,8 @@ arm[&quot;V&quot;] = (arm[&quot;V&quot;] * arm[&quot;N&quot;] + r) / (arm[&quot;
 <li>Line 2: pick the highest-scoring arm.</li>
 <li>Line 3: run the tool; get success and calls used.</li>
 <li>Line 4: count calls against the budget of 5.</li>
-<li>Lines 5–6: checker gives 1 or 0; update the running mean.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Fair comparison: same budget</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
+<li>Lines 5–6: checker gives 1 or 0; update the running mean, as in the paper.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fair comparison: same budget</h3><span class="slide-no">37/42</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Method</th>
@@ -426,20 +726,54 @@ arm[&quot;V&quot;] = (arm[&quot;V&quot;] * arm[&quot;N&quot;] + r) / (arm[&quot;
 <ul>
 <li>PRIME-lite beats single shot only → the extra calls did the work.</li>
 <li>PRIME-lite beats retry → the strategy choice did the work.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
-<li>A contract review mixes easy steps ("find governing law") and hard ones ("does this indemnity break the 12-month cap rule?").</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Solutions: three experiments</h3><span class="slide-no">38/42</span></div><ul>
+<li>Reverse ablation: executor tools on llama3.2:3b, planner stays 8B; 2 puzzles.</li>
+<li>Turn off learning: reset tool stats each puzzle (left as written code; 6 puzzles is too noisy).</li>
+<li>Exploration: <code>C=0.2</code> sticks to the planner's favorite step; <code>C=2.0</code> spreads calls across arms.</li>
+</ul></div><div class="deck-sec" id="sec-9"><span>Part 9</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Easy and hard steps in a contract review</h3><span class="slide-no">39/42</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Easy step</th>
+<th>Hard step</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Find the governing-law clause"</td>
+<td>"Does this indemnity break our 12-month liability cap rule?"</td>
+</tr>
+<tr>
+<td>Solve once</td>
+<td>Reflect, or drill into cap amount, carve-outs, time window</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
 <li>On the firm's own machine, calls are cheap but not free: spend them on the hard steps.</li>
-<li>Reverse ablation shows which step deserves the bigger local model.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Use search where a checker exists</h3><span class="slide-no">40/42</span></div><ul>
+<li>Tree search worked on Game of 24 (exact check), not on WebShop (fuzzy).</li>
+<li>Contract work has checkable parts: "is the cap ≤ 12 months of fees?" is a number check.</li>
+<li>Put the search there; use a single pass for open-ended summaries.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Find which model deserves the upgrade</h3><span class="slide-no">41/42</span></div><ul>
+<li>Reverse ablation: run the planner on a bigger local model, executor on a small one, then swap.</li>
+<li>Pay for the bigger model only where accuracy jumps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">42/42</span></div><ul>
 <li>Comparing at unequal budgets → add a retry baseline with the same call count.</li>
 <li>Tree search without a clear reward → use it where a checker exists.</li>
 <li>Upgrading every part at once → upgrade one part at a time.</li>
 <li>Trusting one table → this paper's numbers disagree in places; rerun what matters.</li>
+<li>Quoting a baseline from another paper as your own run → rerun it with your model.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What does the curiosity bonus in UCT do?</summary><p>It raises the score of moves tried rarely. The search doesn&#x27;t lock onto its first favorite too early.</p></details>
+
+<details><summary>How does PRIME update a node&#x27;s value after a try?</summary><p>Running mean: new value = (old value × visits + reward) / (visits + 1).</p></details>
 
 <details><summary>Why does the notebook include a &quot;retry with feedback&quot; baseline?</summary><p>It uses the same 5-call budget as PRIME-lite. If they tie, the gain came from extra tries, not strategy choice.</p></details>
 
-<details><summary>Where did PRIME struggle?</summary><p>On WebShop it nearly tied with LATS, with generic reflections. It also wandered when a step&#x27;s value was unclear.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>Where did PRIME struggle?</summary><p>On WebShop it nearly tied with LATS, with generic reflections. It also wandered when a step&#x27;s value was unclear.</p></details>
+
+<details><summary>Name two ways PRIME&#x27;s Table 1 disagrees with its text.</summary><p>Table 1 puts o1 at 100% on PlanBench and WebShop; the text says 37.3% and 80%. And the text calls 36.2% &quot;a 2.2% improvement&quot; over LATS, which the table lists at 2.2%.</p></details>
+
+<details><summary>What did the reverse ablation show?</summary><p>Upgrading only the planner or only the executor both lifted scores to 92–100%. Both parts were bottlenecks.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Compare single shot, retry with feedback and PRIME-lite: success rate next to average calls.</li>
 <li>Read the option statistics: which tool did the search learn to prefer?</li>
 <li>Run one puzzle with <code>C=0.2</code> and <code>C=2.0</code>; count the different arms tried.</li>

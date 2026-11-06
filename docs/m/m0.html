@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Start here · Agent Engineering School</title>
-<meta name="description" content="Run a model on your own computer, send it a first question, measure speed, and meet the 20 practice contracts used all course.">
+<meta name="description" content="What this course covers and how to learn it, then run a model on your own computer, measure its speed, and meet the 20 practice contracts.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,9 +259,110 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 00</span></div><section class="mod" id="m0" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 00</div><h2>Start here</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/00_setup_first_call.ipynb">Open in Colab</a><button class="done-btn" data-done="m0" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Run a model on your own computer, send it a first question, measure speed, and meet the 20 practice contracts used all course.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 1 · Intro to Agentic Systems · <a href="https://web.stanford.edu/class/cs329z/slides/lecture01.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 00</span></div><section class="mod" id="m0" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 00</div><h2>Start here</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/00_setup_first_call.ipynb">Open in Colab</a><button class="done-btn" data-done="m0" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">What this course covers and how to learn it, then run a model on your own computer, measure its speed, and meet the 20 practice contracts.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 1 · Intro to Agentic Systems · <a href="https://web.stanford.edu/class/cs329z/slides/lecture01.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (21 slides)</b><ol><li><a href="#sec-1">Why this course</a> <span>6 slides</span></li><li><a href="#sec-2">Run a model on your machine</a> <span>8 slides</span></li><li><a href="#sec-3">The practice data</a> <span>2 slides</span></li><li><a href="#sec-4">How this applies to us</a> <span>3 slides</span></li><li><a href="#sec-5">Wrap-up</a> <span>1 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/21</span></div><ul>
 <li>Run a local model, call it from Python, measure its speed, and load the practice contracts with known answers.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Cloud model vs local model</h3><span class="slide-no">2/12</span></div><div class="tbl"><table>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why this course</div><div class="slide"><div class="slide-top"><h3>Two kinds of knowledge</h3><span class="slide-no">2/21</span></div><ul>
+<li>Building agents needs both a modeling view and a systems view.</li>
+<li>LLM people know how models are trained, prompted, aligned and evaluated.</li>
+<li>Systems people know how to build reliable software: tools, APIs, environments, infrastructure.</li>
+<li>This course: short lessons on foundations, plus hands-on building and checking of agents in every notebook.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Course map</h3><span class="slide-no">3/21</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>CS329Z topic</th>
+<th>Our module</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLMs for builders</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Retrieval-augmented generation</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Tool use and function calling</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Agent design and scaffolds</td>
+<td>1, 6</td>
+</tr>
+<tr>
+<td>Agent memory</td>
+<td>8</td>
+</tr>
+<tr>
+<td>Multi-agent systems</td>
+<td>9</td>
+</tr>
+<tr>
+<td>Optimization and harness</td>
+<td>7, 11</td>
+</tr>
+<tr>
+<td>Data for agentic systems</td>
+<td>12</td>
+</tr>
+<tr>
+<td>Evaluation and benchmarks</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Agent safety and guardrails</td>
+<td>13</td>
+</tr>
+<tr>
+<td>Coding agents</td>
+<td>14</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The lecture's first half is foundations; the second half is making agents good.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What you should already know</h3><span class="slide-no">4/21</span></div><ul>
+<li>Basic LLM ideas: train/dev/test sets, pretraining, fine-tuning, alignment, prompting.<ul>
+<li>Pretraining: learning from a huge pile of text. Fine-tuning: more training on a small, focused set.</li>
+</ul>
+</li>
+<li>The lecture recommends CS 224N, 224V, CS 336 or similar; it does not reteach these.</li>
+<li>Here, Module 2 gives the builder's version of what you need.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The hidden cost: skills erode</h3><span class="slide-no">5/21</span></div><ul>
+<li>RCT (randomized controlled trial): 52 engineers learned a new Python library, with or without AI help (Shen and Tamkin, Anthropic, 2026).</li>
+<li>AI users scored 17% lower on a follow-up quiz, about two letter grades.<ul>
+<li>Chart: quiz score about 50% with AI vs about 65% without (p = 0.010, a real difference).</li>
+<li>Task time: about 23 vs about 25 minutes (p = 0.391, no real difference).</li>
+</ul>
+</li>
+<li>The gap was largest on debugging, the skill senior engineers are made of.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Homework up, exams down</h3><span class="slide-no">6/21</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Homework score</th>
+<th>Exam score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pupils using AI scored higher than before</td>
+<td>Pupils using AI did worse than before</td>
+</tr>
+<tr>
+<td>Distribution shifts right, peak above the no-AI average</td>
+<td>Distribution spreads left, long tail of low scores</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Strömberg et al., "The generative AI learning penalty" (preprint, June 2026): 26,811 pupils aged 12–18.</li>
+<li>Scores set so the average without AI = 100.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Use AI to learn, not to skip learning</h3><span class="slide-no">7/21</span></div><ul>
+<li>Run every cell yourself and predict the output before you look.</li>
+<li>Do the "Your turn" exercises before opening the solutions.</li>
+<li>Ask AI to explain an error, not to rewrite the notebook.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Run a model on your machine</div><div class="slide"><div class="slide-top"><h3>Cloud model vs local model</h3><span class="slide-no">8/21</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Cloud AI service</th>
@@ -281,21 +386,41 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>Same code for both. Only the address changes.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What you need</h3><span class="slide-no">3/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>What you need</h3><span class="slide-no">9/21</span></div><ul>
 <li>Ollama: small program that loads a model and serves it on this machine.</li>
 <li>Model: Meta's Llama 3.1 8B. "8B" = 8 billion parameters. About 5 GB.</li>
 <li>GPU: graphics chip that does the math fast. In Colab: <code>Runtime → Change runtime type → T4 GPU</code>.</li>
 <li>Setup cell: installs Ollama, starts it, downloads the model. 2–3 minutes the first time.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Where the model lives</h3><span class="slide-no">4/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Where the model lives</h3><span class="slide-no">10/21</span></div><ul>
 <li>Ollama serves the model at <code>http://localhost:11434</code>.<ul>
 <li>localhost: "this same computer"</li>
 </ul>
 </li>
 <li>It speaks the same API as OpenAI, so we use the normal <code>openai</code> Python library.</li>
-<li>The model is the LLM core from Lecture 1. Later modules add tools, memory and an environment around it.</li>
 </ul>
 <pre><code>your code → Ollama on localhost:11434 → Llama 3.1 8B → reply
-</code></pre></div><div class="slide"><div class="slide-top"><h3>Your first call</h3><span class="slide-no">5/12</span></div><pre><code class="language-python">local = OpenAI(base_url=&quot;http://localhost:11434/v1&quot;, api_key=&quot;not-needed&quot;)
+</code></pre></div><div class="slide"><div class="slide-top"><h3>Where this fits in an agent</h3><span class="slide-no">11/21</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Agent part (Lecture 1)</th>
+<th>Where it comes in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM core</td>
+<td>This module: Llama 3.1 8B on Ollama</td>
+</tr>
+<tr>
+<td>Planning &amp; reasoning, memory, tools, environment</td>
+<td>Module 1 builds them around this model</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>An LLM-based agent = this same model call, run in a loop with tools.</li>
+<li>Every later notebook reuses the call you make here.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Your first call</h3><span class="slide-no">12/21</span></div><pre><code class="language-python">local = OpenAI(base_url=&quot;http://localhost:11434/v1&quot;, api_key=&quot;not-needed&quot;)
 resp = local.chat.completions.create(
     model=MODEL,
     messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;In one sentence: why would a law firm want AI that runs on its own computers?&quot;}],
@@ -309,12 +434,12 @@ reply = resp.choices[0].message.content
 <li>Line 4: one message. Role: who speaks. Content: the words.</li>
 <li>Line 5: temperature 0, the steadiest answer.</li>
 <li>Line 7: pull the reply text out.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Measure tokens and speed</h3><span class="slide-no">6/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Measure tokens and speed</h3><span class="slide-no">13/21</span></div><ul>
 <li>Token: a short word or piece of a word. Models read and write tokens.</li>
 <li>The reply reports <code>prompt_tokens</code> (sent) and <code>completion_tokens</code> (returned).</li>
 <li>Speed: output tokens ÷ seconds = tokens per second.</li>
 <li>First model load into GPU memory takes about a minute. Time a later call.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Temperature: same question, different settings</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Temperature: same question, different settings</h3><span class="slide-no">14/21</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Temperature 0</th>
@@ -334,11 +459,11 @@ reply = resp.choices[0].message.content
 </table></div>
 <ul>
 <li>Temperature: scales the model's word probabilities. Low = pick the likely word. High = more variety.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Two helpers used in every later notebook</h3><span class="slide-no">8/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two helpers used in every later notebook</h3><span class="slide-no">15/21</span></div><ul>
 <li><code>ask(prompt)</code>: prompt in, text out.</li>
 <li><code>structured(prompt, Schema)</code>: forced JSON that matches a Pydantic schema.</li>
 <li>Both live in <code>lal/llm.py</code> and wrap the same call, at the same localhost address.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Our practice data</h3><span class="slide-no">9/12</span></div><ul>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>The practice data</div><div class="slide"><div class="slide-top"><h3>Our practice data</h3><span class="slide-no">16/21</span></div><ul>
 <li>20 made-up service agreements: <code>msa_01</code> … <code>msa_20</code>.</li>
 <li>Problems planted on purpose, so we know every right answer.</li>
 <li>Built by <code>data/gen.py</code>; answers in <code>data/labels.jsonl</code>.</li>
@@ -368,7 +493,7 @@ reply = resp.choices[0].message.content
 <td>5, 10 or 15 days</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Example: msa_07 and its true answer</h3><span class="slide-no">10/12</span></div><div class="tbl"><table>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Example: msa_07 and its true answer</h3><span class="slide-no">17/21</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Contract text (clause 7.1)</th>
@@ -384,12 +509,20 @@ reply = resp.choices[0].message.content
 </table></div>
 <ul>
 <li>24 months is over the 12-month rule, so it is flagged.</li>
-<li>Lecture 1: agent work = the system, the data, and the evals. Known answers are the data and the evals.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
-<li>A firm can't send client contracts to an outside AI company. Here nothing leaves the machine.</li>
+<li>Because we planted the problem, we know the right answer before any model runs.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Nothing leaves the machine</h3><span class="slide-no">18/21</span></div><ul>
+<li>A firm can't send client contracts to an outside AI company. Here the model, the files and the code sit on one box.</li>
 <li>No API keys to manage, no per-token bill.</li>
+<li>Same <code>openai</code> code as a cloud service, so nothing about the course depends on a vendor.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Known answers grade every module</h3><span class="slide-no">19/21</span></div><ul>
 <li>Every later module grades its agent against these 20 known answers.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>A change (new prompt, new model, new tool) counts only if the score goes up.</li>
+<li>Lecture 1's three layers: system, data, evals. This module gives you the data and the evals.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Speed is the local budget</h3><span class="slide-no">20/21</span></div><ul>
+<li>No bill, but every token costs seconds on your own GPU.</li>
+<li>Measure tokens per second once now; use it to judge later designs (an agent loop makes many calls, a workflow few).</li>
+<li>Small 8B model + careful harness is the course's bet; the next modules show how.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Wrap-up</div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">21/21</span></div><ul>
 <li>No GPU selected → very slow. Change the runtime type before setup.</li>
 <li>Timing the first call → it includes model loading. Time a later call.</li>
 <li>High temperature for facts → details like the cap period can drift. Use 0.</li>
@@ -398,7 +531,13 @@ reply = resp.choices[0].message.content
 
 <details><summary>There is no bill per token on your own machine. Why count tokens at all?</summary><p>Speed. More tokens take more time, and token counts show how full the model&#x27;s input is getting.</p></details>
 
-<details><summary>Why plant problems in the practice contracts?</summary><p>So we know the right answers. Then we can grade any agent and see if a change helped or hurt.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>Why plant problems in the practice contracts?</summary><p>So we know the right answers. Then we can grade any agent and see if a change helped or hurt.</p></details>
+
+<details><summary>In the Anthropic study, AI users finished about as fast. What was the cost?</summary><p>They scored 17% lower on a follow-up quiz, about two letter grades, with the biggest gap on debugging.</p></details>
+
+<details><summary>Which part of an agent do you set up in this module?</summary><p>The LLM core: the model on Ollama. Module 1 adds tools, memory and the loop around it.</p></details>
+
+<details><summary>Why use temperature 0 when summarizing a contract?</summary><p>The answer stays the same every run, so facts like the cap period don&#x27;t drift and you can check them.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run the setup cell, then the first call. Note the seconds and the tokens per second.</li>
 <li>Run the temperature cell: 0 gives one answer, 1.0 gives several.</li>
 <li>Summarize <code>msa_07</code> at temperature 0, 0.7 and 1.3. At high values, watch facts like the cap period drift.</li>

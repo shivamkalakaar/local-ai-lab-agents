@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tools and function calling · Agent Engineering School</title>
-<meta name="description" content="Design tools an agent can use safely. A registry that validates, asks permission, runs and truncates, with rules enforced in code, not the prompt.">
+<meta name="description" content="Why LLMs need tools, how models learn to call them, how tools are exposed (function calling, MCP), how tool use is tested, and a safe registry.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,13 +259,57 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 05</span></div><section class="mod" id="m5" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 05</div><h2>Tools and function calling</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/05_tools.ipynb">Open in Colab</a><button class="done-btn" data-done="m5" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Design tools an agent can use safely. A registry that validates, asks permission, runs and truncates, with rules enforced in code, not the prompt.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 4 · Tool Use · <a href="https://web.stanford.edu/class/cs329z/slides/lecture04.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
-<li>Understand why LLMs need tools, how tools are exposed, and how to build a registry that blocks bad or unsafe calls.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why tools?</h3><span class="slide-no">2/13</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 05</span></div><section class="mod" id="m5" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 05</div><h2>Tools and function calling</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/05_tools.ipynb">Open in Colab</a><button class="done-btn" data-done="m5" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>22 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Why LLMs need tools, how models learn to call them, how tools are exposed (function calling, MCP), how tool use is tested, and a safe registry.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 4 · Tool Use · <a href="https://web.stanford.edu/class/cs329z/slides/lecture04.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (61 slides)</b><ol><li><a href="#sec-1">Why tools?</a> <span>4 slides</span></li><li><a href="#sec-2">What are tools?</a> <span>3 slides</span></li><li><a href="#sec-3">Learning to call tools: Toolformer</a> <span>14 slides</span></li><li><a href="#sec-4">Scaling to many tools: Gorilla</a> <span>7 slides</span></li><li><a href="#sec-5">Standard interfaces: REST, function calling, MCP</a> <span>11 slides</span></li><li><a href="#sec-6">Evaluating tool use: BFCL, ToolBench, τ-bench</a> <span>13 slides</span></li><li><a href="#sec-7">How this applies to us</a> <span>8 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/61</span></div><ul>
+<li>Understand why LLMs need tools, how models learn to call them, how tools are exposed through standard interfaces, and how tool use is evaluated.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why tools?</div><div class="slide"><div class="slide-top"><h3>LLMs can&#x27;t solve that?</h3><span class="slide-no">2/61</span></div><ul>
+<li>"Who is the current President of the United States?" → "I don't have real-time data …"</li>
+<li>"Multiply 999 by 867." GPT-4 gets multi-digit multiplication right only 59% of the time (slide text partly hidden).</li>
+<li>o1-mini, digits in number 1 × digits in number 2 (1–20 each): 100% for small numbers.</li>
+<li>Accuracy falls as both numbers grow; 0% for most pairs of 15+ digit numbers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LLMs struggle as tasks get bigger (Dziri et al., 2023)</h3><span class="slide-no">3/61</span></div><p>Zero-shot accuracy:</p>
+<div class="tbl"><table>
 <thead>
 <tr>
-<th>What LLMs can't do alone</th>
-<th>What a tool gives them</th>
+<th>Task (problem size)</th>
+<th>Small</th>
+<th>Large</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-4, multiplication (digits × digits)</td>
+<td>1 × 1: 1.00; 3 × 3: 0.59</td>
+<td>4 × 4: 0.04; 5 × 5: 0</td>
+</tr>
+<tr>
+<td>GPT-4, logic puzzle (houses × attributes)</td>
+<td>2 × 2: 1.00</td>
+<td>5 rows and up: mostly 0</td>
+</tr>
+<tr>
+<td>GPT-4, dynamic programming (sequence length)</td>
+<td>2: 0.88</td>
+<td>6: 0.31</td>
+</tr>
+<tr>
+<td>GPT-3.5, dynamic programming</td>
+<td>2: 0.51</td>
+<td>6: 0.04</td>
+</tr>
+<tr>
+<td>GPT-3, dynamic programming</td>
+<td>2: 0.30</td>
+<td>6: 0.04</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Accuracy collapses as the problem grows. A calculator doesn't.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why tools?</h3><span class="slide-no">4/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>What LLMs can't compute</th>
+<th>What agents can do</th>
 </tr>
 </thead>
 <tbody>
@@ -270,23 +318,96 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>Calculator, code interpreter</td>
 </tr>
 <tr>
+<td>Multi-step logical deduction</td>
+<td>Symbolic solver, verifier</td>
+</tr>
+<tr>
 <td>Exact, verifiable operations</td>
 <td>Deterministic execution</td>
 </tr>
+</tbody>
+</table></div>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>What LLMs never saw in training</th>
+<th>What agents can do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Long-tail facts</td>
+<td>Web search, retrieval</td>
+</tr>
+<tr>
+<td>Post-cutoff events</td>
+<td>Live APIs, news feeds</td>
+</tr>
 <tr>
 <td>Private and proprietary data</td>
-<td>Search over internal documents</td>
-</tr>
-<tr>
-<td>Live state (time, prices)</td>
-<td>Clocks, live APIs</td>
+<td>RAG over internal documents</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>What is a tool?</h3><span class="slide-no">3/13</span></div><ul>
-<li>Tool: a function interface to a program that runs outside the LM.</li>
-<li>The LM writes the function call and its arguments. Your code runs it.</li>
-</ul>
-<div class="tbl"><table>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Why tools? What LLMs can&#x27;t reach</h3><span class="slide-no">5/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>What LLMs can't reach</th>
+<th>What agents can do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Non-language interfaces (APIs, databases)</td>
+<td>Function calling, MCP</td>
+</tr>
+<tr>
+<td>The physical world</td>
+<td>Browsers, robots</td>
+</tr>
+<tr>
+<td>Live state (time, prices, sensors)</td>
+<td>Clocks, sensors, market data</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>For us: the firm's contracts are private data, and its email and document systems are non-language interfaces.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>What are tools?</div><div class="slide"><div class="slide-top"><h3>What is a tool?</h3><span class="slide-no">6/61</span></div><ul>
+<li>Tool: a function interface to a computer program that runs outside the LM.</li>
+<li>The LM writes the function call and its input arguments. Your code runs it.</li>
+<li>Wang et al., 2024, "What are tools anyway? A survey from the language model perspective."</li>
+<li>Extend: reach the real world, e.g. <code>get_time()</code> → "3 pm".</li>
+<li>Facilitate: do a step better than text, e.g. calculator for (35.223 × 1.6)² / 7 → 453.7.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scenarios of tool use</h3><span class="slide-no">7/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Example tools</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Knowledge access</td>
+<td><code>sql_executor(query)</code>, <code>search_engine(query)</code>, <code>retriever(query)</code></td>
+</tr>
+<tr>
+<td>Computation</td>
+<td><code>calculator(formula)</code>, <code>python_interpreter(program)</code>, <code>worksheet.insert_row(row, index)</code></td>
+</tr>
+<tr>
+<td>Interaction with the world</td>
+<td><code>get_weather(city_name)</code>, <code>get_location(ip)</code>, <code>calendar.fetch_events(date)</code>, <code>email.verify(address)</code></td>
+</tr>
+<tr>
+<td>Non-text modalities</td>
+<td><code>cat_image.delete(image_id)</code>, <code>spotify.play_music(name)</code>, <code>visual_qa(query, image)</code></td>
+</tr>
+<tr>
+<td>Special-skill LMs</td>
+<td><code>QA(question)</code>, <code>translation(text, language)</code></td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Basic tool use example</h3><span class="slide-no">8/61</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Without a tool</th>
@@ -295,63 +416,972 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </thead>
 <tbody>
 <tr>
-<td>"What is 17,423 × 892?" → LLM accuracy drops as numbers get longer</td>
-<td><code>calculate(17423 × 892)</code> → 15,541,316</td>
-</tr>
-</tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Anatomy of a tool call</h3><span class="slide-no">4/13</span></div><div class="tbl"><table>
-<thead>
-<tr>
-<th>Select</th>
-<th>Arguments</th>
-<th>Validate</th>
-<th>Execute</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Which tool, from the schemas in context</td>
-<td>Typed fields, filled from the task</td>
-<td>Schema check before the call</td>
-<td>Sandboxed; result returns to context</td>
-</tr>
-<tr>
-<td><code>get_clause</code></td>
-<td><code>{"contract_id": "msa_07", "clause": "7.1"}</code></td>
-<td><code>clause</code> must match <code>^\d+\.\d+$</code></td>
-<td>Clause 7.1 text, back to the model</td>
-</tr>
-</tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Standard interfaces</h3><span class="slide-no">5/13</span></div><div class="tbl"><table>
-<thead>
-<tr>
-<th>REST API</th>
-<th>Function calling</th>
-<th>MCP</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Endpoints + docs, for humans</td>
-<td>JSON schema per tool</td>
-<td>One protocol, any client</td>
-</tr>
-<tr>
-<td>Model must hand-write requests</td>
-<td>Model emits name + args; harness validates</td>
-<td>Servers list tools at runtime (<code>tools/list</code>, <code>tools/call</code>)</td>
+<td>"What is 17,423 × 892?" → the LLM guesses digits; accuracy drops as numbers get longer</td>
+<td>LLM writes <code>calculate(17423 × 892)</code> → code runs the calculator → 15,541,316</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Our notebook uses function calling against the local Ollama server.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Our registry: four gates, in order</h3><span class="slide-no">6/13</span></div><ul>
-<li>Validate: arguments match the JSON schema? If not, never run.</li>
-<li>Permission: tool changes the world (<code>read_only=False</code>)? Ask for approval.</li>
+<li>Steps: the model emits the call → the harness runs the tool → the result goes back to the model.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Learning to call tools: Toolformer</div><div class="slide"><div class="slide-top"><h3>LLMs can teach themselves to use tools (Schick et al., 2023)</h3><span class="slide-no">9/61</span></div><ul>
+<li>Toolformer trains an LM to decide which APIs to call, when, with what arguments, and how to use the results.</li>
+<li>Self-supervised: only a handful of demonstrations per API.</li>
+<li>Examples of calls written into text:<ul>
+<li>"… a registered trademark of [QA("Who is the publisher of The New England Journal of Medicine?") → Massachusetts Medical Society] the MMS."</li>
+<li>"Out of 1400 participants, 400 (or [Calculator(400 / 1400) → 0.29] 29%) passed the test."</li>
+<li>"… the Spanish word for [MT("tortuga") → turtle] turtle."</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Toolformer: candidate tools</h3><span class="slide-no">10/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Input</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q&amp;A system</td>
+<td>"What other name is Pittsburgh known by?"</td>
+<td>"The Steel City"</td>
+</tr>
+<tr>
+<td>Search engine</td>
+<td>"War memorial Flodden"</td>
+<td>"[…] was created in memory of the Battle of Flodden."</td>
+</tr>
+<tr>
+<td>Calculator</td>
+<td>"3435*235/9"</td>
+<td>"89691.67"</td>
+</tr>
+<tr>
+<td>Calendar</td>
+<td>(no input)</td>
+<td>"Thursday, March 10, 2019"</td>
+</tr>
+<tr>
+<td>Translation</td>
+<td>"Os Melhores Escolas em Jersey"</td>
+<td>"The Best Schools in Jersey"</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Toolformer: method</h3><span class="slide-no">11/61</span></div><ul>
+<li>Start from a plain LM dataset. Make a new copy with API calls added.</li>
+<li>Fine-tune GPT-J (6B) on that new dataset.</li>
+<li>Three steps: (1) sample API calls → (2) execute them → (3) filter out the useless ones.</li>
+<li>Running example: "Pittsburgh is also known as | the Steel City."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Toolformer: (1) sample API calls</h3><span class="slide-no">12/61</span></div><ul>
+<li>Prompt the LM: "Your task is to add calls to a Question Answering API to a piece of text […]"</li>
+<li>Input: "Pittsburgh is known as the Steel City." → Output: "Pittsburgh is known as [QA("What other name is Pittsburgh known by?")] the Steel City."</li>
+<li><code>p_i = p_M(&lt;API&gt; | P(x), x_1:i−1)</code>: how likely the model is to start an API call at position i.</li>
+<li>Keep positions where p_i &gt; τ_s (a threshold); sample m candidate calls there.</li>
+<li>Candidates: "What other name is Pittsburgh known by?" and "Which country is Pittsburgh in?"</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Toolformer: (2) execute API calls</h3><span class="slide-no">13/61</span></div><ul>
+<li>Run every candidate call.</li>
+<li>"What other name is Pittsburgh known by?" → "Steel City".</li>
+<li>"Which country is Pittsburgh in?" → "United States".</li>
+<li>Then drop every call that doesn't lower the loss L_i on the next tokens.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Toolformer: (3) filter API calls</h3><span class="slide-no">14/61</span></div><ul>
+<li>Weighted loss on the tokens after position i: <code>L_i(z) = −Σ_{j=i..n} w_{j−i} · log p_M(x_j | z, x_1:j−1)</code><ul>
+<li>z: text inserted before the tokens (a call, a call + result, or nothing).</li>
+<li>w: weights; nearer tokens count more.</li>
+</ul>
+</li>
+<li><code>L_i+ = L_i(call + result)</code>: both the API call and its output.</li>
+<li><code>L_i− = min( L_i(nothing), L_i(call without result) )</code>: no call, or a call with no output.</li>
+<li>Keep the call if <code>L_i− − L_i+ ≥ τ_f</code>: the result must help, not just the call.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Toolformer: filter example</h3><span class="slide-no">15/61</span></div><p><code>L(prefix) = −log p("the Steel City." | prefix)</code></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Prefix</th>
+<th>Loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A. No API call</td>
+<td>"Pittsburgh is known as"</td>
+<td>2.5</td>
+</tr>
+<tr>
+<td>B. Call, not executed</td>
+<td>"… [QA("What other name is Pittsburgh known by?") → ?]"</td>
+<td>2.1</td>
+</tr>
+<tr>
+<td>C. Call, executed</td>
+<td>"… [QA(…) → Steel City]"</td>
+<td>0.8</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Usefulness = min(L_A, L_B) − L_C = min(2.5, 2.1) − 0.8 = 1.3. Keep it.</li>
+<li>"Which country is Pittsburgh in?" → "United States" doesn't help predict "the Steel City". Drop it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example texts and usefulness scores</h3><span class="slide-no">16/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Score</th>
+<th>Text with call</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.11</td>
+<td>"The WL will be open on Friday, [Calendar() → Today is Thursday, March 9, 2017.] March 10, and Sunday, March 19 for regular hours."</td>
+</tr>
+<tr>
+<td>1.59</td>
+<td>"… 499 K rather than 735 K which is [Calculator(735 / 499) → 1.47] 1.47 times hotter."</td>
+</tr>
+<tr>
+<td>−1.23</td>
+<td>"The last time I was with [QA("Who was the last time I was with?") → The Last Time] him I asked what he likes about me."</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>High score: the result helps predict the next words. Negative: the call hurts; it is dropped.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Toolformer results on diverse tasks</h3><span class="slide-no">17/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>GPT-J (6B)</th>
+<th>Toolformer (6B)</th>
+<th>GPT-3 (175B)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fact completion</td>
+<td>18.3</td>
+<td><strong>33.3</strong></td>
+<td>24.7</td>
+</tr>
+<tr>
+<td>Question answering</td>
+<td>25.3</td>
+<td>31.0</td>
+<td><strong>39.3</strong></td>
+</tr>
+<tr>
+<td>Math</td>
+<td>7.7</td>
+<td><strong>37.7</strong></td>
+<td>14.7</td>
+</tr>
+<tr>
+<td>Temporal</td>
+<td>4.0</td>
+<td><strong>27.0</strong></td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>Multilingual</td>
+<td><strong>11.0</strong></td>
+<td><strong>11.0</strong></td>
+<td>4.0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>A 6B model with tools beats a 175B model on fact completion, math and temporal tasks.</li>
+<li>GPT-3 still wins on question answering.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GPT-2 models with and without Toolformer</h3><span class="slide-no">18/61</span></div><ul>
+<li>Three charts: LAMA (facts), math benchmarks, QA benchmarks. X axis: model size (up to ~6,700M parameters).</li>
+<li>Lines: Toolformer, Toolformer with tools disabled, GPT-3 (dashed reference).</li>
+<li>The smallest models gain little from tools. The gap opens as models grow.</li>
+<li>With tools, the larger models pass GPT-3 on LAMA and math. On QA, all stay below GPT-3.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>View tools as &quot;words&quot;? ToolkenGPT (Hao et al., 2024)</h3><span class="slide-no">19/61</span></div><ul>
+<li>Represent each tool as a token (a "toolken") and learn an embedding for it.</li>
+<li>Toolken groups: KB (<code>winner_of</code>, <code>father_of</code>), math (<code>square</code>, <code>GCD</code>), robot (<code>grab</code>, <code>walk</code>).</li>
+<li>Once a toolken is triggered, the LM fills in the tool's arguments; the tool runs.</li>
+<li>Example: garden 64 m × 48 m → GCD(64, 48) = 16 → <code>&lt;square&gt;(16)</code> → 256. "Therefore, the area is 256."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ToolkenGPT framework</h3><span class="slide-no">20/61</span></div><ul>
+<li>The LM predicts the next token, either a word or a toolken: <code>P(t_i | t_&lt;i) = softmax([W_ν; W_τ] · h_{i−1})</code><ul>
+<li>W_ν: word embeddings (frozen). W_τ: toolken embeddings (learned).</li>
+</ul>
+</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Toolken predicted</td>
+<td>Mode switch</td>
+</tr>
+<tr>
+<td>Generation pauses</td>
+<td>Context moved to a new prompt</td>
+</tr>
+<tr>
+<td>Tool-mode prompt</td>
+<td>Demos in <a href="args">tool</a> syntax</td>
+</tr>
+<tr>
+<td>Arguments filled</td>
+<td>In-context learning does the easy work</td>
+</tr>
+<tr>
+<td>Tool executes</td>
+<td>Return value goes back into reasoning mode</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Learning toolken embeddings</h3><span class="slide-no">21/61</span></div><p>"the area is 256 square feet"</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>s</th>
+<th>the</th>
+<th>area</th>
+<th>is</th>
+<th>2</th>
+<th>5</th>
+<th>6</th>
+<th>square</th>
+<th>feet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>s′</td>
+<td>the</td>
+<td>area</td>
+<td>is</td>
+<td><strong>[square]</strong></td>
+<td>[N/A]</td>
+<td>[N/A]</td>
+<td>square</td>
+<td>feet</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>[square]: the toolken, predicted at the first result token. [N/A]: the result tokens, skipped in the loss.</li>
+<li><code>L(W_τ) = Σ over (s, s′) Σ_i −log P(t′_i | t_&lt;i) · 1[t′_i ≠ N/A]</code></li>
+<li>Training data: datasets with ground-truth tool calls, or synthetic data.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ToolkenGPT results</h3><span class="slide-no">22/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>GSM8K-XL (4 tools)</th>
+<th>FuncQA one-hop (13 tools)</th>
+<th>FuncQA multi-hop</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-shot ChatGPT</td>
+<td>0.17</td>
+<td>0.55</td>
+<td>0.09</td>
+</tr>
+<tr>
+<td>CoT</td>
+<td>0.18</td>
+<td>0.20</td>
+<td>0.03</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>0.32</td>
+<td>0.57</td>
+<td>0.06</td>
+</tr>
+<tr>
+<td>ToolkenGPT</td>
+<td><strong>0.33</strong></td>
+<td><strong>0.73</strong></td>
+<td><strong>0.15</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Chart: accuracy vs number of tools (30 → 234 relations). ToolkenGPT (supervised) stays near 1.0.</li>
+<li>ToolkenGPT (synthetic data), in-context learning and prompting all fall as tools are added.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Scaling to many tools: Gorilla</div><div class="slide"><div class="slide-top"><h3>ToolLLM: LLMs that use 16k+ APIs</h3><span class="slide-no">23/61</span></div><ul>
+<li>Fine-tune LLaMA into ToolLLaMA, plus a neural API retriever that suggests the right APIs per instruction.</li>
+<li>Data: API collection from RapidAPI → instruction generation (ChatGPT) → solution path annotation (ChatGPT) → ToolBench.</li>
+<li>Train: supervised fine-tuning (SFT) of LLaMA on ToolBench → ToolLLaMA.</li>
+<li>Inference: instruction → API retriever → retrieved APIs → ToolLLaMA calls RapidAPI N times → final answer, scored by ToolEval.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Arising issue: tool use and hallucination</h3><span class="slide-no">24/61</span></div><p>Prompt: "Help me find an API to convert the spoken language in a recorded audio to text using Torch Hub."</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>GPT-4</th>
+<th>Claude</th>
+<th>Gorilla</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>torch.hub.load('snakers4/silero-models', 'asr', source='local')</code></td>
+<td><code>torchaudio.pipelines.WAV2VEC2_ASR_PIPELINE("audio.wav")</code></td>
+<td><code>torch.hub.load('snakers4/silero-models', 'silero_stt')</code></td>
+</tr>
+<tr>
+<td>Hallucinated arguments</td>
+<td>Wrong library (domain: audio translation)</td>
+<td>Good to go</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Gorilla: LLMs connected with massive APIs (Patil et al., 2023)</h3><span class="slide-no">25/61</span></div><ul>
+<li>Dataset: 1,645 API calls. 94 from Torch Hub (all), 626 from TensorFlow Hub v2 (all), 925 from HuggingFace (top 20 per domain).</li>
+<li>Each API as JSON: {domain, framework, functionality, api_name, api_call, api_arguments, environment_requirements, example_code, performance, description}.</li>
+<li>Self-instruct with GPT-4 and in-context examples → 16,450 {instruction, API} pairs.</li>
+<li>Used to train Gorilla-7B (on LLaMA 7B).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Retrieval-aware training (RAT)</h3><span class="slide-no">26/61</span></div><ul>
+<li>Fine-tune the model to use or ignore retrieved API docs.</li>
+<li>Show both correct and incorrect retrieved docs during instruction fine-tuning.</li>
+<li>Result: the model stays robust when retrieval is poor.</li>
+<li>Inference two ways: zero-shot, or with a retriever over the API database.</li>
+<li>Example: "I want to see some cats dancing in celebration!" → retriever adds "Reference API: StableDiffusionPipeline.from_pretrained(…)" → Gorilla writes <code>StableDiffusionPipeline.from_pretrained(stabilityai/stable-diffusion-2-1)</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AST sub-tree matching to measure hallucination</h3><span class="slide-no">27/61</span></div><ul>
+<li>AST (abstract syntax tree): the call parsed into a tree of its parts.</li>
+<li>Call: <code>torch.hub.load('pytorch/vision:v0.10.0', 'densenet121', pretrained=True)</code> → torch → hub → load → pytorch/vision → densenet121 → pretrained=True.</li>
+<li>Correct if that tree is a sub-tree of the tree of real APIs in the database.</li>
+<li>Hallucination: the call matches no real API at all. Wrong but real API = an error, not a hallucination.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Improved accuracy with reduced hallucination</h3><span class="slide-no">28/61</span></div><p>Accuracy with GPT-retriever:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Torch Hub</th>
+<th>HuggingFace</th>
+<th>TensorFlow Hub</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLaMA</td>
+<td>14.51</td>
+<td>10.17</td>
+<td>15.62</td>
+</tr>
+<tr>
+<td>GPT-3.5</td>
+<td>60.21</td>
+<td>47.34</td>
+<td><strong>65.59</strong></td>
+</tr>
+<tr>
+<td>GPT-4</td>
+<td>59.13</td>
+<td>44.57</td>
+<td>43.94</td>
+</tr>
+<tr>
+<td>Claude</td>
+<td>60.21</td>
+<td>41.37</td>
+<td>55.62</td>
+</tr>
+<tr>
+<td>Gorilla</td>
+<td><strong>61.82</strong></td>
+<td><strong>47.45</strong></td>
+<td>64.96</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Scatter plots (accuracy vs hallucination; up-left is better): zero-shot, Gorilla is far ahead with the lowest hallucination.</li>
+<li>With BM25, GPT and oracle retrievers, Gorilla keeps the lowest or near-lowest hallucination; GPT-3.5 matches or slightly beats its accuracy. LLaMA stays low and hallucinates most.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Learning to use tools: summary</h3><span class="slide-no">29/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Toolformer</th>
+<th>ToolkenGPT</th>
+<th>ToolLLM</th>
+<th>Gorilla</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tool call is</td>
+<td>text</td>
+<td>one new token</td>
+<td>ReAct-style trace</td>
+<td>text, API call code</td>
+</tr>
+<tr>
+<td>What is trained</td>
+<td>model (GPT-J 6B)</td>
+<td>embeddings</td>
+<td>model (LLaMA 7B)</td>
+<td>model (LLaMA 7B)</td>
+</tr>
+<tr>
+<td>Labels</td>
+<td>self-supervised</td>
+<td>ground-truth or synthetic calls</td>
+<td>ChatGPT traces</td>
+<td>GPT-4 self-instruct</td>
+</tr>
+<tr>
+<td>Learns when</td>
+<td>loss filter</td>
+<td>embedding</td>
+<td>fine-tuning</td>
+<td>fine-tuning</td>
+</tr>
+<tr>
+<td>Learns what</td>
+<td>fine-tuning</td>
+<td>in-context</td>
+<td>fine-tuning</td>
+<td>fine-tuning</td>
+</tr>
+<tr>
+<td>Scale</td>
+<td>5 tools</td>
+<td>234 tools</td>
+<td>16k APIs</td>
+<td>1.6k APIs</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Standard interfaces: REST, function calling, MCP</div><div class="slide"><div class="slide-top"><h3>Why standard interfaces?</h3><span class="slide-no">30/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Change the model to fit the tools</th>
+<th>Change how tools are described so any model can use them</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Toolformer, ToolkenGPT, Gorilla</td>
+<td>REST, function calling, MCP</td>
+</tr>
+<tr>
+<td>Every new API means another training run</td>
+<td>A schema at runtime instead of fine-tuning per API</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Three generations</h3><span class="slide-no">31/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>REST API (human-facing)</th>
+<th>Function calling (model-facing)</th>
+<th>MCP (ecosystem-facing)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Endpoints + docs; auth per service</td>
+<td>JSON schema per tool</td>
+<td>One protocol, any client</td>
+</tr>
+<tr>
+<td>LLM must read docs and hand-write requests</td>
+<td>Model emits name + args; harness validates and dispatches</td>
+<td>Servers expose tools, resources, prompts</td>
+</tr>
+<tr>
+<td>No machine-readable contract</td>
+<td>Schemas live in the codebase</td>
+<td>Discovery at runtime; write once, reuse across hosts</td>
+</tr>
+<tr>
+<td><code>GET /v1/weather?city=SF</code></td>
+<td><code>{"name":"get_weather","arguments":{"city":"SF"}}</code></td>
+<td><code>tools/list</code> → <code>tools/call</code></td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>REST APIs: tools over HTTP</h3><span class="slide-no">32/61</span></div><pre><code>GET  https://api.weather.com/v1/current?city=Stanford
+200  {&quot;temp_f&quot;: 74, &quot;conditions&quot;: &quot;sunny&quot;}
+</code></pre>
+<ul>
+<li>Verbs: GET read, POST create, PUT update, DELETE remove.</li>
+<li>Limitation: the model must know the URL, parameter names and response shape.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Function calling: tools as JSON schemas</h3><span class="slide-no">33/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Tool schema (what the model sees)</th>
+<th>Model output (what it emits)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{"name": "get_weather", "description": "Current weather", "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}</code></td>
+<td><code>{"tool_call": {"name": "get_weather", "arguments": {"city": "Stanford"}}}</code></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Flow: schema → model emits tool_call → harness runs it → result back to the model.</li>
+<li>Limitation: a tool written for one API format has to be rewritten for the next.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Model Context Protocol (MCP)</h3><span class="slide-no">34/61</span></div><ul>
+<li>One standard protocol between AI apps and data sources, with data flowing both ways.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>AI applications</th>
+<th>Data sources and tools</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chat interfaces: Claude Desktop, LibreChat</td>
+<td>Data and file systems: PostgreSQL, SQLite, GDrive</td>
+</tr>
+<tr>
+<td>IDEs and code editors: Claude Code, Goose</td>
+<td>Development tools: Git, Sentry</td>
+</tr>
+<tr>
+<td>Other AI apps: 5ire, Superinterface</td>
+<td>Productivity tools: Slack, Google Maps</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>MCP architecture: host, client, server</h3><span class="slide-no">35/61</span></div><ul>
+<li>MCP host: the AI application.</li>
+<li>MCP client: lives inside the host; one per server, each with a dedicated connection.</li>
+<li>MCP server: exposes tools. Can be local (filesystem, database) or remote (e.g., Sentry).</li>
+<li>Example: one host with 4 clients → local server A (filesystem), local server B (database), remote server C (Sentry, two clients).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MCP: tool discovery (`tools/list`)</h3><span class="slide-no">36/61</span></div><ul>
+<li>Request: <code>{"jsonrpc": "2.0", "id": 2, "method": "tools/list"}</code>. "What tools do you have?"</li>
+<li>The server returns a list of tools.</li>
+<li>Each tool has a name, description and JSON <code>inputSchema</code>.</li>
+<li>Example: <code>weather_current</code>, "Current weather for a location"; <code>location</code> (string, required), <code>units</code> (enum: metric, imperial).</li>
+<li><code>ttlMs: 300000</code>: how long the client may cache the list (300,000 ms).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MCP: tool execution (`tools/call`)</h3><span class="slide-no">37/61</span></div><ul>
+<li>Request: <code>"method": "tools/call"</code>, <code>"name": "weather_current"</code>, <code>"arguments": {"location": "Stanford", "units": "imperial"}</code>.</li>
+<li><code>name</code> picks a listed tool; <code>arguments</code> follow its inputSchema.</li>
+<li>Result is a <code>content</code> array the host hands back to the LLM.</li>
+<li>Example: <code>{"type": "text", "text": "Current weather in Stanford: 68°F, partly cloudy, wind W 8 mph"}</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example: course LMS API → MCP tools</h3><span class="slide-no">38/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>REST route</th>
+<th>MCP tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /assignments</code></td>
+<td><code>list_assignments</code></td>
+</tr>
+<tr>
+<td><code>GET /submissions</code></td>
+<td><code>get_submissions</code></td>
+</tr>
+<tr>
+<td><code>POST /grade</code></td>
+<td><code>post_grade</code></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>FastMCP reads the API's OpenAPI spec (<code>/openapi.json</code>) and makes one MCP tool per route: <code>FastMCP.from_openapi(openapi_spec=spec, client=api, name="Course MCP")</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example: inbound vs outbound auth</h3><span class="slide-no">39/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Inbound: agent → MCP server</th>
+<th>Outbound: MCP server → LMS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agent sends <code>AGENT_TOKEN</code></td>
+<td>Server sends <code>LMS_TOKEN</code> as a Bearer header</td>
+</tr>
+<tr>
+<td><code>StaticTokenVerifier</code> checks it; maps to client "ta-agent"</td>
+<td>Held only by the server; the agent never sees it</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Server: <code>FastMCP.from_openapi(..., auth=who_may_call)</code>, run over HTTP on port 8001.</li>
+<li>Two separate keys: who may call the server, and what the server may do.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our notebook uses function calling</h3><span class="slide-no">40/61</span></div><ul>
+<li>The registry's <code>schemas()</code> turns each tool into <code>{"type": "function", "function": {name, description, parameters}}</code>.</li>
+<li>The local Ollama server takes these as <code>tools=</code>, the same format as OpenAI's API.</li>
+<li>The model replies with <code>tool_calls</code>; our loop runs each through the registry and returns a <code>"role": "tool"</code> message.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Evaluating tool use: BFCL, ToolBench, τ-bench</div><div class="slide"><div class="slide-top"><h3>BFCL: Berkeley Function-Calling Leaderboard (Patil et al., 2025)</h3><span class="slide-no">41/61</span></div><p>Snapshot, Nov 2025:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Rank</th>
+<th>Model</th>
+<th>Overall acc</th>
+<th>Cost ($)</th>
+<th>Web search</th>
+<th>Memory</th>
+<th>Multi-turn</th>
+<th>Non-live (AST)</th>
+<th>Live (AST)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Claude-Opus-4-5 (FC)</td>
+<td>77.47</td>
+<td>86.55</td>
+<td>84.5</td>
+<td>73.76</td>
+<td>68.38</td>
+<td>88.58</td>
+<td>79.79</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Claude-Sonnet-4-5 (FC)</td>
+<td>73.24</td>
+<td>43.73</td>
+<td>81</td>
+<td>64.95</td>
+<td>61.37</td>
+<td>88.65</td>
+<td>81.13</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Gemini-3-Pro-Preview (Prompt)</td>
+<td>72.51</td>
+<td>298.47</td>
+<td>80</td>
+<td>61.72</td>
+<td>60.75</td>
+<td>90.65</td>
+<td>83.12</td>
+</tr>
+<tr>
+<td>4</td>
+<td>GLM-4.6 (FC thinking)</td>
+<td>72.38</td>
+<td>4.64</td>
+<td>77.5</td>
+<td>55.7</td>
+<td>68</td>
+<td>87.56</td>
+<td>80.9</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Grok-4-1-fast-reasoning (FC)</td>
+<td>69.57</td>
+<td>17.26</td>
+<td>82.5</td>
+<td>53.98</td>
+<td>58.87</td>
+<td>88.27</td>
+<td>78.46</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Non-live single-turn calls score high (~88–91). Multi-turn and memory are much lower.</li>
+<li>GLM-4.6, an open-weight model, is 4th at $4.64 vs $86.55 for 1st.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>BFCL: how it evaluates</h3><span class="slide-no">42/61</span></div><ul>
+<li>BFCL: a broad test of an LLM's ability to invoke functions (tool calling).</li>
+<li>Evaluation:<ul>
+<li>AST-based offline check: does the call parse to the right function and arguments?</li>
+<li>Execute the function for a real-world check.</li>
+<li>State-based check for multi-step and multi-turn calls.</li>
+</ul>
+</li>
+<li>Datasets: from real-world use cases; taxonomies of call types; Python, C++, Java, SQL and more.</li>
+<li>Tests relevance and irrelevance: sometimes none of the given functions fits the query.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>BFCL: example function calls</h3><span class="slide-no">43/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Multiple functions</th>
+<th>Parallel functions</th>
+<th>Relevance detection</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User: "What is 2 + 3?"</td>
+<td>User: "What is (2+3) and (4+5)?"</td>
+<td>User: "What is 2*3?"</td>
+</tr>
+<tr>
+<td>Functions: add(a, b), mult(a, b)</td>
+<td>Functions: add(a, b)</td>
+<td>Functions: add(a, b)</td>
+</tr>
+<tr>
+<td>Agent: <code>add(a=2, b=3)</code></td>
+<td>Agent: <code>add(a=2, b=3), add(a=4, b=5)</code></td>
+<td>Agent: "Error: request is multiplication; only add is available."</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Category chart: crowd-sourced (2,251), single-turn (1,700), multi-turn (800), agentic (300), with sub-groups like simple, multiple, parallel and irrelevance.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ToolBench / ToolLLM: 16k real APIs (Qin et al., 2023)</h3><span class="slide-no">44/61</span></div><ul>
+<li>Crawl 6,000+ real-world APIs from RapidAPI and write realistic human instructions that use them.</li>
+<li>RapidAPI hierarchy: category (Finance, Movies, Jobs) → tool (e.g., Streaming Availability) → API (e.g., GET Search By Title).</li>
+<li>Each API's docs: name, description, required and optional parameters, code snippet, example response.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ToolBench: three kinds of instructions</h3><span class="slide-no">45/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>APIs sampled from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Single-tool</td>
+<td>One tool</td>
+</tr>
+<tr>
+<td>2. Intra-category multi-tool</td>
+<td>Several tools in the same category</td>
+</tr>
+<tr>
+<td>3. Intra-collection multi-tool</td>
+<td>Several tools in the same collection</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>ChatGPT gets the sampled APIs and their docs, and writes instructions plus the list of relevant APIs.</li>
+<li>Example: "We are planning a movie night in the mountains. Can you suggest …" → API1, API2, API5.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>τ-bench: tool-agent-user interaction (Yao et al., 2024)</h3><span class="slide-no">46/61</span></div><ul>
+<li>Tools: <code>get_user_details</code>, <code>book_reservation</code>, <code>cancel_reservation</code>, <code>update_reservation_flights</code>, …</li>
+<li>Agent gets the domain policy as a system prompt: "Basic economy cannot be modified." "Basic economy cannot be cancelled after 24 hours of booking…"</li>
+<li>A simulated user (an LLM) gets its own instruction: change a reservation to SF; if not possible, cancel and rebook.</li>
+<li>Scored on the final database state, not the chat.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>τ-bench: example trajectory (τ-airline)</h3><span class="slide-no">47/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Turn</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User</td>
+<td>"Change flight"</td>
+</tr>
+<tr>
+<td>Agent → tool</td>
+<td><code>get_reservation_details[JK9O19]</code> → {'cabin': 'basic_economy', …} (read database)</td>
+</tr>
+<tr>
+<td>Agent</td>
+<td>"JK9O19 is basic economy and cannot be changed. But since it is within 24h, I can cancel it and book a new one. Do you want me to do it?"</td>
+</tr>
+<tr>
+<td>User</td>
+<td>"Oh… In that case just cancel it"</td>
+</tr>
+<tr>
+<td>Agent → tool</td>
+<td><code>cancel_reservation[JK9O19]</code> → {…, 'status': 'cancelled'} (write database)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Pass^k: reward reliability and consistency</h3><span class="slide-no">48/61</span></div><ul>
+<li><code>pass^k = E_task[ C(c, k) / C(n, k) ]</code>: chance all k sampled trials succeed, given c of n succeeded.</li>
+<li><code>pass@k = 1 − E_task[ C(n−c, k) / C(n, k) ]</code>: chance at least 1 of k succeeds.<ul>
+<li>C(a, b): "a choose b". n: trials run per task. c: trials that passed.</li>
+</ul>
+</li>
+<li>pass@k rises with k; pass^k falls with k. Agents need pass^k.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>τ-retail</th>
+<th>τ-airline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Databases</td>
+<td>500 users, 50 products, 1,000 orders</td>
+<td>500 users, 300 flights, 2,000 reservations</td>
+</tr>
+<tr>
+<td>API tools</td>
+<td>7 write, 8 non-write</td>
+<td>6 write, 7 non-write</td>
+</tr>
+<tr>
+<td>Tasks</td>
+<td>115</td>
+<td>50</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>τ-bench results</h3><span class="slide-no">49/61</span></div><p>Pass^1 via function calling (Llama-3 via text ReAct):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Retail</th>
+<th>Airline</th>
+<th>Avg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gpt-4o</td>
+<td><strong>61.2</strong></td>
+<td><strong>35.2</strong></td>
+<td><strong>48.2</strong></td>
+</tr>
+<tr>
+<td>gpt-4-turbo</td>
+<td>57.7</td>
+<td>32.4</td>
+<td>45.1</td>
+</tr>
+<tr>
+<td>gpt-4-32k</td>
+<td>56.5</td>
+<td>33.0</td>
+<td>44.8</td>
+</tr>
+<tr>
+<td>gpt-3.5-turbo</td>
+<td>20.0</td>
+<td>10.8</td>
+<td>15.4</td>
+</tr>
+<tr>
+<td>claude-3-opus</td>
+<td>44.2</td>
+<td>34.7</td>
+<td>39.5</td>
+</tr>
+<tr>
+<td>claude-3-sonnet</td>
+<td>26.3</td>
+<td>27.6</td>
+<td>27.0</td>
+</tr>
+<tr>
+<td>claude-3-haiku</td>
+<td>19.0</td>
+<td>14.4</td>
+<td>16.7</td>
+</tr>
+<tr>
+<td>gemini-1.5-pro</td>
+<td>21.7</td>
+<td>14.0</td>
+<td>17.9</td>
+</tr>
+<tr>
+<td>gemini-1.5-flash</td>
+<td>17.4</td>
+<td>26.0</td>
+<td>21.7</td>
+</tr>
+<tr>
+<td>mistral-large</td>
+<td>30.7</td>
+<td>22.4</td>
+<td>26.6</td>
+</tr>
+<tr>
+<td>mixtral-8x22b</td>
+<td>17.7</td>
+<td>31.6</td>
+<td>24.7</td>
+</tr>
+<tr>
+<td>meta-llama-3-70B</td>
+<td>14.8</td>
+<td>14.4</td>
+<td>14.6</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>τ-bench: function calling and pass^k</h3><span class="slide-no">50/61</span></div><ul>
+<li>Pass^1 in τ-retail by method: native function calling (FC) beats ReAct and Act for every GPT model shown.</li>
+<li>Pass^k vs pass@k in τ-retail (k up to 32): pass@k climbs toward 90%+; pass^k drops steadily.</li>
+<li>gpt-4o starts near 60% at k = 1 and falls to about 25% by k = 8.</li>
+<li>In words: an agent that passes once often fails when you run the same task again.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>τ-bench has evolved</h3><span class="slide-no">51/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>What it adds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>τ-bench</td>
+<td>June 2024</td>
+<td>Tool-agent-user tasks with a simulated user; scored on database outcomes with pass^k (retail, airline)</td>
+</tr>
+<tr>
+<td>τ²-bench</td>
+<td>June 2025</td>
+<td>Dual control: the user can act too; the agent must guide the user (adds telecom)</td>
+</tr>
+<tr>
+<td>Task audit &amp; fixes</td>
+<td>Feb 2026</td>
+<td>Fixed 50+ airline and retail tasks: expected actions, unclear instructions, impossible constraints</td>
+</tr>
+<tr>
+<td>τ-knowledge</td>
+<td>Mar 2026</td>
+<td>Retrieve and reason over ~700 documents plus policy (adds banking)</td>
+</tr>
+<tr>
+<td>τ-voice</td>
+<td>Mar 2026</td>
+<td>Real-time voice: interruptions, accents, background noise</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Failure modes in tool use</h3><span class="slide-no">52/61</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Single call</th>
+<th>Multi-step chain</th>
+<th>Conversation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Selection: wrong tool, or a tool when none was needed</td>
+<td>Sequencing: skips a needed earlier call, or wrong order</td>
+<td>Policy: acts where the rules say not to</td>
+</tr>
+<tr>
+<td>Arguments: made-up fields, wrong types or units</td>
+<td>Recovery: retries the same failing call instead of backing off</td>
+<td>Interaction: assumes instead of asking the user</td>
+</tr>
+<tr>
+<td>Hallucinated tool: calls an API that doesn't exist</td>
+<td></td>
+<td>Non-determinism: passes once, fails on the retry (pass^k)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Lecture summary</h3><span class="slide-no">53/61</span></div><ul>
+<li>Why tools: what LLMs didn't see in training, or can't reach.</li>
+<li>Toolformer: the LM teaches itself which APIs to call, when, and with what arguments.</li>
+<li>Gorilla: trained on 1.6k APIs; AST matching measures hallucination.</li>
+<li>REST → function calling → MCP: from hand-written requests to <code>tools/list</code>, <code>tools/call</code>.</li>
+<li>BFCL / ToolBench / τ-bench: single call, multi-step chain, tool-agent-user.</li>
+<li>Failure modes: wrong tool, made-up arguments, wrong order.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Our registry: four gates, in order</h3><span class="slide-no">54/61</span></div><ul>
+<li>Validate: do the arguments match the JSON schema? If not, never run.</li>
+<li>Permission: does the tool change the world (<code>read_only=False</code>)? Ask for approval.</li>
 <li>Run: call the function; catch any crash.</li>
-<li>Truncate: output over 1,500 chars → cut it, say how to ask for less.</li>
+<li>Truncate: output over 1,500 characters → cut it, and say how to ask for less.</li>
 <li>Every outcome is a <code>ToolResult</code> with a status: ok, unknown_tool, invalid_args, tool_error, denied.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The gates in code</h3><span class="slide-no">7/13</span></div><pre><code class="language-python">jsonschema.validate(args, spec.parameters)
+</ul></div><div class="slide"><div class="slide-top"><h3>The gates in code</h3><span class="slide-no">55/61</span></div><pre><code class="language-python">jsonschema.validate(args, spec.parameters)
 ...
 if not spec.read_only and not self.approve(name, args):
     return ToolResult(&quot;denied&quot;, &quot;DENIED: a person declined this action. Do not retry it.&quot;)
@@ -365,36 +1395,42 @@ if len(out) &gt; self.max_chars:
 <li>Lines 3–4: not read-only and not approved → "denied", with a clear message.</li>
 <li>Line 6: run the tool.</li>
 <li>Lines 7–8: cut long output and say how to ask for a narrower range.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Five calls, no model needed</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Five calls, no model needed</h3><span class="slide-no">56/61</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Call</th>
 <th>Status</th>
+<th>Failure mode it catches</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>get_clause(msa_07, "7.1")</code></td>
 <td>ok</td>
+<td>–</td>
 </tr>
 <tr>
 <td><code>get_clause(msa_7, "seven")</code></td>
 <td>invalid_args (ID must look like <code>msa_07</code>)</td>
+<td>Arguments: wrong format</td>
 </tr>
 <tr>
 <td><code>delete_contract(msa_07)</code></td>
 <td>unknown_tool, plus the list of real tools</td>
+<td>Hallucinated tool</td>
 </tr>
 <tr>
 <td><code>send_email(x@example.com, ...)</code></td>
 <td>denied (default approver says no)</td>
+<td>Policy</td>
 </tr>
 <tr>
 <td><code>read_pages(msa_07, n_lines=30)</code></td>
 <td>ok (30 is the schema maximum)</td>
+<td>–</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Good vs bad tool descriptions</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Good vs bad tool descriptions</h3><span class="slide-no">57/61</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Bad</th>
@@ -413,13 +1449,14 @@ if len(out) &gt; self.max_chars:
 </tbody>
 </table></div>
 <ul>
-<li>Short output matters: showing whole files cut SWE-agent's success from 18.0% to 12.7%.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Policy in code, not in the prompt</h3><span class="slide-no">10/13</span></div><ul>
+<li>Short output matters too: showing whole files cut SWE-agent's success from 18.0% to 12.7%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Policy in code, not in the prompt</h3><span class="slide-no">58/61</span></div><ul>
 <li>Task: "Read clause 7.1 of msa_07 and email it to opposing.counsel@example.com"</li>
 <li>The model reads the clause, tries <code>send_email</code>, gets "denied."</li>
 <li>The notebook checks <code>SENT == []</code>: nothing was sent.</li>
 <li>Solution: an approver that allows only <code>@yourfirm.com</code> addresses.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Failure modes in tool use</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
+<li>Like τ-bench's airline rules, but enforced by the registry, not by the model's memory of the prompt.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Failure modes vs our registry</h3><span class="slide-no">59/61</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Where</th>
@@ -449,20 +1486,32 @@ if len(out) &gt; self.max_chars:
 <td>Test each task several times</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Running it on the firm&#x27;s machine</h3><span class="slide-no">60/61</span></div><ul>
 <li>"Never email a client without approval" must hold every time. Only code can promise that.</li>
 <li>Small local models make more malformed calls. The schema check catches them before they run.</li>
 <li>Short, paged output keeps the local model's context small.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>Open-weight models can call tools well: GLM-4.6 was 4th on BFCL at a fraction of the cost.</li>
+<li>Later, an MCP server could expose the firm's document system once, for any local agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">61/61</span></div><ul>
 <li>Policy in the prompt → it's a suggestion. Put it in the approval gate.</li>
 <li>Vague descriptions → the model guesses. Good descriptions are free accuracy.</li>
 <li>Huge outputs → return pages, with a way to ask for the next one.</li>
 <li>Raising errors → return them as results so the model can recover.</li>
+<li>No "none of these fits" path → the model picks a wrong tool. BFCL tests this.</li>
+<li>Testing once → run each task several times and report pass^k.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Where should &quot;never email a client without approval&quot; live?</summary><p>In code. `send_email` is not read-only, so the registry calls the approval gate before running it.</p></details>
 
 <details><summary>Why validate arguments before running the tool?</summary><p>So bad calls never execute. The model gets a clear error and can retry with the right format.</p></details>
 
-<details><summary>What does pass^k measure?</summary><p>Whether the agent succeeds on all k tries of the same task, not just once. It rewards reliability.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>How does Toolformer decide which API calls to keep in its training data?</summary><p>It keeps a call only if adding the call and its result lowers the loss on the next tokens by at least τ_f, compared with no call or a call without its result.</p></details>
+
+<details><summary>What does Gorilla&#x27;s AST sub-tree matching measure?</summary><p>Whether a generated API call matches a real API in the database. A call that matches no real API counts as a hallucination.</p></details>
+
+<details><summary>What problem does MCP solve that plain function calling doesn&#x27;t?</summary><p>With function calling, schemas live in each app&#x27;s code and get rewritten per API. MCP servers list their tools at runtime (`tools/list`), so one server works with any host.</p></details>
+
+<details><summary>What does pass^k measure, and why does it fall as k grows?</summary><p>The chance the agent succeeds on all k tries of the same task. Every extra try is another chance to fail, so it rewards reliability.</p></details>
+
+<details><summary>In BFCL&#x27;s relevance test, the user asks &quot;What is 2*3?&quot; and only add(a, b) exists. What should the agent do?</summary><p>Call nothing and say the request is multiplication but only add is available.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run the five hand-made calls and read each status.</li>
 <li>Run the email task. Confirm "emails actually sent: []".</li>
 <li>In the solutions, try the <code>@yourfirm.com</code> approver and the "reads stuff" description.</li>

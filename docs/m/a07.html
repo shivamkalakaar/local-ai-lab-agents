@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Self-improvement with search and deep research agents · Agent Engineering School</title>
-<meta name="description" content="Make an agent better without training it. Search over many answers and pick well (AlphaCode), or look facts up mid-thought (Search-o1).">
+<meta name="description" content="Make an agent better without training it. Search over many answers and pick well (AlphaCode, AlphaCode 2), or look facts up mid-thought (Search-o1).">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,9 +259,9 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A07</span></div><section class="mod" id="a07" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A07</div><h2>Self-improvement with search and deep research agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a07_search_deep_research.ipynb">Open in Colab</a><button class="done-btn" data-done="a07" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Make an agent better without training it. Search over many answers and pick well (AlphaCode), or look facts up mid-thought (Search-o1).</p><article class="lesson"><p class="deck-src">Based on CS329A · Lecture 8 · Self-improvement with search and deep research agents · <a href="https://arxiv.org/abs/2203.07814" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
-<li>Use two kinds of search to make an agent better without training: sample-filter-cluster over answers, and search in the middle of reasoning.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Two kinds of search</h3><span class="slide-no">2/13</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A07</span></div><section class="mod" id="a07" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A07</div><h2>Self-improvement with search and deep research agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a07_search_deep_research.ipynb">Open in Colab</a><button class="done-btn" data-done="a07" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>22 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Make an agent better without training it. Search over many answers and pick well (AlphaCode, AlphaCode 2), or look facts up mid-thought (Search-o1).</p><article class="lesson"><p class="deck-src">Based on CS329A · Lecture 8 · Self-improvement with search and deep research agents · <a href="https://arxiv.org/abs/2203.07814" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (70 slides)</b><ol><li><a href="#sec-1">Why this lecture: search instead of training</a> <span>3 slides</span></li><li><a href="#sec-2">AlphaCode (Li et al. 2022)</a> <span>34 slides</span></li><li><a href="#sec-3">AlphaCode 2 (Google DeepMind 2023)</a> <span>6 slides</span></li><li><a href="#sec-4">Search-o1 (Li et al. 2025)</a> <span>16 slides</span></li><li><a href="#sec-5">Our notebook, Part A: AlphaCode at laptop scale</a> <span>2 slides</span></li><li><a href="#sec-6">Our notebook, Part B: Search-o1 over contracts</a> <span>4 slides</span></li><li><a href="#sec-7">How this applies to us</a> <span>4 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/70</span></div><ul>
+<li>Use two kinds of search to make an agent better without training: sample-filter-cluster over answers (AlphaCode, AlphaCode 2), and search in the middle of reasoning (Search-o1).</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why this lecture: search instead of training</div><div class="slide"><div class="slide-top"><h3>Two kinds of search</h3><span class="slide-no">2/70</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Search over answers</th>
@@ -280,24 +284,1107 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
-<li>Both make the agent better with no change to the model.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>AlphaCode: sample, filter, cluster</h3><span class="slide-no">3/13</span></div><ul>
-<li>Sample: draw up to millions of programs per problem.</li>
-<li>Filter: run each on the example tests in the problem. Drop the ones that fail.<ul>
-<li>Removed about 99% of samples.</li>
+<li>Both make the agent better with no change to the model's weights at test time.</li>
+<li>Both spend more compute at answer time ("test-time compute").</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The three papers</h3><span class="slide-no">3/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>What it does</th>
+<th>Headline result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AlphaCode (Li et al., DeepMind, 2022)</td>
+<td>Sample up to millions of programs, filter on example tests, cluster by behavior, submit ≤10</td>
+<td>Top 54.3% in 10 Codeforces contests (Table 4)</td>
+</tr>
+<tr>
+<td>AlphaCode 2 (Leblond et al., Google DeepMind, 2023)</td>
+<td>Same pipeline on Gemini Pro, plus a learned scoring model</td>
+<td>43% of 77 problems vs 25% for AlphaCode; about 85th percentile</td>
+</tr>
+<tr>
+<td>Search-o1 (Li et al., Renmin Univ., 2025)</td>
+<td>A reasoning model writes search queries mid-thought; Reason-in-Documents condenses results</td>
+<td>GPQA diamond 63.6 vs 58.1 without retrieval (Table 1)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What ties them together</h3><span class="slide-no">4/70</span></div><ul>
+<li>Generation is cheap; picking the right answer is hard.<ul>
+<li>AlphaCode: millions of samples, only 10 submissions.</li>
+<li>Search-o1: 10 web pages per search, only a few facts matter.</li>
 </ul>
 </li>
-<li>Cluster: run survivors on new inputs; group programs with identical outputs.<ul>
-<li>The inputs need no known answers.</li>
+<li>Both add a selection step between "raw output" and "final answer".<ul>
+<li>AlphaCode: filter + cluster (+ scorer in AlphaCode 2).</li>
+<li>Search-o1: Reason-in-Documents.</li>
 </ul>
 </li>
-<li>Submit one program per cluster, biggest first, at most 10.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why the biggest cluster first</h3><span class="slide-no">4/13</span></div><ul>
-<li>Many ways to be wrong; correct programs tend to agree.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>AlphaCode (Li et al. 2022)</div><div class="slide"><div class="slide-top"><h3>The problem: competitive programming</h3><span class="slide-no">5/70</span></div><ul>
+<li>Contest: 5–10 problems, about 3 hours, solutions judged on hidden tests.</li>
+<li>Competitors learn only pass/fail, not why; wrong submissions cost penalty points.</li>
+<li>Solving takes three steps:<ul>
+<li>Read a long description (story, task, input/output format, example tests)</li>
+<li>Invent an efficient algorithm (time limits kill naive attempts)</li>
+<li>Implement it exactly, often 100+ lines</li>
+</ul>
+</li>
+<li>Prior models: low single-digit solve rates on such problems.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why this is hard for a model</h3><span class="slide-no">6/70</span></div><ul>
+<li>Search space: all programs. Reward: very sparse (pass all hidden tests or not).</li>
+<li>One character can change behavior without crashing.</li>
+<li>Correct solutions can look completely different from each other.</li>
+<li>Earlier code models (Codex) did short, explicit tasks: "translate the spec to code".</li>
+<li>Contests need "what is the problem" → "how to solve it": a leap of reasoning.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example problem: Backspace (Figure 2, 3)</h3><span class="slide-no">7/70</span></div><ul>
+<li>Given strings s and t. Type s; instead of any character you may press Backspace.</li>
+<li>Can you end with t? Output YES or NO. Rated 1500 (medium).</li>
+<li>Example: s = "ababa", t = "ba" → YES (Backspace instead of 1st and 4th characters).</li>
+<li>AlphaCode's solution (Figure 3):<ul>
+<li>Reverse both strings; match from the end</li>
+<li>Mismatch → drop two letters (the one replaced and the one before it)</li>
+<li>All of t matched → YES</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The metric: n@k</h3><span class="slide-no">8/70</span></div><ul>
+<li>n@k: percent of problems solved when the system draws k samples but may submit only n to the hidden tests.<ul>
+<li>Solved if any of the n submissions passes all hidden tests.</li>
+<li>Choosing which n may use only what competitors see (example tests), never hidden tests.</li>
+</ul>
+</li>
+<li>10@k: the main contest-like setting, 10 submissions.</li>
+<li>pass@k = k@k: submit everything. An upper bound for k samples.</li>
+<li>Reported numbers are expectations from bootstrapping over a sample set much larger than k (lowers variance).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CodeContests: the dataset (Table 1)</h3><span class="slide-no">9/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Split</th>
+<th>Problems</th>
+<th>Example tests</th>
+<th>Hidden tests</th>
+<th>Generated tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Train</td>
+<td>13328</td>
+<td>2.0</td>
+<td>14.8</td>
+<td>79.1</td>
+</tr>
+<tr>
+<td>Valid</td>
+<td>117</td>
+<td>1.5</td>
+<td>12.9</td>
+<td>190.0</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>165</td>
+<td>1.7</td>
+<td>9.4</td>
+<td>192.7</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Sources: newly scraped Codeforces, plus Description2Code and CodeNet (train only).</li>
+<li>Strict time split: train ≤ 2021/07/14; validation 2021/07/15–2021/09/20; test after 2021/09/21.</li>
+<li>Includes correct and incorrect human solutions in C++, Python, Java.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>False positives (Table 2)</h3><span class="slide-no">10/70</span></div><ul>
+<li>False positive: a wrong program marked correct because the tests are too weak.</li>
+<li>Slow positive: correct but too slow, still accepted.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>Tests / problem</th>
+<th>False positive rate</th>
+<th>FP or slow rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APPS</td>
+<td>20.99</td>
+<td>60%</td>
+<td>70%</td>
+</tr>
+<tr>
+<td>HumanEval</td>
+<td>7.77</td>
+<td>30%</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>CodeContests raw</td>
+<td>12.4</td>
+<td>62%</td>
+<td>88%</td>
+</tr>
+<tr>
+<td>CodeContests</td>
+<td>203.7</td>
+<td>4%</td>
+<td>46%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Method: 50 problems the 1B model solved, one solution each checked by hand.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How they cut false positives</h3><span class="slide-no">11/70</span></div><ul>
+<li>Generated tests: mutate existing test inputs.<ul>
+<li>Bit flips, +/- on integers, swapping and changing characters in strings</li>
+</ul>
+</li>
+<li>Keep a mutated input only if 30 correct solutions all give the same output.</li>
+<li>Budget: up to 10 CPU hours or 200 tests per problem (failed to reach 200 for 6.3% of problems).</li>
+<li>Drop validation/test problems with fewer than 5 hidden or generated tests, or fewer than 2 distinct outputs (stops "always print YES").</li>
+<li>Result: false positive rate 62% → 4%. Slow positives remain common.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The AlphaCode pipeline (Figure 4)</h3><span class="slide-no">12/70</span></div><pre><code>pre-train on GitHub → fine-tune on CodeContests
+  → sample huge numbers of programs per problem
+  → filter on example tests → cluster by behavior → ≤10 submissions
+</code></pre>
+<ul>
+<li>Pre-training: learn the space of human code (shrinks the search space).</li>
+<li>Fine-tuning: adapt to contest problems.</li>
+<li>Large-scale sampling + filtering: the part unique to AlphaCode; it "greatly improves" solve rate.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pre-training data</h3><span class="slide-no">13/70</span></div><ul>
+<li>GitHub snapshot from 2021/07/14, 12 languages: C++, C#, Go, Java, JavaScript, Lua, PHP, Python, Ruby, Rust, Scala, TypeScript.</li>
+<li>Dropped files over 1MB or with lines over 1000 characters (auto-generated code).</li>
+<li>Removed duplicate files (ignoring whitespace).</li>
+<li>Final size: 715.1 GB of code.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Model architecture (Table 3)</h3><span class="slide-no">14/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Encoder blocks</th>
+<th>Decoder blocks</th>
+<th>Training tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AlphaCode 300M</td>
+<td>284M</td>
+<td>4</td>
+<td>24</td>
+<td>354B</td>
+</tr>
+<tr>
+<td>AlphaCode 1B</td>
+<td>1.1B</td>
+<td>5</td>
+<td>30</td>
+<td>590B</td>
+</tr>
+<tr>
+<td>AlphaCode 3B</td>
+<td>2.8B</td>
+<td>6</td>
+<td>36</td>
+<td>826B</td>
+</tr>
+<tr>
+<td>AlphaCode 9B</td>
+<td>8.7B</td>
+<td>8</td>
+<td>48</td>
+<td>1250B</td>
+</tr>
+<tr>
+<td>AlphaCode 41B</td>
+<td>41.1B</td>
+<td>8</td>
+<td>56</td>
+<td>967B</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Encoder-decoder: encoder reads the description, decoder writes the code. Models p(code | description).</li>
+<li>Asymmetric: 1536 encoder tokens, 768 decoder tokens (descriptions are about twice as long as solutions).</li>
+<li>Shallow encoder, deep decoder: faster training, same solve rate.</li>
+<li>41B was stopped early, so it is under-trained relative to the others.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Built for fast sampling</h3><span class="slide-no">15/70</span></div><ul>
+<li>Multi-query attention: all query heads share one key head and one value head per block.<ul>
+<li>Cuts memory and cache-update cost, the main bottleneck when sampling</li>
+<li>Allows bigger sampling batches</li>
+</ul>
+</li>
+<li>Tokenizer: SentencePiece, 8,000-token vocabulary, trained on GitHub + CodeContests.</li>
+<li>Pre-training losses: next-token for the decoder, masked language modeling (MLM: predict hidden tokens) for the encoder.</li>
+<li>Files split at a random pivot: before → encoder, after → decoder.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Architecture ablation (Table 6)</h3><span class="slide-no">16/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Samples / TPU sec</th>
+<th>10@10K</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AlphaCode (enc-dec, multi-query)</td>
+<td>1.15B</td>
+<td>4.74</td>
+<td>17.3%</td>
+</tr>
+<tr>
+<td>Decoder-only</td>
+<td>1.17B</td>
+<td>1.23</td>
+<td>18.5%</td>
+</tr>
+<tr>
+<td>Standard multi-head attention</td>
+<td>1.16B</td>
+<td>0.37</td>
+<td>17.0%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Same quality, much faster sampling: about 4x the decoder-only, about 13x standard attention.</li>
+<li>Faster sampling = more samples per compute budget = higher solve rate.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fine-tuning tricks (1/2)</h3><span class="slide-no">17/70</span></div><ul>
+<li>Tempering: divide logits by a temperature T before softmax during training.<ul>
+<li>Formula: p = softmax(logits / T), with T = 0.2 at training</li>
+<li>Makes training sharper so inference is smoother; avoids overfitting</li>
+<li>Sampling temperature T′ tuned on validation: 0.12 (tempering only), 0.25 (tempering + GOLD)</li>
+</ul>
+</li>
+<li>Value conditioning: put "CORRECT SOLUTION" or "INCORRECT SOLUTION" in the prompt during training.<ul>
+<li>At sampling time, always condition on "correct"</li>
+<li>Lets the model learn from wrong human submissions too</li>
+</ul>
+</li>
+<li>Value prediction: an extra small head guesses if a submission is correct (training only).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fine-tuning tricks (2/2)</h3><span class="slide-no">18/70</span></div><ul>
+<li>Metadata in the prompt (Figure 5): rating, tags (e.g. "dp, implementation"), language, correctness.</li>
+<li>GOLD (Pang and He 2020): an offline RL objective.<ul>
+<li>Plain likelihood spreads weight over every training solution (like recall)</li>
+<li>The contest only needs one correct solution in 10 tries (like precision)</li>
+<li>GOLD learns from tokens the model already likes and ignores tokens far from its distribution</li>
+</ul>
+</li>
+<li>Fine-tuning learning rate: 10⁻⁵ cosine-decayed to 10⁻⁶.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Large-scale sampling</h3><span class="slide-no">19/70</span></div><ul>
+<li>Millions of samples per problem. Diversity tricks:<ul>
+<li>Half Python, half C++</li>
+<li>Random tags (from the 50 most popular) and random ratings (800–3500) in the prompt</li>
+<li>Fairly high sampling temperature</li>
+</ul>
+</li>
+<li>Optimal temperature rises with sample count, but a wide range gives similar solve rates (Figure A5).</li>
+<li>Top-k and nucleus sampling: no significant gain, so plain temperature sampling.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 1: filtering</h3><span class="slide-no">20/70</span></div><ul>
+<li>Run each sample on the example tests in the problem statement. Drop failures.</li>
+<li>Removes about 99% of samples (exact share depends on problem and model).</li>
+<li>Can still leave tens of thousands of candidates per problem.</li>
+<li>On about 10% of problems, no sample passes the examples at all.</li>
+<li>This sub-task alone is classic program synthesis from input/output pairs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example-test statistics (Table 9, 1M samples per problem)</h3><span class="slide-no">21/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Problems with ≥1 sample passing examples</th>
+<th>Avg share passing (all problems)</th>
+<th>Avg share passing (solved problems)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>300M</td>
+<td>82.05%</td>
+<td>0.39%</td>
+<td>1.18%</td>
+</tr>
+<tr>
+<td>1B</td>
+<td>87.18%</td>
+<td>0.59%</td>
+<td>1.40%</td>
+</tr>
+<tr>
+<td>3B</td>
+<td>87.18%</td>
+<td>0.49%</td>
+<td>0.98%</td>
+</tr>
+<tr>
+<td>9B</td>
+<td>89.74%</td>
+<td>0.76%</td>
+<td>1.52%</td>
+</tr>
+<tr>
+<td>41B</td>
+<td>92.31%</td>
+<td>0.73%</td>
+<td>1.47%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Under 1% of samples pass the examples. Bigger models pass for more problems.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 2: clustering</h3><span class="slide-no">22/70</span></div><ul>
+<li>Problem: random picks from survivors waste submissions on programs that differ in text but behave the same.</li>
+<li>Fix: run survivors on new test inputs; group programs with identical outputs.</li>
+<li>Test inputs come from a separate test-input generation model (same architecture, trained to predict test inputs from descriptions).<ul>
+<li>Inputs need no known answers</li>
+<li>Even invalid inputs can help separate programs</li>
+</ul>
+</li>
+<li>Submit one program per cluster, largest cluster first.</li>
+<li>Fewer than 10 clusters → loop back to the largest, skipping submitted samples.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why the biggest cluster first</h3><span class="slide-no">23/70</span></div><ul>
+<li>Many ways to be wrong; correct programs tend to behave the same.</li>
 <li>So correct programs gather in the larger clusters.</li>
-<li>Random picks waste submissions on programs that look different but behave the same.</li>
-<li>Coverage: share of problems where at least one sample is correct. The ceiling for any picking method.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Same tests, different behavior</h3><span class="slide-no">5/13</span></div><div class="tbl"><table>
+<li>Different from the dataset's mutation tests: those need correct solutions to check, which do not exist at test time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Codeforces results (Table 4)</h3><span class="slide-no">24/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Contest</th>
+<th>1591</th>
+<th>1608</th>
+<th>1613</th>
+<th>1615</th>
+<th>1617</th>
+<th>1618</th>
+<th>1619</th>
+<th>1620</th>
+<th>1622</th>
+<th>1623</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Estimated rank (top %)</td>
+<td>44.3</td>
+<td>46.3</td>
+<td>66.1</td>
+<td>62.4</td>
+<td>73.9</td>
+<td>52.2</td>
+<td>47.3</td>
+<td>63.3</td>
+<td>66.2</td>
+<td>20.9</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>10 contests (2021/12/01–2021/12/28), each with over 5,000 participants.</li>
+<li>Average: top 54.3% (best-case penalties 48.4%, worst-case 77.2%).</li>
+<li>System: ensemble of 41B and 9B models with clustering.</li>
+<li>Average 2.4 submissions per solved problem. Solved one problem rated 1800.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Codeforces rating (Figure 1)</h3><span class="slide-no">25/70</span></div><ul>
+<li>Estimated rating: 1238.</li>
+<li>Better than 72% of users who competed in the last 6 months (top 28%).</li>
+<li>With unlimited submissions (runs 2 and 3): top 48.8%, but 28.8 submissions per solved problem.</li>
+<li>Paper's conclusion: "roughly at the level of the median competitor."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CodeContests results (Table 5)</h3><span class="slide-no">26/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>System</th>
+<th>Valid 10@1k</th>
+<th>10@10k</th>
+<th>10@100k</th>
+<th>10@1M</th>
+<th>Test 10@100k</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>9B</td>
+<td>16.9%</td>
+<td>22.6%</td>
+<td>27.1%</td>
+<td>30.1%</td>
+<td>25.8%</td>
+</tr>
+<tr>
+<td>41B</td>
+<td>16.9%</td>
+<td>23.9%</td>
+<td>28.2%</td>
+<td>31.8%</td>
+<td>27.7%</td>
+</tr>
+<tr>
+<td>41B + clustering</td>
+<td>21.0%</td>
+<td>26.2%</td>
+<td>31.8%</td>
+<td>34.2%</td>
+<td>29.6%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Best: 34.2% of validation problems with 1M samples and 10 submissions.</li>
+<li>41B beats 9B everywhere; clustering always adds.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scaling with samples (Figure 6)</h3><span class="slide-no">27/70</span></div><ul>
+<li>Solve rate grows roughly log-linearly with sample count, for both 10@k and pass@k.<ul>
+<li>Each 10x more samples → a similar step up</li>
+<li>10@k bends down slightly at very large k</li>
+</ul>
+</li>
+<li>Larger models: higher slope. They reach the same solve rate with exponentially fewer samples.</li>
+<li>Gap between 10@k and pass@k: the value of choosing well.</li>
+<li>Catch: more solve rate needs exponentially more samples; cost soon prohibitive.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scaling with compute (Figure 7)</h3><span class="slide-no">28/70</span></div><ul>
+<li>Solve rate also grows log-linearly with training compute (TPU-days).</li>
+<li>Sampling compute: big models cost more per sample, but win at equal sampling compute once the budget is large enough.</li>
+<li>Open trade-off: spend compute on training a bigger model or on sampling more.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pre-training data matters (Table 7)</h3><span class="slide-no">29/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pre-training data</th>
+<th>10@1K</th>
+<th>10@10K</th>
+<th>10@100K</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>None</td>
+<td>4.5%</td>
+<td>7.0%</td>
+<td>10.5%</td>
+</tr>
+<tr>
+<td>GitHub (Python only)</td>
+<td>5.8%</td>
+<td>11.1%</td>
+<td>15.5%</td>
+</tr>
+<tr>
+<td>MassiveText (mostly text)</td>
+<td>9.7%</td>
+<td>16.1%</td>
+<td>21.2%</td>
+</tr>
+<tr>
+<td>GitHub (all languages)</td>
+<td>12.4%</td>
+<td>17.3%</td>
+<td>21.5%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>All languages beats Python-only; any pre-training beats none.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Build-up ablation (Table 8, 1B model)</h3><span class="slide-no">30/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>10@1K</th>
+<th>10@10K</th>
+<th>10@100K</th>
+<th>10@1M</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No enhancements</td>
+<td>6.7%</td>
+<td>10.4%</td>
+<td>15.2%</td>
+<td>19.6%</td>
+</tr>
+<tr>
+<td>+ MLM</td>
+<td>6.6%</td>
+<td>12.5%</td>
+<td>17.0%</td>
+<td>20.7%</td>
+</tr>
+<tr>
+<td>+ Tempering</td>
+<td>7.7%</td>
+<td>13.3%</td>
+<td>18.7%</td>
+<td>21.9%</td>
+</tr>
+<tr>
+<td>+ Tags and ratings</td>
+<td>6.8%</td>
+<td>13.7%</td>
+<td>19.3%</td>
+<td>22.4%</td>
+</tr>
+<tr>
+<td>+ Value</td>
+<td>10.6%</td>
+<td>16.6%</td>
+<td>20.2%</td>
+<td>23.2%</td>
+</tr>
+<tr>
+<td>+ GOLD</td>
+<td>12.4%</td>
+<td>17.3%</td>
+<td>21.5%</td>
+<td>24.2%</td>
+</tr>
+<tr>
+<td>+ Clustering</td>
+<td>12.2%</td>
+<td>18.0%</td>
+<td>24.1%</td>
+<td>28.4%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>All together: 10@100k 15.2% → 24.1%. Clustering adds most at large k.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Selection methods compared (Figure 8)</h3><span class="slide-no">31/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Trend as samples grow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10@k, no filtering (random)</td>
+<td>Stays flat</td>
+</tr>
+<tr>
+<td>10@k, filtering</td>
+<td>Rises</td>
+</tr>
+<tr>
+<td>10@k, filtering + clustering</td>
+<td>Rises more</td>
+</tr>
+<tr>
+<td>pass@k (perfect selection)</td>
+<td>Highest</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Filtering and clustering are what make scaling work.</li>
+<li>A large gap to pass@k remains: selection is still unsolved.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results on APPS (Table 10)</h3><span class="slide-no">32/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Introductory</th>
+<th>Interview</th>
+<th>Competition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Codex 12B, 5@1000 (filtered)</td>
+<td>24.52%</td>
+<td>3.23%</td>
+<td>3.08%</td>
+</tr>
+<tr>
+<td>AlphaCode 1B, 5@1000</td>
+<td>14.36%</td>
+<td>5.63%</td>
+<td>4.58%</td>
+</tr>
+<tr>
+<td>AlphaCode 1B, 5@50000</td>
+<td>20.36%</td>
+<td>9.66%</td>
+<td>7.75%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>APPS: 10,000 problems, half train half test; run without clustering, tags, ratings or value conditioning.</li>
+<li>The 1B model beats Codex 12B on interview and competition levels; more samples keep helping.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Does it copy? (Section 6.1)</h3><span class="slide-no">33/70</span></div><ul>
+<li>Longest common substring between solutions and training data: model and human solutions look similar (Figure 9).</li>
+<li>On CodeContests, about 3% of human and under 1% of model solutions share a substring over 600 characters.</li>
+<li>Shared pieces are mostly input-parsing boilerplate, not core logic.</li>
+<li>Manual look at 50 solutions: no evidence of copied core logic.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What it is good and bad at (Table 11)</h3><span class="slide-no">34/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Tag (10@10k, 41B)</th>
+<th>Solve rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bitmasks</td>
+<td>33.8%</td>
+</tr>
+<tr>
+<td>Math</td>
+<td>28.2%</td>
+</tr>
+<tr>
+<td>Sortings</td>
+<td>25.5%</td>
+</tr>
+<tr>
+<td>Greedy</td>
+<td>25.0%</td>
+</tr>
+<tr>
+<td>Constructive algorithms</td>
+<td>14.9%</td>
+</tr>
+<tr>
+<td>DP</td>
+<td>8.8%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Relatively better: bitmasks, sorting, math, greedy. Worse: dynamic programming and constructive.</li>
+<li>C++ syntax is harder for the model than Python. Dead code: about the same amount as humans.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Sensitivity to the description (Table 12, 1B model)</h3><span class="slide-no">35/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Solve rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Original vs simplified description</td>
+<td>3.0% → 15.7% (correct samples)</td>
+</tr>
+<tr>
+<td>Original description (rewording study, correct samples)</td>
+<td>17.1%</td>
+</tr>
+<tr>
+<td>Opposite problem</td>
+<td>0.1%</td>
+</tr>
+<tr>
+<td>Related but different problem</td>
+<td>3.2%</td>
+</tr>
+<tr>
+<td>Underspecified</td>
+<td>0.03%</td>
+</tr>
+<tr>
+<td>≤6 variables consistently renamed (10@1024; original 13.5%)</td>
+<td>12.1%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The model reads the description; small rewordings barely matter, real changes do.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Sensitivity to tags (Figure 12, Table 13)</h3><span class="slide-no">36/70</span></div><ul>
+<li>Problem 1549A: tag "number theory" vs "brute force" changes the code it writes.<ul>
+<li>29 vs 9 solutions in 2048 samples; loop-free solution 12 vs 3 times</li>
+</ul>
+</li>
+<li>Tag schemes (10@1024, 1B): random per sample 13.5%, true tags 13.3%, random per problem 11.9%.</li>
+<li>Random tags per sample win: diversity beats the right hint.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Loss is a poor proxy (Figure 13)</h3><span class="slide-no">37/70</span></div><ul>
+<li>Validation loss starts rising after about 50k fine-tuning steps (looks like overfitting).</li>
+<li>Solve rate keeps improving long after.</li>
+<li>Their guess: the model moves probability from odd solutions to typical ones. Loss gets worse, but finding one correct solution gets easier.</li>
+<li>Lesson: measure the real target (solve rate), not loss.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations and risks (Sections 8–9)</h3><span class="slide-no">38/70</span></div><ul>
+<li>Median-competitor level only; best on easier problems.</li>
+<li>Needs exponentially more samples for each gain; sampling and training used hundreds of petaFLOPS days.</li>
+<li>Still some slow positives in the test set.</li>
+<li>Risks named: malware, unfair contest/interview advantage, biased or insecure code, IP of training code.</li>
+<li>Upside named: code is readable and checkable, unlike network weights.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>AlphaCode 2 (Google DeepMind 2023)</div><div class="slide"><div class="slide-top"><h3>What changed</h3><span class="slide-no">39/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>AlphaCode</th>
+<th>AlphaCode 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base model</td>
+<td>Own encoder-decoder</td>
+<td>Gemini Pro, fine-tuned</td>
+</tr>
+<tr>
+<td>Languages sampled</td>
+<td>Python + C++</td>
+<td>C++ only (higher quality)</td>
+</tr>
+<tr>
+<td>Policies</td>
+<td>One model</td>
+<td>A family of fine-tuned models</td>
+</tr>
+<tr>
+<td>Pick inside a cluster</td>
+<td>Any sample</td>
+<td>Learned scoring model</td>
+</tr>
+<tr>
+<td>Codeforces</td>
+<td>25% of problems</td>
+<td>43% of problems</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Policy and fine-tuning</h3><span class="slide-no">40/70</span></div><ul>
+<li>Start: Gemini Pro. Two rounds of fine-tuning with GOLD.</li>
+<li>Round 1: updated CodeContests, about 15 thousand problems and 30 million human code samples.</li>
+<li>Vary hyperparameters → a family of fine-tuned models.</li>
+<li>Round 2: a few more steps on a different, higher-quality dataset.</li>
+<li>Why a family: maximize diversity, "key to tackling hard problems".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Sampling, filtering, clustering</h3><span class="slide-no">41/70</span></div><ul>
+<li>Up to a million C++ samples per problem; random temperature per sample.</li>
+<li>Random rating and tags in the prompt, as in AlphaCode. Budget split evenly across the model family.</li>
+<li>Filter on public tests; drop the under 5% that do not compile. Removes about 95% of samples.</li>
+<li>About 50 thousand candidates remain per problem on average.</li>
+<li>Cluster by outputs on generated inputs; keep only the 10 largest clusters.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The scoring model</h3><span class="slide-no">42/70</span></div><ul>
+<li>A second fine-tuned Gemini Pro gives each sample a correctness score from 0 to 1.</li>
+<li>Pick the highest-scoring sample in each of the 10 clusters → 10 submissions.</li>
+<li>This is a learned selector on top of filtering and clustering.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results (Figures 2, 3)</h3><span class="slide-no">43/70</span></div><ul>
+<li>12 recent contests (division 2 or "1+2"), each over 8000 participants: 77 problems.</li>
+<li>Solved 43% within 10 attempts vs 25% for AlphaCode (1.7x more problems).</li>
+<li>Estimated 85th percentile, between "Expert" and "Candidate Master". AlphaCode: about 46%.</li>
+<li>In its two best contests: better than 99.5% of participants.</li>
+<li>Log-linear with samples again; about 100 samples match AlphaCode with 1M ("over 10000× more sample efficient").</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations and next steps</h3><span class="slide-no">44/70</span></div><ul>
+<li>"Requires a lot of trial and error, and remains too costly to operate at scale."</li>
+<li>Relies heavily on filtering out obviously bad samples.</li>
+<li>With a human adding filtering properties: above the 90th percentile.</li>
+<li>They expect Gemini Ultra as the base would help further.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Search-o1 (Li et al. 2025)</div><div class="slide"><div class="slide-top"><h3>The problem: reasoning models lack knowledge</h3><span class="slide-no">45/70</span></div><ul>
+<li>Large reasoning model (LRM): a model trained with RL to think in long step-by-step chains (o1, QwQ, DeepSeek-R1).</li>
+<li>Long chains hit knowledge gaps; one gap can spread errors through the whole chain.</li>
+<li>Figure 1, QwQ-32B on GPQA diamond: "perhaps" appears over 30 times per answer on average.</li>
+<li>Uncertain words per output (Figure 1):</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Word</th>
+<th>Direct reasoning</th>
+<th>Standard RAG</th>
+<th>Search-o1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>perhaps</td>
+<td>30.4</td>
+<td>26.4</td>
+<td>15.8</td>
+</tr>
+<tr>
+<td>alternatively</td>
+<td>27.1</td>
+<td>21.6</td>
+<td>11.9</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Three ways to reason (Figure 2)</h3><span class="slide-no">46/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Vanilla reasoning</th>
+<th>Agentic RAG</th>
+<th>Search-o1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Guesses when unsure</td>
+<td>Searches when unsure</td>
+<td>Searches when unsure</td>
+</tr>
+<tr>
+<td>"Perhaps trans-cinnamaldehyde is C6H5CH=CH-CO-CH3" ✗</td>
+<td>Gets long, noisy pages</td>
+<td>Gets condensed facts</td>
+</tr>
+<tr>
+<td>Wrong carbon count (10) ✗</td>
+<td>Reasoning derailed (14) ✗</td>
+<td>"C6H5CH=CHCHO" → 11 carbons ✓</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Example task: count carbon atoms after a 3-step chemistry reaction.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why standard RAG is not enough</h3><span class="slide-no">47/70</span></div><ul>
+<li>Standard RAG: retrieve once with the whole question, then answer.</li>
+<li>In Figure 1, standard RAG barely reduces uncertainty vs direct reasoning.</li>
+<li>Complex reasoning needs different facts at different steps.</li>
+<li>Two problems with pasting documents into a chain:<ul>
+<li>Redundant information: long pages add noise and break coherence</li>
+<li>Weak long-document reading: reasoning-tuned models partly forget general skills</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Problem setup</h3><span class="slide-no">48/70</span></div><ul>
+<li>Inputs: task instruction I, question q, retrieved documents D.</li>
+<li>Output: reasoning chain R and final answer a.</li>
+<li>Formula (Eq. 1): P(R, a | I, q, D) = Π P(R_t | R_&lt;t, I, q, D_≤t) · Π P(a_t | a_&lt;t, R, I, q)<ul>
+<li>First product: each reasoning token depends on earlier tokens and documents found so far</li>
+<li>Second product: each answer token depends on the full reasoning</li>
+<li>Key point: documents arrive during the chain, not only at the start</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agentic RAG mechanism</h3><span class="slide-no">49/70</span></div><ul>
+<li>The model writes a query between <code>&lt;|begin_search_query|&gt;</code> and <code>&lt;|end_search_query|&gt;</code>.</li>
+<li>Query i depends on the instruction, question and all reasoning so far (Eq. 2).</li>
+<li>On the end tag: pause, run Search(query) → top-k documents (Eq. 3).</li>
+<li>Results go back between <code>&lt;|begin_search_result|&gt;</code> and <code>&lt;|end_search_result|&gt;</code>.</li>
+<li>Can happen many times in one chain (capped by a max search limit).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reason-in-Documents</h3><span class="slide-no">50/70</span></div><ul>
+<li>A separate generation by the same reasoning model, outside the main chain.</li>
+<li>Inputs: previous reasoning steps, current search query, retrieved pages.</li>
+<li>Two stages:<ul>
+<li>r_docs: reason about the pages (Eq. 4)</li>
+<li>r_final: write the refined knowledge (Eq. 5)</li>
+</ul>
+</li>
+<li>Only r_final goes into the main chain (Eq. 6).</li>
+<li>Prompt asks for output starting "Final Information", or "No helpful information found."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Inference loop (Algorithm 1)</h3><span class="slide-no">51/70</span></div><pre><code>S = {instruction + question}
+while S not empty:
+  generate all sequences until EOS or end-of-query tag   # batched
+  for each sequence ending in a query: search, build Reason-in-Documents input
+  for each sequence ending in EOS: move to finished
+  run Reason-in-Documents for all pending searches     # batched
+  insert r_final between search-result tags
+</code></pre>
+<ul>
+<li>Batching both generation and refinement raises throughput.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setup</h3><span class="slide-no">52/70</span></div><ul>
+<li>Backbone: QwQ-32B-Preview. Max 32,768 tokens; temperature 0.7, top_p 0.8, top_k 20, repetition penalty 1.05.</li>
+<li>Retrieval: Bing Web Search (US-EN), top 10 documents; Jina Reader fetches page text.</li>
+<li>Back-off: if no final answer, use the direct-reasoning answer.</li>
+<li>Baselines: direct reasoning; standard RAG (top-10 documents for the question); RAgent (model searches, sees snippets, chooses URLs to fetch).</li>
+<li>Hardware: eight NVIDIA A800-80GB GPUs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Tasks</h3><span class="slide-no">53/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Datasets</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Science QA</td>
+<td>GPQA diamond (198 questions); extended set (546)</td>
+</tr>
+<tr>
+<td>Math</td>
+<td>MATH500 (500), AMC2023 (40), AIME2024 (30)</td>
+</tr>
+<tr>
+<td>Code</td>
+<td>LiveCodeBench, Aug–Nov 2024 (112 problems)</td>
+</tr>
+<tr>
+<td>Single-hop QA</td>
+<td>Natural Questions, TriviaQA</td>
+</tr>
+<tr>
+<td>Multi-hop QA</td>
+<td>HotpotQA, 2WikiMultihopQA, MuSiQue, Bamboogle</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Main results: reasoning tasks (Table 1, pass@1)</h3><span class="slide-no">54/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>GPQA overall</th>
+<th>MATH500</th>
+<th>AMC23</th>
+<th>AIME24</th>
+<th>LiveCodeBench</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QwQ-32B (no retrieval)</td>
+<td>58.1</td>
+<td>83.2</td>
+<td>82.5</td>
+<td>53.3</td>
+<td>33.0</td>
+</tr>
+<tr>
+<td>RAG-QwQ-32B</td>
+<td>58.6</td>
+<td>84.8</td>
+<td>82.5</td>
+<td>50.0</td>
+<td>24.1</td>
+</tr>
+<tr>
+<td>RAgent-QwQ-32B</td>
+<td>61.6</td>
+<td>85.0</td>
+<td>85.0</td>
+<td>56.7</td>
+<td>26.8</td>
+</tr>
+<tr>
+<td>Search-o1</td>
+<td>63.6</td>
+<td>86.4</td>
+<td>85.0</td>
+<td>56.7</td>
+<td>33.0</td>
+</tr>
+<tr>
+<td>o1-preview (reference)</td>
+<td>73.3</td>
+<td>85.5</td>
+<td>-</td>
+<td>44.6</td>
+<td>53.6</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What Table 1 shows</h3><span class="slide-no">55/70</span></div><ul>
+<li>QwQ-32B beats larger non-reasoning models (Qwen2.5-72B, Llama3.3-70B) without retrieval.</li>
+<li>RAgent-QwQ beats standard RAG and no retrieval on most tasks.</li>
+<li>Non-reasoning Qwen2.5-32B with agentic RAG: about equal on GPQA, worse on math and code. Ordinary LLMs can't use search well.</li>
+<li>Averaged over five datasets, Search-o1 beats RAgent-QwQ by 4.7% and QwQ by 3.1%.</li>
+<li>It beats Qwen2.5-32B and Llama3.3-70B by 44.7% and 39.3%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How many documents? (Figure 3)</h3><span class="slide-no">56/70</span></div><ul>
+<li>Vary top-k from 1 to 10 on GPQA.</li>
+<li>More documents → better Search-o1 scores.</li>
+<li>Even 1 document beats direct reasoning and standard RAG with 10 documents (overall).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Versus human experts (Table 2, GPQA extended)</h3><span class="slide-no">57/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Physics</th>
+<th>Chemistry</th>
+<th>Biology</th>
+<th>Overall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Physicists</td>
+<td>57.9</td>
+<td>31.6</td>
+<td>42.0</td>
+<td>39.9</td>
+</tr>
+<tr>
+<td>Chemists</td>
+<td>34.5</td>
+<td>72.6</td>
+<td>45.6</td>
+<td>48.9</td>
+</tr>
+<tr>
+<td>Biologists</td>
+<td>30.4</td>
+<td>28.8</td>
+<td>68.9</td>
+<td>37.2</td>
+</tr>
+<tr>
+<td>QwQ-32B</td>
+<td>61.7</td>
+<td>36.9</td>
+<td>61.0</td>
+<td>51.8</td>
+</tr>
+<tr>
+<td>RAG-QwQ-32B</td>
+<td>64.3</td>
+<td>38.3</td>
+<td>66.7</td>
+<td>54.6</td>
+</tr>
+<tr>
+<td>Search-o1</td>
+<td>68.7</td>
+<td>40.7</td>
+<td>69.5</td>
+<td>57.9</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Beats every expert group overall; trails chemists in chemistry (40.7 vs 72.6).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Open-domain QA (Table 3, exact match)</h3><span class="slide-no">58/70</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>NQ</th>
+<th>TriviaQA</th>
+<th>HotpotQA</th>
+<th>2WIKI</th>
+<th>MuSiQue</th>
+<th>Bamboogle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QwQ-32B</td>
+<td>23.0</td>
+<td>53.8</td>
+<td>25.4</td>
+<td>34.4</td>
+<td>9.0</td>
+<td>38.4</td>
+</tr>
+<tr>
+<td>RAG-QwQ-32B</td>
+<td>29.6</td>
+<td>65.6</td>
+<td>34.2</td>
+<td>35.6</td>
+<td>10.6</td>
+<td>55.2</td>
+</tr>
+<tr>
+<td>RAgent-QwQ-32B</td>
+<td>33.6</td>
+<td>62.0</td>
+<td>43.0</td>
+<td>58.4</td>
+<td>13.6</td>
+<td>52.0</td>
+</tr>
+<tr>
+<td>Search-o1</td>
+<td>34.0</td>
+<td>63.4</td>
+<td>45.2</td>
+<td>58.0</td>
+<td>16.6</td>
+<td>56.0</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What Table 3 shows</h3><span class="slide-no">59/70</span></div><ul>
+<li>No retrieval: QwQ ≈ Qwen2.5-32B (average EM 30.7 vs 31.3). Reasoning models aren't better at pure knowledge.</li>
+<li>Retrieval helps everyone: the models have knowledge gaps.</li>
+<li>Multi-hop: agentic RAG beats standard RAG by 23.2% average EM (QwQ).</li>
+<li>Single-hop: no real change (47.8 vs 47.6 average EM). One fact needs one search.</li>
+<li>Multi-hop: Search-o1 beats RAG-QwQ by 29.6% and RAgent-QwQ by 5.3% average EM.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limits of the evidence</h3><span class="slide-no">60/70</span></div><ul>
+<li>The paper has no separate limitations section.</li>
+<li>Some gains are small or mixed: LiveCodeBench Easy 57.7 vs 65.4 for RAgent; TriviaQA EM 63.4 vs 65.6 for RAG.</li>
+<li>Web search via Bing: results depend on a commercial engine.</li>
+<li>Back-off to direct reasoning hides cases where search never produced an answer.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Our notebook, Part A: AlphaCode at laptop scale</div><div class="slide"><div class="slide-top"><h3>Same tests, different behavior</h3><span class="slide-no">61/70</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Correct <code>max_subarray</code></th>
@@ -325,32 +1412,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>Filtering can't catch it. On generated inputs it behaves differently, so it lands in another cluster.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What the papers showed</h3><span class="slide-no">6/13</span></div><div class="tbl"><table>
-<thead>
-<tr>
-<th>Paper</th>
-<th>What it showed</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>AlphaCode (Li et al. 2022)</td>
-<td>Top 54.3% in simulated Codeforces contests; 34.2% of held-out problems with 10 submissions</td>
-</tr>
-<tr>
-<td>AlphaCode 2 (2023)</td>
-<td>43% of 77 recent Codeforces problems in 10 tries vs 25%; about 85th percentile</td>
-</tr>
-<tr>
-<td>Search-o1 (Li et al. 2025)</td>
-<td>GPQA diamond 63.6 vs 58.6 with standard RAG and 58.1 with no retrieval</td>
-</tr>
-</tbody>
-</table></div>
-<ul>
-<li>AlphaCode 2 added a scoring model: predicts how likely a sample is correct; picks the best in each cluster.</li>
-<li>It needed about 100 samples to match AlphaCode with a million.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Comparing ways to pick</h3><span class="slide-no">7/13</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Comparing ways to pick</h3><span class="slide-no">62/70</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Method</th>
@@ -377,9 +1439,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
+<li>Coverage: share of problems where at least one sample is correct. The ceiling for any picking method.</li>
 <li>The gap to the oracle row is the selection problem.</li>
-<li>10@k: share of problems solved when k samples are drawn but only 10 may be submitted.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Naive RAG vs Search-o1</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<li>Mirrors Figure 8 of AlphaCode at tiny scale: 5 tasks, 6 samples each.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Our notebook, Part B: Search-o1 over contracts</div><div class="slide"><div class="slide-top"><h3>Naive RAG vs Search-o1</h3><span class="slide-no">63/70</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Naive RAG</th>
@@ -404,17 +1467,12 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <ul>
 <li>RAG (retrieval-augmented generation): search first, then answer from what you found.</li>
 <li>Agentic RAG: the model decides when and what to search, possibly many times.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Reason-in-Documents</h3><span class="slide-no">9/13</span></div><ul>
-<li>A separate step: reads the retrieved pages, the reasoning so far and the query.</li>
-<li>Writes back only the useful facts (our notebook: 1–3 sentences).</li>
-<li>Why: long, noisy pages can push the reasoning off track.</li>
-<li>Search-o1 beat agentic RAG without this step by 4.7% averaged over five reasoning datasets.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>A two-hop question</h3><span class="slide-no">10/13</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>A two-hop question</h3><span class="slide-no">64/70</span></div><ul>
 <li>Question: "Under our procurement policy, who must approve the agreement between Bayview Health Partners and Brightline Data Corp.?"</li>
 <li>Hop 1 (contract msa_01, 2.1): "Customer shall pay Vendor $12,500 per month"</li>
-<li>Hop 2 (Procurement Policy PP-4): $5,000 up to and including $15,000 → Finance Director</li>
+<li>Hop 2 (Procurement Policy PP-4): "A monthly fee from $5,000 up to and including $15,000 is approved by the Finance Director."</li>
 <li>Answer: Finance Director. One search with the whole question may bring back only one hop.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The Search-o1 loop in code</h3><span class="slide-no">11/13</span></div><pre><code class="language-python">out = ask_msgs(msgs, stop=[&quot;&lt;/search&gt;&quot;])
+</ul></div><div class="slide"><div class="slide-top"><h3>The Search-o1 loop in code</h3><span class="slide-no">65/70</span></div><pre><code class="language-python">out = ask_msgs(msgs, stop=[&quot;&lt;/search&gt;&quot;])
 ...
 query = out[i_s + len(&quot;&lt;search&gt;&quot;):].strip()[:200]
 docs = search(query)
@@ -427,16 +1485,38 @@ transcript += f&quot;&lt;/search&gt;\n&lt;result&gt;{info}&lt;/result&gt;&quot;
 <li>Line 4: BM25 search (keyword scoring) over contract sections and policies, top 3.</li>
 <li>Line 5: condense the pages into a few facts (or paste raw pages if <code>condense=False</code>).</li>
 <li>Line 6: put the facts back inside <code>&lt;result&gt;</code> and let the model continue. At most 3 searches.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
-<li>A local model often fails on the first try. With a cheap exact check, drawing many and filtering is affordable on the firm's machine.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our Reason-in-Documents step</h3><span class="slide-no">66/70</span></div><ul>
+<li>Inputs: the last 1,500 characters of reasoning, the query, the retrieved pages.</li>
+<li>Asks for "only the facts that help with the search query, in 1-3 sentences."</li>
+<li>"Copy names and numbers exactly. If nothing helps, write 'No helpful information found.'"</li>
+<li>Same idea as the paper's prompt, shorter for a small local model.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Search over answers on the firm&#x27;s machine</h3><span class="slide-no">67/70</span></div><ul>
+<li>A local model often fails on the first try. With a cheap exact check, drawing many and filtering is affordable.</li>
+<li>AlphaCode 2's lesson: a better model needs far fewer samples. Use the best local model you can fit.</li>
+<li>Example check for the firm: "Does the extracted liability cap match the clause text word for word?"</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Search for knowledge on the firm&#x27;s machine</h3><span class="slide-no">68/70</span></div><ul>
 <li>A local model knows nothing about the firm's contracts or policies. It must look them up.</li>
 <li>Many firm questions need two facts from two places: the fee from the contract, the rule from the policy.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>Keep search local: BM25 or a local embedding index over the firm's own files, no web search.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Selection is the weak link</h3><span class="slide-no">69/70</span></div><ul>
+<li>Both papers show a big gap between "some candidate was right" and "we picked the right one".</li>
+<li>For the firm: log every candidate and every search, then check what the picker threw away.</li>
+<li>A human reviewer adding one extra check helped AlphaCode 2 pass the 90th percentile. Same for a lawyer adding one rule.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">70/70</span></div><ul>
 <li>"Passes the examples" = "correct" → many wrong programs pass; cluster and use hidden tests.</li>
+<li>Judging by loss → AlphaCode's loss rose while solve rate kept improving. Measure the real target.</li>
 <li>Searching once with the whole question → let the model search one fact at a time.</li>
 <li>Pasting long raw results into the reasoning → condense to a few facts first.</li>
 <li>Reading only the score → a small model may never search, or search with vague words. Read the transcripts.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why does AlphaCode pick from the largest cluster first?</summary><p>There are many ways to be wrong, but correct programs tend to behave the same. So they gather in the larger clusters.</p></details>
+
+<details><summary>What does 10@k measure, and how is it different from pass@k?</summary><p>10@k is the share of problems solved when k samples are drawn but only 10 may be submitted. pass@k lets you submit all k, so it is an upper bound.</p></details>
+
+<details><summary>About how much does filtering on example tests remove in AlphaCode and AlphaCode 2?</summary><p>About 99% of samples in AlphaCode, and about 95% in AlphaCode 2.</p></details>
+
+<details><summary>What did AlphaCode 2 add on top of filtering and clustering?</summary><p>A fine-tuned Gemini Pro scoring model that picks the best sample in each of the 10 largest clusters.</p></details>
+
+<details><summary>Why did AlphaCode sample with random tags per sample rather than the true tags?</summary><p>Random tags per sample gave the best solve rate (Table 13). The extra diversity mattered more than the correct hint.</p></details>
 
 <details><summary>What does Reason-in-Documents do?</summary><p>It reads the retrieved pages with the current reasoning and query, and returns only the relevant facts to put back into the reasoning.</p></details>
 

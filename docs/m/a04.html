@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,20 +259,20 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A04</span></div><section class="mod" id="a04" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A04</div><h2>Multi-step reasoning and planning</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a04_planning_search.ipynb">Open in Colab</a><button class="done-btn" data-done="a04" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">When one pass isn&#x27;t enough, search a tree of steps, split tasks only when they fail, and run independent steps at once.</p><article class="lesson"><p class="deck-src">Based on CS329A · Multi-step reasoning and planning · <a href="https://arxiv.org/abs/2310.04406" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/14</span></div><ul>
-<li>Learn when to search, when to split a task, how to spend calls wider or deeper, and how to turn logged steps into training data.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why planning?</h3><span class="slide-no">2/14</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A04</span></div><section class="mod" id="a04" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A04</div><h2>Multi-step reasoning and planning</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a04_planning_search.ipynb">Open in Colab</a><button class="done-btn" data-done="a04" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>26 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">When one pass isn&#x27;t enough, search a tree of steps, split tasks only when they fail, and run independent steps at once.</p><article class="lesson"><p class="deck-src">Based on CS329A · Multi-step reasoning and planning · <a href="https://arxiv.org/abs/2310.04406" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (80 slides)</b><ol><li><a href="#sec-1">Why planning?</a> <span>4 slides</span></li><li><a href="#sec-2">LATS: tree search for agents (Zhou et al. 2023)</a> <span>18 slides</span></li><li><a href="#sec-3">ADaPT: decompose only when needed (Prasad et al. 2024)</a> <span>14 slides</span></li><li><a href="#sec-4">AB-MCTS: wider or deeper? (Inoue et al. 2025)</a> <span>14 slides</span></li><li><a href="#sec-5">SPRINT: run independent steps at once (Biju et al. 2025)</a> <span>11 slides</span></li><li><a href="#sec-6">SWiRL: train on steps, not runs (Goldie et al. 2025)</a> <span>13 slides</span></li><li><a href="#sec-7">How this applies to us</a> <span>4 slides</span></li><li><a href="#sec-8">Wrap-up</a> <span>1 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/80</span></div><ul>
+<li>Learn when to search a tree of steps, when to split a task, how to spend calls wider or deeper, how to run steps in parallel, and how to turn logged steps into training data.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why planning?</div><div class="slide"><div class="slide-top"><h3>One straight pass is not enough</h3><span class="slide-no">2/80</span></div><ul>
 <li>A greedy chain commits to its first idea and never looks back.</li>
 <li>Hard tasks need more than one straight pass.</li>
-<li>Five tools from this lecture:<ul>
-<li>Tree search: back up from dead ends (LATS)</li>
-<li>Split only on failure (ADaPT)</li>
-<li>Wider vs deeper budget (AB-MCTS)</li>
-<li>Parallel independent steps (SPRINT)</li>
-<li>Step-level training data (SWiRL)</li>
+<li>Five papers, five tools:<ul>
+<li>LATS: tree search; back up from dead ends</li>
+<li>ADaPT: split a task only when a direct try fails</li>
+<li>AB-MCTS: spend the next call on a new answer or on fixing an old one</li>
+<li>SPRINT: run independent steps at the same time</li>
+<li>SWiRL: train on single steps, not whole runs</li>
 </ul>
 </li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Greedy chain vs tree search</h3><span class="slide-no">3/14</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Greedy chain vs tree search</h3><span class="slide-no">3/80</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Greedy chain</th>
@@ -278,7 +282,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <tbody>
 <tr>
 <td>One next step, no going back</td>
-<td>Several candidate steps, scored</td>
+<td>Several candidate steps, each scored</td>
 </tr>
 <tr>
 <td>Dead end → fail</td>
@@ -292,119 +296,1153 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>Tree search: explore several next steps, score them, return to a better branch when one fails.</li>
-<li>Value function: a score for how promising a partial solution is.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>LATS: tree search for agents (Zhou et al. 2023)</h3><span class="slide-no">4/14</span></div><ul>
-<li>Monte Carlo Tree Search over agent actions.<ul>
-<li>Select: pick a promising node</li>
-<li>Expand: sample n actions (n = 5 by default) and run them</li>
-<li>Evaluate: value = LM's own rating mixed with self-consistency</li>
-<li>Backpropagate, and write a reflection after a failure</li>
-</ul>
-</li>
-<li>Needs states you can return to. A sent email can't be undone.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>LATS results</h3><span class="slide-no">5/14</span></div><div class="tbl"><table>
+<li>Value function: a score for how promising a half-finished solution is.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How the five papers fit together</h3><span class="slide-no">4/80</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Benchmark</th>
-<th>LATS</th>
-<th>Baseline</th>
+<th>Question</th>
+<th>Paper</th>
+<th>Answer</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>HumanEval pass@1 (GPT-3.5)</td>
-<td>83.8%</td>
-<td>68.1% Reflexion</td>
+<td>Dead end?</td>
+<td>LATS</td>
+<td>Keep a tree; go back</td>
 </tr>
 <tr>
-<td>HotPotQA EM (GPT-3.5)</td>
-<td>0.63</td>
-<td>0.32 ReAct</td>
+<td>Task too big?</td>
+<td>ADaPT</td>
+<td>Try first; split only what fails</td>
 </tr>
 <tr>
-<td>Game of 24</td>
-<td>0.44</td>
-<td>0.20 Tree-of-Thoughts</td>
+<td>New idea or fix the old one?</td>
+<td>AB-MCTS</td>
+<td>Let scores decide at every node</td>
+</tr>
+<tr>
+<td>Too slow?</td>
+<td>SPRINT</td>
+<td>Run steps that don't depend on each other at once</td>
+</tr>
+<tr>
+<td>How to train it?</td>
+<td>SWiRL</td>
+<td>One training example per step</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Our test bed: a number puzzle</h3><span class="slide-no">5/80</span></div><ul>
+<li>Four numbers 1–9, a target; use each number once with + − × ÷.</li>
+<li>Every middle result must be a whole number, not negative.</li>
+<li>A brute-force solver keeps only targets that can be reached, so every puzzle has an answer.</li>
+<li>State: the numbers still left. Step: combine two of them. Four numbers need three steps.</li>
+<li>With two numbers left, code checks the last step, like a unit test.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>LATS: tree search for agents (Zhou et al. 2023)</div><div class="slide"><div class="slide-top"><h3>The problem LATS solves</h3><span class="slide-no">6/80</span></div><ul>
+<li>ReAct and Reflexion act step by step but never consider several paths or plan ahead.</li>
+<li>Tree-of-Thoughts and RAP search over reasoning chains, but use no outside feedback.</li>
+<li>LATS (Language Agent Tree Search): Monte Carlo Tree Search (MCTS) over agent actions, with the environment's feedback inside the search.</li>
+<li>One LM plays three roles: the agent, the judge of states, and the writer of reflections.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MCTS in one slide</h3><span class="slide-no">7/80</span></div><ul>
+<li>MCTS: build a tree where each node is a state and each edge is an action.</li>
+<li>Run k episodes. Each one starts at the root and grows the tree.</li>
+<li>Expansion: sample n actions from a node, making n children.</li>
+<li>Selection: walk down by picking the child with the highest UCT score.</li>
+<li>Classic MCTS needs a model to undo steps. Many LM tasks can simply be reset.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A node in LATS</h3><span class="slide-no">8/80</span></div><ul>
+<li>Node: s = [x, a1…i, o1…i]<ul>
+<li>x: the original input (the question or task)</li>
+<li>a1…i: the actions taken so far</li>
+<li>o1…i: what the environment returned after each action</li>
+</ul>
+</li>
+<li>The tree lives in an outside memory, not in the prompt.</li>
+<li>LATS does not need a world model. It calls the real environment.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The six operations (Figure 2)</h3><span class="slide-no">9/80</span></div><ul>
+<li>Selection: walk from the root to a leaf by UCT.</li>
+<li>Expansion: sample n actions; the environment returns n observations; add n children.</li>
+<li>Evaluation: give each new child a value.</li>
+<li>Simulation: keep expanding the best child until the end of the task.</li>
+<li>Backpropagation: send the final reward back up the path.</li>
+<li>Reflection: after a failure, write what went wrong; use it as context next time.</li>
+<li>Repeat until success or the budget of k trajectories runs out.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Selection formula: UCT</h3><span class="slide-no">10/80</span></div><ul>
+<li>UCT(s) = V(s) + w · sqrt( ln N(p) / N(s) )<ul>
+<li>V(s): the node's value (expected reward below it)</li>
+<li>N(s): how often s was visited; N(p): how often its parent was visited</li>
+<li>w: exploration weight; higher = try rarely visited nodes more</li>
+</ul>
+</li>
+<li>First term: go where it has worked. Second term: try what you haven't.</li>
+<li>Default w = 1 (Appendix A).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Evaluation formula: the value</h3><span class="slide-no">11/80</span></div><ul>
+<li>V(s) = λ · LM(s) + (1 − λ) · SC(s)<ul>
+<li>LM(s): the LM reasons about the state and ends with a score</li>
+<li>SC(s): self-consistency; actions sampled many times at the same state tend to be right</li>
+<li>λ: mix weight</li>
+</ul>
+</li>
+<li>Key difference from Tree-of-Thoughts: the score comes after the environment's feedback.</li>
+<li>λ = 0.5 for HotPotQA and Game of 24; λ = 0.8 for programming and WebShop (Appendix A).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Backpropagation and reflection</h3><span class="slide-no">12/80</span></div><ul>
+<li>Backpropagation: for every node on the path, add 1 to its visit count and fold in the reward r.<ul>
+<li>V(s) = (old V · (N − 1) + r) / N, so V stays an average of rewards</li>
+</ul>
+</li>
+<li>Reflection: on a failed end state, the LM gets the path and the reward and writes what went wrong plus a better idea.</li>
+<li>Failed paths and reflections are stored and added to later prompts.</li>
+<li>The paper calls this a "semantic gradient": learning from trial and error with no weight updates.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>HotPotQA setup</h3><span class="slide-no">13/80</span></div><ul>
+<li>HotPotQA: questions that need two or more Wikipedia passages.</li>
+<li>Actions: search and look up Wikipedia (the ReAct setup).</li>
+<li>Oracle setup: the environment says whether a submitted answer is right (same as ReAct and Reflexion papers).</li>
+<li>100 questions, 3 few-shot examples, k = 50 trajectories, n = 5 children.</li>
+<li>Model: GPT-3.5.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>HotPotQA: reasoning only (Table 2)</h3><span class="slide-no">14/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method (no tools)</th>
+<th>EM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base LM</td>
+<td>0.32</td>
+</tr>
+<tr>
+<td>CoT</td>
+<td>0.34</td>
+</tr>
+<tr>
+<td>CoT-SC</td>
+<td>0.38</td>
+</tr>
+<tr>
+<td>ToT</td>
+<td>0.55</td>
+</tr>
+<tr>
+<td>RAP</td>
+<td>0.60</td>
+</tr>
+<tr>
+<td>RAP (n = 10)</td>
+<td>0.60</td>
+</tr>
+<tr>
+<td>LATS (CoT)</td>
+<td>0.62</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>With GPT-4: 92.7% on HumanEval.</li>
-<li>Costs more than ReAct or Reflexion.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>ADaPT: decompose only when needed (Prasad et al. 2024)</h3><span class="slide-no">6/14</span></div><ul>
-<li>As-needed decomposition: split a task only after a direct try fails.</li>
-<li>Executor tries the whole task first.</li>
-<li>On failure, a planner splits it into sub-tasks; recurse on each, up to a max depth.</li>
-<li>Easy tasks cost one call. Only hard ones pay for planning.</li>
-<li>Watch out: the executor's self-reported success was over 30 points too high on WebShop.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>ADaPT results (GPT-3.5)</h3><span class="slide-no">7/14</span></div><div class="tbl"><table>
+<li>EM: exact match with the gold answer.</li>
+<li>Search methods (ToT, RAP, LATS) beat single chains even without tools.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>HotPotQA: with tools (Table 3)</h3><span class="slide-no">15/80</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Benchmark</th>
-<th>ADaPT</th>
-<th>ReAct</th>
+<th>Method (with tools)</th>
+<th>EM</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>ALFWorld</td>
-<td>71.6%</td>
-<td>43.3%</td>
+<td>ReAct</td>
+<td>0.32</td>
 </tr>
 <tr>
-<td>WebShop</td>
-<td>44.0%</td>
-<td>32.0%</td>
+<td>ReAct (best of k)</td>
+<td>0.38</td>
 </tr>
 <tr>
-<td>TextCraft</td>
-<td>52.0%</td>
-<td>19.0%</td>
+<td>Reflexion</td>
+<td>0.51</td>
+</tr>
+<tr>
+<td>ToT (ReAct)</td>
+<td>0.39</td>
+</tr>
+<tr>
+<td>RAP (ReAct)</td>
+<td>0.54</td>
+</tr>
+<tr>
+<td>LATS (ReAct)</td>
+<td>0.63</td>
+</tr>
+<tr>
+<td>LATS (n = 3) / (n = 10)</td>
+<td>0.58 / 0.65</td>
+</tr>
+<tr>
+<td>LATS (CoT + ReAct)</td>
+<td>0.71</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Wider or deeper? (AB-MCTS, Inoue et al. 2025)</h3><span class="slide-no">8/14</span></div><ul>
-<li>Wider: spend the next call on a brand-new answer.</li>
-<li>Deeper: refine an existing answer with feedback.</li>
-<li>Thompson sampling: picks the option whose random draw from its scores is highest; balances new vs proven.</li>
-<li>AB-MCTS makes this choice at every node.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>AB-MCTS results</h3><span class="slide-no">9/14</span></div><div class="tbl"><table>
+</table></div>
+<ul>
+<li>More children per step (bigger n) helps, at more cost.</li>
+<li>Best: try CoT first, switch to ReAct tools on failure.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Programming setup</h3><span class="slide-no">16/80</span></div><ul>
+<li>HumanEval and MBPP: write a Python function from its description.</li>
+<li>Action: a whole solution. Observation: test results and compiler output.</li>
+<li>Tests: an LM writes a synthetic test suite of "assert" lines (4 tests).</li>
+<li>Reward: the share of synthetic tests passed; no simulation step needed.</li>
+<li>k = 8 iterations, n = 5 solutions per expansion.</li>
+<li>The best-valued solution is then graded on the real tests (pass@1).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Programming results (Tables 4 and 5)</h3><span class="slide-no">17/80</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>CodeContests, GPT-4o, 128 calls</th>
-<th>Solved</th>
+<th>Method (GPT-3.5)</th>
+<th>HumanEval pass@1</th>
+<th>MBPP pass@1</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Pure refinement (deeper only)</td>
-<td>30.1%</td>
+<td>CoT</td>
+<td>46.9</td>
+<td>54.9</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>56.9</td>
+<td>67.0</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>68.1</td>
+<td>70.0</td>
+</tr>
+<tr>
+<td>ToT</td>
+<td>54.4</td>
+<td>65.8</td>
+</tr>
+<tr>
+<td>RAP</td>
+<td>63.1</td>
+<td>71.4</td>
+</tr>
+<tr>
+<td>LATS (ReAct)</td>
+<td>83.8</td>
+<td>81.1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>With GPT-4 on HumanEval: base 80.1, Reflexion 91.0, LATS 92.7 (state of the art then).</li>
+<li>RAP searches like LATS but has no test feedback: the feedback matters.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>WebShop (Table 6)</h3><span class="slide-no">18/80</span></div><ul>
+<li>WebShop: a shopping website with 1.18M real products and 12k human instructions. Buy the item that matches.</li>
+<li>50 instructions, n = 5, k = 30. Score = share of wanted features met; SR = success rate (all met).</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Score</th>
+<th>SR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ReAct</td>
+<td>53.8</td>
+<td>28.0</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>64.2</td>
+<td>35.0</td>
+</tr>
+<tr>
+<td>LATS (ReAct)</td>
+<td>75.9</td>
+<td>38.0</td>
+</tr>
+<tr>
+<td>IL+RL (trained)</td>
+<td>62.4</td>
+<td>28.7</td>
+</tr>
+<tr>
+<td>Fine-tuning (trained)</td>
+<td>67.5</td>
+<td>45.0</td>
+</tr>
+<tr>
+<td>Human expert</td>
+<td>82.1</td>
+<td>59.6</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Reflections here were often generic and got the agent stuck.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Game of 24 (Tables 7 and 13)</h3><span class="slide-no">19/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method (GPT-3.5)</th>
+<th>Success rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CoT</td>
+<td>0.08</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>0.12</td>
+</tr>
+<tr>
+<td>ToT</td>
+<td>0.20</td>
+</tr>
+<tr>
+<td>RAP</td>
+<td>0.40</td>
+</tr>
+<tr>
+<td>LATS (CoT)</td>
+<td>0.44</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>n = 5, k = 30, 50 games, max depth 5.</li>
+<li>Without self-consistency (λ = 1): 0.40. With λ = 0.5: 0.44 (Table 13).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Ablations: every part matters (Table 8)</h3><span class="slide-no">20/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>HotPotQA variant</th>
+<th>EM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ToT (ReAct)</td>
+<td>0.39</td>
+</tr>
+<tr>
+<td>RAP (ReAct)</td>
+<td>0.54</td>
+</tr>
+<tr>
+<td>LATS, no LM score</td>
+<td>0.37</td>
+</tr>
+<tr>
+<td>LATS, depth-first search (no select/backprop)</td>
+<td>0.42</td>
+</tr>
+<tr>
+<td>LATS, no reflection</td>
+<td>0.58</td>
+</tr>
+<tr>
+<td>LATS (full)</td>
+<td>0.63</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The LM score is the most important part of the value.</li>
+<li>Exploration weight w = 0.5 did worse; w = 2.0 did not help but converged faster (Appendix C).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Cost (Tables 9 and 10)</h3><span class="slide-no">21/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>HotPotQA, k = 50</th>
+<th>EM</th>
+<th>Nodes to success</th>
+<th>Tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ToT (ReAct, n = 5)</td>
+<td>0.49</td>
+<td>84.05</td>
+<td>210,215</td>
+</tr>
+<tr>
+<td>RAP (ReAct, n = 5)</td>
+<td>0.54</td>
+<td>70.60</td>
+<td>176,500</td>
+</tr>
+<tr>
+<td>LATS (n = 5)</td>
+<td>0.61–0.63</td>
+<td>66.65</td>
+<td>173,290</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Same growth in cost as other tree methods, but fewer nodes and tokens on success.</li>
+<li>With n = 1, LATS costs about as much as ReAct with retries; it scored 0.48 vs 0.42 for ReAct best of 250 (Table 9).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LATS limitations</h3><span class="slide-no">22/80</span></div><ul>
+<li>Costs more than ReAct or Reflexion.</li>
+<li>Needs to return to earlier states. A sent email can't be unsent.</li>
+<li>Benchmarks are simpler than real-world settings (Appendix B).</li>
+<li>n (children per step) is the knob between quality and cost.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our simplified LATS (notebook)</h3><span class="slide-no">23/80</span></div><ul>
+<li>Best-first search: pick the highest-value open node and backtrack; no visit-count bonus.</li>
+<li>Expand: one call returns k = 3 candidate steps; code drops illegal ones.</li>
+<li>Evaluate: one call rates new states 1–10; self-consistency = how many proposals led to the same state.</li>
+<li>Terminal: with two numbers left, code checks the last step.</li>
+<li>Reflection: code writes dead ends into the next prompt (free, unlike asking the LM).</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>ADaPT: decompose only when needed (Prasad et al. 2024)</div><div class="slide"><div class="slide-top"><h3>The problem ADaPT solves</h3><span class="slide-no">24/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Iterative executor (ReAct)</th>
+<th>Plan-and-execute</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Picks the next action from the full history</td>
+<td>Writes a plan once, then runs each step</td>
+</tr>
+<tr>
+<td>Long histories confuse it</td>
+<td>One step it can't do → the whole task fails</td>
+</tr>
+<tr>
+<td>No planning</td>
+<td>Plan never adapts</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>ADaPT (As-Needed Decomposition and Planning for complex Tasks): plan only when the executor fails, and only for the part that failed.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The executor</h3><span class="slide-no">25/80</span></div><ul>
+<li>An LLM that acts step by step in the environment, ReAct style, until done or out of steps.</li>
+<li>It gets examples of "atomic skills" for the environment (e.g. how to heat an object in ALFWorld).</li>
+<li>All baselines use the same executor, so the comparison is fair.</li>
+<li>Self-generated success: the executor ends with "task completed" or "task failed". No gold reward needed.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The planner</h3><span class="slide-no">26/80</span></div><ul>
+<li>Breaks a failed task into a short plan, typically 3–5 steps.</li>
+<li>Short and abstract on purpose: a 10-step plan made without knowing where the mug is breaks easily.</li>
+<li>Joins steps with logic:<ul>
+<li>AND: do them in order; all must succeed</li>
+<li>OR: try one, then the other if needed ("find a mug on the countertop" OR "find a mug in the cabinet")</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The controller: a recursive program</h3><span class="slide-no">27/80</span></div><ul>
+<li>ADaPT(task, depth k):<ul>
+<li>
+<ol>
+<li>Run the executor on the task. Success → done.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Failure and k &lt; d_max → planner splits the task.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Call ADaPT(step, k + 1) on each step; combine with AND/OR.</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>d_max: 3 for ALFWorld and WebShop, 4 for TextCraft.</li>
+<li>d_max = 1 is plain ReAct.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example: &quot;put a clean mug on the desk&quot; (Figure 2)</h3><span class="slide-no">28/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Level</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Depth 1</td>
+<td>Executor tries the whole task; fails</td>
+</tr>
+<tr>
+<td>Planner</td>
+<td>Step 1: find and take a mug AND Step 2: clean it AND Step 3: put it on the desk</td>
+</tr>
+<tr>
+<td>Depth 2</td>
+<td>Executor runs each step; "clean the mug" succeeds directly</td>
+</tr>
+<tr>
+<td>Deeper</td>
+<td>Only a step that fails gets split again</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Datasets and baselines</h3><span class="slide-no">29/80</span></div><ul>
+<li>ALFWorld: text household game, 6 task types; 134 unseen test games.</li>
+<li>WebShop: shopping site, 1.18M products; 100 test instructions.</li>
+<li>TextCraft (new): craft Minecraft items from recipes; recipe depth 2–4; 200 test tasks.</li>
+<li>Baselines: ReAct, Plan-and-Execute, Try Again (retry d_max times, keep the best), Reflexion.</li>
+<li>Model: GPT-3.5 for planner and executor; similar LLM-call budgets for all.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ALFWorld results (Table 1)</h3><span class="slide-no">30/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Pick</th>
+<th>Clean</th>
+<th>Heat</th>
+<th>Cool</th>
+<th>Look</th>
+<th>Pick2</th>
+<th>All</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ReAct</td>
+<td>33.3</td>
+<td>67.7</td>
+<td>43.5</td>
+<td>33.3</td>
+<td>55.6</td>
+<td>11.8</td>
+<td>43.3</td>
+</tr>
+<tr>
+<td>Plan-and-Execute</td>
+<td>29.2</td>
+<td>61.3</td>
+<td>47.8</td>
+<td>38.1</td>
+<td>61.1</td>
+<td>11.8</td>
+<td>43.3</td>
+</tr>
+<tr>
+<td>Try Again</td>
+<td>50.0</td>
+<td>51.6</td>
+<td>60.8</td>
+<td>47.6</td>
+<td>61.1</td>
+<td>5.9</td>
+<td>47.8</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>70.8</td>
+<td>61.3</td>
+<td>61.0</td>
+<td>66.7</td>
+<td>61.1</td>
+<td>5.9</td>
+<td>57.5</td>
+</tr>
+<tr>
+<td>ADaPT</td>
+<td>87.5</td>
+<td>80.6</td>
+<td>60.8</td>
+<td>76.2</td>
+<td>61.1</td>
+<td>52.9</td>
+<td>71.6</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Pick2 (two pick tasks in a row): baselines under 12%, ADaPT over 4× higher.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>WebShop and TextCraft (Table 2)</h3><span class="slide-no">31/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>WebShop</th>
+<th>TextCraft</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ReAct</td>
+<td>32.0</td>
+<td>19.0</td>
+</tr>
+<tr>
+<td>Plan-and-Execute</td>
+<td>17.0</td>
+<td>27.0</td>
+</tr>
+<tr>
+<td>Try Again</td>
+<td>30.0</td>
+<td>15.0</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>35.0</td>
+<td>32.0</td>
+</tr>
+<tr>
+<td>LATS</td>
+<td>38.0</td>
+<td>−</td>
+</tr>
+<tr>
+<td>ADaPT</td>
+<td>44.0</td>
+<td>52.0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Reflexion and LATS WebShop numbers are as reported by the LATS paper.</li>
+<li>Abstract: up to 28.3%, 27% and 33% (absolute points) above baselines on ALFWorld, WebShop, TextCraft.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Deeper splitting helps (Figure 4, dev sets)</h3><span class="slide-no">32/80</span></div><ul>
+<li>Success rises with d_max on all three datasets.</li>
+<li>Biggest jump: d_max 1 → 2 (adding the planner at all).</li>
+<li>2 → 3 still helps: some sub-tasks are still too hard and need another split.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fits the executor&#x27;s skill (Figure 5, Table 3)</h3><span class="slide-no">33/80</span></div><ul>
+<li>Weak executor (atomic skills only) on ALFWorld: 3.3% → 41.7% with ADaPT.</li>
+<li>TextCraft by recipe depth (Table 3):</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>ReAct</th>
+<th>ADaPT</th>
+<th>Splits used (k_max)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>26.9</td>
+<td>78.2</td>
+<td>1.9</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1.8</td>
+<td>38.7</td>
+<td>2.8</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Harder recipes → ADaPT splits deeper on its own.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Other LLMs and mixed teams (Figure 6, Table 4)</h3><span class="slide-no">34/80</span></div><ul>
+<li>Helps GPT-3.5, GPT-4, LLaMA-2 70B and Lemur 70B on all datasets.<ul>
+<li>TextCraft: GPT-4 up to 37% better, LLaMA up to 15%</li>
+</ul>
+</li>
+<li>Mixed planner and executor, ALFWorld dev (Table 4):</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Executor</th>
+<th>Planner</th>
+<th>Success</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-3.5</td>
+<td>none</td>
+<td>38.4</td>
+</tr>
+<tr>
+<td>GPT-3.5</td>
+<td>GPT-3.5</td>
+<td>58.3</td>
+</tr>
+<tr>
+<td>LLaMA-2-70B</td>
+<td>none</td>
+<td>20.4</td>
+</tr>
+<tr>
+<td>LLaMA-2-70B</td>
+<td>GPT-3.5</td>
+<td>43.3</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The planner is called rarely, so a cheap open executor saves money.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Not just more calls (Figure 7)</h3><span class="slide-no">35/80</span></div><ul>
+<li>ADaPT uses about as many LLM calls as Try Again and Reflexion.</li>
+<li>ReAct and Plan-and-Execute often use fewer: they stop at the first failure.</li>
+<li>So the gains don't come from simply calling the LLM more.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ADaPT limitations (Limitations, Appendix F)</h3><span class="slide-no">36/80</span></div><ul>
+<li>Depends on the executor judging its own success.</li>
+<li>ALFWorld and TextCraft: self-judged success slightly too high.</li>
+<li>WebShop: self-judged success more than 30 points above the real reward.<ul>
+<li>Then ADaPT stops when it should split further</li>
+</ul>
+</li>
+<li>Fix suggested by the authors: outside verifiers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ADaPT in the notebook</h3><span class="slide-no">37/80</span></div><pre><code class="language-python">expr = direct(state, p[&quot;target&quot;])                                # 1. try directly
+full = substitute(expr, state) if expr else None
+ok = bool(full) and check_expr(full, p[&quot;numbers&quot;], p[&quot;target&quot;])[0]
+if ok:
+    return full, log
+steps = [s for s in propose(state, p[&quot;target&quot;], k=1) if apply(state, s)]    # 2. only now: plan one sub-step
+return adapt(apply(state, steps[0]), p, depth + 1, d_max, log)              # 3. recurse on the smaller task
+</code></pre>
+<ul>
+<li>Line 1: the executor writes a whole answer in one go.</li>
+<li>Lines 2–3: rewrite it over the original numbers; a checker grades it, not the model.</li>
+<li>Lines 4–5: success → stop after one call.</li>
+<li>Line 6: only on failure, plan one step.</li>
+<li>Line 7: recurse on the smaller puzzle (up to <code>d_max = 2</code>).</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>AB-MCTS: wider or deeper? (Inoue et al. 2025)</div><div class="slide"><div class="slide-top"><h3>Three ways to spend a budget (Figure 1)</h3><span class="slide-no">38/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Shape</th>
+<th>Weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repeated sampling</td>
+<td>Only wide: n fresh answers</td>
+<td>Never uses feedback to fix an answer</td>
+</tr>
+<tr>
+<td>Sequential refinement</td>
+<td>Only deep: fix one answer n − 1 times</td>
+<td>Stuck if the first idea is wrong</td>
 </tr>
 <tr>
 <td>Standard MCTS</td>
-<td>37.5%</td>
-</tr>
-<tr>
-<td>Repeated sampling (wider only)</td>
-<td>37.9%</td>
-</tr>
-<tr>
-<td>AB-MCTS-M</td>
-<td>40.6%</td>
+<td>Fixed width (e.g. 5 children per node)</td>
+<td>Width is a guess set by hand</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>On ARC-AGI, repeated sampling still led at 128 calls; AB-MCTS kept improving up to 512.</li>
-<li>Gains show up at large budgets.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>SPRINT: run independent steps at once (Biju et al. 2025)</h3><span class="slide-no">10/14</span></div><ul>
-<li>Critical path: the steps that must happen one after another. It sets the latency.</li>
-<li>SPRINT trains a model to alternate a plan (independent subtasks) with parallel execution.</li>
-<li>About 1,700 examples fine-tune a 7B reasoning model.</li>
-<li>MATH-500: 92.5% vs 91.0%, with up to 39% fewer sequential tokens on long problems.<ul>
-<li>Up to 45% fewer on GPQA, 65% on Countdown</li>
+<li>AB-MCTS (Adaptive Branching MCTS) decides at every node: go wider or go deeper.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setup</h3><span class="slide-no">39/80</span></div><ul>
+<li>The LLM gets a prompt (the task, or an old answer plus feedback) and returns an answer.</li>
+<li>Score r = R(answer), usually from 0 to 1. Example: share of test cases passed.</li>
+<li>The true grader may be hidden, so search uses a partial one (like public tests).</li>
+<li>Goal: find a high-scoring answer within a fixed number of LLM calls.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The algorithm (Algorithm 1)</h3><span class="slide-no">40/80</span></div><ul>
+<li>Each round adds one node:<ul>
+<li>
+<ol>
+<li>Select a node to expand</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Expand: at the root, write a new answer; elsewhere, refine that node's answer with feedback</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Back up the new score toward the root</li>
+</ol>
+</li>
 </ul>
 </li>
-</ul></div><div class="slide"><div class="slide-top"><h3>A parallel contract review plan</h3><span class="slide-no">11/14</span></div><pre><code class="language-python">PLAN = {&quot;liability_cap&quot;: [], &quot;governing_law&quot;: [], &quot;auto_renewal&quot;: [], &quot;termination_notice&quot;: [],
+<li>No rollouts: each answer is scored as soon as it exists.</li>
+<li>GEN node: every node has a special child meaning "make a new child here". Picking it = go wider at that node.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why Thompson sampling, not UCT</h3><span class="slide-no">41/80</span></div><ul>
+<li>UCT assumes a fixed set of arms. GEN creates new arms on the fly.</li>
+<li>GEN has no children, so it has no UCT score.</li>
+<li>Thompson sampling: for each option, draw a random score from its belief; pick the highest draw.<ul>
+<li>
+<ol>
+<li>Compute the score distribution for each action (GEN or each existing child)</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Draw one score from each</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Pick the action with the highest draw</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>Bonus: Thompson sampling lets you expand several nodes in parallel.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AB-MCTS-M: mixed model</h3><span class="slide-no">42/80</span></div><ul>
+<li>r = αj + σy · ε, with αj = µα + σα · ε'<ul>
+<li>αj: quality of the answers under child j (one "group" per subtree)</li>
+<li>µα, σα: average and spread of quality across groups</li>
+<li>σy · ε: noise for each new answer</li>
+</ul>
+</li>
+<li>Fit with MCMC (random sampling to estimate the unknowns) at each selection.</li>
+<li>GEN is a new group with no data; its quality is guessed from what the other groups show.</li>
+<li>Figure 2: a child with high-scoring children gets a peak at high r; more data → narrower curve.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AB-MCTS-A: node aggregation</h3><span class="slide-no">43/80</span></div><ul>
+<li>Simpler and lighter: no shared parameters.</li>
+<li>CONT node: "keep refining the existing children". GEN: "make a new one".</li>
+<li>Scores back up to the GEN or CONT node that led there.</li>
+<li>Two belief types with closed-form updates:<ul>
+<li>Gaussian (normal-inverse-χ² prior) for any score range</li>
+<li>Beta prior for scores in [0, 1]</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Experiment setup</h3><span class="slide-no">44/80</span></div><ul>
+<li>Benchmarks: LiveCodeBench and CodeContests (contest coding), ARC-AGI (find a visual rule, write it as code), MLE-Bench (Kaggle tasks).</li>
+<li>Models: GPT-4o (temperature 0.6), DeepSeek-V3 (temperature 1.0).</li>
+<li>Budget: 2^7 = 128 LLM calls per task.</li>
+<li>Standard MCTS follows LATS: 5 children per expansion.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Main results, GPT-4o (Table 1)</h3><span class="slide-no">45/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>LiveCodeBench</th>
+<th>CodeContests</th>
+<th>ARC-AGI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repeated sampling</td>
+<td>37.8 ± 0.5</td>
+<td>37.9 ± 0.3</td>
+<td>15.0 ± 1.0</td>
+</tr>
+<tr>
+<td>Sequential refinement</td>
+<td>37.8 ± 2.4</td>
+<td>30.1 ± 0.3</td>
+<td>8.7 ± 0.9</td>
+</tr>
+<tr>
+<td>Standard MCTS</td>
+<td>36.7 ± 1.0</td>
+<td>37.5 ± 0.0</td>
+<td>9.0 ± 1.5</td>
+</tr>
+<tr>
+<td>AB-MCTS-M</td>
+<td>38.9 ± 1.9</td>
+<td>40.6 ± 1.0</td>
+<td>12.3 ± 1.2</td>
+</tr>
+<tr>
+<td>AB-MCTS-A (Gaussian)</td>
+<td>39.1 ± 1.9</td>
+<td>40.2 ± 1.7</td>
+<td>13.0 ± 3.6</td>
+</tr>
+<tr>
+<td>AB-MCTS-A (Beta)</td>
+<td>38.7 ± 1.2</td>
+<td>40.4 ± 0.3</td>
+<td>14.0 ± 2.1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Pure "deeper" is worst on CodeContests and ARC-AGI.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Main results, DeepSeek-V3 and average rank (Table 1)</h3><span class="slide-no">46/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>LiveCodeBench</th>
+<th>CodeContests</th>
+<th>ARC-AGI</th>
+<th>Avg. rank (all 6)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repeated sampling</td>
+<td>40.7 ± 1.9</td>
+<td>43.2 ± 0.9</td>
+<td>18.6 ± 1.0</td>
+<td>3.5</td>
+</tr>
+<tr>
+<td>Sequential refinement</td>
+<td>41.6 ± 0.6</td>
+<td>41.6 ± 0.9</td>
+<td>10.0 ± 0.6</td>
+<td>5.5</td>
+</tr>
+<tr>
+<td>Standard MCTS</td>
+<td>43.2 ± 2.1</td>
+<td>43.8 ± 0.9</td>
+<td>14.0 ± 1.5</td>
+<td>4.2</td>
+</tr>
+<tr>
+<td>AB-MCTS-M</td>
+<td>43.0 ± 1.5</td>
+<td>44.6 ± 0.9</td>
+<td>16.0 ± 1.0</td>
+<td>2.3</td>
+</tr>
+<tr>
+<td>AB-MCTS-A (Gaussian)</td>
+<td>42.5 ± 1.5</td>
+<td>43.4 ± 0.9</td>
+<td>18.3 ± 0.6</td>
+<td>2.7</td>
+</tr>
+<tr>
+<td>AB-MCTS-A (Beta)</td>
+<td>42.3 ± 0.8</td>
+<td>44.8 ± 0.6</td>
+<td>16.6 ± 0.6</td>
+<td>2.7</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Many LiveCodeBench gaps sit inside the ± ranges (our reading).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MLE-Bench (Table 2)</h3><span class="slide-no">47/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method (GPT-4o)</th>
+<th>Nomad2018</th>
+<th>Spooky</th>
+<th>Pizza</th>
+<th>Avg. rank</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repeated sampling</td>
+<td>0.065 (3)</td>
+<td>0.47 (4)</td>
+<td>0.72 (2)</td>
+<td>3.0</td>
+</tr>
+<tr>
+<td>Sequential refinement</td>
+<td>0.059 (1)</td>
+<td>0.46 (3)</td>
+<td>0.62 (3)</td>
+<td>2.3</td>
+</tr>
+<tr>
+<td>Standard MCTS</td>
+<td>0.076 (4)</td>
+<td>0.45 (2)</td>
+<td>0.60 (4)</td>
+<td>3.3</td>
+</tr>
+<tr>
+<td>AB-MCTS-M</td>
+<td>0.060 (2)</td>
+<td>0.38 (1)</td>
+<td>0.72 (1)</td>
+<td>1.3</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The best baseline changes from task to task. AB-MCTS-M is strong on all three.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the curves show (Figures 4–6)</h3><span class="slide-no">48/80</span></div><ul>
+<li>Figure 4: all methods improve with more calls. AB-MCTS pulls ahead on LiveCodeBench from 2^3 calls, on CodeContests from 2^5.</li>
+<li>ARC-AGI: repeated sampling is strong; wide exploration matters there.</li>
+<li>Figure 5: AB-MCTS builds wider trees than standard MCTS.</li>
+<li>Figure 6 (DeepSeek-V3, up to 512 calls on ARC-AGI): AB-MCTS keeps improving from 200 to 500 calls while repeated sampling levels off.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Extra checks (Appendix)</h3><span class="slide-no">49/80</span></div><ul>
+<li>Progressive widening (classic MCTS trick, add children slowly) on LiveCodeBench, Table 4: 48.7 to 50.7 depending on settings, vs 48.9–51.8 for AB-MCTS. Good only with well-tuned settings.</li>
+<li>Multi-LLM AB-MCTS on ARC-AGI-2 (120 problems, 250 calls, pass@k):<ul>
+<li>o4-mini repeated sampling 23%; AB-MCTS with o4-mini 27.5%</li>
+<li>o4-mini + Gemini-2.5-Pro + DeepSeek-R1-0528: over 30%</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AB-MCTS limitations</h3><span class="slide-no">50/80</span></div><ul>
+<li>Needs a reliable scorer. Building one can be hard.</li>
+<li>Counts only API calls, not real cost (time, GPU, tokens).</li>
+<li>Repeated sampling is easier to run in parallel and needs no feedback step.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Wider vs deeper in the notebook</h3><span class="slide-no">51/80</span></div><ul>
+<li>Same budget of 3 calls per puzzle for each strategy.</li>
+<li>Wider: 3 fresh answers at temperature 0.9; keep the best score.</li>
+<li>Deeper: 1 answer, then 2 fixes with the checker's message ("it equals 30, not 24").</li>
+<li>Score: 1.0 if correct; partial credit if it uses the right numbers and lands close.</li>
+<li>3 puzzles × 3 calls is far too small to pick a winner. The paper used up to 128.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>SPRINT: run independent steps at once (Biju et al. 2025)</div><div class="slide"><div class="slide-top"><h3>The problem SPRINT solves</h3><span class="slide-no">52/80</span></div><ul>
+<li>Reasoning models (like DeepSeek-R1) think in one long sequence. Long = slow.</li>
+<li>Repeated sampling runs in parallel but the paths don't share work.</li>
+<li>Tree-of-Thoughts and Graph-of-Thoughts need a hand-made search shape.</li>
+<li>SPRINT trains the model itself to spot steps that don't depend on each other and run them at the same time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Inference: plan, run, sync (Figure 1)</h3><span class="slide-no">53/80</span></div><ul>
+<li>
+<ol>
+<li>Planning: the planner reads everything so far and writes a plan, with each subtask inside <code>&lt;prompt_i.j&gt;</code> tags.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Parallel execution: one executor per prompt, all running at once, each writing its own reasoning.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Syncing: results go back into the context as <code>&lt;execution_i.j&gt;</code>, in prompt order.</li>
+</ol>
+</li>
+<li>Repeat until the planner writes the final answer.</li>
+<li>Planner and executors are the same fine-tuned model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Training data: four steps (Figure 2)</h3><span class="slide-no">54/80</span></div><ul>
+<li>
+<ol>
+<li>Step extraction: GPT-4o cuts an R1 reasoning trace into steps, each with a plan part and an execution part.</li>
+<li>Very short executions are merged into the plan ("plan-only" steps)</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>DAG creation: GPT-4o-mini marks which steps depend on which. DAG: a graph of steps with arrows, no loops.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Packing: group steps into stages that can run together.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Filter and fine-tune: keep traces with steps/stages ≥ 1.5; SFT the model on the tagged format.</li>
+</ol>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Packing formula</h3><span class="slide-no">55/80</span></div><ul>
+<li>stage(S) = 1 if S has no parents</li>
+<li>otherwise stage(S) = max over parents P of ( stage(P) + 1 if P has an execution, else + 0 )<ul>
+<li>A step can share a stage with a plan-only parent: no result to wait for</li>
+</ul>
+</li>
+<li>Stage k plan = all plans in stage k joined in order.</li>
+<li>Stage k executions = all non-empty executions in stage k, run in parallel.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Measuring speed: sequential tokens</h3><span class="slide-no">56/80</span></div><ul>
+<li>Sequential tokens = sum over stages of the max over prompts in that stage of (planner tokens up to that prompt + executor tokens)<ul>
+<li>Only the longest branch in each stage counts</li>
+</ul>
+</li>
+<li>For normal models: just the number of output tokens.</li>
+<li>Stand-in for wall-clock time, which the authors could not measure fully.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Data and baselines</h3><span class="slide-no">57/80</span></div><ul>
+<li>Start: 6,000 DeepSeek-R1 traces on MATH training problems; keep correct ones; pipeline leaves about 1,700.</li>
+<li>Base model: DeepSeek-R1-Distill-Qwen-7B.</li>
+<li>RFT: the same base fine-tuned on the same 1,700 traces, unchanged. The fair control.</li>
+<li>SoT (Skeleton-of-Thought): plan once, run all parts in parallel, no fine-tuning.</li>
+<li>Self-consistency: many samples, majority vote (Qwen2.5-7B-Instruct).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>MATH-500 results (Table 2, Figure 4)</h3><span class="slide-no">58/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Accuracy</th>
+<th>Sequential tokens</th>
+<th>Total tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Self-consistency</td>
+<td>80.5</td>
+<td>590</td>
+<td>11645</td>
+</tr>
+<tr>
+<td>SoT-chat</td>
+<td>47.3</td>
+<td>256</td>
+<td>1290</td>
+</tr>
+<tr>
+<td>SoT-reasoning</td>
+<td>90.8</td>
+<td>3836</td>
+<td>11538</td>
+</tr>
+<tr>
+<td>RFT</td>
+<td>91.0</td>
+<td>2880</td>
+<td>2880</td>
+</tr>
+<tr>
+<td>SPRINT</td>
+<td>92.5</td>
+<td>2440</td>
+<td>3622</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Base model before fine-tuning: 89.1%.</li>
+<li>SPRINT: 440 (about 15%) fewer sequential tokens than RFT.</li>
+<li>SoT's single plan makes subtasks that depend on each other, wasting work.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Out-of-domain results (Table 2)</h3><span class="slide-no">59/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Countdown acc</th>
+<th>Countdown seq. tokens</th>
+<th>GPQA acc</th>
+<th>GPQA seq. tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Self-consistency</td>
+<td>78.5</td>
+<td>2845</td>
+<td>45.4</td>
+<td>4735</td>
+</tr>
+<tr>
+<td>SoT-chat</td>
+<td>80.0</td>
+<td>2367</td>
+<td>49.4</td>
+<td>3526</td>
+</tr>
+<tr>
+<td>SoT-reasoning</td>
+<td>82.4</td>
+<td>5823</td>
+<td>48.0</td>
+<td>7560</td>
+</tr>
+<tr>
+<td>RFT</td>
+<td>84.9</td>
+<td>4917</td>
+<td>50.5</td>
+<td>7103</td>
+</tr>
+<tr>
+<td>SPRINT</td>
+<td>85.9</td>
+<td>2284</td>
+<td>51.0</td>
+<td>6336</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Trained only on math. Countdown: 53.5% fewer sequential tokens than RFT; GPQA: 10.8% fewer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Longer problems, bigger savings (Figure 6)</h3><span class="slide-no">60/80</span></div><ul>
+<li>Short problems: tags and prompts add overhead, about 5% more sequential tokens.</li>
+<li>MATH-500 problems where RFT needs over 8,000 tokens: 39% fewer.</li>
+<li>Longer traces on GPQA and Countdown: up to 45% and 65% fewer (abstract).</li>
+<li>Estimated runtime: 36.92s vs 40.57s per problem (9% faster); 74.47s vs 120.54s on long ones (38%).</li>
+<li>Figure 5: harder problems need more stages; early stages have more parallel plans.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SPRINT limitations</h3><span class="slide-no">61/80</span></div><ul>
+<li>Real wall-clock gains need good KV caching and fast links between GPUs.</li>
+<li>Many parallel tasks need many GPUs.</li>
+<li>Parallelism is capped by the quality of the training data (SFT only). Future: RL that rewards low latency.</li>
+<li>Not yet applied to tool calls, where parallel calls could help most.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A parallel contract review plan</h3><span class="slide-no">62/80</span></div><pre><code class="language-python">PLAN = {&quot;liability_cap&quot;: [], &quot;governing_law&quot;: [], &quot;auto_renewal&quot;: [], &quot;termination_notice&quot;: [],
         &quot;summary&quot;: [&quot;liability_cap&quot;, &quot;governing_law&quot;, &quot;auto_renewal&quot;, &quot;termination_notice&quot;]}
 print(&quot;plan rounds:&quot;, stages(PLAN))
 </code></pre>
@@ -413,44 +1451,270 @@ print(&quot;plan rounds:&quot;, stages(PLAN))
 <li>The four rule checks depend on nothing; the summary needs all four.</li>
 <li><code>stages</code> groups steps into rounds: round 1 = four checks, round 2 = summary.</li>
 <li>With 2 parallel slots, 4 checks take about 2 rounds instead of 4.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>SWiRL: train on steps, not runs (Goldie et al. 2025)</h3><span class="slide-no">12/14</span></div><ul>
-<li>Sub-trajectory: cut a run with k actions into k examples (context so far → next action).</li>
-<li>Process filtering: keep steps a judge calls reasonable, even if the final answer was wrong.</li>
-<li>Gemma 2 27B, relative gains: 21.5% GSM8K, 12.3% HotPotQA.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>SWiRL: train on steps, not runs (Goldie et al. 2025)</div><div class="slide"><div class="slide-top"><h3>The problem SWiRL solves</h3><span class="slide-no">63/80</span></div><ul>
+<li>RLHF, RLAIF and RLEF treat a task as one step: one answer, one reward at the end.</li>
+<li>Agent tasks take many steps: what to search, when to stop, how to combine.</li>
+<li>One wrong middle step often ruins the final answer.</li>
+<li>SWiRL (Step-Wise Reinforcement Learning): make multi-step data, then give a reward to every step.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Stage 1: make synthetic runs (Figure 1)</h3><span class="slide-no">64/80</span></div><ul>
+<li>Gemma 2 gets a tool: a search engine (for QA) or a calculator (for math).</li>
+<li>Each turn: think, then call the tool or give a final answer.</li>
+<li>Run: τ = (s1, a1, …, sK, aK)<ul>
+<li>s1: the question; each later state = everything so far plus the tool's reply</li>
+<li>ai: the model's response; aK is the final answer</li>
 </ul>
-<div class="tbl"><table>
+</li>
+<li>50,000 runs from 10,000 HotPotQA questions (5 each; "Easy" ones dropped); 37,500 runs from 7,500 GSM8K questions.</li>
+<li>Max 5 steps for HotPotQA, 10 for GSM8K.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four filters</h3><span class="slide-no">65/80</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Filter</th>
 <th>Keeps</th>
+<th>Needs gold answers?</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Outcome only</td>
-<td>Steps from runs with the right final answer</td>
+<td>None</td>
+<td>Everything</td>
+<td>No</td>
 </tr>
 <tr>
-<td>Process only</td>
-<td>Good steps, even inside failed runs. Best for RL</td>
+<td>Process</td>
+<td>Runs where a judge (Gemini 1.5 Pro Thinking) calls every step reasonable</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Outcome</td>
+<td>Runs whose final answer matches the gold answer</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Process + outcome</td>
+<td>Both</td>
+<td>Yes</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">13/14</span></div><ul>
-<li>Independent playbook checks can run in parallel on the firm's machine; the summary waits for all.</li>
-<li>Try a direct review first; split into per-rule checks only when it fails.</li>
-<li>Log every step. A failed review still has good steps to train a local model on.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">14/14</span></div><ul>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Stage 2: step-wise RL (Figure 2)</h3><span class="slide-no">66/80</span></div><ul>
+<li>Sub-trajectory: cut a run with k actions into k examples (context so far → next action).</li>
+<li>Goal: J(θ) = average over states s of R(a | s), with a from the model<ul>
+<li>s: a state from the synthetic runs</li>
+<li>a: the model's next action</li>
+<li>R: a reward model (Gemini 1.5 Pro) scoring the action given the context; no gold labels</li>
+</ul>
+</li>
+<li>Trained with the same policy-gradient method Gemma 2 uses for human-feedback RL.</li>
+<li>Offline: tool replies were saved in Stage 1, so training never waits on a tool.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Inference (Figure 3)</h3><span class="slide-no">67/80</span></div><ul>
+<li>The model calls tools as often as needed, up to a limit (5 for QA, 10 for math).</li>
+<li>Search: <code>&lt;search_query&gt;</code> → embed with Gecko → nearest article from a vector database.</li>
+<li>Math: <code>&lt;math_exp&gt;</code> → run in SymPy.</li>
+<li>Stop at <code>&lt;answer&gt;</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results vs other models (Table 1)</h3><span class="slide-no">68/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>HotpotQA</th>
+<th>CofCA</th>
+<th>MuSiQue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-4</td>
+<td>74.8</td>
+<td>51.9</td>
+<td>63.9</td>
+</tr>
+<tr>
+<td>GPT-3.5</td>
+<td>62.8</td>
+<td>40.7</td>
+<td>53.1</td>
+</tr>
+<tr>
+<td>O1-preview</td>
+<td>76.9</td>
+<td>58.5</td>
+<td>67.9</td>
+</tr>
+<tr>
+<td>Qwen 2-7b</td>
+<td>39.3</td>
+<td>30.7</td>
+<td>33.5</td>
+</tr>
+<tr>
+<td>Base Gemma 2-27b</td>
+<td>58.6</td>
+<td>31.7</td>
+<td>35.4</td>
+</tr>
+<tr>
+<td>SWiRL Gemma 2-27b</td>
+<td>67.8</td>
+<td>39.3</td>
+<td>43.6</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Partial match, 300 questions, GPT-4o as judge. Baselines from Wu et al. (2024).</li>
+<li>Gemma models had no context documents; they searched for them.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Generalization (Table 2)</h3><span class="slide-no">69/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Trained on</th>
+<th>GSM8K</th>
+<th>HotPotQA</th>
+<th>CofCA</th>
+<th>BeerQA</th>
+<th>MuSiQue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base model</td>
+<td>0.65</td>
+<td>0.65</td>
+<td>0.54</td>
+<td>0.59</td>
+<td>0.45</td>
+</tr>
+<tr>
+<td>SWiRL on GSM8K (math)</td>
+<td>0.79</td>
+<td>0.71</td>
+<td>0.56</td>
+<td>0.68</td>
+<td>0.49</td>
+</tr>
+<tr>
+<td>SWiRL on HotPotQA (QA)</td>
+<td>0.76</td>
+<td>0.73</td>
+<td>0.62</td>
+<td>0.68</td>
+<td>0.50</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Relative gains (abstract): 21.5% GSM8K, 12.3% HotPotQA, 14.8% CofCA, 11.1% MuSiQue, 15.3% BeerQA.</li>
+<li>Train on HotPotQA only → GSM8K +16.9%. Train on GSM8K only → HotPotQA +9.2%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Which filter wins? (Figure 4)</h3><span class="slide-no">70/80</span></div><ul>
+<li>Process-only filtering gave the best accuracy every time.</li>
+<li>Even unfiltered data beat the base model.</li>
+<li>Outcome filtering usually hurt: except on MuSiQue, it did worse than no filter.</li>
+<li>The authors' guess: SWiRL learns from both good and bad examples.</li>
+<li>So you don't need gold labels.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SFT vs SWiRL (Figure 5, Appendix B)</h3><span class="slide-no">71/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>SFT (copy the runs)</th>
+<th>SWiRL (step-wise RL)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hurt the base model</td>
+<td>Beat the base model</td>
+</tr>
+<tr>
+<td>Best with process + outcome filtering</td>
+<td>Best with process-only filtering</td>
+</tr>
+<tr>
+<td>Needs correct runs</td>
+<td>Learns from failed runs too</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>SFT on Gemini 1.5 Pro's runs made Gemma even worse.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>More findings</h3><span class="slide-no">72/80</span></div><ul>
+<li>Data size (Figure 7): 100 runs too few; 1,000 already give solid gains; 10,000 better still.</li>
+<li>Model size (Appendix C): 2B and 9B gain in-domain, but transfer less reliably than 27B.</li>
+<li>Tool use (Figure 6): SWiRL helps even without the tool at test time.</li>
+<li>Vs the reward model (Figure 8): SWiRL Gemma beat Gemini 1.5 Pro on CofCA and BeerQA, so it is not just copying the judge.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Better steps, not just answers (Table 3)</h3><span class="slide-no">73/80</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Mean process label</th>
+<th>HotPotQA (in-domain)</th>
+<th>GSM8K (out-of-domain)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base</td>
+<td>82.5%</td>
+<td>87.5%</td>
+</tr>
+<tr>
+<td>SWiRL on HotPotQA</td>
+<td>91.0%</td>
+<td>91.6%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Process label: share of steps the judge calls reasonable.</li>
+<li>500 runs from 100 questions per dataset.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Watch the judges (Appendix D)</h3><span class="slide-no">74/80</span></div><ul>
+<li>Model judges add noise to evaluation.</li>
+<li>Gemma-2-27b on HotPotQA: 4% false positives, 1% false negatives (Table 5).</li>
+<li>Math grading, 100 checks (Table 6):<ul>
+<li>Gemma-2-27b: 15% false positives (too kind)</li>
+<li>GPT-4o: 10% false negatives (too harsh)</li>
+<li>Gemini 1.5 Pro: 4% false positives</li>
+</ul>
+</li>
+<li>All math grading errors involved units.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWiRL in the notebook</h3><span class="slide-no">75/80</span></div><ul>
+<li>Logged runs from greedy and tree search become step examples.</li>
+<li>Process judge = the solver: a step is good if the target is still reachable after it.</li>
+<li>Four filters, as in the paper: none, outcome only, process only, process + outcome.</li>
+<li>The key count: good steps inside failed runs. An outcome filter throws these away.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Parallel playbook checks</h3><span class="slide-no">76/80</span></div><ul>
+<li>The firm's four playbook rules (liability cap, governing law, renewal, notice) are independent checks.</li>
+<li>Run them at once on the firm's machine; the summary waits for all four.</li>
+<li>msa_15: cap is "THIRTY-SIX (36) MONTHS" (7.1) and law is "the State of New York" (10.1). Two rules fail, found in one parallel round.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Try first, split on failure</h3><span class="slide-no">77/80</span></div><ul>
+<li>Ask the local model for a whole-contract review first.</li>
+<li>If a checker rejects it (missing clause cite, wrong verdict), split into one check per rule.</li>
+<li>Easy contracts cost one call; hard ones get the extra work.</li>
+<li>Use code checks, not the model's "task completed". ADaPT's self-reports ran over 30 points high on WebShop.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Search only where you can undo</h3><span class="slide-no">78/80</span></div><ul>
+<li>Drafting a redline: safe to search. Drafts can be thrown away.</li>
+<li>Sending to the counterparty: not safe. No going back.</li>
+<li>Search needs a scorer. Our playbook checks in code are one: cap months, law, renewal years, notice days.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Log every step</h3><span class="slide-no">79/80</span></div><ul>
+<li>Save each step: context so far, action, tool reply, a step label.</li>
+<li>A failed review still has good steps (right clause found, right rule applied).</li>
+<li>These step examples can train a smaller local model later, SWiRL style.</li>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>Wrap-up</div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">80/80</span></div><ul>
 <li>Searching where actions can't be undone → only search over states you can return to.</li>
 <li>Planning everything up front → try directly, split only what fails.</li>
 <li>Trusting self-reported success → use a real checker.</li>
+<li>Picking wider vs deeper from a tiny budget → gains showed at 2^5–2^9 calls; some gaps were within noise.</li>
 <li>Parallelizing dependent steps → map dependencies first; the longest chain sets latency.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What does ADaPT do differently from plan-and-execute?</summary><p>It tries the whole task first and splits it only when the executor fails, so easy tasks cost one call.</p></details>
+<li>Keeping only successful runs → process filtering beat outcome filtering for RL.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What does ADaPT do differently from plan-and-execute?</summary><p>It tries the whole task first and splits it only when the executor fails, recursing on the failed parts. Easy tasks cost one call.</p></details>
 
-<details><summary>In AB-MCTS, what choice is made at each node, and what decides it?</summary><p>Whether to generate a new answer (wider) or refine an existing one (deeper). Thompson sampling on the feedback scores decides.</p></details>
+<details><summary>In LATS, what two parts make up the value of a node?</summary><p>An LM score, given after seeing the environment&#x27;s feedback, and a self-consistency score. They are mixed with weight λ.</p></details>
+
+<details><summary>Why can&#x27;t AB-MCTS use UCT to pick the GEN node?</summary><p>GEN has no children and adds new arms as it goes, so it has no UCT score. Thompson sampling draws a score from a belief instead.</p></details>
+
+<details><summary>In AB-MCTS on CodeContests with GPT-4o, which did worse: only wider or only deeper?</summary><p>Only deeper. Sequential refinement scored 30.1% vs 37.9% for repeated sampling (Table 1).</p></details>
+
+<details><summary>How does SPRINT count speed?</summary><p>Sequential tokens: in each stage only the longest parallel branch counts. On long MATH-500 problems this fell by 39%.</p></details>
 
 <details><summary>Why might SWiRL keep a step from a run whose final answer was wrong?</summary><p>The step itself was judged reasonable. Process-only filtering gave the best RL results.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run greedy vs tree search on the 3 number puzzles. Which solves more, and at what call cost?</li>
 <li>Run ADaPT and see which puzzles stop after one direct try.</li>
+<li>Run the SPRINT section on msa_15: compare sequential vs parallel time and check the verdicts.</li>
 <li>Run the SWiRL section: count the good steps that live inside failed runs.</li>
 </ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   

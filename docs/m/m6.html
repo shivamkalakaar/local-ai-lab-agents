@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Design patterns · Agent Engineering School</title>
-<meta name="description" content="Five workflow patterns and four agent patterns cover most systems. Start with the simplest that works; use code, not the model, as the checker.">
+<meta name="description" content="Five workflow patterns, four reasoning patterns and five context patterns cover most agent systems. Start with the simplest one that works; use code, not the model, as the checker.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,9 +259,93 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 06</span></div><section class="mod" id="m6" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 06</div><h2>Design patterns</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/06_design_patterns.ipynb">Open in Colab</a><button class="done-btn" data-done="m6" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Five workflow patterns and four agent patterns cover most systems. Start with the simplest that works; use code, not the model, as the checker.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 6 · Agent Design Patterns and Scaffolds · <a href="https://web.stanford.edu/class/cs329z/slides/lecture06.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
-<li>Define the common design patterns for workflows and agents, and pick the simplest one for a task.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Workflows vs agents</h3><span class="slide-no">2/12</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 06</span></div><section class="mod" id="m6" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 06</div><h2>Design patterns</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/06_design_patterns.ipynb">Open in Colab</a><button class="done-btn" data-done="m6" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>22 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Five workflow patterns, four reasoning patterns and five context patterns cover most agent systems. Start with the simplest one that works; use code, not the model, as the checker.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 6 · Agent Design Patterns and Scaffolds · <a href="https://web.stanford.edu/class/cs329z/slides/lecture06.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (75 slides)</b><ol><li><a href="#sec-1">Review: Workflows vs Agents</a> <span>4 slides</span></li><li><a href="#sec-2">Workflow Design Patterns</a> <span>18 slides</span></li><li><a href="#sec-3">Agent Design Patterns: Reasoning/Acting</a> <span>22 slides</span></li><li><a href="#sec-4">Agent Design Patterns: Context</a> <span>17 slides</span></li><li><a href="#sec-5">Case Study: Pi</a> <span>6 slides</span></li><li><a href="#sec-6">How this applies to us</a> <span>5 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/75</span></div><ul>
+<li>Define the common design patterns for workflows and agents, compare patterns for managing an agent's context, and read the design choices inside a real harness (Pi).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Patterns are half-baked</h3><span class="slide-no">2/75</span></div><ul>
+<li>"Patterns are half-baked: you always have to finish them yourself and adapt them to your own environment." (Martin Fowler, <em>Patterns of Enterprise Application Architecture</em>)</li>
+<li>Building an agent system means many design decisions.</li>
+<li>This lesson names the common patterns. In practice you customize them.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture overview</h3><span class="slide-no">3/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Section</th>
+<th>What it covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Review: workflows vs agents</td>
+<td>Where the control flow lives</td>
+</tr>
+<tr>
+<td>Workflow design patterns</td>
+<td>Chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer</td>
+</tr>
+<tr>
+<td>Agent patterns: reasoning/acting</td>
+<td>ReAct, Reflexion, CRITIC, CodeAct, ReWOO, LLMCompiler</td>
+</tr>
+<tr>
+<td>Agent patterns: context</td>
+<td>Event log, memory offloading, compaction, observation masking, context isolation</td>
+</tr>
+<tr>
+<td>Case study: Pi</td>
+<td>A minimal harness, taken apart</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Review: Workflows vs Agents</div><div class="slide"><div class="slide-top"><h3>Where does the control flow lie?</h3><span class="slide-no">4/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Workflow / compound AI system</th>
+<th>Agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A small part of a larger system</td>
+<td>Logic and orchestration live in the program</td>
+<td>Control flow is the AI model's job</td>
+</tr>
+<tr>
+<td>e.g. GPT-6 Sol, Claude Fable 5.1</td>
+<td>e.g. email categorizer, news feed summarizer</td>
+<td>e.g. customer service agent, coding agent</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Contract example: "extract the cap, then check it" is a workflow. "Review this data room" is an agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Predictability vs agency</h3><span class="slide-no">5/75</span></div><ul>
+<li>Chart (LangChain): y-axis predictability, x-axis agency.<ul>
+<li>Workflows sit top-left: high predictability, low agency.</li>
+<li>Agents sit bottom-right: the curve drops sharply as agency grows.</li>
+</ul>
+</li>
+<li>Workflows are more predictable: the control flow is in the program logic.</li>
+<li>Agents are more adaptable: the control flow is in the LLM's decisions.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Workflows vs agents (example graphs)</h3><span class="slide-no">6/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Workflow graph</th>
+<th>Agent graph</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>start → extract → pick_emoji → add_to_calendar → end</td>
+<td>start → model ⇄ tools; model → end</td>
+</tr>
+<tr>
+<td>A dotted edge from extract can skip straight to end</td>
+<td>The model decides each turn: call a tool or stop</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Same graph tools (LangGraph, module 07) draw both.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Workflows vs agents (table)</h3><span class="slide-no">7/75</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th></th>
@@ -273,85 +361,79 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tr>
 <tr>
 <td>Adaptation</td>
-<td>Fixed branches, routes, loops</td>
+<td>Fixed (programmed) branches, routes, loops</td>
 <td>Chooses next step from observations</td>
 </tr>
 <tr>
 <td>Best fit</td>
 <td>Clear, repeatable structure</td>
-<td>Exploration, flexible decisions</td>
+<td>Exploration and flexible decisions</td>
 </tr>
 <tr>
 <td>Example</td>
 <td>Classify ticket → retrieve policy → draft reply</td>
-<td>Resolve ticket using tools</td>
+<td>Resolve ticket using tools to investigate</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Real systems often combine both.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Five workflow patterns</h3><span class="slide-no">3/12</span></div><div class="tbl"><table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>What it does</th>
-<th>Contract example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Prompt chaining</td>
-<td>Fixed steps, checks between</td>
-<td>Extract cap → check → flag</td>
-</tr>
-<tr>
-<td>Routing</td>
-<td>Classify, send to the right handler</td>
-<td>Easy clause → code; odd one → model</td>
-</tr>
-<tr>
-<td>Parallelization</td>
-<td>Independent work at once, or voting</td>
-<td>All 4 playbook rules at once</td>
-</tr>
-<tr>
-<td>Orchestrator-workers</td>
-<td>One LLM creates subtasks at runtime</td>
-<td>Review unknown documents</td>
-</tr>
-<tr>
-<td>Evaluator-optimizer</td>
-<td>Generate, critique, revise</td>
-<td>Draft a redline, check, fix</td>
-</tr>
-</tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Prompt chaining in code</h3><span class="slide-no">4/12</span></div><pre><code class="language-python">cap = structured(f&quot;{s['text']}\n\nExtract the cap in months of fees (null if unlimited) and quote the sentence.&quot;, Cap)   # step 1: LLM
+<li>Real systems often combine workflows and agents.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Workflow Design Patterns</div><div class="slide"><div class="slide-top"><h3>Anthropic&#x27;s workflow taxonomy</h3><span class="slide-no">8/75</span></div><ul>
+<li>Source: Anthropic, "Building Effective Agents" (anthropic.com/engineering/building-effective-agents).</li>
+<li>Prompt chaining: break the problem into smaller steps.</li>
+<li>Routing: send the task to the right LLM.</li>
+<li>Parallelization: split the work across several threads.</li>
+<li>Orchestrator-workers: find subtasks, send workers to do them.</li>
+<li>Evaluator-optimizer: generate, critique, iterate on the output.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Prompt chaining</h3><span class="slide-no">9/75</span></div><pre><code>In → LLM call 1 → Gate ─pass→ LLM call 2 → LLM call 3 → Out
+                       └fail→ Exit
+</code></pre>
+<ul>
+<li>Split a larger task into a series of smaller steps.</li>
+<li>Gate: a check between steps; on fail, stop early.</li>
+<li>Trades latency for accuracy.</li>
+<li>Use when a task is complicated and gains from being split.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Prompt chaining in code</h3><span class="slide-no">10/75</span></div><pre><code class="language-python">cap = structured(f&quot;{s['text']}\n\nExtract the cap in months of fees (null if unlimited) and quote the sentence.&quot;, Cap)   # step 1: LLM
 if not quote_is_in_doc(cap.quote, contract(cid)):                                                                     # gate: code
     return {&quot;status&quot;: &quot;HOLD&quot;, &quot;why&quot;: &quot;quote not found in contract&quot;}
 ok = cap.months is not None and cap.months &lt;= PB[&quot;max_cap_months&quot;]                                                    # step 2: rule in code
 return {&quot;status&quot;: &quot;OK&quot; if ok else &quot;ISSUE&quot;, &quot;months&quot;: cap.months}
 </code></pre>
 <ul>
-<li>Line 1: the model extracts the cap and quotes it.</li>
-<li>Lines 2–3: quote not in the contract → HOLD for a person.</li>
+<li>Line 1: the model extracts the cap and quotes the sentence.</li>
+<li>Lines 2–3: the gate. Quote not in the contract → HOLD for a person.</li>
 <li>Line 4: the 12-month rule, in code. No cap counts as not OK.</li>
 <li>Line 5: OK or ISSUE. The notebook's check expects ISSUE on msa_07 (24 months).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Routing and parallelization</h3><span class="slide-no">5/12</span></div><ul>
-<li>Routing: classify the input first, then send it to the right handler. Saves time and money.<ul>
-<li>Notebook: a regex finds "State of ..." → code answers, no model call. Otherwise → model.</li>
-</ul>
-</li>
-<li>Sectioning: split independent work and run it together.<ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Routing</h3><span class="slide-no">11/75</span></div><pre><code>In → LLM router → LLM call 1 / LLM call 2 / LLM call 3 → Out
+</code></pre>
+<ul>
+<li>Classify the input, then send it to the right LLM (different model or prompt per case).</li>
+<li>Helps when a complex task has several categories that are best handled differently.</li>
+<li>Saves money and time: a weaker model for easier cases.</li>
+<li>Notebook: a regex finds "State of ..." → code answers, no model call. No match → model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Parallelization</h3><span class="slide-no">12/75</span></div><pre><code>In → LLM call 1 / 2 / 3 (at once) → Aggregator → Out
+</code></pre>
+<ul>
+<li>Sectioning: split independent work and run it in parallel (e.g. flag a query safe/unsafe while also answering it).</li>
+<li>Voting: inference-time scaling. Run the same input several times; the aggregator decides.</li>
+<li>Each call can focus on one aspect.</li>
 <li>Notebook: 4 playbook rules on msa_15 in parallel threads. Truth: liability_cap and governing_law fail.</li>
-</ul>
-</li>
-<li>Voting: run the same input several times; an aggregator decides.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Evaluator-optimizer</h3><span class="slide-no">6/12</span></div><ul>
-<li>One LLM generates; another step gives feedback; repeat.</li>
-<li>Two conditions: (1) clear, stateable feedback; (2) something able to give it.</li>
-<li>Notebook: rewrite msa_08's cap (36 months). Code reads the new text, finds every "N months," checks the largest ≤ 12.</li>
-<li>Feedback is specific: "the text says {N} months; the playbook max is 12."</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Who should check: the model or code?</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Orchestrator-workers</h3><span class="slide-no">13/75</span></div><pre><code>In → Orchestrator → LLM call 1 / 2 / 3 → Synthesizer → Out
+</code></pre>
+<ul>
+<li>One LLM breaks the task down at runtime and hands parts to worker LLMs.</li>
+<li>Use when you can't predict the kind or number of subtasks.</li>
+<li>Like parallelization, but the subtasks are created on the fly.</li>
+<li>Contract example: a data room with unknown documents. A fixed playbook check doesn't need it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Evaluator-optimizer</h3><span class="slide-no">14/75</span></div><pre><code>In → Generator ─solution→ Evaluator ─accepted→ Out
+         ↑───rejected + feedback───┘
+</code></pre>
+<ul>
+<li>One LLM generates; another evaluates and gives feedback, in a loop.</li>
+<li>Two necessary conditions: (1) clear, stateable feedback; (2) something able to give it.</li>
+<li>Also needed: the generator can improve from the feedback.</li>
+<li>Notebook: rewrite msa_08's 36-month cap. Code reads the new text, finds every "N months", checks the largest ≤ 12.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Who should check: the model or code?</h3><span class="slide-no">15/75</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>LLM checker</th>
@@ -361,18 +443,207 @@ return {&quot;status&quot;: &quot;OK&quot; if ok else &quot;ISSUE&quot;, &quot;m
 <tbody>
 <tr>
 <td>"Does the clause meet the playbook? Answer YES or NO only."</td>
-<td>Regex finds "N months" / "N years", checks max ≤ 12</td>
+<td>Regex finds "N months" / "N years", checks the max ≤ 12</td>
 </tr>
 <tr>
-<td>A model judging, with no outside signal</td>
+<td>A model judging with no outside signal</td>
 <td>Reads the draft text itself, same answer every time</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Asking an LLM to judge its own responses can lower performance.</li>
-<li>CRITIC: a checker that uses tools (search, code) scored about 75 vs 67 F1 without.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Four agent patterns</h3><span class="slide-no">8/12</span></div><div class="tbl"><table>
+<li>Notebook feedback is specific: "the text says {N} months; the playbook max is 12."</li>
+<li>The checker reads the draft text, not the model's own claim (<code>d.months</code>).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Composition of workflow patterns</h3><span class="slide-no">16/75</span></div><ul>
+<li>Real systems are compositions of these basic patterns.</li>
+<li>Two examples from the lecture: STORM (writing) and Archon (inference-time search).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example: STORM, the task</h3><span class="slide-no">17/75</span></div><ul>
+<li>STORM (Shao et al., 2024): writes a Wikipedia-style article on a topic from scratch.</li>
+<li>Input: "I'd like to know more about: 2024 Hualien City earthquake."</li>
+<li>Output: a table of contents (background, the earthquake, impact, response, aftermath) and a full cited article.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example: STORM, the pipeline</h3><span class="slide-no">18/75</span></div><ul>
+<li>① Survey related articles on topic t.</li>
+<li>② Identify perspectives (several writer personas).</li>
+<li>③ Read &amp; ask: a Wikipedia-writer agent asks questions to an expert agent.</li>
+<li>④ Split queries, ⑤ search &amp; sift, ⑥ synthesize: the expert answers from trusted sources.</li>
+<li>Gather all conversations; ⑦ direct-generate a draft outline; ⑧ refine into the final outline, with references.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>STORM as composed patterns</h3><span class="slide-no">19/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Part of STORM</th>
+<th>Pattern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Survey → draft outline</td>
+<td>Prompt chaining</td>
+</tr>
+<tr>
+<td>Writer asks, expert answers, repeat</td>
+<td>Roughly evaluator-optimizer</td>
+</tr>
+<tr>
+<td>Several perspectives each run a conversation</td>
+<td>Orchestrator-workers (close to parallelization here)</td>
+</tr>
+<tr>
+<td>Gather conversations, refine outline</td>
+<td>Parallelization + aggregation</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>STORM results</h3><span class="slide-no">20/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>ROUGE-1</th>
+<th>ROUGE-L</th>
+<th>Entity recall</th>
+<th>Interest</th>
+<th>Organization</th>
+<th>Relevance</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Direct Gen</td>
+<td>25.62</td>
+<td>12.63</td>
+<td>5.08</td>
+<td>2.87</td>
+<td>4.60</td>
+<td>3.10</td>
+<td>4.16</td>
+</tr>
+<tr>
+<td>RAG</td>
+<td>28.52</td>
+<td>13.18</td>
+<td>7.57</td>
+<td>3.14</td>
+<td>4.22</td>
+<td>3.05</td>
+<td>4.08</td>
+</tr>
+<tr>
+<td>oRAG</td>
+<td>44.26</td>
+<td>16.51</td>
+<td>12.57</td>
+<td>3.90</td>
+<td>4.79</td>
+<td>4.09</td>
+<td>4.70</td>
+</tr>
+<tr>
+<td>STORM</td>
+<td>45.82</td>
+<td>16.70</td>
+<td>14.10</td>
+<td>3.99</td>
+<td>4.82</td>
+<td>4.45</td>
+<td>4.88</td>
+</tr>
+<tr>
+<td>STORM w/o outline stage</td>
+<td>26.77</td>
+<td>12.77</td>
+<td>7.39</td>
+<td>3.33</td>
+<td>4.87</td>
+<td>3.35</td>
+<td>4.37</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>ROUGE / entity recall: overlap with human-written articles. Rubric grading: 1–5 scale.</li>
+<li>Dropping the outline stage loses most of the gain: each piece of the composition matters.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Archon: architecture search over inference-time techniques</h3><span class="slide-no">21/75</span></div><ul>
+<li>Archon (Saad-Falcon et al., 2024): searches for the best way to combine LLM calls.</li>
+<li>Inputs: target benchmarks, an inference-call budget, available LLMs, available techniques.</li>
+<li>Optimizer: Bayesian optimization proposes an architecture, scores it on sample benchmark results, repeats.</li>
+<li>Output: an optimized stack of layers (e.g. generators → critic → ranker → fuser).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Archon&#x27;s building blocks</h3><span class="slide-no">22/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Technique</th>
+<th>What it does</th>
+<th>Cost</th>
+<th>Domains</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Generator</td>
+<td>Writes a candidate response from the prompt</td>
+<td>1 call per candidate</td>
+<td>All</td>
+</tr>
+<tr>
+<td>Fuser</td>
+<td>Merges several candidates into one</td>
+<td>1 call per output</td>
+<td>All</td>
+</tr>
+<tr>
+<td>Critic</td>
+<td>Lists strengths/weaknesses of each candidate</td>
+<td>1 call</td>
+<td>All</td>
+</tr>
+<tr>
+<td>Ranker</td>
+<td>Returns the top-K candidates</td>
+<td>1 call</td>
+<td>All</td>
+</tr>
+<tr>
+<td>Verifier</td>
+<td>Keeps candidates whose reasoning checks out</td>
+<td>2 calls per candidate</td>
+<td>Reasoning</td>
+</tr>
+<tr>
+<td>Unit test generator</td>
+<td>Writes unit tests for the prompt</td>
+<td>1 call</td>
+<td>Reasoning</td>
+</tr>
+<tr>
+<td>Unit test evaluator</td>
+<td>Scores each candidate with those tests</td>
+<td>1 call per candidate</td>
+<td>Reasoning</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Archon&#x27;s architecture for math</h3><span class="slide-no">23/75</span></div><ul>
+<li>Found by search; worked across the MATH benchmarks explored.</li>
+<li>Layer 1: 4 generators (GPT-4o, Llama 3.1 405B, Qwen 2.5 72B, Wizard 8x22B), n = 5 samples each.</li>
+<li>Then: critic (Claude 3.5 Sonnet) → ranker (Claude 3.5 Sonnet).</li>
+<li>Then: 4 fusers (same four models) → verifier (GPT-4o) → final fuser (Claude 3.5 Sonnet).</li>
+<li>It is parallelization + evaluator steps + aggregation, stacked.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Archon scales with budget</h3><span class="slide-no">24/75</span></div><ul>
+<li>Chart: average score on ArenaHardAuto, MATH, CodeContests vs max input/output token budget (10K–100K).</li>
+<li>Archon: about 52–53% at 10K, about 69% at 50K, about 76% at 100K. Highest from 25K on.</li>
+<li>ADAS and AFlow (other search methods) level off around 63–65%.</li>
+<li>Flat lines for reference: MoA about 61%, o1 about 68–69%.</li>
+<li>Archon passes o1 around the 50K budget.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Workflow recap</h3><span class="slide-no">25/75</span></div><ul>
+<li>Workflows are simpler to reproduce and debug than agents.</li>
+<li>Five common patterns: prompt chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer.</li>
+<li>Real workflows are usually larger compositions of these pieces.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Agent Design Patterns: Reasoning/Acting</div><div class="slide"><div class="slide-top"><h3>Agents: design how the LLM reasons</h3><span class="slide-no">26/75</span></div><pre><code>Human ⇢ LLM call ─action→ Environment
+            ↑──feedback────┘
+            ⇣ stop
+</code></pre>
+<ul>
+<li>Beyond the tools, we design <em>how</em> the LLM reasons and interacts with the environment.</li>
+<li>Four ideas follow, each with one key insight.</li>
+</ul>
+<div class="tbl"><table>
 <thead>
 <tr>
 <th>Pattern</th>
@@ -386,7 +657,7 @@ return {&quot;status&quot;: &quot;OK&quot; if ok else &quot;ISSUE&quot;, &quot;m
 </tr>
 <tr>
 <td>Reflexion</td>
-<td>Turn feedback from the environment into a short lesson, retry with it</td>
+<td>Self-reflection is useful</td>
 </tr>
 <tr>
 <td>CodeAct</td>
@@ -394,10 +665,214 @@ return {&quot;status&quot;: &quot;OK&quot; if ok else &quot;ISSUE&quot;, &quot;m
 </tr>
 <tr>
 <td>ReWOO / LLMCompiler</td>
-<td>Plan first, then execute; turns agent work back into a workflow</td>
+<td>Planning turns agent action back into a workflow</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>JSON actions vs code actions</h3><span class="slide-no">9/12</span></div><div class="tbl"><table>
+</table></div></div><div class="slide"><div class="slide-top"><h3>ReAct (Yao et al., 2023): reason + act</h3><span class="slide-no">27/75</span></div><ul>
+<li>Question (HotpotQA): "Aside from the Apple Remote, what other device can control the program Apple Remote was originally designed to interact with?"</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>What happens</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard</td>
+<td>Answers "iPod"</td>
+<td>Wrong</td>
+</tr>
+<tr>
+<td>CoT (reason only)</td>
+<td>Reasons from memory: "Apple TV… iPhone, iPad, iPod Touch"</td>
+<td>Wrong</td>
+</tr>
+<tr>
+<td>Act only</td>
+<td>Searches, but never thinks; finishes with "yes"</td>
+<td>Wrong</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>Thought → Search[Apple Remote] → Front Row → Search[Front Row (software)] → "keyboard function keys"</td>
+<td>Right</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>ReAct: fine-tuning for agents</h3><span class="slide-no">28/75</span></div><ul>
+<li>Chart: HotpotQA exact match (EM) by model size (8B, 62B, 540B), prompting vs fine-tuning.</li>
+<li>Prompting, 8B: ReAct about 5, worse than standard (about 16).</li>
+<li>Prompting, 540B: all four methods about 26–29.</li>
+<li>Fine-tuned, 62B: ReAct about 33, best of all; Act about 31.</li>
+<li>The paper found you need fine-tuning for best results. Now fine-tuning models to act as agents is common in post-training.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ReAct: importance of reasoning</h3><span class="slide-no">29/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Prompt method (PaLM-540B)</th>
+<th>HotpotQA (EM)</th>
+<th>Fever (accuracy)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Act</td>
+<td>25.7</td>
+<td>58.9</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>27.4</td>
+<td>60.9</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Thinking before acting helps on both tasks.</li>
+<li>Thoughts before actions are still very common today.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reflexion (Shinn et al., 2023): the algorithm</h3><span class="slide-no">30/75</span></div><ul>
+<li>Three LMs: Actor (acts), Evaluator (scores the try), Self-reflection (writes a lesson).</li>
+<li>Trajectory = short-term memory. Reflections = long-term memory ("experience").</li>
+<li>Loop: act → evaluate → reflect → append the reflection to memory → try again, until pass or max trials.</li>
+<li>Key insight: turn evaluations and reflections into "memory" (context) for the actor.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reflexion: example trajectories</h3><span class="slide-no">31/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Evaluation signal</th>
+<th>Reflection</th>
+<th>Next try</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Decision making: "clean some pan, put it on countertop"</td>
+<td>Rule/LM heuristic: hallucination</td>
+<td>"Pan was not in stoveburner 1"</td>
+<td>Takes pan from stoveburner 2; succeeds</td>
+</tr>
+<tr>
+<td>Programming: match parentheses</td>
+<td>Self-written unit tests fail</td>
+<td>"Only checks counts, not order"</td>
+<td>Checks order; returns correct answer</td>
+</tr>
+<tr>
+<td>Reasoning: Lanchester and Foster's shared profession</td>
+<td>Environment reward: 0</td>
+<td>"Wrongly assumed both had several professions"</td>
+<td>Answers "novelist"</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Reflexion: results</h3><span class="slide-no">32/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>HotpotQA success (chart)</th>
+<th>Start</th>
+<th>After trials</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CoT only / ReAct only</td>
+<td>about 0.32–0.34</td>
+<td>flat</td>
+</tr>
+<tr>
+<td>CoT + Reflexion</td>
+<td>about 0.32</td>
+<td>about 0.40 by trial 2, then flat</td>
+</tr>
+<tr>
+<td>ReAct + Reflexion</td>
+<td>about 0.32</td>
+<td>about 0.54 by trial 5</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Second chart (episodic memory): CoT (GT) only stays about 0.61; adding past trajectories (EPM) reaches about 0.66; EPM + Reflexion reaches about 0.74.</li>
+<li>It's the written reflection that helps, not just replaying past tries.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations of self-reflection</h3><span class="slide-no">33/75</span></div><ul>
+<li>Huang et al. (Google DeepMind, 2024), "Large Language Models Cannot Self-Correct Reasoning Yet."</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>GPT-4-Turbo</th>
+<th>Calls</th>
+<th>GSM8K</th>
+<th>CommonSenseQA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard prompting</td>
+<td>1</td>
+<td>91.5</td>
+<td>84.0</td>
+</tr>
+<tr>
+<td>"Assume it could be wrong; report problems", round 1 / 2</td>
+<td>3 / 5</td>
+<td>88.0 / 90.0</td>
+<td>81.5 / 83.0</td>
+</tr>
+<tr>
+<td>"Review your answer; find problems", round 1 / 2</td>
+<td>3 / 5</td>
+<td>90.0 / 90.0</td>
+<td>74.5 / 81.0</td>
+</tr>
+<tr>
+<td>"Verify your answer, explain", round 1 / 2</td>
+<td>3 / 5</td>
+<td>91.0 / 91.0</td>
+<td>81.5 / 83.5</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Asking an LLM to judge its own answers lowered scores in every row.</li>
+<li>Reflexion avoids this by using outside feedback from the environment.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Self-reflection today</h3><span class="slide-no">34/75</span></div><ul>
+<li>The Huang finding predates reasoning models, which self-correct well while reasoning.</li>
+<li>Today, self-reflection is usually built into the model's reasoning, not forced by the harness.</li>
+<li>Contract example: the model checking "is my 12-month answer right?" adds little. A code check against the contract text adds a real signal.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CRITIC (Gou et al., 2024): give the verifier tools</h3><span class="slide-no">35/75</span></div><ul>
+<li>Loop: output → verify → critiques → correct → output.</li>
+<li>The verifier calls external tools: knowledge base (Wikipedia), code interpreter, calculator, text APIs, search engine.</li>
+<li>Chart, AmbigNQ (F1) over 3 iterations:<ul>
+<li>CRITIC (with tools): about 64 → about 75.</li>
+<li>CRITIC without tools: about 64 → about 67.</li>
+<li>CRITIC with an oracle: about 80. ReAct baseline: about 65.</li>
+</ul>
+</li>
+<li>Adding external tools to the verifier helps. Make the verifier an agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CodeAct (Wang et al., 2024): JSON actions</h3><span class="slide-no">36/75</span></div><ul>
+<li>Task: find the cheapest country (USA, Japan, Germany, India) to buy the phone "CodeAct 1".</li>
+<li>Tools: lookup_rates, lookup_phone_price, convert_and_tax, estimate_shipping_cost, estimate_final_price.</li>
+<li>With JSON actions, one tool call per turn: <code>{"tool": "lookup_rates", "country": "Germany"}</code> → 1.1, 0.19 → next call → ...</li>
+<li>Many turns, repeated for every country.</li>
+<li>Answer: Japan, 904.00 USD.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CodeAct: code actions</h3><span class="slide-no">37/75</span></div><pre><code class="language-python">for country in countries:
+    exchange_rate, tax_rate = lookup_rates(country)
+    ...
+most_cost_effective_country = min(final_prices, key=final_prices.get)
+</code></pre>
+<ul>
+<li>One action holds the whole loop over four countries.</li>
+<li>Control and data flow of code simplify complex operations.</li>
+<li>Reuses <code>min</code> from the Python library.</li>
+<li>Environment returns "Japan 904.0" in one turn.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CodeAct: more accurate and more efficient</h3><span class="slide-no">38/75</span></div><ul>
+<li>Chart: success rate and average turns for 8 models, code vs JSON vs text actions.</li>
+<li>gpt-4-1106-preview: about 74% success with code vs about 52% JSON; about 5.5 turns vs about 7.6.</li>
+<li>gpt-3.5-turbo-0613: about 51% with code vs about 27% JSON.</li>
+<li>Llama-2-70b-chat: about 11% with code vs about 4% JSON.</li>
+<li>Code as action: higher success and fewer turns.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>JSON actions vs code actions (our notebook)</h3><span class="slide-no">39/75</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>JSON tool call (ReAct)</th>
@@ -418,25 +893,508 @@ return {&quot;status&quot;: &quot;OK&quot; if ok else &quot;ISSUE&quot;, &quot;m
 <ul>
 <li>Question: "Which contract ids are governed by Texas, Florida or New York law?" Truth: msa_09, msa_10, msa_15.</li>
 <li>Runs in a restricted namespace: a toy sandbox. Real systems use containers.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Plan then execute</h3><span class="slide-no">10/12</span></div><ul>
-<li>One call writes the plan: a list of checks from a fixed menu (<code>Literal["liability_cap", "governing_law", "auto_renewal", "termination_notice"]</code>).</li>
-<li>Code runs each check.</li>
-<li>ReWOO: about 40–60% fewer tokens.</li>
-<li>Today, planning shows up mostly as parallel tool calls.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
-<li>Contract review has known steps. Most of it is chaining plus parallel checks.</li>
-<li>Each step asks the small local model one narrow question; code does the rest.</li>
-<li>Playbook rules live in code, so checks are exact and repeatable.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Planning then executing</h3><span class="slide-no">40/75</span></div><ul>
+<li>Key insight: planning turns the agent's actions back into a workflow.</li>
+<li>Plan all tool calls first; run them without asking the model after each step.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ReWOO (Xu et al., 2023): reasoning without observation</h3><span class="slide-no">41/75</span></div><ul>
+<li>Planner: writes the full plan with placeholders. <code>#E1 = Wikipedia[The Hennchata]</code>, <code>#E2 = LLM[main ingredient? Given #E1]</code>, <code>#E3 = Wikipedia[#E2]</code>, <code>#E4 = LLM[cognac house? Given #E3]</code>.</li>
+<li>Worker: runs each step, fills in the evidence.</li>
+<li>Solver: reads the plans plus evidence, gives the answer: "Jas Hennessy &amp; Co."</li>
+<li>The model is not called between tool steps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ReWOO: fewer tokens, higher accuracy</h3><span class="slide-no">42/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>ReAct</th>
+<th>ReWOO</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Curated</td>
+<td>about 0.65 accuracy, about 1,850 tokens</td>
+<td>about 0.70, about 1,050 tokens</td>
+</tr>
+<tr>
+<td>Public</td>
+<td>about 0.58, about 3,600 tokens</td>
+<td>about 0.61, about 1,300 tokens</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Read from the chart. Direct answers: about 0.53–0.55 with almost no tokens; CoT: about 0.60.</li>
+<li>Planning, then executing, gives higher accuracy with fewer tokens.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Plan then execute (our notebook)</h3><span class="slide-no">43/75</span></div><pre><code class="language-python">class Plan(BaseModel):
+    checks: list[Literal[&quot;liability_cap&quot;, &quot;governing_law&quot;, &quot;auto_renewal&quot;, &quot;termination_notice&quot;]]
+</code></pre>
+<ul>
+<li><code>Plan</code>: the plan's shape. A list of checks from a fixed menu.</li>
+<li><code>Literal[...]</code>: the model can only pick these four names.</li>
+<li>One call writes the plan; code runs <code>check_rule</code> for each check.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LLMCompiler (Kim et al., 2024)</h3><span class="slide-no">44/75</span></div><ul>
+<li>Question: "How much does Microsoft's market cap need to increase to exceed Apple's?"</li>
+<li>Function-calling planner writes a DAG (graph of tasks): <code>$1 = search(Microsoft)</code>, <code>$2 = search(Apple)</code>, <code>$3 = math($1 / $2)</code>, <code>$4 = llm($3)</code>.</li>
+<li>Task fetching unit sends ready tasks to the executor and resolves dependencies.</li>
+<li>Differences from ReWOO: parallel execution and dynamic replanning.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LLMCompiler vs ReAct</h3><span class="slide-no">45/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>ReAct</th>
+<th>LLMCompiler</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Thought → search(Scott Derrickson) → observe</td>
+<td>Plan: <code>$1 = search(Scott Derrickson)</code>, <code>$2 = search(Ed Wood)</code></td>
+</tr>
+<tr>
+<td>Thought → search(Ed Wood) → observe</td>
+<td>Both searches run in parallel</td>
+</tr>
+<tr>
+<td>Thought → finish(yes)</td>
+<td>One LLM step → finish(yes)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Question: "Were Scott Derrickson and Ed Wood of the same nationality?"</li>
+<li>Latency speedup: 1.8x.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LLMCompiler results</h3><span class="slide-no">46/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Method</th>
+<th>GPT acc.</th>
+<th>GPT latency (s)</th>
+<th>Speedup</th>
+<th>LLaMA-2 70B acc.</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HotpotQA</td>
+<td>ReAct†</td>
+<td>62.47</td>
+<td>7.12</td>
+<td>1.00x</td>
+<td>54.40</td>
+<td>1.00x</td>
+</tr>
+<tr>
+<td>HotpotQA</td>
+<td>LLMCompiler</td>
+<td>62.00</td>
+<td>3.95</td>
+<td>1.80x</td>
+<td>57.83</td>
+<td>1.40x</td>
+</tr>
+<tr>
+<td>Movie Rec.</td>
+<td>ReAct†</td>
+<td>72.47</td>
+<td>20.47</td>
+<td>1.00x</td>
+<td>70.60</td>
+<td>1.00x</td>
+</tr>
+<tr>
+<td>Movie Rec.</td>
+<td>LLMCompiler</td>
+<td>77.13</td>
+<td>5.47</td>
+<td>3.74x</td>
+<td>77.80</td>
+<td>2.82x</td>
+</tr>
+<tr>
+<td>ParallelQA</td>
+<td>ReAct</td>
+<td>89.09</td>
+<td>35.90</td>
+<td>1.00x</td>
+<td>59.59</td>
+<td>1.00x</td>
+</tr>
+<tr>
+<td>ParallelQA</td>
+<td>LLMCompiler</td>
+<td>89.38</td>
+<td>16.69</td>
+<td>2.15x</td>
+<td>68.14</td>
+<td>2.27x</td>
+</tr>
+<tr>
+<td>Game of 24</td>
+<td>Tree-of-Thoughts</td>
+<td>74.00</td>
+<td>241.2</td>
+<td>1.00x</td>
+<td>30.00</td>
+<td>1.00x</td>
+</tr>
+<tr>
+<td>Game of 24</td>
+<td>LLMCompiler</td>
+<td>75.33</td>
+<td>83.6</td>
+<td>2.89x</td>
+<td>32.00</td>
+<td>2.09x</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>OpenAI parallel function calling sat in between (e.g. HotpotQA 4.42 s, 1.61x).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reasoning/acting recap</h3><span class="slide-no">47/75</span></div><ul>
+<li>ReAct: reasoning before acting is useful.</li>
+<li>Reflexion: self-reflection is now part of the model's reasoning.</li>
+<li>CodeAct: code is a good form for actions.</li>
+<li>ReWOO / LLMCompiler: today this is mostly parallel tool calls. Planning still matters.<ul>
+<li>Workflows are still sometimes used to orchestrate sub-agents.</li>
+</ul>
+</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Agent Design Patterns: Context</div><div class="slide"><div class="slide-top"><h3>Agents: the context manager</h3><span class="slide-no">48/75</span></div><pre><code>Human ⇢ [ Context manager ( LLM call ) ] ─action→ Environment
+                    ↑──────feedback─────────┘
+</code></pre>
+<ul>
+<li>Context manager: the code that decides what goes into each LLM call.</li>
+<li>It sits around the LLM call, inside the agent loop.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Prompt engineering vs context engineering</h3><span class="slide-no">49/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Prompt engineering (single turn)</th>
+<th>Context engineering (agents)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Context window holds a system prompt and a user message</td>
+<td>Many possible inputs: docs, tools, memory files, instructions, domain knowledge, message history</td>
+</tr>
+<tr>
+<td>One answer comes back</td>
+<td>Curation picks what fits in the window each turn; tool results feed back into history</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Source: Anthropic, "Effective context engineering for AI agents."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why focus matters: needle in a haystack</h3><span class="slide-no">50/75</span></div><ul>
+<li>Test: hide a fact in a document; ask Claude 2.1 (200K window) to retrieve it.</li>
+<li>Run at 35 document depths × 35 context lengths (1K to 200K tokens); GPT-4 graded the answers.</li>
+<li>Heatmap: almost all green (correct) at short lengths; more and more red (missed) as length grows.</li>
+<li>Retrieval accuracy dropped as the context got longer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context engineering: two principles</h3><span class="slide-no">51/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Focus the context</th>
+<th>Preserve continuity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Keep only what the task needs in the window</td>
+<td>Keep requirements, goals, constraints and progress across turns</td>
+</tr>
+<tr>
+<td>The whole history does not need to be there</td>
+<td>In practice, also preserve the KV cache (the model's saved work on the prompt prefix)</td>
+</tr>
+<tr>
+<td>Too much information is context bloat</td>
+<td></td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Five context patterns</h3><span class="slide-no">52/75</span></div><ul>
+<li>Persistent event log: rebuild the context from the system's events.</li>
+<li>Memory offloading: store knowledge in memory so the context can be pruned.</li>
+<li>Compaction: summarize earlier context into a short description.</li>
+<li>Observation masking: hide or cut old tool outputs.</li>
+<li>Context isolation: sub-agents for specific tasks; each sees only what it needs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Persistent event log: OpenHands</h3><span class="slide-no">53/75</span></div><ul>
+<li>Event stream: every action and observation, in order (user message, run code, file created, run server, browse page, ...).</li>
+<li>Agent: event history → new action. Runtime: action → observation (Docker sandbox with Python, bash, browser).</li>
+<li>Abstraction: event stream = list of actions and observations.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Event log → LLM input</h3><span class="slide-no">54/75</span></div><pre><code>Event list → filter LLM-convertible events → group action events by llm_response_id → convert to messages → LLM input
+</code></pre>
+<ul>
+<li>Everything is kept exactly as it happened, even if the LLM input must change. The log can be append-only.</li>
+<li>Every LLM call rebuilds its input from the log.</li>
+<li>Outside observers can hook into the log to monitor the system.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Memory offloading: MemGPT</h3><span class="slide-no">55/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Write to memory</th>
+<th>Read from memory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User: "my bf james baked me a birthday cake"</td>
+<td>User: "yeah we went to six flags!"</td>
+</tr>
+<tr>
+<td>System alert: memory pressure</td>
+<td><code>recall_storage.search("six flags")</code> → 3 old messages</td>
+</tr>
+<tr>
+<td><code>working_context.append("Birthday is February 7")</code>, <code>("Boyfriend named James")</code></td>
+<td>Agent: "Did you go with James? It's so cute how you both met there!"</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>MemGPT (Packer et al., 2023): storing facts in memory or files frees parts of the context to prune.</li>
+<li>Module 08 covers memory in depth.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Compaction</h3><span class="slide-no">56/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Raw agent</th>
+<th>LLM summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>System prompt, user prompt</td>
+<td>System prompt, user prompt</td>
+</tr>
+<tr>
+<td>Reasoning 1, action 1, observation 1</td>
+<td>Summary 1 (of turns 1–2)</td>
+</tr>
+<tr>
+<td>Reasoning 2, action 2, observation 2</td>
+<td></td>
+</tr>
+<tr>
+<td>Reasoning 3, action 3, observation 3</td>
+<td>Reasoning 3, action 3, observation 3</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Have the LLM summarize earlier reasoning, actions and observations.</li>
+<li>Fewer tokens for the same history.</li>
+<li>The compaction step itself can be an agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Observation masking: where the tokens go</h3><span class="slide-no">57/75</span></div><ul>
+<li>Pie chart (raw coding agent, Lindenbauer et al., 2025): observations 83.9%, reasoning 9.6%, actions 6.5% of tokens.</li>
+<li>Tool outputs are most of the context.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Observation masking: how it works</h3><span class="slide-no">58/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Raw agent</th>
+<th>Observation masking</th>
+<th>LLM summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Keep everything</td>
+<td>Keep reasoning and actions; replace old observations with a short mask</td>
+<td>Replace old turns with one summary</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Instead of an LLM summary, cut old observations.</li>
+<li>Especially useful for coding agents, where observations can be very long.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Observation masking: results</h3><span class="slide-no">59/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model (chart)</th>
+<th>Raw agent</th>
+<th>Observation masking</th>
+<th>LLM summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gemini 2.5 Flash</td>
+<td>about 33% at about $0.42</td>
+<td>about 35–36% at about $0.18</td>
+<td>about 36% at about $0.25</td>
+</tr>
+<tr>
+<td>Gemini 2.5 Flash (thinking)</td>
+<td>about 40% at about $0.56</td>
+<td>about 36–37% at about $0.24</td>
+<td>about 31–32% at about $0.25</td>
+</tr>
+<tr>
+<td>Qwen3-Coder 480B</td>
+<td>about 53–54% at about $1.29</td>
+<td>about 55% at about $0.61</td>
+<td>about 54% at about $0.64</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Solve rate vs cost per task. Masking cut cost about in half; solve rate held or rose in 2 of 3 models.</li>
+<li>A simple cut can match an LLM summary.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context isolation</h3><span class="slide-no">60/75</span></div><ul>
+<li>A planner sends work to Agent 1 and Agent 2; each has its own context window.</li>
+<li>Parallelize work with isolated context windows.</li>
+<li>Each sub-agent sees only what its task needs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context isolation: progressive disclosure</h3><span class="slide-no">61/75</span></div><ul>
+<li>You don't need every tool and document in the first prompt. Reveal them when needed.</li>
+<li>Example: a skill file, <code>pdf/SKILL.md</code>.<ul>
+<li>YAML front matter: <code>name: pdf</code>, a one-line description. Always loaded.</li>
+<li>Markdown body: how-to and code. Read only when the task needs PDFs.</li>
+<li>Further files (<code>./reference.md</code>, <code>./forms.md</code>) loaded only if needed.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Patterns combine</h3><span class="slide-no">62/75</span></div><ul>
+<li>These strategies are all compatible.</li>
+<li>Offload knowledge to memory, then compact the context.</li>
+<li>Build the context from an event log and also truncate observations.</li>
+<li>Real systems combine many or all of them.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context management taxonomy (LangChain)</h3><span class="slide-no">63/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Select</th>
+<th>Compress</th>
+<th>Isolate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Long-term memories (across sessions)</td>
+<td>Retrieve relevant tools</td>
+<td>Summarize to keep relevant tokens</td>
+<td>Partition context in state</td>
+</tr>
+<tr>
+<td>Scratchpad (within a session)</td>
+<td>Retrieve from scratchpad</td>
+<td>Trim to remove irrelevant tokens</td>
+<td>Hold in environment / sandbox</td>
+</tr>
+<tr>
+<td>State (within a session)</td>
+<td>Retrieve long-term memory</td>
+<td></td>
+<td>Partition across multi-agent</td>
+</tr>
+<tr>
+<td></td>
+<td>Retrieve relevant knowledge</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Long-term memory → module 08 (memory). Multi-agent partitioning → module 09.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context recap</h3><span class="slide-no">64/75</span></div><ul>
+<li>Event logs, memory, compaction, observation masking and context isolation are key context patterns.</li>
+<li>Real systems combine them.</li>
+<li>Two principles drive them: keep the context focused, and preserve continuity.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Case Study: Pi</div><div class="slide"><div class="slide-top"><h3>Pi: design philosophy</h3><span class="slide-no">65/75</span></div><ul>
+<li>"Pi is a minimal agent harness. Adapt Pi to your workflows, not the other way around."</li>
+<li>Very basic; people build many extensions on top to add features of mainstream harnesses.</li>
+<li>What Pi lacks: no sub-agents, no permission checks, no plan mode, no agent to-do lists, no bash in the background.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pi tools</h3><span class="slide-no">66/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Built-in</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>read</td>
+<td>Read text files and supported images</td>
+</tr>
+<tr>
+<td>bash</td>
+<td>Run shell commands</td>
+</tr>
+<tr>
+<td>powershell</td>
+<td>Run PowerShell commands on Windows</td>
+</tr>
+<tr>
+<td>edit</td>
+<td>Apply exact text replacements to a file</td>
+</tr>
+<tr>
+<td>write</td>
+<td>Create or overwrite a file</td>
+</tr>
+<tr>
+<td>grep / find / ls</td>
+<td>Search contents / find paths by glob / list a directory</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Only read, bash, edit and write are on by default. Minimal tool bloat.</li>
+<li>All other tools are subsets of bash.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pi agent loop</h3><span class="slide-no">67/75</span></div><ul>
+<li>ReAct-style: reason before acting, with JSON tool calls.</li>
+<li>Context is a tree, not a list: go back to an earlier message and branch to a different thread.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pi context management</h3><span class="slide-no">68/75</span></div><ul>
+<li>Uses three patterns from this lesson:</li>
+<li>Event log → LLM input conversion.</li>
+<li>Progressive disclosure through skill files.</li>
+<li>Compaction.</li>
+<li>What the LLM sees: <code>system | summary | usr | ass | tool | tool | ass | tool</code>.<ul>
+<li>system: the prompt. summary: from compaction. The rest: messages kept since the cut point (<code>firstKeptEntryId</code>).</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pi safety</h3><span class="slide-no">69/75</span></div><ul>
+<li>Pi runs with the same permissions as its process.</li>
+<li>No pop-ups asking for permission.</li>
+<li>Treat it as always on auto-mode with no protections.</li>
+<li>Module 13 covers guardrails.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pi recap</h3><span class="slide-no">70/75</span></div><ul>
+<li>Minimalist harness; the community has built many extensions.</li>
+<li>Default tools: bash, read, write, edit.</li>
+<li>ReAct-style agent.</li>
+<li>Context: event log, progressive disclosure, compaction.</li>
+<li>No safeguards built in.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Contract review is mostly a workflow</h3><span class="slide-no">71/75</span></div><ul>
+<li>The steps are known: find the clause, extract the term, check the rule, flag or draft.</li>
+<li>So most of it is chaining plus parallel checks. No orchestrator needed.</li>
+<li>Routing sends easy clauses ("State of Delaware") to code and only odd ones to the model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Narrow questions for a small local model</h3><span class="slide-no">72/75</span></div><ul>
+<li>Each step asks the local model one narrow question; code does the rest.</li>
+<li>Plan then execute: one planning call, then fixed steps. Fewer open decisions and fewer tokens.</li>
+<li>LLMCompiler's numbers held on an open model too (LLaMA-2 70B ran 1.4x–2.8x faster).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Checkers that use outside signals</h3><span class="slide-no">73/75</span></div><ul>
+<li>Playbook rules live in code: exact and repeatable.</li>
+<li>The code checker reads the draft text, like CRITIC's tool-using verifier.</li>
+<li>Don't ask the same small model "is this good?": Huang et al. showed that lowers scores.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context on a firm&#x27;s own machine</h3><span class="slide-no">74/75</span></div><ul>
+<li>Local models have smaller windows; focus matters more.</li>
+<li>Mask old tool outputs (whole contract texts) once a clause is extracted.</li>
+<li>Keep an append-only event log of every step: an audit trail for the firm.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">75/75</span></div><ul>
 <li>Checker = same model asking "is this good?" → use code, rules or tools.</li>
 <li>Orchestrator-workers for known steps → if you can list the steps, write a chain.</li>
 <li>Starting complex → begin with a chain; add patterns when your eval shows a gain.</li>
 <li>Checking the model's claim (<code>d.months</code>) → check the draft text itself.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>When does an evaluator-optimizer loop help?</summary><p>When the feedback can be stated clearly, something can give it reliably (tests, rules, a tool), and the generator can act on it.</p></details>
+<li>Keeping every tool output in context → mask or compact old observations.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>When does an evaluator-optimizer loop help?</summary><p>When feedback can be stated clearly, something can give it reliably (tests, rules, a tool), and the generator can act on it.</p></details>
 
 <details><summary>Why does the chain put a contract on HOLD instead of guessing?</summary><p>The model&#x27;s quote wasn&#x27;t found in the contract, a sign the answer may be wrong, so a person looks.</p></details>
 
-<details><summary>How does plan then execute help a small local model?</summary><p>One planning call, then fixed steps run by code. Fewer open decisions and fewer tokens.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>Reflexion and the Huang et al. study both ask a model to reflect. Why does one help and the other hurt?</summary><p>Reflexion reflects on outside feedback (test results, environment reward). Huang et al. asked the model to judge itself with no outside signal, and scores dropped.</p></details>
+
+<details><summary>Why do code actions take fewer turns than JSON actions?</summary><p>One code snippet can loop, store values and call `min`, so it does many tool calls in one turn. JSON allows one call per turn.</p></details>
+
+<details><summary>How do ReWOO and LLMCompiler differ?</summary><p>Both plan first. LLMCompiler also runs independent steps in parallel and can replan.</p></details>
+
+<details><summary>What is the difference between compaction and observation masking?</summary><p>Compaction has an LLM summarize old turns. Masking just cuts old tool outputs and keeps reasoning and actions.</p></details>
+
+<details><summary>Name the three context patterns Pi uses.</summary><p>Event log to LLM input, progressive disclosure through skill files, and compaction.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run the chain on msa_01, msa_07 and msa_16 and compare with the printed truth.</li>
 <li>Run the redline loop on msa_08 and see how many rounds it takes.</li>
 <li>In the solutions, count how many of the 3 known-bad drafts the LLM checker approves vs the code checker.</li>

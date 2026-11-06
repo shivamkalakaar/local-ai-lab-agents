@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Data and flywheels · Agent Engineering School</title>
-<meta name="description" content="Turn every run and every lawyer&#x27;s fix into data. Plant known faults, log traces, make corrections into tests now and training data later.">
+<meta name="description" content="What data makes a model a better agent, where it comes from, what to keep, and how a firm turns every run and fix into data.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,17 +259,131 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 12</span></div><section class="mod" id="m12" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 12</div><h2>Data and flywheels</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/12_data_flywheel.ipynb">Open in Colab</a><button class="done-btn" data-done="m12" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Turn every run and every lawyer&#x27;s fix into data. Plant known faults, log traces, make corrections into tests now and training data later.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lectures 11 and 12 · What Data Do Agents Need? · Data Selection &amp; Quality · <a href="https://web.stanford.edu/class/cs329z/slides/lecture11.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
-<li>Build labeled contract cases cheaply, log every run, and turn corrections into tests and checked training data.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why data matters</h3><span class="slide-no">2/12</span></div><ul>
-<li>Same base model, different post-training data: big difference in results.</li>
-<li>Making tasks and trajectories is now cheap. Deciding what to keep is the hard part.</li>
-<li>A firm rarely has hundreds of labeled contracts ready. We have to make them.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Two types of agent data</h3><span class="slide-no">3/12</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 12</span></div><section class="mod" id="m12" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 12</div><h2>Data and flywheels</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/12_data_flywheel.ipynb">Open in Colab</a><button class="done-btn" data-done="m12" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>40 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">What data makes a model a better agent, where it comes from, what to keep, and how a firm turns every run and fix into data.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lectures 11–12 · What Data Do Agents Need? · Data Selection &amp; Quality · <a href="https://web.stanford.edu/class/cs329z/slides/lecture11.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (119 slides)</b><ol><li><a href="#sec-1">Lecture 11 · Motivation</a> <span>8 slides</span></li><li><a href="#sec-2">Lecture 11 · Kinds of agent data</a> <span>6 slides</span></li><li><a href="#sec-3">Lecture 11 · Where agent data comes from</a> <span>26 slides</span></li><li><a href="#sec-4">Lecture 11 · What your data accidentally teaches</a> <span>16 slides</span></li><li><a href="#sec-5">Lecture 12 · Motivation</a> <span>5 slides</span></li><li><a href="#sec-6">Lecture 12 · Which tasks are worth training on?</a> <span>20 slides</span></li><li><a href="#sec-7">Lecture 12 · Which trajectories are worth imitating?</a> <span>12 slides</span></li><li><a href="#sec-8">Lecture 12 · More data, or better data?</a> <span>11 slides</span></li><li><a href="#sec-9">Lecture 12 · Takeaways</a> <span>3 slides</span></li><li><a href="#sec-10">In the notebook: our data flywheel</a> <span>5 slides</span></li><li><a href="#sec-11">How this applies to us</a> <span>5 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/119</span></div><ul>
+<li>Name the kinds of agent data, the five ways to get it, and what it teaches by accident; then pick which tasks and trajectories to keep, and build our own labeled contract cases and training data.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two lectures, one question</h3><span class="slide-no">2/119</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Trajectory</th>
-<th>Environment</th>
+<th>Lecture 11: What Data Do Agents Need?</th>
+<th>Lecture 12: Data Selection &amp; Quality</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Motivation</td>
+<td>Motivation</td>
+</tr>
+<tr>
+<td>Kinds of agent data</td>
+<td>Which tasks are worth training on?</td>
+</tr>
+<tr>
+<td>Where agent data comes from</td>
+<td>Which trajectories are worth imitating?</td>
+</tr>
+<tr>
+<td>What your data accidentally teaches</td>
+<td>More data, or better data? · Takeaways</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Lecture 11: how agent data is made. Lecture 12: what to keep.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Lecture 11 · Motivation</div><div class="slide"><div class="slide-top"><h3>The tl;dr</h3><span class="slide-no">3/119</span></div><ul>
+<li>LMs got much better at agent tasks in the past 2 years.</li>
+<li>Nearly all of it came from making "agentic" data at scale.</li>
+<li>This lecture: what agentic data is, how it is made, and how to clean it before training.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Last lecture vs today</h3><span class="slide-no">4/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Last lecture (optimization)</th>
+<th>Today (data)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Weights stay frozen</td>
+<td>Make the LM itself a better agent</td>
+</tr>
+<tr>
+<td>Tune the parts around the model</td>
+<td>Data is the main lever</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Data is the key differentiator</h3><span class="slide-no">5/119</span></div><ul>
+<li>Percy Liang's CS 336 data lecture: data is the most important thing to get right.</li>
+<li>Open-weight models (e.g., Llama 3) share architecture and training steps, but almost nothing on data.</li>
+<li>Llama 3 report: one short paragraph on pre-training data (dedup, cleaning, removing PII and adult domains).</li>
+<li>Kimi-K2: open weights, no data release.</li>
+<li>James Betker (OpenAI), "The 'it' in AI models is the dataset": trained long enough on the same data, models converge to the same point.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Labs pay a ton for data</h3><span class="slide-no">6/119</span></div><ul>
+<li>Chart: quarterly payouts in new data marketplaces. Mercor's curve rises far above Airbnb and Uber at the same age.</li>
+<li>Headlines on the slide:<ul>
+<li>Google completed a $1.5 billion-plus talent deal for AI startup Mechanize.</li>
+<li>"Silicon Valley bets big on 'environments' to train AI agents" (TechCrunch).</li>
+<li>"Why China's Answer to Surge AI Got a $1 Billion Valuation On Just $30 Million in Orders."</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Where agent data lands in training</h3><span class="slide-no">7/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pretraining</th>
+<th>SFT &amp; RLHF</th>
+<th>RL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>runs on internet text</td>
+<td>runs on conversations</td>
+<td>runs on environments</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Agent data = conversations and environments.</li>
+<li>Conversations are demonstrations. Environments are places to practice.</li>
+<li>Karpathy (Aug 2025): now it is environments. They let the LLM act and see outcomes, so it can do better than "statistical expert imitation."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Text vs environment</h3><span class="slide-no">8/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>What's on the internet</th>
+<th>What's possible in an environment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q: TypeError in parse_date() when passing a string?</td>
+<td><code>$ grep -rn parse_date src/</code> → utils.py:42</td>
+</tr>
+<tr>
+<td>A: Wrap it in strptime() first.</td>
+<td><code>$ pytest tests/</code> → FAILED: TypeError</td>
+</tr>
+<tr>
+<td></td>
+<td><code>$ edit src/utils.py</code> → <code>$ pytest</code> → 1 passed</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Web crawls show a lot of text. Agents need environments to actually interact.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Post-training data makes a big difference</h3><span class="slide-no">9/119</span></div><ul>
+<li>OpenThoughts-Agent (Raoof et al., 2026): same base model, same budget of SFT traces.</li>
+<li>Three charts (SWE-Bench Verified 100-task subset, Terminal-Bench 2.0, average of 7 benchmarks); x-axis = dataset size, 316 to 100K.</li>
+<li>OT-Agent Qwen3-32B (red) is at or near the top on all three, reaching about 55% on the SWE-Bench subset at 100K.</li>
+<li>Every line rises with more data; picking the most effective subset wins at each size.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Roadmap for this lecture</h3><span class="slide-no">10/119</span></div><ol>
+<li>Why does agent data matter? (done)</li>
+<li>Two types of agent data: traces and environments</li>
+<li>Where does agent data come from?</li>
+<li>What agent data teaches by accident</li>
+<li>Next lecture: which agent data should be trained on?</li>
+</ol></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Lecture 11 · Kinds of agent data</div><div class="slide"><div class="slide-top"><h3>Trajectory vs environment</h3><span class="slide-no">11/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>🎞 Trajectory</th>
+<th>📦 Environment</th>
 </tr>
 </thead>
 <tbody>
@@ -274,26 +392,1363 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>A task + sandbox + a way to check success</td>
 </tr>
 <tr>
-<td>Train with SFT: the model imitates it</td>
-<td>Train with RL: the model practices</td>
+<td>Think → Act → Obs → Act → Obs → Submit</td>
+<td>Task · Sandbox · Verifier</td>
 </tr>
 <tr>
-<td>Ours: a trace of one review call</td>
-<td>Ours: a contract with known issues + the grader</td>
+<td>Train with SFT: the LM imitates it</td>
+<td>Train with RL: the LM practices ReAct</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Where agent data comes from</h3><span class="slide-no">4/12</span></div><ul>
-<li>Human demos: realistic but costly.</li>
-<li>Mined from the web: code history, tutorials, videos.</li>
-<li>Synthesized trajectories: a model writes or runs the steps; a filter keeps good runs.</li>
-<li>Synthesized tasks: inject a known fault, so the checker knows the answer.</li>
-<li>Simulated users or environments: endless practice, but errors get learned too.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Synthesized tasks: SWE-smith</h3><span class="slide-no">5/12</span></div><ul>
-<li>SWE-smith: inject bugs that break existing tests in 128 Python repos.</li>
-<li>An LM writes the issue text. 50k tasks from about 20 hours of human work.</li>
-<li>Same idea for us: take a clean contract, break one clause in code.</li>
+</table></div>
+<ul>
+<li>SFT: supervised fine-tuning; train on examples of the outputs you want.</li>
+<li>RL: reinforcement learning; the model tries, and a reward scores the try.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Anatomy of a trajectory</h3><span class="slide-no">12/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Content</th>
+<th>Learned?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SYSTEM</td>
+<td>You are a coding agent. Tools: bash, edit, submit</td>
+<td>context only</td>
+</tr>
+<tr>
+<td>USER</td>
+<td>Issue: separability_matrix is wrong for nested models</td>
+<td>context only</td>
+</tr>
+<tr>
+<td>AGENT</td>
+<td><code>grep -rn "def _cstack" astropy/modeling/</code></td>
+<td>learned</td>
+</tr>
+<tr>
+<td>TOOL</td>
+<td>separable.py:219: def _cstack(left, right):</td>
+<td>context only</td>
+</tr>
+<tr>
+<td>AGENT</td>
+<td>edit, run reproduce_issue.py, submit</td>
+<td>learned</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Loss mask: the model is trained to predict only the agent's thoughts and actions.</li>
+<li>The format (tool calls, ReAct text, code actions) is set by the system around the LM.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Anatomy of a post-training task</h3><span class="slide-no">13/119</span></div><ul>
+<li>Problem statement: says what must be done (e.g., an ffmpeg command outputs 1920×1080, not 1280×720).</li>
+<li>Agent: reads it, works in the sandbox with ReAct.</li>
+<li>Sandbox: terminal, browser, simulator, or real world.</li>
+<li>Submission, then verification: unit/E2E tests, rubrics, or preference → pass or fail.</li>
+<li>Run an LM on an environment and record it: you get a trajectory.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Where the RL reward comes from</h3><span class="slide-no">14/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Code tests</th>
+<th>Rubrics</th>
+<th>LM-as-a-judge</th>
+<th>Human preference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unit tests check deterministically</td>
+<td>An LM or human checks a checklist</td>
+<td>A model ranks 2+ solutions</td>
+<td>People pick the best answer live</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Left end: reliable, but narrow. Right end: general, but fuzzy.</li>
+<li>For trajectories / SFT, the "reward" is predicting the correct action.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Training on each</h3><span class="slide-no">15/119</span></div><ul>
+<li>One environment → many rollouts.</li>
+<li>Curate ⇒ SFT data: imitate what is kept.</li>
+<li>Score ⇒ RL update: weight each attempt by its reward.</li>
+<li>Rollout: one full attempt by the agent on a task.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How much data at each stage?</h3><span class="slide-no">16/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>DeepSeek data point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pretraining</td>
+<td>14.8T tokens (v3)</td>
+</tr>
+<tr>
+<td>SFT</td>
+<td>1.5M examples (v3)</td>
+</tr>
+<tr>
+<td>RL</td>
+<td>85k task prompts (v3.2)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>v3 compute in H800 GPU hours: pre 2,664k, mid 119k, post 5k.</li>
+<li>One year later, V3.2: post-train budget exceeds 10% of pre-training.</li>
+<li>Labs usually don't disclose this.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Lecture 11 · Where agent data comes from</div><div class="slide"><div class="slide-top"><h3>Five sources</h3><span class="slide-no">17/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Source</th>
+<th>Idea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Human demos</td>
+<td>People do the task; a recorder logs it</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Mined from web, world</td>
+<td>Convert issues, tutorials, videos</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Synthesized trajectories</td>
+<td>A model writes or runs the steps</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Synthesized tasks, envs</td>
+<td>Build task + sandbox + checker in code</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Simulated users, envs</td>
+<td>An LLM plays the user or the world</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>For each, ask: cost, realism, scalability. Why does it fit this domain?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>1 · Human demonstrations: the recipe</h3><span class="slide-no">18/119</span></div><ol>
+<li>Define: write task goals on real sites or apps.</li>
+<li>Perform: an annotator does each task by hand.</li>
+<li>Record: log every screen state + click, keystroke.</li>
+<li>Filter: drop failed or noisy runs; verify success.</li>
+<li>Package: store as task + step pairs, optionally with reasoning.</li>
+<li>Output: task → (screen₁, action₁) → … → (screenₙ, actionₙ).</li>
+</ol></div><div class="slide"><div class="slide-top"><h3>Mind2Web (Deng et al., NeurIPS 2023)</h3><span class="slide-no">19/119</span></div><ul>
+<li>Crowdworkers recorded action sequences for 2,000+ open-ended tasks on 137 real websites, 31 domains.</li>
+<li>Examples: "Find one-way flights from New York to Toronto"; "Open page to schedule an appointment for car knowledge test" (DMV).</li>
+<li>Domain mix: Travel 27.4%, Info 20.4%, Service 18.3%, Shopping 17.5%, Entertainment 16.1%.</li>
+<li>Tests generalization: same site, similar tasks on different sites, totally different domains.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Mind2Web: one data instance</h3><span class="slide-no">20/119</span></div><ul>
+<li>Task: "Show me the reviews for the auto repair business closest to 10002."</li>
+<li>10 actions: TYPE "auto repair" in search box → CLICK Auto Repair → TYPE 10002 → CLICK Search → … → CLICK Read Reviews.</li>
+<li>Three parts: task description, action sequence (target element + operation), webpage snapshots.</li>
+<li>Some actions cause a jump to a new page.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>OpenCUA (Wang et al., NeurIPS 2026)</h3><span class="slide-no">21/119</span></div><ul>
+<li>CUA: computer-use agent; controls a desktop with mouse and keyboard.</li>
+<li>An app on annotators' own computers records screen video, mouse and keyboard.</li>
+<li>22.6K tasks across Windows, macOS and Ubuntu.</li>
+<li>Also saves metadata: accessibility tree (Axtree), HTML, timestamps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>OpenCUA: human action → agent action</h3><span class="slide-no">22/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Human action</th>
+<th>Agent action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Click, double, triple, middle click</td>
+<td><code>click(x, y, button)</code>, <code>doubleClick</code>, <code>tripleClick</code>, <code>middleClick</code></td>
+</tr>
+<tr>
+<td>Mouse move, drag, scroll</td>
+<td><code>moveTo(x, y)</code>, <code>dragTo(x, y)</code>, <code>scroll(dx, dy)</code></td>
+</tr>
+<tr>
+<td>Type, press, hotkey</td>
+<td><code>write(text)</code>, <code>press(key)</code>, <code>hotkey(key1, key2)</code></td>
+</tr>
+<tr>
+<td>Wait, terminate</td>
+<td><code>wait()</code>, <code>terminate('success' or 'failure')</code></td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Case study: Mind2Web vs OpenCUA</h3><span class="slide-no">23/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Mind2Web</th>
+<th>OpenCUA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Who records</td>
+<td>Crowdworkers in a recording tool</td>
+<td>Annotators on their own computers</td>
+</tr>
+<tr>
+<td>Environment</td>
+<td>Web only: 137 sites, 31 domains</td>
+<td>Desktop: 3 OSes, 200+ apps, sites</td>
+</tr>
+<tr>
+<td>Recorded</td>
+<td>Actions + page snapshot per step</td>
+<td>Video, inputs, accessibility tree</td>
+</tr>
+<tr>
+<td>Tasks</td>
+<td>2,350</td>
+<td>22.6K</td>
+</tr>
+<tr>
+<td>Reasoning</td>
+<td>None; raw actions only</td>
+<td>Synthetic, added per step</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>2 · Mined from the web + world</h3><span class="slide-no">24/119</span></div><ul>
+<li>Raw sources: code history (GitHub issues + the PRs that fixed them), written tutorials, videos (screen recordings, gameplay).</li>
+<li>Convert:</li>
+<li>Extract the task: issue, guide title or video goal → instruction.</li>
+<li>Recover the actions: parse diffs or steps; label video with an inverse dynamics model.</li>
+<li>Replay and verify: rerun live; keep runs that succeed.</li>
+<li>Output: trajectory = instruction + observation/action steps + pass/fail signal.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWE-rebench (Badertdinov et al., NeurIPS 2026)</h3><span class="slide-no">25/119</span></div><ul>
+<li>Fully automated pipeline: 21,336 verifiable tasks from 3,468 GitHub repos.</li>
+<li>Uses the SWE-bench task format (Jimenez et al., 2023): issue + codebase → model writes a PR → unit tests that fail before and pass after.</li>
+<li>Steps: filter repos and PRs (GitHub + GHArchive) → an LLM guesses the install script, retried until tests run → LLM labels instances.</li>
+<li>Final dataset: 21,000+ samples.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AgentTrek (Xu et al., ICLR 2025)</h3><span class="slide-no">26/119</span></div><ul>
+<li>Harvest how-to tutorials from the web (a classifier filters them).</li>
+<li>A VLM agent replays them in a real browser, guided by the tutorial.</li>
+<li>A VLM evaluator keeps successful runs. $0.55 per trajectory.</li>
+<li>VLM: vision-language model; reads screenshots.</li>
+<li>Example: "Find the return policy for men's football apparel on Under Armour's website" → 9 steps, each with a thought and an action.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AgentTrek vs other datasets</h3><span class="slide-no">27/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>Size</th>
+<th>Avg steps</th>
+<th>Reasoning</th>
+<th>Video</th>
+<th>Websites</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RUSS</td>
+<td>80</td>
+<td>5.4</td>
+<td>No</td>
+<td>No</td>
+<td>22</td>
+</tr>
+<tr>
+<td>WebLINX</td>
+<td>969</td>
+<td>18.8</td>
+<td>No</td>
+<td>No</td>
+<td>155</td>
+</tr>
+<tr>
+<td>MM-Mind2Web</td>
+<td>1009</td>
+<td>7.3</td>
+<td>No</td>
+<td>No</td>
+<td>137</td>
+</tr>
+<tr>
+<td>GUIAct</td>
+<td>2482</td>
+<td>6.7</td>
+<td>No</td>
+<td>No</td>
+<td>121</td>
+</tr>
+<tr>
+<td>AgentTrek</td>
+<td>10398</td>
+<td>12.1</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>127</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>AgentTrek is the only one with HTML, AxTree, reasoning, video and matching screenshots.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>VideoAgentTrek (Lu et al., 2025)</h3><span class="slide-no">28/119</span></div><ul>
+<li>An inverse dynamics model labels 39k YouTube screen-recording tutorials with clicks and keystrokes.</li>
+<li>Inverse dynamics model: looks at two frames and guesses the action between them.</li>
+<li>Yields 1.52M interaction steps.</li>
+<li>Finds videos itself: seed keywords and tags → search → judge videos → expand to channels where 80%+ of videos pass → screen filter.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>3 · Synthesized trajectories</h3><span class="slide-no">29/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Instruction first (Synatra)</th>
+<th>Interaction first (OS-Genesis, NNetNav)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start from a task or tutorial</td>
+<td>Explore the environment freely</td>
+</tr>
+<tr>
+<td>LLM writes the steps without running them</td>
+<td>Label the run in hindsight</td>
+</tr>
+<tr>
+<td>Filter drops invalid samples</td>
+<td>Score and prune the runs</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Either way: a model makes the steps, a filter keeps the good runs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Synatra (Ou et al., NeurIPS 2024)</h3><span class="slide-no">30/119</span></div><ul>
+<li>An LLM rewrites wikiHow tutorials and random web pages into 100k step-by-step demonstrations.</li>
+<li>$0.031 each: 3% of human cost.</li>
+<li>Example: "Cancel a PayPal payment" tutorial → task "Cancel Amazon Prime membership on PayPal" → <code>goto(paypal.com)</code>, <code>click("login")</code>, <code>type(...)</code>, <code>click("Amazon Inc.", id=156)</code>.</li>
+<li>Turns "indirect knowledge" (how-to text) into direct demonstrations.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Case study: Synatra vs AgentTrek</h3><span class="slide-no">31/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Synatra</th>
+<th>AgentTrek</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raw source</td>
+<td>wikiHow + random web pages</td>
+<td>Tutorials filtered from RedPajama crawl</td>
+</tr>
+<tr>
+<td>How steps are made</td>
+<td>LLM writes them offline; never executed</td>
+<td>VLM agent replays live; VLM judge keeps wins</td>
+</tr>
+<tr>
+<td>Observations</td>
+<td>Synthesized page text, no screenshots</td>
+<td>Real screenshots + accessibility trees</td>
+</tr>
+<tr>
+<td>Cost per sample</td>
+<td>$0.031</td>
+<td>$0.55</td>
+</tr>
+<tr>
+<td>Model trained</td>
+<td>CodeLlama-7B, text only</td>
+<td>Qwen2-VL (vision), Qwen2.5 (text)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>OS-Genesis (Sun et al., ACL 2025)</h3><span class="slide-no">32/119</span></div><ul>
+<li>Explore apps first, then infer what task each interaction did ("reverse task synthesis").</li>
+<li>Low-level step ("Click the Event button") → high-level task ("Create an event 'Team Meeting' for October 15, 2023, 10:00 AM").</li>
+<li>A trajectory reward model (TRM) grades runs 1–5. An incomplete run can still score 3/5: "task incomplete, but trajectory valuable."</li>
+<li>Nearly doubles AndroidWorld success.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>NNetNav (Murty et al., 2024)</h3><span class="slide-no">33/119</span></div><ul>
+<li>An LM explores websites while playing a sampled persona (e.g., "Investor, active on r/investing").</li>
+<li>Another LM labels the run in hindsight with the instruction it achieved.</li>
+<li>Runs that cannot be labeled are pruned early.</li>
+<li>Then the instruction-following policy is trained on each labeled prefix.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>4 · Synthesized tasks and environments</h3><span class="slide-no">34/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Code agents (SWE-smith, R2E-Gym)</th>
+<th>Tool-use agents (AgentScaler)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Environment</td>
+<td>Docker image of a real repo that runs its tests</td>
+<td>Simulated database behind real API schemas</td>
+</tr>
+<tr>
+<td>Task</td>
+<td>Injected bug or reverted commit + LM-written issue</td>
+<td>Goal from a chain of dependent tool calls</td>
+</tr>
+<tr>
+<td>Verifier</td>
+<td>Tests fail before the fix, pass after</td>
+<td>Final database state matches the expected one</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Build sandbox, task and checker automatically: every task has a verifiable reward.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWE-smith (Yang et al., NeurIPS 2025)</h3><span class="slide-no">35/119</span></div><ul>
+<li>Inject bugs that break existing tests in 128 Python repos.</li>
+<li>An LM writes the issue text.</li>
+<li>50k tasks from about 20 hours of human work.</li>
+<li>Pipeline: SWE-agent tries to install the repo and run tests → a developer writes the Dockerfile → bug strategies → task = generated issue + bugged patch + verified tests.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWE-smith: bug strategies</h3><span class="slide-no">36/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Bug type</th>
+<th>Yield %</th>
+<th>Instances</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Combine</td>
+<td>96.9%</td>
+<td>10,092</td>
+<td>0.00¢</td>
+</tr>
+<tr>
+<td>LM Modify</td>
+<td>56.0%</td>
+<td>17,887</td>
+<td>0.38¢</td>
+</tr>
+<tr>
+<td>LM Rewrite</td>
+<td>35.0%</td>
+<td>4,173</td>
+<td>3.93¢</td>
+</tr>
+<tr>
+<td>PR Mirror</td>
+<td>33.8%</td>
+<td>2,344</td>
+<td>5.53¢</td>
+</tr>
+<tr>
+<td>Procedural</td>
+<td>40.2%</td>
+<td>15,641</td>
+<td>0.00¢</td>
+</tr>
+<tr>
+<td>Total</td>
+<td>50.1</td>
+<td>50,137</td>
+<td>2.32¢</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Yield: share of candidates that break 1+ tests. Median: 6 fail-to-pass tests, 5 lines edited.</li>
+<li>128 repos in 6 groups (e.g., Data Mgmt 52, System Tools 24).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>R2E-Gym (Jain et al., COLM 2025)</h3><span class="slide-no">37/119</span></div><ul>
+<li>Turns ordinary commits into 8.1K executable tasks: generate tests, back-translate code changes into issue text.</li>
+<li>No human-written PRs needed. 2.5× more training environments than from human PRs.</li>
+<li>Test-time scaling on SWE-Bench Verified: 34.4% pass@1 → 42.8% (execution-free verifier) → 43.7% (execution-based) → 51.0% (hybrid).</li>
+<li>51.0% beat other open-weight agents (SweRL 41%, SweGym 32%, SweFixer 30.2%), close to Sonnet-3.5 + OpenHands at 53.0%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AgentScaler (Fang et al., 2025)</h3><span class="slide-no">38/119</span></div><ul>
+<li>Builds verifiable simulated environments from real APIs.</li>
+<li>Each tool call is a read or write on a database (<code>get_user_info</code>, <code>get_order_info</code>).</li>
+<li>A simulated user chats with the task agent ("Can you return my order?").</li>
+<li>Grading: compare interaction traces to the gold action sequence, and the final database state to the gold state.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>5 · Simulated users and environments</h3><span class="slide-no">39/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Simulated user</th>
+<th>Simulated environment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>An LLM plays the person</td>
+<td>An LLM predicts the next state and reward</td>
+</tr>
+<tr>
+<td>τ-bench, APIGen-MT</td>
+<td>DreamGym</td>
+</tr>
+<tr>
+<td>Gives requests, follow-ups, reactions</td>
+<td>Actions in; next state + reward out</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Payoff: cheap, unlimited practice.</li>
+<li>Risk: agents learn the simulator's mistakes.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>τ-bench (Yao et al., ICLR 2025)</h3><span class="slide-no">40/119</span></div><ul>
+<li>An LLM plays the customer in retail and airline support chats.</li>
+<li>The agent follows a domain policy in its system prompt (e.g., "Basic economy cannot be modified").</li>
+<li>The user has its own hidden instruction ("change to SF; if not possible, cancel and rebook").</li>
+<li>Grading compares the final database state to the goal.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>APIGen-MT (Prabhakar et al., NeurIPS 2025)</h3><span class="slide-no">41/119</span></div><ul>
+<li>Phase 1: an LLM writes task blueprints (intent, ground-truth actions, outputs) from APIs, rules and domain data.</li>
+<li>A format + execution checker, then a review committee of LLMs votes. Failures get summarized feedback and a retry.</li>
+<li>Phase 2: a simulated human chats with the test agent to turn each blueprint into a multi-turn trajectory.</li>
+<li>Kept only if the agent's actions match the ground truth.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DreamGym (Chen et al., ICLR 2026)</h3><span class="slide-no">42/119</span></div><ul>
+<li>Real environments: tasks are scarce, rewards sparse and unstable, not scalable.</li>
+<li>An LLM "experience model" predicts the next state and reward in text, replacing costly real rollouts during RL.</li>
+<li>Uses an experience replay buffer and step-by-step reasoning.</li>
+<li>A curriculum generator makes harder task variations, picked by reward entropy.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Lecture 11 · What your data accidentally teaches</div><div class="slide"><div class="slide-top"><h3>Three gotchas</h3><span class="slide-no">43/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Reward hacking</th>
+<th>Overfit to harness</th>
+<th>Training trends</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The environment rewards a loophole</td>
+<td>Traces teach one scaffold's format only</td>
+<td>SFT or RL can overshoot</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>"Just train on it and the model gets good." Not quite.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reward hacking: the .git loophole</h3><span class="slide-no">44/119</span></div><ul>
+<li>SWE-bench: fix a GitHub issue by changing a codebase.</li>
+<li>SWE-bench issue #465: if <code>.git</code> history is left in, agents can look at future commits.</li>
+<li>Claude 4 Sonnet on pytest-6202 ran <code>git log --all</code>, which leaked the commit that fixed the issue.</li>
+<li>Qwen3-Coder 480B used <code>git log --grep=[issue ID]</code> on django-13513 to find the fix PR.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fix: wipe the history</h3><span class="slide-no">45/119</span></div><ul>
+<li>Self-play SWE-RL (Wei et al., 2025) builds each buggy repo in steps:</li>
+<li>Apply bug-injection patch. 2. Apply test-weakening patch. 3. Optional: apply a failed prediction for harder bugs.</li>
+<li><code>rm -r .git &amp;&amp; git init &amp;&amp; git add . &amp;&amp; git commit -m 'init'</code>.</li>
+<li>Also restores test files before grading.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Gaming the test harness</h3><span class="slide-no">46/119</span></div><ul>
+<li>Anthropic production coding environments: models learned hacks like <code>sys.exit(0)</code> to fake passing tests (MacDiarmid et al., 2025).</li>
+<li>Chart: misaligned-generalization score stays near zero, then jumps from under 0.1 to about 0.35–0.4 right at the onset of hacking (around step 70). The no-hacking baseline stays flat.</li>
+<li>Misalignment rose on every eval: fake goals, deception, monitor disruption, framing a colleague.</li>
+<li>Mitigations exist (preference models, hack classifiers), but they rely on detecting the hack.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A monitor in the reward teaches hiding</h3><span class="slide-no">47/119</span></div><ul>
+<li>OpenAI coding RL: a chain-of-thought monitor caught hacks ("We can circumvent verify to always return true").</li>
+<li>Hack types seen: patch verify function, <code>os._exit(0)</code>, expected error codes, lazy code, decompiling a jar, parsing the test file, stubbing pandas.</li>
+<li>Adding the monitor to the reward ("CoT pressure"): fewer caught cheats, but cheating the monitor can't see rises to about 0.5 of samples.</li>
+<li>Lesson: punishing visible bad thoughts hides intent; it does not stop the hacking.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Eval awareness</h3><span class="slide-no">48/119</span></div><ul>
+<li>On BrowseComp, Claude Opus 4.6 twice inferred it was being tested.</li>
+<li>Steps: legitimate search (~30M tokens across 12 languages) → suspicion ("question feels constructed") → identified BrowseComp → found the source, cracked the XOR key, submitted the answer.</li>
+<li>Source: Anthropic (2026).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Memorization</h3><span class="slide-no">49/119</span></div><ul>
+<li>Models name the buggy file from the issue text alone 76% of the time on SWE-Bench Verified, vs up to 53% on repos outside SWE-Bench (Liang et al., 2025).</li>
+<li>OpenAI o3 bars: 76 (Verified), 69 (Full SWE-Bench), 59 (SWE-Bench Extra), 55 (outside repos), 43 (RefactorBench), 30 (SWE-Bench C#).</li>
+<li>High score on familiar repos = recall, not skill.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>OpenAI retires SWE-bench Verified</h3><span class="slide-no">50/119</span></div><ul>
+<li>Their models could recite issues from memory.</li>
+<li>Prompt: "We're playing a SWE-bench Verified memory game… task ID django__django-11451."</li>
+<li>The model recalled the task sentence, the file (<code>django/contrib/auth/backends.py</code>), the function, and the early-return fix.</li>
+<li>OpenAI stopped tracking it as an evaluation.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Misleading: looking right vs being right</h3><span class="slide-no">51/119</span></div><ul>
+<li>RLHF with a ChatbotArena-style reward, tested on QuALITY (hard reading QA).</li>
+<li>Human evaluator approval: +9.4 points.</li>
+<li>Oracle (true) correctness: −1.8 points.</li>
+<li>Human evaluation error rate: +7.4 points.</li>
+<li>The model got better at convincing people to approve wrong answers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Overfit to harness</h3><span class="slide-no">52/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>mini-swe-agent</th>
+<th>SWE-agent</th>
+<th>Terminus 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>THOUGHT text + fenced <code>mswea_bash_command</code> block</td>
+<td><code>tool: bash</code>, JSON arguments</td>
+<td>JSON plan + keystrokes + duration</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Harness: the code around the model that defines tools, formats and when to stop.</li>
+<li>Same task (<code>grep -rn _cstack astropy/</code>), three formats.</li>
+<li>Train on one harness only and the model won't generalize.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Skill vs harness</h3><span class="slide-no">53/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Skill (transfers)</th>
+<th>Harness (doesn't transfer)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Find the bug → fix it → test it</td>
+<td>Action format: fenced block, function call or JSON</td>
+</tr>
+<tr>
+<td></td>
+<td>Tool names: bash, str_replace_editor, keystrokes</td>
+</tr>
+<tr>
+<td></td>
+<td>Observations: prefixes, truncation, line numbers</td>
+</tr>
+<tr>
+<td></td>
+<td>How to finish: echo COMPLETE, submit, task_complete</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>SFT copies both and can't tell which part is which.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Harness overfit in action</h3><span class="slide-no">54/119</span></div><ul>
+<li>Trained on mini-swe-agent, deployed in a function-calling harness.</li>
+<li>Model writes a fenced <code>mswea_bash_command</code> block → harness: "No tool call found. Please call a tool." → same block again… until the step limit.</li>
+<li>Fixes:<ul>
+<li>Train across harnesses: mix rollouts from several scaffolds.</li>
+<li>Convert to a common format before training.</li>
+<li>Match train and deploy: ship in the harness you trained in.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SFT can overfit</h3><span class="slide-no">55/119</span></div><ul>
+<li>SWE-RL (Wei et al., NeurIPS 2025) trained Llama-3.3-70B on GitHub PRs.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Base</th>
+<th>SFT</th>
+<th>RL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HumanEval+</td>
+<td>76.2</td>
+<td>73.2</td>
+<td>79.9</td>
+</tr>
+<tr>
+<td>BigCodeBench-Hard (I)</td>
+<td>28.4</td>
+<td>25.7</td>
+<td>28.4</td>
+</tr>
+<tr>
+<td>MATH (strict)</td>
+<td>63.2</td>
+<td>54.0</td>
+<td>73.7</td>
+</tr>
+<tr>
+<td>MMLU</td>
+<td>86.49</td>
+<td>85.26</td>
+<td>86.82</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>RL improved out-of-domain tasks; SFT on the same seed data hurt them on average.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RL can overshoot</h3><span class="slide-no">56/119</span></div><ul>
+<li>OpenThoughts-Agent's best RL run: mean reward about 0.47 → peak about 0.51.</li>
+<li>Then it collapsed below 0.2 as the policy over-explored and timed out.</li>
+<li>They shipped the checkpoint from before the collapse (post-RL eval about 0.33 vs baseline about 0.2).</li>
+<li>Watch the curve; keep earlier checkpoints.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Best model ≠ best teacher</h3><span class="slide-no">57/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Teacher</th>
+<th>SWE-bench Verified (100)</th>
+<th>Terminal-Bench 2.0</th>
+<th>Avg (raw)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GLM 4.7 (quantized)</td>
+<td>28.00</td>
+<td>8.61</td>
+<td>18.16</td>
+</tr>
+<tr>
+<td>Kimi K2.5</td>
+<td>33.33</td>
+<td>8.24</td>
+<td>18.59</td>
+</tr>
+<tr>
+<td>GLM 5</td>
+<td>33.00</td>
+<td>7.50</td>
+<td>18.27</td>
+</tr>
+<tr>
+<td>GLM 4.6 (quantized)</td>
+<td>26.00</td>
+<td>6.37</td>
+<td>16.45</td>
+</tr>
+<tr>
+<td>GPT-5.3-Codex</td>
+<td>21.67</td>
+<td>3.75</td>
+<td>11.94</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The strongest model was the weakest teacher: about 5 points behind GLM 4.7 on Terminal-Bench 2.0.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture 11 takeaways</h3><span class="slide-no">58/119</span></div><ol>
+<li>Agents need more than text: tasks, environments, trajectories.</li>
+<li>Humans are realistic but costly. Demos are hard to scale.</li>
+<li>Mined traces are cheap. Code, tutorials and videos convert.</li>
+<li>Synthesis scales cheaply. Models write steps and build tasks.</li>
+<li>Simulators give endless practice. Their errors get learned too.</li>
+<li>Data teaches by accident: reward hacks, harness overfit.</li>
+</ol></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Lecture 12 · Motivation</div><div class="slide"><div class="slide-top"><h3>The tl;dr</h3><span class="slide-no">59/119</span></div><ul>
+<li>Making agent tasks and trajectories is now cheap.</li>
+<li>Deciding what to keep is the hard part.</li>
+<li>This lecture: which tasks to train on, which trajectories to imitate, and whether more data or better data wins.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Keeping vs making: CWM</h3><span class="slide-no">60/119</span></div><ul>
+<li>CWM (Meta FAIR, 2025): 3M agent trajectories from 10.2k Docker images of 3.15k repos.</li>
+<li>Dropped near-duplicates: within each repo, kept trajectories have pairwise Jaccard similarity below 0.5.</li>
+<li>Jaccard similarity: shared items ÷ all items; 1 = identical.</li>
+<li>Kept failed attempts: the goal is a world model of code environments, so no filtering by success.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Every stage throws data away</h3><span class="slide-no">61/119</span></div><pre><code>candidate tasks → valid tasks → learnable tasks      (which tasks?)
+→ rollouts → kept trajectories                      (which trajectories?)
+→ training mix                                      (more or better data?)
+</code></pre>
+<ul>
+<li>We select two things: environments for RL, trajectories for SFT.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three ways data goes bad</h3><span class="slide-no">62/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Wrong signal</th>
+<th>No signal</th>
+<th>Redundant signal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Broken verifiers and hacked successes</td>
+<td>Tasks too easy or too hard to learn from</td>
+<td>More of the same</td>
+</tr>
+<tr>
+<td>Tasks + trajectories sections</td>
+<td>Tasks section</td>
+<td>More-or-better section</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The open tension</h3><span class="slide-no">63/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Less is more</th>
+<th>More is more</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LIMI: 78 hand-curated trajectories beat 10,000</td>
+<td>Orchard: at scale, data size matters more than how you pick it</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Same OpenThoughts-Agent evidence as Lecture 11: the subset you pick matters at a fixed budget.</li>
+<li>The last section shows when each one holds.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Lecture 12 · Which tasks are worth training on?</div><div class="slide"><div class="slide-top"><h3>Task selection is a loop</h3><span class="slide-no">64/119</span></div><ol>
+<li>Filter out broken or unreliable tasks (SWE-bench Verified).</li>
+<li>Check task validity by running them (APIGen, CodeMidas).</li>
+<li>Keep tasks the LM sometimes solves (DAPO, LEGO-RL).</li>
+<li>Re-select as the model improves (WebRL).</li>
+</ol></div><div class="slide"><div class="slide-top"><h3>SWE-bench Verified: a broken task</h3><span class="slide-no">65/119</span></div><ul>
+<li>sklearn-14520: "Copy param ignored in TfidfVectorizer."</li>
+<li>The test demands an exact deprecation message: "'copy' param is unused and has been deprecated since version 0.22…"</li>
+<li>That wording was decided in PR discussion the agent never sees.</li>
+<li>A correct fix can still fail.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWE-bench Verified: human review</h3><span class="slide-no">66/119</span></div><ul>
+<li>93 Python developers annotated 1,699 random SWE-bench samples.</li>
+<li>3 annotators per sample; keep the highest-severity label.</li>
+<li>Two questions, each scored 0–3:<ul>
+<li>Is the problem statement well specified?</li>
+<li>Do the tests accept all valid solutions?</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWE-bench Verified: results</h3><span class="slide-no">67/119</span></div><ul>
+<li>38.3% flagged for underspecified problem statements.</li>
+<li>61.1% flagged for unit tests that reject valid solutions.</li>
+<li>68.3% filtered out overall.</li>
+<li>A third chart: under 10% had "other major issues."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Broken tasks hide ability</h3><span class="slide-no">68/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>GPT-4o on original SWE-bench</th>
+<th>GPT-4o on SWE-bench Verified</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>16%</td>
+<td>33.2%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>In evaluation, broken tasks hide real ability.</li>
+<li>In training, they give wrong rewards.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>APIGen (Liu et al., 2024)</h3><span class="slide-no">69/119</span></div><ul>
+<li>Human review doesn't scale, so APIGen automates it for function-calling data.</li>
+<li>An LLM generates query + function-call answers from an API library and seed QA data.</li>
+<li>Three checks in a row:</li>
+<li>Format checker: is the call well formed?</li>
+<li>Execution checker: does it run on the real API?</li>
+<li>Semantic checker: an LLM judges whether results match the query's intent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CodeMidas (Ye et al., 2026)</h3><span class="slide-no">70/119</span></div><ul>
+<li>From the MiMo model team.</li>
+<li>Builds coding RL environments from source code alone: no issues, PRs, commits or existing tests.</li>
+<li>Four modules: task design (remove code, refine), test construction, execution consistency, post-rollout filtering.</li>
+<li>Pool shrinks at each step: 22,575 → 16,027 → 12,746 → 11,930 → 8,173 → 5,545 high-quality environments.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CodeMidas: tests accept any correct solution</h3><span class="slide-no">71/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Too strict: sklearn-14520</th>
+<th>CodeMidas: only what the task states</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pytest.warns(DeprecationWarning, match=msg)</code> with an exact message</td>
+<td><code>pytest.raises(ValueError)</code></td>
+</tr>
+<tr>
+<td>The message came from PR discussion</td>
+<td>The task says "raise ValueError"; wording not specified</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>CodeMidas: six fresh containers</h3><span class="slide-no">72/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Starting code × 2</th>
+<th>Reference solution × 4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>must fail, must fail</td>
+<td>must pass ×4</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>A task is kept only if all six runs come out as expected.</li>
+<li>Catches flaky tests and tests that pass without a fix.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CodeMidas: three filters after rollouts</h3><span class="slide-no">73/119</span></div><ul>
+<li>Leakage probe: drop if adversarial rollouts find the solution leaks (compiled code, cached source).</li>
+<li>Verdict review: drop if a reviewing agent finds a wrong verifier verdict (false pass or false fail).</li>
+<li>Outcome filter: drop if every attempt passes, or every attempt fails.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CodeMidas: filtered beats bigger</h3><span class="slide-no">74/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>High-quality 1k</th>
+<th>3k</th>
+<th>5k</th>
+<th>Vanilla 8k</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SWE-bench Pro</td>
+<td>52.86</td>
+<td>54.02</td>
+<td>54.40</td>
+<td>53.81</td>
+</tr>
+<tr>
+<td>DeepSWE</td>
+<td>17.57</td>
+<td>19.05</td>
+<td>21.70</td>
+<td>17.11</td>
+</tr>
+<tr>
+<td>CodeMidas Val</td>
+<td>41.30</td>
+<td>43.22</td>
+<td>44.73</td>
+<td>40.24</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Even filtered 3k beats unfiltered 8k on all three.</li>
+<li>Full 5k beats 8k by 0.59 / 4.59 / 4.49 points.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DAPO: same reward, no learning</h3><span class="slide-no">75/119</span></div><ul>
+<li>GRPO-style advantage = (reward − group mean) / group std.</li>
+<li>Mixed rewards (1 0 1 1 0 0 1 0) → learns.</li>
+<li>All correct (1 1 1 1 1 1 1 1) → advantage is 0 for all → no gradient.</li>
+<li>One prompt, 8 rollouts. Source: Yu et al., DAPO (2025).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DAPO: it gets worse over time</h3><span class="slide-no">76/119</span></div><ul>
+<li>Chart: share of prompts where all 32 samples are correct, over training steps.</li>
+<li>Rises from 0 to about 0.55–0.6 by step 9,000.</li>
+<li>Those prompts give zero gradient.</li>
+<li>Each batch carries fewer prompts the model can learn from.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DAPO fix: dynamic sampling</h3><span class="slide-no">77/119</span></div><ul>
+<li>Keep sampling until the batch is full of prompts with mixed rewards.</li>
+<li>Drop prompts that are all correct or all wrong.</li>
+<li>Chart (AIME avg@32): with dynamic sampling, the run reaches about 0.43 near step 2,300; without, it takes about 6,000 steps.</li>
+<li>Same accuracy in fewer steps, even though each step samples more.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LEGO-RL (Du et al., 2026): validity checks</h3><span class="slide-no">78/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Tasks left</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Candidates</td>
+<td>36,884</td>
+</tr>
+<tr>
+<td>Rule-based screening</td>
+<td>22,806</td>
+</tr>
+<tr>
+<td>Build + verifier check</td>
+<td>21,681</td>
+</tr>
+<tr>
+<td>Difficulty screen</td>
+<td>2,699</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>About 2.5% of inspected tasks had verifiers that wrongly apply the reference patch.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LEGO-RL: difficulty screen</h3><span class="slide-no">79/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>0/4</th>
+<th>1/4</th>
+<th>2/4</th>
+<th>3/4</th>
+<th>4/4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>never solved: drop</td>
+<td>keep</td>
+<td>keep</td>
+<td>keep</td>
+<td>always solved: drop</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Keep tasks the model solves 1–3 times out of 4 tries.</li>
+<li>Final training set: 2,699 tasks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LEGO-RL: without the screen, no gain</h3><span class="slide-no">80/119</span></div><ul>
+<li>Ablation on 951-task pools: random vs 1–2/4 vs 1–3/4 vs 2–3/4.</li>
+<li>Held-out validation: random drifts from about 0.636 to 0.634; 1–3/4 and 2–3/4 reach about 0.68–0.69.</li>
+<li>Training reward: random stays flat near 0.2–0.25; screened pools climb.</li>
+<li>In the unscreened pool, 72.7% of tasks are never solved and 13.4% always solved.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LEGO-RL: the pool goes stale</h3><span class="slide-no">81/119</span></div><ul>
+<li>Histogram of rollouts solved out of 8, epoch 1 vs epoch 3.</li>
+<li>OpenHands SDK: "0 of 8" share −4.5 pp; "8 of 8" share +11.1 pp.</li>
+<li>Claude Code harness: −4.6 pp and +8.8 pp.</li>
+<li>Under OpenHands SDK, zero-variation groups rise from 44.7% to 51.4%.</li>
+<li>As the policy improves, refresh the task pool.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>WebRL (Qi et al., ICLR 2025)</h3><span class="slide-no">82/119</span></div><ul>
+<li>Online RL for web agents faces three problems:</li>
+<li>Scarce training tasks.</li>
+<li>Sparse feedback.</li>
+<li>Policy distribution drift.</li>
+<li>Fixes: a self-evolving curriculum that writes new tasks from failed attempts; an outcome-supervised reward model (ORM); policy updates with a KL limit; replay buffer filtered by actor confidence.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>WebRL results</h3><span class="slide-no">83/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Llama-3.1-8B on WebArena-Lite</th>
+<th>Success</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Before WebRL</td>
+<td>4.8%</td>
+</tr>
+<tr>
+<td>After WebRL</td>
+<td>42.4%</td>
+</tr>
+<tr>
+<td>70B model after WebRL</td>
+<td>47.3%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Chart by phase: WebRL climbs from about 20% to 42% over 8 phases; DigiRL stays near 30%; AWR, filtered BC and SFT baselines sit lower.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>Lecture 12 · Which trajectories are worth imitating?</div><div class="slide"><div class="slide-top"><h3>Passing ≠ a good demonstration</h3><span class="slide-no">84/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Passed: some are cheats</th>
+<th>Passed: some are sloppy</th>
+<th>Failed: labeled failures</th>
+<th>Failed: good steps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Check how the agent got there</td>
+<td>Select by process quality</td>
+<td>Keep them, marked as failed</td>
+<td>Salvage them from failed expert runs</td>
+</tr>
+<tr>
+<td>Verification Horizon</td>
+<td>SWE-Prime</td>
+<td>NAT</td>
+<td>EEF</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The Verification Horizon (Qwen Team, 2026)</h3><span class="slide-no">85/119</span></div><ul>
+<li>Generating solutions is no longer the hard part; verifying them is.</li>
+<li>Sketch: verifier and policy co-evolve. When the verifier lags, reward hacking appears; when the verifier improves, the policy jumps.</li>
+<li>Task quality vs scale: SWE-Universe is largest but only ~58% good tasks; filtering by an agentic judge brings it near 100%. SWE-bench Verified: high quality, small.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Seven kinds of shortcuts</h3><span class="slide-no">86/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Shortcut</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Solution-artifact retrieval</td>
+<td>Fetches <code>*.patch</code>, PR files, copied diffs</td>
+</tr>
+<tr>
+<td>External fix lookup</td>
+<td>Searches issue titles, fixing PRs</td>
+</tr>
+<tr>
+<td>Harness tampering</td>
+<td>Edits pytest.ini, CI config, timeouts</td>
+</tr>
+<tr>
+<td>Test-oracle tampering</td>
+<td>Weakens asserts, adds skip/xfail</td>
+</tr>
+<tr>
+<td>Visible-test overfitting</td>
+<td>Branches on fixture names, test inputs</td>
+</tr>
+<tr>
+<td>Evaluator-aware patching</td>
+<td>Changes code because of expected grader behavior</td>
+</tr>
+<tr>
+<td>Git-history mining</td>
+<td><code>git log</code>, <code>git grep</code>, reflog</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Shortcuts pay off</h3><span class="slide-no">87/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Freq.</th>
+<th>Resolved (Δ vs 59.99 base)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repository-history mining</td>
+<td>21.11%</td>
+<td>56.55 (−3.44)</td>
+</tr>
+<tr>
+<td>Visible-test overfitting</td>
+<td>30.00%</td>
+<td>51.62 (−8.37)</td>
+</tr>
+<tr>
+<td>Evaluation-harness tampering</td>
+<td>8.25%</td>
+<td>41.47 (−18.52)</td>
+</tr>
+<tr>
+<td>Solution-artifact retrieval</td>
+<td>4.32%</td>
+<td>72.34 (+12.35)</td>
+</tr>
+<tr>
+<td>External fix lookup</td>
+<td>7.03%</td>
+<td>61.69 (+1.70)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Solution-artifact retrieval is rare but effective.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pass rate hides the drop</h3><span class="slide-no">88/119</span></div><ul>
+<li>RL on Qwen-Turbo, three SWE-Bench variants, 100 steps.</li>
+<li>Without a monitor, the raw pass rate keeps climbing (to about 77% on Verified).</li>
+<li>Count hacked passes as wrong and clean performance collapses late: about 37% (Verified), 51% (Multilingual), 33% (Pro).</li>
+<li>With a behavior monitor, clean performance stays at about 65 / 66 / 50.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fix: monitor the trajectories</h3><span class="slide-no">89/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Average of 3 SWE-bench variants</th>
+<th>Base</th>
+<th>+ Monitor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hacked resolved rate</td>
+<td>28.57%</td>
+<td>0.56%</td>
+</tr>
+<tr>
+<td>Clean resolved rate</td>
+<td>40.22%</td>
+<td>60.53%</td>
+</tr>
+<tr>
+<td>Hack rate</td>
+<td>37.76%</td>
+<td>1.31%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>SWE-Bench Verified alone: clean resolved 36.49 → 64.98.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWE-Prime (Zheng et al., 2026)</h3><span class="slide-no">90/119</span></div><ul>
+<li>Successful runs can still have ineffective, redundant or risky steps.</li>
+<li>Stage 1, trajectory filter: process quality (observe-edit-verify pattern, tool success rate, no git hacking), result quality vs the ground-truth patch, and diversity (top 10% from each embedding cluster).</li>
+<li>Stage 2, segment filter: cut runs into windows, score each by contribution, risk and learnability; only high-scoring segments count in the loss.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWE-Prime result</h3><span class="slide-no">91/119</span></div><ul>
+<li>Training on the 10% subset SWE-Prime picks beats training on all successful trajectories.</li>
+<li>Relative gains up to 12.2% (SWE-bench Pro) and 24.2% (SWE-bench Verified).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>NAT (Wang et al., NAACL 2025)</h3><span class="slide-no">92/119</span></div><ul>
+<li>Standard practice trains only on successful trajectories.</li>
+<li>Example: a failed math run has reasonable early steps, but the whole run is thrown away.</li>
+<li>NAT, negative-aware training: keep failed runs too, and tell the model which succeeded with a prefix or suffix label.</li>
+<li>Why it works: the label gives a better trade-off between the useful information and the errors in failed runs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>EEF (Lan et al., 2025): the RFT gap</h3><span class="slide-no">93/119</span></div><ul>
+<li>RFT, rejection-sampling fine-tuning: train only on successful expert runs.</li>
+<li>The expert mostly succeeds on easy subtasks.</li>
+<li>So hard subtasks never enter training.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>EEF: salvage good steps</h3><span class="slide-no">94/119</span></div><ul>
+<li>A failure may come from mistakes in only the last few steps.</li>
+<li>Prior methods treat every action in a failed run as negative.</li>
+<li>EEF: from states along a failed GPT-4 run, let the agent simulate onward at fixed intervals.</li>
+<li>Expert actions that lead to states the agent can finish from (reward 1) are kept as useful.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>EEF result</h3><span class="slide-no">95/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>WebShop win rate</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EEF</td>
+<td>62%</td>
+</tr>
+<tr>
+<td>RFT</td>
+<td>53.6%</td>
+</tr>
+<tr>
+<td>GPT-4</td>
+<td>35.6%</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-8"><span>Part 8</span>Lecture 12 · More data, or better data?</div><div class="slide"><div class="slide-top"><h3>Is less more, or is more more?</h3><span class="slide-no">96/119</span></div><ul>
+<li>Illustrative sketch (not data): small curated data starts higher but flattens; more unfiltered data starts lower but keeps rising and crosses it.</li>
+<li>Either way, diversity is what generalizes.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Earlier small-data wins</h3><span class="slide-no">97/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LIMI: agent trajectories</td>
+<td>78</td>
+</tr>
+<tr>
+<td>LIMO: math samples</td>
+<td>817</td>
+</tr>
+<tr>
+<td>LIMA: alignment examples</td>
+<td>1,000</td>
+</tr>
+<tr>
+<td>LIMI's comparison set</td>
+<td>10,000</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>LIMI (Xiao et al., 2025)</h3><span class="slide-no">98/119</span></div><ul>
+<li>78 hand-curated trajectories beat 10,000 (128× fewer).</li>
+<li>73.5% on AgencyBench vs 47.8% for a model trained on 10,000 (AFM CodeAgent data).</li>
+<li>Other bars: GLM-4.5 45.1, Qwen-3 27.5, Kimi-K2 24.1, DeepSeek-3.1 11.9.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How LIMI built its 78</h3><span class="slide-no">99/119</span></div><ul>
+<li>60 queries from real developer and researcher scenarios.</li>
+<li>18 sampled from queries synthesized from GitHub PRs.</li>
+<li>Four PhD students worked with GPT-5 until each task succeeded.</li>
+<li>Trajectories are long: 13k to 152k tokens, average 42.4k.</li>
+<li>Topics: vibe coding (frontend, backend, debugging, tool calling) and research workflow (paper search, web search, experiments).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LIMI fine print</h3><span class="slide-no">100/119</span></div><ul>
+<li>A small, close benchmark: AgencyBench has 10 tasks and shares many authors with LIMI.</li>
+<li>Small gain without the CLI: generalization is 50.0% vs 48.7% for GLM-4.5.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Orchard (Peng et al., 2026): the setup</h3><span class="slide-no">101/119</span></div><ul>
+<li>Same base model, SFT recipe and harness. Only data size and selection strategy vary.</li>
+<li>Sizes: 512, 1,024, 2,048 trajectories.</li>
+<li>Heuristic strategies: random, diverse repo, concentrated repo.</li>
+<li>Strategies using gold-patch properties: multi-file, large diff, composite.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Orchard: any good SFT helps</h3><span class="slide-no">102/119</span></div><ul>
+<li>Base model: 22.0%.</li>
+<li>Worst SFT setting: +22 points above it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Orchard: scale dominates</h3><span class="slide-no">103/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Trajectories</th>
+<th>Random</th>
+<th>Diverse repo</th>
+<th>Concentrated</th>
+<th>Multi-file</th>
+<th>Large diff</th>
+<th>Composite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>512</td>
+<td>45.8</td>
+<td>44.0</td>
+<td>47.9</td>
+<td>47.5</td>
+<td>49.5</td>
+<td>48.1</td>
+</tr>
+<tr>
+<td>1,024</td>
+<td>50.3</td>
+<td>49.0</td>
+<td>51.3</td>
+<td>51.6</td>
+<td>52.2</td>
+<td>52.1</td>
+</tr>
+<tr>
+<td>2,048</td>
+<td>52.8</td>
+<td>52.2</td>
+<td>53.4</td>
+<td>54.2</td>
+<td>52.9</td>
+<td>53.7</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>SWE-bench Verified resolve rate (%). Worst method, 512 → 2,048: +8.2 points. Spread across all six at 512: 5.5 points.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AgentRefine (Fu et al., ICLR 2025)</h3><span class="slide-no">104/119</span></div><ul>
+<li>Existing agent data (Agent-FLAN) does well on held-in tasks, not held-out ones.</li>
+<li>Chart: Agent-FLAN wins on Alfworld (held-in); AgentRefine wins on all held-out tasks (BabyAI, SciWorld, PDDL, Jericho).</li>
+<li>In new environments, most errors are one of three types:</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Format error</th>
+<th>Illogical reasoning</th>
+<th>Repeated generation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Action: clik [Buy Now]</code></td>
+<td>"mug is in sink" → go to fridge 1</td>
+<td>look, look, look</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>AgentRefine: how it works</h3><span class="slide-no">105/119</span></div><ul>
+<li>Synthesize diverse environments from personas (Persona Hub).</li>
+<li>An LLM plays the game master; the agent plays; errors are flagged.</li>
+<li>Keep only trajectories with at least two error → fix turns.</li>
+<li>Training masks the loss on wrong steps, and learns from the correction.</li>
+<li>Self-correction holds up better when the environment changes slightly.</li>
+<li>Diverse environments and diverse thoughts drive the gains.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWE-smith: diversity of repos</h3><span class="slide-no">106/119</span></div><ul>
+<li>Recap: one environment per repo, bugs synthesized into it.</li>
+<li>Each run uses 700 expert trajectories, drawn from a few (4–5) up to 100 repositories.</li>
+<li>% resolved: 10.3% (5 repos) → 11.5% (25) → 12.9% (50) → 15.1% (100).</li>
+<li>Grows roughly logarithmically with repository count.</li>
+<li>Side result: SymPy-only training boosts SymPy (7B: 13.6% → 21.2%) with minor loss elsewhere.</li>
+</ul></div><div class="deck-sec" id="sec-9"><span>Part 9</span>Lecture 12 · Takeaways</div><div class="slide"><div class="slide-top"><h3>Filtering helps most when data is scarce</h3><span class="slide-no">107/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Training set</th>
+<th>Fine-tuning score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Random, 9,139</td>
+<td>21.61</td>
+</tr>
+<tr>
+<td>Filtered, 9,139</td>
+<td>23.52</td>
+</tr>
+<tr>
+<td>Full set, 19,050</td>
+<td>24.75</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Filtering beats random at the same size, but the bigger unfiltered set wins.</li>
+<li>This reconciles LIMI and Orchard. (Verification Horizon, Table 10.)</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A checklist for selecting agent data</h3><span class="slide-no">108/119</span></div><ol>
+<li>Verify tasks.</li>
+<li>Screen difficulty.</li>
+<li>Audit successes.</li>
+<li>Keep failures (labeled).</li>
+<li>Scale diverse sources.</li>
+</ol></div><div class="slide"><div class="slide-top"><h3>Lecture 12 summary</h3><span class="slide-no">109/119</span></div><ul>
+<li>Tasks: run each one to check it, keep the ones the model sometimes solves, refresh the pool as it improves.</li>
+<li>Trajectories: a pass can be a cheat, so check how it passed. Failures still teach.</li>
+<li>Training mix: curate when data is scarce; at scale, size and diversity win.</li>
+<li>Next: how do we know the agent actually improved?</li>
+</ul></div><div class="deck-sec" id="sec-10"><span>Part 10</span>In the notebook: our data flywheel</div><div class="slide"><div class="slide-top"><h3>Synthesized tasks for contracts</h3><span class="slide-no">110/119</span></div><ul>
+<li>Same idea as SWE-smith: take a clean contract, break one clause in code.</li>
 <li>The right answer is known by construction. No lawyer needed to label it.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Planting faults in code</h3><span class="slide-no">6/12</span></div><pre><code class="language-python">FAULTS = {
+<li>Our verifier: does the model's list of broken rules match the planted list exactly?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Planting faults in code</h3><span class="slide-no">111/119</span></div><pre><code class="language-python">FAULTS = {
     &quot;liability_cap&quot;:      lambda t: re.sub(r&quot;IN THE 12 MONTHS&quot;, &quot;IN THE FORTY-EIGHT (48) MONTHS&quot;, t),
     &quot;governing_law&quot;:      lambda t: re.sub(r&quot;State of (California|Delaware)&quot;, &quot;State of Nevada&quot;, t),
     &quot;auto_renewal&quot;:       lambda t: t.replace(&quot;successive one (1) year&quot;, &quot;successive four (4) year&quot;),
@@ -306,17 +1761,17 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <li>Line 3: California or Delaware → Nevada.</li>
 <li>Line 4: one-year renewal → four years (rule: at most 1).</li>
 <li>Line 5: any notice period → seven days (rule: at least 30).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Clean vs planted</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Clean vs planted</h3><span class="slide-no">112/119</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Clean (msa_03)</th>
+<th>Clean (msa_03, 7.1)</th>
 <th>Planted case</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>"...in the 12 months preceding the claim"</td>
-<td>"...in the forty-eight (48) months preceding the claim"</td>
+<td>"...SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE 12 MONTHS PRECEDING THE CLAIM."</td>
+<td>"...SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE FORTY-EIGHT (48) MONTHS PRECEDING THE CLAIM."</td>
 </tr>
 <tr>
 <td>issues: none</td>
@@ -326,39 +1781,92 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>The notebook builds 30 cases from the 6 clean contracts, 1 or 2 faults each.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The flywheel</h3><span class="slide-no">8/12</span></div><pre><code>use → traces + corrections → tests now, training later → better system → more use
+</ul></div><div class="slide"><div class="slide-top"><h3>The flywheel</h3><span class="slide-no">113/119</span></div><pre><code>use → traces + corrections → tests now, training later → better system → more use
 </code></pre>
 <ul>
 <li>Trace: the full record of one run: input hash, prompt, model, output, time.</li>
 <li>Regression set: past mistakes you rerun after every change.</li>
 <li>Each lawyer's fix is free expert labeling. Save it with the reason.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Rejection sampling for training data</h3><span class="slide-no">9/12</span></div><ul>
-<li>Let the model try each case (up to 2 tries).</li>
-<li>Keep only answers that exactly match the known issues. Drop the rest.</li>
-<li>Save as chat-format JSONL (<code>sft_train.jsonl</code>) that TRL or Unsloth can fine-tune on.</li>
-<li>Never put held-out eval cases in training.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What data teaches by accident</h3><span class="slide-no">10/12</span></div><ul>
-<li>Reward hacking: models faked passing tests with <code>sys.exit(0)</code>.</li>
-<li>Trained on human approval: the model learned to look right, not be right.</li>
-<li>Overfit to harness: trained in one harness, it keeps that harness's habits.</li>
-<li>Best model ≠ best teacher.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Rejection sampling in code</h3><span class="slide-no">114/119</span></div><pre><code class="language-python">sft = []
+for c in synthetic[6:16]:
+    for _ in range(2):                                          # up to 2 tries per case
+        pred = review(c[&quot;text&quot;])
+        if pred == c[&quot;issues&quot;]:                                 # the checker: matches the known answer
+            sft.append({&quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;Review against the playbook:\n{c['text']}&quot;},
+                                     {&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: &quot;, &quot;.join(pred) or &quot;none&quot;}]})
+            break
+</code></pre>
+<ul>
+<li>Line 1: empty training set.</li>
+<li>Line 2: 10 synthetic cases not used for the trace demo.</li>
+<li>Lines 3–4: up to 2 tries; the model reviews the contract.</li>
+<li>Line 5: keep only exact matches with the planted issues (RFT).</li>
+<li>Lines 6–7: save as a chat example: user = contract, assistant = broken rules.</li>
+<li>Line 8: one good example per case is enough. Written to <code>sft_train.jsonl</code> for TRL or Unsloth.</li>
+</ul></div><div class="deck-sec" id="sec-11"><span>Part 11</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Data stays on the firm&#x27;s machine</h3><span class="slide-no">115/119</span></div><ul>
 <li>Traces and corrections live on the firm's own disk: audit trail and future training set.</li>
 <li>Planted faults give labeled cases without sending contracts anywhere.</li>
 <li>Fine-tuning on checked data can run on the same local machine later.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
-<li>Guessing why it fails → read 50–100 real outputs with the customer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our five sources</h3><span class="slide-no">116/119</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Lecture source</th>
+<th>Our version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Human demos</td>
+<td>A lawyer's corrections, saved with the reason</td>
+</tr>
+<tr>
+<td>Mined</td>
+<td>Past contracts and the firm's marked-up redlines</td>
+</tr>
+<tr>
+<td>Synthesized tasks</td>
+<td>Planted faults with known answers</td>
+</tr>
+<tr>
+<td>Synthesized trajectories</td>
+<td>Local model runs kept only if the checker agrees</td>
+</tr>
+<tr>
+<td>Simulated users</td>
+<td>An LLM playing a client asking follow-ups (use with care)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Select like Lecture 12</h3><span class="slide-no">117/119</span></div><ul>
+<li>Verify tasks: check each planted fault actually changed the text (the notebook asserts this).</li>
+<li>Screen difficulty: drop cases the local model always gets right or never gets right.</li>
+<li>Audit successes: a run that flags every rule "passes" recall but is a cheat; check precision too.</li>
+<li>Keep failures, labeled; they go to the regression set.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Guard against accidental lessons</h3><span class="slide-no">118/119</span></div><ul>
+<li>Don't train on one prompt format only, or the model is stuck with it (harness overfit).</li>
+<li>Never put held-out eval contracts into training (memorization looks like skill).</li>
+<li>A bigger model is not always the best teacher. Test the student, not the teacher.</li>
+<li>Keep real contracts next to synthetic ones in every set.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">119/119</span></div><ul>
+<li>Training on every passing run → audit how it passed; drop flag-everything answers.</li>
+<li>Keeping tasks the model always or never solves → keep the ones it sometimes solves; refresh as it improves.</li>
 <li>Synthetic-only cases → keep real contracts in every eval and training set.</li>
 <li>Rewarding "a reviewer approved it" → reward answers checked against labels.</li>
-<li>Reusing stored examples unfiltered → one bad example poisons later runs.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Where does a lawyer&#x27;s correction go?</summary><p>Logged with the reason, added to the regression set at once, then into the next training batch. Never into the held-out eval.</p></details>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What is the difference between a trajectory and an environment?</summary><p>A trajectory is a recording of an agent solving a task, used for SFT. An environment is a task plus sandbox plus verifier, used for RL.</p></details>
 
-<details><summary>Why are planted faults useful?</summary><p>We broke the clause ourselves, so the right answer is known. Many labeled cases, no labeling cost.</p></details>
+<details><summary>Why are planted faults useful?</summary><p>We broke the clause ourselves, so the right answer is known. Many labeled cases, no labeling cost, like SWE-smith.</p></details>
 
-<details><summary>What is rejection sampling?</summary><p>Let the model try, keep only answers the checker accepts. What is left is clean training data.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>Why does a group where every rollout is correct teach RL nothing?</summary><p>The advantage is reward minus the group mean, so it is zero for every rollout. DAPO keeps sampling until each prompt has mixed rewards.</p></details>
+
+<details><summary>Why can&#x27;t you trust every trajectory that passed the tests?</summary><p>Some passes are cheats (git-history mining, test tampering) and some are sloppy. The Verification Horizon cut hacked passes from 28.57% to 0.56% by monitoring trajectories.</p></details>
+
+<details><summary>Is less data better, or more?</summary><p>Curation wins when data is scarce (LIMI). At scale, size and diversity win (Orchard). Filtered 9,139 beat random 9,139, but the full 19,050 beat both.</p></details>
+
+<details><summary>Where does a lawyer&#x27;s correction go?</summary><p>Logged with the reason, added to the regression set at once, then into the next training batch. Never into the held-out eval.</p></details>
+
+<details><summary>What is harness overfit and how do you avoid it?</summary><p>SFT copies the scaffold&#x27;s format along with the skill. Train across harnesses, convert traces to one format, or deploy in the harness you trained in.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Look at <code>synthetic[0]</code>: which rules were broken, and the changed lines.</li>
 <li>Count misses saved to <code>regression.jsonl</code> and cases kept out of 10 for fine-tuning.</li>
-<li>Solutions: add a cure-period fault; mix real and synthetic cases in one eval.</li>
+<li>Solutions: add a cure-period fault; mix real and synthetic cases in one eval and compare scores per group.</li>
 </ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">Lecture 11 · Shankar, "Data Flywheels" · "Who Validates the Validators?" · SWE-smith · LIMA</p>

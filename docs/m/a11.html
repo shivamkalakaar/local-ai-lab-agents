@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,9 +259,9 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A11</span></div><section class="mod" id="a11" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A11</div><h2>Guest lectures and reasoning frontiers</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a11_guest_lectures.ipynb">Open in Colab</a><button class="done-btn" data-done="a11" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">The reasoning tricks behind today&#x27;s models, tried on a small local one. Chain of thought, self-consistency, least-to-most, CoT-decoding, and where the guest talks point.</p><article class="lesson"><p class="deck-src">Based on CS329A · Guest lectures (9, 15, 16, 18, 19) and Lecture 20 · Reasoning frontiers · <a href="https://arxiv.org/abs/2203.11171" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
-<li>Use four prompt-only reasoning tricks on a local model, and use voting agreement to decide which answers need a person.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The guest talks</h3><span class="slide-no">2/13</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A11</span></div><section class="mod" id="a11" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A11</div><h2>Guest lectures and reasoning frontiers</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a11_guest_lectures.ipynb">Open in Colab</a><button class="done-btn" data-done="a11" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>22 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">The reasoning tricks behind today&#x27;s models, tried on a small local one. Chain of thought, self-consistency, least-to-most, CoT-decoding, and where the guest talks point.</p><article class="lesson"><p class="deck-src">Based on CS329A · Guest lectures (9, 15, 16, 18, 19) and Lecture 20 · Reasoning frontiers · <a href="https://arxiv.org/abs/2203.11171" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (64 slides)</b><ol><li><a href="#sec-1">Why this lecture exists</a> <span>3 slides</span></li><li><a href="#sec-2">Chain-of-thought prompting (Wei et al. 2022)</a> <span>12 slides</span></li><li><a href="#sec-3">Self-consistency (Wang et al. 2022)</a> <span>10 slides</span></li><li><a href="#sec-4">Least-to-most prompting (Zhou et al. 2022)</a> <span>8 slides</span></li><li><a href="#sec-5">CoT-decoding: reasoning without a prompt (Wang and Zhou 2024)</a> <span>10 slides</span></li><li><a href="#sec-6">Math olympiad: from formal to plain language</a> <span>9 slides</span></li><li><a href="#sec-7">The other guest talks</a> <span>7 slides</span></li><li><a href="#sec-8">How this applies to us</a> <span>3 slides</span></li><li><a href="#sec-9">Wrap-up</a> <span>1 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/64</span></div><ul>
+<li>Use four prompt-only reasoning tricks on a local model, use voting agreement to decide which answers need a person, and know the papers behind each guest talk.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why this lecture exists</div><div class="slide"><div class="slide-top"><h3>The guest talks</h3><span class="slide-no">2/64</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Lecture</th>
@@ -301,7 +305,187 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>The course assigned no papers for these talks. Every reading here is our pick.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Direct answer vs chain of thought</h3><span class="slide-no">3/13</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>One arc through the talks</h3><span class="slide-no">3/64</span></div><ul>
+<li>Reason step by step (chain of thought).</li>
+<li>Sample several answers and vote (self-consistency).</li>
+<li>Split hard problems into easy ones (least-to-most).</li>
+<li>Find reasoning the model already has (CoT-decoding).</li>
+<li>Learn from rewards a machine can check (AlphaGeometry, AlphaProof, Gemini Deep Think).</li>
+<li>Act in software and the physical world (Algorithm Distillation, PaLM-E, π0).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four tricks, one question each</h3><span class="slide-no">4/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Trick</th>
+<th>Question it answers</th>
+<th>Extra calls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chain of thought</td>
+<td>Does writing steps help?</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Self-consistency</td>
+<td>Do many paths agree?</td>
+<td>K samples</td>
+</tr>
+<tr>
+<td>Least-to-most</td>
+<td>Can we split it first?</td>
+<td>1 + number of sub-questions</td>
+</tr>
+<tr>
+<td>CoT-decoding</td>
+<td>Is reasoning hiding behind greedy decoding?</td>
+<td>k branches</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Chain-of-thought prompting (Wei et al. 2022)</div><div class="slide"><div class="slide-top"><h3>The idea</h3><span class="slide-no">5/64</span></div><ul>
+<li>Chain of thought (CoT): a series of short reasoning steps written before the answer.</li>
+<li>Few-shot prompting: show the model a few worked examples, then the new question.</li>
+<li>CoT prompting: each example is a triple ⟨input, chain of thought, output⟩.</li>
+<li>No training or fine-tuning. One model checkpoint, many tasks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Standard vs chain-of-thought prompt (Figure 1)</h3><span class="slide-no">6/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Standard prompting</th>
+<th>Chain-of-thought prompting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Example answer: "The answer is 11."</td>
+<td>Example answer: "Roger started with 5 balls. 2 cans of 3 tennis balls each is 6 tennis balls. 5 + 6 = 11. The answer is 11."</td>
+</tr>
+<tr>
+<td>Cafeteria question → "The answer is 27." (wrong)</td>
+<td>Cafeteria question → "23 - 20 = 3 ... 3 + 6 = 9. The answer is 9." (right)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Why CoT helps (Section 2)</h3><span class="slide-no">7/64</span></div><ul>
+<li>Breaks multi-step problems into steps, so more compute goes to harder problems.</li>
+<li>Gives a readable window into how the model got its answer.</li>
+<li>Works for any task people solve in language: math, commonsense, symbols.</li>
+<li>Easy to use: just put worked examples in the prompt.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setup (Section 3.1)</h3><span class="slide-no">8/64</span></div><ul>
+<li>5 math benchmarks: GSM8K, SVAMP, ASDiv, AQuA, MAWPS.</li>
+<li>8 hand-written CoT examples for all math sets except AQuA (4 examples).</li>
+<li>Models: GPT-3 (350M to 175B), LaMDA (422M to 137B), PaLM (8B, 62B, 540B), UL2 20B, Codex.</li>
+<li>Greedy decoding.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results on math (Table 1)</h3><span class="slide-no">9/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>GSM8K standard</th>
+<th>GSM8K CoT</th>
+<th>MAWPS standard</th>
+<th>MAWPS CoT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UL2 20B</td>
+<td>4.1</td>
+<td>4.4</td>
+<td>16.6</td>
+<td>19.1</td>
+</tr>
+<tr>
+<td>LaMDA 137B</td>
+<td>6.5</td>
+<td>14.3</td>
+<td>43.2</td>
+<td>57.9</td>
+</tr>
+<tr>
+<td>GPT-3 175B</td>
+<td>15.6</td>
+<td>46.9</td>
+<td>72.7</td>
+<td>87.1</td>
+</tr>
+<tr>
+<td>Codex</td>
+<td>19.7</td>
+<td>63.1</td>
+<td>78.7</td>
+<td>92.6</td>
+</tr>
+<tr>
+<td>PaLM 540B</td>
+<td>17.9</td>
+<td>56.9</td>
+<td>79.2</td>
+<td>93.3</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Prior best on GSM8K: 55 (fine-tuned GPT-3 with a verifier). PaLM 540B + CoT beat it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three takeaways (Section 3.2)</h3><span class="slide-no">10/64</span></div><ul>
+<li>CoT is an emergent ability of scale: it only helps at about 100B parameters.<ul>
+<li>Smaller models wrote fluent but illogical chains, scoring below standard prompting.</li>
+</ul>
+</li>
+<li>Bigger gains on harder problems: GSM8K more than doubled for the largest models.<ul>
+<li>On one-step problems (SingleOp), gains were negative or very small.</li>
+</ul>
+</li>
+<li>With CoT, large models match or beat fine-tuned task-specific models.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Are the chains correct? (Section 3.2)</h3><span class="slide-no">11/64</span></div><ul>
+<li>LaMDA 137B, GSM8K, 50 correct answers: all chains correct except two that got lucky.</li>
+<li>50 wrong answers: 46% almost correct (calculator error, symbol mix-up, one missing step); 54% had major errors.</li>
+<li>Scaling PaLM 62B → 540B fixed many missing-step and understanding errors.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Ablation: what actually helps (Figure 5)</h3><span class="slide-no">12/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>What it tests</th>
+<th>GSM8K result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Equation only</td>
+<td>Is it just writing the equation?</td>
+<td>Little help (does help on 1–2 step sets)</td>
+</tr>
+<tr>
+<td>Variable compute only (dots)</td>
+<td>Is it just more tokens?</td>
+<td>About the same as baseline</td>
+</tr>
+<tr>
+<td>Reasoning after the answer</td>
+<td>Is it just recalling knowledge?</td>
+<td>About the same as baseline</td>
+</tr>
+<tr>
+<td>Full chain of thought</td>
+<td>Steps in language, before the answer</td>
+<td>Large gain</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Robustness (Section 3.4)</h3><span class="slide-no">13/64</span></div><ul>
+<li>Three annotators wrote different chains; a concise style too; three sets sampled from GSM8K training data.</li>
+<li>All beat standard prompting by a large margin (Figure 6). No special wording needed.</li>
+<li>Also robust to example order and number of examples.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Beyond math (Sections 4–5)</h3><span class="slide-no">14/64</span></div><ul>
+<li>Commonsense with PaLM 540B + CoT:<ul>
+<li>StrategyQA: 75.6% vs prior best 69.4%.</li>
+<li>Sports understanding: 95.4% vs 84% for an unaided sports enthusiast.</li>
+<li>CSQA: minimal gain.</li>
+</ul>
+</li>
+<li>Symbolic (last-letter concatenation, coin flip): CoT helps generalize to longer inputs than the examples (2 words → 3 or 4).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CoT&#x27;s stated limits (Section 6)</h3><span class="slide-no">15/64</span></div><ul>
+<li>Doesn't settle whether the network is really "reasoning".</li>
+<li>Writing chains is cheap for a few examples, costly for fine-tuning data.</li>
+<li>No guarantee the chain is correct.</li>
+<li>Only works at large scale, which is costly to serve.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Direct answer vs chain of thought (our notebook)</h3><span class="slide-no">16/64</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Direct</th>
@@ -324,14 +508,185 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
-<li>CoT: the model writes its reasoning steps before the answer.</li>
-<li>Gain grows with model size; tiny models can write steps that look right but are wrong.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Self-consistency</h3><span class="slide-no">4/13</span></div><ul>
-<li>Sample several reasoning paths (temperature above 0); take the majority answer.</li>
-<li>Many paths lead to the right answer; wrong answers tend to scatter.</li>
-<li>Agreement rate: share of samples matching the majority. A free confidence score.</li>
-<li>High agreement ≠ truth. A model can be wrong the same way every time.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Voting in code</h3><span class="slide-no">5/13</span></div><pre><code class="language-python">samples = pmap(sample_answers, PROBS)
+<li>Today's chat models are trained to reason, so "think step by step" (zero-shot CoT) is usually enough.</li>
+<li>6 seeded hard math problems (3–5 steps each).</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Self-consistency (Wang et al. 2022)</div><div class="slide"><div class="slide-top"><h3>The idea</h3><span class="slide-no">17/64</span></div><ul>
+<li>Replace greedy decoding in CoT with "sample and marginalize".</li>
+<li>
+<ol>
+<li>Prompt with chain-of-thought examples.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Sample many diverse reasoning paths (temperature above 0).</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Take the most common final answer.</li>
+</ol>
+</li>
+<li>Intuition: a hard problem has many paths to the right answer; wrong paths rarely agree.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example (Figure 1)</h3><span class="slide-no">18/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Reasoning</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Greedy</td>
+<td>"3 + 4 = 7 eggs every day ... 7 * $2 = $14"</td>
+<td>$14 (wrong)</td>
+</tr>
+<tr>
+<td>Sample 1</td>
+<td>"16 - 3 - 4 = 9 eggs left ... $2 * 9 = $18"</td>
+<td>$18</td>
+</tr>
+<tr>
+<td>Sample 2</td>
+<td>"$2 * (16 - 4 - 3) = $26"</td>
+<td>$26</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>"16 - 3 = 13 ... 13 - 4 = 9 ... 9 * $2 = $18"</td>
+<td>$18</td>
+</tr>
+<tr>
+<td>Majority vote</td>
+<td></td>
+<td>$18 (right)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The formula (Section 2)</h3><span class="slide-no">19/64</span></div><ul>
+<li>Majority vote: <code>answer = argmax_a Σ_i 1(a_i = a)</code> over m sampled outputs.</li>
+<li>a_i: final answer parsed from path i ("The answer is X").</li>
+<li>Weighted option: weight each path by <code>P(r_i, a_i) = exp((1/K) · Σ_k log P(t_k | ...))</code>.<ul>
+<li>K: number of tokens; this is the length-normalized probability.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Which vote works? (Table 1, PaLM-540B)</h3><span class="slide-no">20/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Aggregation</th>
+<th>GSM8K</th>
+<th>AQuA</th>
+<th>SVAMP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Greedy decode</td>
+<td>56.5</td>
+<td>35.8</td>
+<td>79.0</td>
+</tr>
+<tr>
+<td>Weighted sum (unnormalized)</td>
+<td>59.9</td>
+<td>38.2</td>
+<td>76.2</td>
+</tr>
+<tr>
+<td>Weighted sum (normalized)</td>
+<td>74.1</td>
+<td>48.0</td>
+<td>86.8</td>
+</tr>
+<tr>
+<td>Majority vote</td>
+<td>74.4</td>
+<td>48.3</td>
+<td>86.6</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Plain majority ≈ normalized weighting: the model sees all its paths as about equally likely.</li>
+<li>That also means the model is poorly calibrated on its own.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setup (Section 3.1)</h3><span class="slide-no">21/64</span></div><ul>
+<li>Models: UL2-20B, GPT-3 (code-davinci-001 and -002), LaMDA-137B, PaLM-540B.</li>
+<li>Same prompts as Wei et al.: 8 examples for math.</li>
+<li>Sampling: T = 0.5, top-k 40 (UL2, LaMDA); T = 0.7, k = 40 (PaLM); T = 0.7 (GPT-3).</li>
+<li>40 sampled paths, averaged over 10 runs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results on math (Table 2)</h3><span class="slide-no">22/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>GSM8K CoT</th>
+<th>GSM8K SC</th>
+<th>AQuA CoT</th>
+<th>AQuA SC</th>
+<th>SVAMP CoT</th>
+<th>SVAMP SC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UL2-20B</td>
+<td>4.1</td>
+<td>7.3</td>
+<td>23.6</td>
+<td>26.9</td>
+<td>12.6</td>
+<td>19.4</td>
+</tr>
+<tr>
+<td>LaMDA-137B</td>
+<td>17.1</td>
+<td>27.7</td>
+<td>17.7</td>
+<td>26.8</td>
+<td>38.9</td>
+<td>53.3</td>
+</tr>
+<tr>
+<td>PaLM-540B</td>
+<td>56.5</td>
+<td>74.4</td>
+<td>35.8</td>
+<td>48.3</td>
+<td>79.0</td>
+<td>86.6</td>
+</tr>
+<tr>
+<td>code-davinci-002</td>
+<td>60.1</td>
+<td>78.0</td>
+<td>39.8</td>
+<td>52.0</td>
+<td>75.8</td>
+<td>86.8</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Headline gains: GSM8K +17.9%, SVAMP +11.0%, AQuA +12.2%, StrategyQA +6.4%, ARC-challenge +3.9%.</li>
+<li>Gains grow with model size.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Compared with other methods (Section 3.4)</h3><span class="slide-no">23/64</span></div><ul>
+<li>Sample-and-rank (pick the highest-probability sample): much smaller gain (Figure 3).</li>
+<li>Beam search (UL2-20B, AQuA, 40 beams): 10.2% vs 26.9% for self-consistency (Table 6). Beams lack diversity.</li>
+<li>Prompt ensembles on LaMDA-137B GSM8K (Table 7):<ul>
+<li>3 prompt sets: 18.6; 40 prompt orders: 19.2; self-consistency: 27.7.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Extra findings (Section 3.3, 3.5)</h3><span class="slide-no">24/64</span></div><ul>
+<li>Helps even where CoT hurts (Table 5): ANLI R1 standard 69.1, CoT 68.8, SC 78.5.</li>
+<li>Robust to sampling settings (temperature, top-k, nucleus).</li>
+<li>Imperfect prompts: greedy 17.1 → 14.9; SC brings it to 23.4 (Table 8).</li>
+<li>Zero-shot CoT on PaLM-540B: 43.0 → 69.2 with SC (+26.2%).</li>
+<li>More paths help; 5 or 10 get most of the gain (Figure 2).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agreement as confidence (Figure 5)</h3><span class="slide-no">25/64</span></div><ul>
+<li>Consistency: % of samples that agree with the final majority answer.</li>
+<li>Highly correlated with accuracy on GSM8K.</li>
+<li>Low consistency → the model "knows when it doesn't know".</li>
+<li>Limits: costs more compute; models can still write wrong or nonsense reasoning.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Voting in code</h3><span class="slide-no">26/64</span></div><pre><code class="language-python">samples = pmap(sample_answers, PROBS)
 votes = [Counter(a for a in s if a is not None).most_common(1) for s in samples]
 sc = [v[0][0] if v else None for v in votes]
 agree = [v[0][1] / K if v else 0 for v in votes]
@@ -342,12 +697,216 @@ agree = [v[0][1] / K if v else 0 for v in votes]
 <li>Line 3: the majority answer.</li>
 <li>Line 4: agreement = majority count / K.</li>
 <li>Review gate (Solution 3): agreement below 60% → send to a person.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Least-to-most</h3><span class="slide-no">6/13</span></div><ul>
-<li>Stage 1: break the problem into simpler sub-questions. Don't solve yet.</li>
-<li>Stage 2: solve them in order; each answer feeds the next.</li>
-<li>For problems harder than the prompt examples.</li>
-<li>Our notebook: 2 calls (decompose, then solve all). The paper solves each sub-question in its own call.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>CoT-decoding: reasoning without a prompt</h3><span class="slide-no">7/13</span></div><div class="tbl"><table>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Least-to-most prompting (Zhou et al. 2022)</div><div class="slide"><div class="slide-top"><h3>The problem: easy-to-hard generalization</h3><span class="slide-no">27/64</span></div><ul>
+<li>CoT does poorly when test problems are harder than the prompt examples.</li>
+<li>People can solve problems harder than any they've seen; models usually can't.</li>
+<li>Name borrowed from education: a sequence of prompts that builds up a new skill.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two stages (Section 2)</h3><span class="slide-no">28/64</span></div><ul>
+<li>
+<ol>
+<li>Decomposition: examples show how to split a problem; then the new problem.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Subproblem solving: examples of solving, plus earlier sub-questions and answers, plus the next sub-question.</li>
+</ol>
+</li>
+<li>The original problem is the last sub-question.</li>
+<li>Both stages are few-shot prompts. No training.</li>
+<li>Can merge into one pass, or combine with CoT and self-consistency.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Least-to-most vs CoT examples (Tables 2–3)</h3><span class="slide-no">29/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Least-to-most</th>
+<th>Chain of thought</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"think, machine" outputs "ke".</td>
+<td>Same first example</td>
+</tr>
+<tr>
+<td>"'think, machine' outputs 'ke'. The last letter of 'learning' is 'g' ... leads to 'keg'."</td>
+<td>"The last letter of 'think' is 'k' ... 'machine' is 'e' ... 'learning' is 'g' ... 'keg'."</td>
+</tr>
+<tr>
+<td>Builds on the previous answer (base case + recursive step)</td>
+<td>Starts from scratch each time</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Last-letter concatenation (Table 4)</h3><span class="slide-no">30/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>L=4</th>
+<th>L=6</th>
+<th>L=8</th>
+<th>L=10</th>
+<th>L=12</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<td>Chain of thought</td>
+<td>84.2</td>
+<td>69.2</td>
+<td>50.2</td>
+<td>39.8</td>
+<td>31.8</td>
+</tr>
+<tr>
+<td>Least-to-most</td>
+<td>94.0</td>
+<td>88.4</td>
+<td>83.0</td>
+<td>76.4</td>
+<td>74.0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>code-davinci-002, 500 lists per length; examples had only 2–3 words.</li>
+<li>Most errors: dropping or adding a letter when concatenating.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SCAN: compositional generalization (Section 3.2)</h3><span class="slide-no">31/64</span></div><ul>
+<li>SCAN: map commands to actions. "look thrice after jump" → JUMP LOOK LOOK LOOK.</li>
+<li>Length split: test commands are longer than training ones.</li>
+<li>Prompts: 8 decomposition examples, 14 mapping examples.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Standard</th>
+<th>CoT</th>
+<th>Least-to-most</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>code-davinci-002</td>
+<td>16.7</td>
+<td>16.2</td>
+<td>99.7</td>
+</tr>
+<tr>
+<td>text-davinci-002</td>
+<td>6.0</td>
+<td>0.0</td>
+<td>76.0</td>
+</tr>
+<tr>
+<td>code-davinci-001</td>
+<td>0.4</td>
+<td>0.0</td>
+<td>60.7</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Specialist neural-symbolic models train on over 15,000 examples. Least-to-most uses 14.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Math word problems (Tables 9–12)</h3><span class="slide-no">32/64</span></div><ul>
+<li>GSM8K prompt: one 2-step example; "Let's break down this problem: 1. ... 2. ..."</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>DROP non-football</th>
+<th>DROP football</th>
+<th>GSM8K</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zero-shot</td>
+<td>43.86</td>
+<td>51.77</td>
+<td>16.38</td>
+</tr>
+<tr>
+<td>Standard</td>
+<td>58.78</td>
+<td>62.73</td>
+<td>17.06</td>
+</tr>
+<tr>
+<td>Chain of thought</td>
+<td>74.77</td>
+<td>59.56</td>
+<td>60.87</td>
+</tr>
+<tr>
+<td>Least-to-most</td>
+<td>82.45</td>
+<td>73.42</td>
+<td>62.39</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>GSM8K problems needing 5+ steps: 39.07 (CoT) → 45.23 (least-to-most) (Table 12).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Least-to-most&#x27;s stated limits (Section 5)</h3><span class="slide-no">33/64</span></div><ul>
+<li>Decomposition prompts don't carry across domains: a math one won't split "Did Aristotle use a laptop?"</li>
+<li>Hard even within one domain: almost every GSM8K problem is solvable once given the right decomposition.</li>
+<li>Great results on SCAN and letters come from easy decomposition.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Least-to-most in code</h3><span class="slide-no">34/64</span></div><ul>
+<li>Stage 1: "Do not solve it yet. List the simpler sub-questions, in order... at most 5."</li>
+<li>Stage 2: "Answer each sub-question in order, using earlier answers. Then end with: <code>ANSWER: &lt;number&gt;</code>"</li>
+<li>Our notebook uses 2 calls (decompose, then solve all). The paper solves each sub-question in its own call.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>CoT-decoding: reasoning without a prompt (Wang and Zhou 2024)</div><div class="slide"><div class="slide-top"><h3>The question</h3><span class="slide-no">35/64</span></div><ul>
+<li>Can a model reason with no prompt engineering at all?</li>
+<li>Prompts carry human hints, so they hide what the model can do alone.</li>
+<li>Input: plain <code>Q: [question]\nA:</code> (needed only so a base model answers instead of continuing the question).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Greedy vs top-k paths (Table 1, PaLM-2 Large)</h3><span class="slide-no">36/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Output</th>
+<th>Confidence Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Greedy (k=0)</td>
+<td>"$60.00"</td>
+<td>0.029</td>
+</tr>
+<tr>
+<td>k=1</td>
+<td>"60"</td>
+<td>0.058</td>
+</tr>
+<tr>
+<td>k=2</td>
+<td>"Kylar needs to pay $60 for 16 glasses."</td>
+<td>0.058</td>
+</tr>
+<tr>
+<td>k=9</td>
+<td>"16 x 5 = 80 8 x 5 = 40 40 x 0.4 = 16 80 – 16 = 64 ... $64"</td>
+<td>0.994</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The right answer ($64) comes from the path that reasons; its Δ is far higher.</li>
+<li>Majority of paths say 60, so self-consistency would pick wrong here.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The method</h3><span class="slide-no">37/64</span></div><ul>
+<li>Branch on the top-k tokens at the first decoding step (k = 10 by default).</li>
+<li>Continue each branch greedily.</li>
+<li>Score each path by answer confidence Δ; pick the highest, or sum Δ per answer.</li>
+</ul>
+<div class="tbl"><table>
 <thead>
 <tr>
 <th>Greedy decoding</th>
@@ -357,7 +916,7 @@ agree = [v[0][1] / K if v else 0 for v in votes]
 <tbody>
 <tr>
 <td>Always pick the most likely next token</td>
-<td>Branch on the top-k first tokens (k = 10 in the paper)</td>
+<td>Branch on the top-k first tokens</td>
 </tr>
 <tr>
 <td>One path; often answers at once</td>
@@ -368,72 +927,428 @@ agree = [v[0][1] / K if v else 0 for v in votes]
 <td>Pick by answer confidence</td>
 </tr>
 </tbody>
-</table></div>
-<ul>
-<li>Answer confidence (Δ): average gap between top-1 and top-2 token probabilities over the answer tokens.</li>
-<li>Needs raw completion and log-probs. Without them, our notebook uses branch agreement instead.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Denny Zhou&#x27;s four papers</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The formula</h3><span class="slide-no">38/64</span></div><ul>
+<li><code>Δ_k,answer = (1 / |answer|) · Σ_{x_t ∈ answer} [ p(x_t¹ | x_&lt;t) − p(x_t² | x_&lt;t) ]</code></li>
+<li>x_t¹, x_t²: the top-1 and top-2 tokens at step t on path k.</li>
+<li>Sum runs only over the answer's tokens (e.g. "6" and "0" for 60).</li>
+<li>Big gap = model is sure. Similar to min-margin uncertainty.</li>
+<li>Aggregated version: pick the answer with the largest Σ_k Δ_k,a.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Ways to pick a path (Table 2, PaLM-2 L)</h3><span class="slide-no">39/64</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Paper</th>
-<th>What it showed</th>
+<th>Method</th>
+<th>GSM8K (top-100)</th>
+<th>Year parity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Chain-of-Thought (Wei et al. 2022)</td>
-<td>540B model + 8 CoT examples: state of the art on GSM8K, beat fine-tuned GPT-3 with a verifier</td>
+<td>Greedy</td>
+<td>44.0%</td>
+<td>57.0%</td>
 </tr>
 <tr>
-<td>Self-Consistency (Wang et al. 2022)</td>
-<td>Over CoT: GSM8K +17.9%, SVAMP +11.0%, AQuA +12.2%</td>
+<td>10 paths, rank by log-prob</td>
+<td>37.0%</td>
+<td>55.0%</td>
 </tr>
 <tr>
-<td>Least-to-Most (Zhou et al. 2022)</td>
-<td>SCAN, 14 examples: at least 99% on every split vs 16% for CoT</td>
+<td>10 paths, rank by length-normalized log-prob</td>
+<td>51.0%</td>
+<td>57.0%</td>
 </tr>
 <tr>
-<td>CoT-decoding (Wang and Zhou 2024)</td>
-<td>Pre-trained Mistral-7B on GSM8K: 9.9% greedy → 25.1%</td>
+<td>CoT-decoding (rank by Δ)</td>
+<td>72.0%</td>
+<td>95.0%</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Math olympiad: from formal to plain language</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+</table></div>
+<ul>
+<li>On the first 100 GSM8K questions, the highest-Δ path contained a CoT 88% of the time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Only CoT-decoding helps (Table 4, Mistral-7B pre-trained, GSM8K)</h3><span class="slide-no">40/64</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>System</th>
-<th>Result</th>
+<th>Decoding</th>
+<th>Accuracy</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>AlphaGeometry (2024)</td>
-<td>25 of 30 olympiad geometry problems; previous best 10; average gold medalist about 25.9</td>
+<td>Top-k sampling (k = 10)</td>
+<td>4.9%</td>
 </tr>
 <tr>
-<td>AlphaProof + AlphaGeometry 2 (IMO 2024)</td>
-<td>28 of 42 points, silver; Lean proofs; some problems took up to three days</td>
+<td>Nucleus sampling (p = 0.9)</td>
+<td>6.4%</td>
 </tr>
 <tr>
-<td>Gemini Deep Think (IMO 2025)</td>
-<td>35 of 42 points, gold; natural language, within 4.5 hours</td>
+<td>Beam search (b = 10)</td>
+<td>6.7%</td>
+</tr>
+<tr>
+<td>Temperature sampling (T = 0.7)</td>
+<td>7.5%</td>
+</tr>
+<tr>
+<td>Greedy</td>
+<td>9.9%</td>
+</tr>
+<tr>
+<td>Self-consistency without CoT prompt (10 paths)</td>
+<td>12.9%</td>
+</tr>
+<tr>
+<td>CoT-decoding (k = 10)</td>
+<td>25.1%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Sampling fails without a prompt: the first token has little diversity.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Across models and tuning (Tables 3, 5)</h3><span class="slide-no">41/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Greedy</th>
+<th>CoT-decoding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PaLM-2 L pre-trained, GSM8K</td>
+<td>34.8%</td>
+<td>63.2%</td>
+</tr>
+<tr>
+<td>Mistral-7B pre-trained, GSM8K</td>
+<td>9.9%</td>
+<td>25.1%</td>
+</tr>
+<tr>
+<td>Mistral-7B instruction-tuned, GSM8K</td>
+<td>31.2%</td>
+<td>38.2%</td>
+</tr>
+<tr>
+<td>Mistral-7B pre-trained, MultiArith</td>
+<td>14.3%</td>
+<td>45.7%</td>
+</tr>
+<tr>
+<td>Mistral-7B pre-trained, year parity</td>
+<td>35.0%</td>
+<td>66.0%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>PaLM-2 L pre-trained + CoT-decoding (63.2%) is close to the instruction-tuned model (67.8%).</li>
+<li>Higher k usually helps; less so for instruction-tuned models (Figure 5).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Harder tasks, smaller gains (Table 6, PaLM-2 L)</h3><span class="slide-no">42/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Greedy</th>
+<th>CoT-decoding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Coin flip, 2 rounds</td>
+<td>70.0</td>
+<td>94.0</td>
+</tr>
+<tr>
+<td>Coin flip, 4 rounds</td>
+<td>48.0</td>
+<td>55.0</td>
+</tr>
+<tr>
+<td>Multi-step arithmetic d0, l3</td>
+<td>39.0</td>
+<td>56.0</td>
+</tr>
+<tr>
+<td>Multi-step arithmetic d2, l4</td>
+<td>0.0</td>
+<td>16.0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Correct paths exist for 1–2 step manipulations; harder to find at 3+ steps.</li>
+<li>Weak spots exposed: losing track of state; doing arithmetic left to right.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Combining with a CoT prompt (Table 7, GSM8K)</h3><span class="slide-no">43/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Mistral-7B</th>
+<th>PaLM-2 L</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zero-shot CoT prompt</td>
+<td>17.5%</td>
+<td>75.1%</td>
+</tr>
+<tr>
+<td>Self-consistency + zero-shot CoT</td>
+<td>39.4%</td>
+<td>85.3%</td>
+</tr>
+<tr>
+<td>CoT-decoding (agg) + zero-shot CoT</td>
+<td>48.4%</td>
+<td>87.0%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Limits: extra compute; Δ is less precise for open-ended answers; only branches at the first token.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CoT-decoding on Ollama (our notebook)</h3><span class="slide-no">44/64</span></div><ul>
+<li>Uses <code>/api/generate</code> with <code>raw: true</code> (skips the chat template), k = 5 branches.</li>
+<li>If Ollama returns log-probs: real top-k first tokens and the paper's Δ.</li>
+<li>If not: sample different first tokens at high temperature; use branch agreement instead of Δ.</li>
+<li>Our model is instruction-tuned, so it often reasons anyway. The paper's big gains are on base models.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Math olympiad: from formal to plain language</div><div class="slide"><div class="slide-top"><h3>AlphaGeometry: the problem (Trinh et al. 2024)</h3><span class="slide-no">45/64</span></div><ul>
+<li>Olympiad proofs need machine-checkable training data, which is scarce.</li>
+<li>Geometry is worst: very few proofs in Lean; geometry-only languages can't express many human proofs.</li>
+<li>Key hard step: auxiliary constructions (adding a new point or line). Infinite choices.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How AlphaGeometry works (Figure 1)</h3><span class="slide-no">46/64</span></div><ul>
+<li>Neuro-symbolic: a language model plus a symbolic deduction engine.</li>
+<li>
+<ol>
+<li>Symbolic engine deduces everything it can from the premises.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Not solved? The language model proposes one auxiliary construction.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Engine tries again. Loop until solved or out of budget (beam search over constructions).</li>
+</ol>
+</li>
+<li>Engine: DD (deductive database, Horn-clause rules) + AR (algebraic rules for angle, ratio and distance chasing).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Synthetic data, no human proofs (Figure 3)</h3><span class="slide-no">47/64</span></div><ul>
+<li>Sample nearly 1 billion random premise sets; run the engine; trace back the minimal proof of each conclusion.</li>
+<li>100 million unique theorems and proofs; some over 200 steps.</li>
+<li>Dependency difference: premises the conclusion doesn't need become auxiliary constructions.<ul>
+<li>Nearly 10 million such steps; about 9% of proofs.</li>
+</ul>
+</li>
+<li>Pre-train on all 100 million; fine-tune on the 9 million with constructions.</li>
+<li>Model: 151 million parameter transformer, 12 layers, vocabulary of 757.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results on IMO-AG-30 (Table 1)</h3><span class="slide-no">48/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Solved (of 30)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wu's method (previous best)</td>
+<td>10</td>
+</tr>
+<tr>
+<td>GPT-4</td>
+<td>0</td>
+</tr>
+<tr>
+<td>DD + human heuristics</td>
+<td>9</td>
+</tr>
+<tr>
+<td>DD + AR</td>
+<td>14</td>
+</tr>
+<tr>
+<td>DD + AR + human heuristics</td>
+<td>18</td>
+</tr>
+<tr>
+<td>AlphaGeometry</td>
+<td>25</td>
+</tr>
+<tr>
+<td>without pre-training</td>
+<td>21</td>
+</tr>
+<tr>
+<td>without fine-tuning</td>
+<td>23</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>AR added 7 problems over DD; the language model added another 11.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Versus humans (Figure 2)</h3><span class="slide-no">49/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Problems solved (of 30)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Previous best (Wu)</td>
+<td>10.0</td>
+</tr>
+<tr>
+<td>Average IMO contestant</td>
+<td>15.2</td>
+</tr>
+<tr>
+<td>Bronze medallist</td>
+<td>19.3</td>
+</tr>
+<tr>
+<td>Silver medallist</td>
+<td>22.9</td>
+</tr>
+<tr>
+<td>AlphaGeometry</td>
+<td>25.0</td>
+</tr>
+<tr>
+<td>Gold medallist</td>
+<td>25.9</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Also: 98.7% of a larger 231-problem set; 21 problems with 20% of the data or 2% of the search budget.</li>
+<li>Limits: only classical plane geometry (75% of non-combinatorial IMO geometry); lower-level toolkit than humans.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AlphaProof + AlphaGeometry 2 at IMO 2024 (DeepMind blog)</h3><span class="slide-no">50/64</span></div><ul>
+<li>AlphaProof: a pre-trained language model + AlphaZero reinforcement learning in Lean.<ul>
+<li>A fine-tuned Gemini translated natural-language problems into Lean.</li>
+<li>Trained by proving or disproving millions of problems.</li>
+</ul>
+</li>
+<li>AlphaGeometry 2: Gemini-based model; symbolic engine two orders of magnitude faster; solved 83% of historical IMO geometry problems.</li>
+<li>IMO problems were translated into Lean by hand.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>IMO 2024 result</h3><span class="slide-no">51/64</span></div><ul>
+<li>28 of 42 points: 4 of 6 problems, each with a perfect score. Silver level; gold started at 29.</li>
+<li>AlphaProof: two algebra and one number theory problem. AlphaGeometry 2: the geometry problem (in 19 seconds after formalization).</li>
+<li>Two combinatorics problems unsolved.</li>
+<li>One problem in minutes; others took up to three days.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Gemini Deep Think at IMO 2025 (DeepMind blog)</h3><span class="slide-no">52/64</span></div><ul>
+<li>35 of 42 points: 5 of 6 problems solved perfectly. Gold level.</li>
+<li>End to end in natural language, within the 4.5-hour limit.</li>
+<li>Officially graded and certified by IMO coordinators.</li>
+<li>Methods: parallel thinking (explore several solutions at once), new RL techniques, a curated corpus of high-quality math solutions.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>2024 vs 2025</h3><span class="slide-no">53/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>AlphaProof + AlphaGeometry 2 (2024)</th>
+<th>Gemini Deep Think (2025)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Score</td>
+<td>28/42, silver</td>
+<td>35/42, gold</td>
+</tr>
+<tr>
+<td>Language</td>
+<td>Formal Lean (hand-translated input)</td>
+<td>Natural language</td>
+</tr>
+<tr>
+<td>Time</td>
+<td>Up to three days</td>
+<td>Within 4.5 hours</td>
+</tr>
+<tr>
+<td>System</td>
+<td>Specialist</td>
+<td>General model</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
 <li>Lean: a proof language a computer can check exactly.</li>
-<li>Parallel thinking: explore several candidate solutions at once.</li>
 <li>A checkable reward is what made the RL work.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The other talks, in short</h3><span class="slide-no">10/13</span></div><ul>
-<li>Johnson: post-training = everything after pre-training (instruction tuning, preference tuning, RL).<ul>
-<li>His 2017 paper: one model for many languages, translating pairs never seen together.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>The other guest talks</div><div class="slide"><div class="slide-top"><h3>Johnson: one model, many languages (2017)</h3><span class="slide-no">54/64</span></div><ul>
+<li>Post-training: everything after pre-training (instruction tuning, preference tuning, RL). Johnson leads Gemini post-training (per his site); see the Gemini report.</li>
+<li>His NMT paper: one translation model for many languages.</li>
+<li>Only change: an artificial token for the target language, e.g. <code>&lt;2es&gt; Hello, how are you?</code>.</li>
+<li>Same encoder, decoder, attention; shared 32,000 wordpiece vocabulary; no extra parameters.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Multilingual NMT results</h3><span class="slide-no">55/64</span></div><ul>
+<li>WMT'14: matched state of the art English→French; beat it for English→German.</li>
+<li>Many-to-one (Table 1): multilingual beat single models, e.g. French→English 35.50 → 36.77 BLEU.</li>
+<li>Zero-shot Portuguese→Spanish (Table 5), never seen together in training:</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Zero-shot</th>
+<th>BLEU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NMT bridged through English</td>
+<td>no</td>
+<td>30.91</td>
+</tr>
+<tr>
+<td>Model 1 (Pt→En, En→Es)</td>
+<td>yes</td>
+<td>21.62</td>
+</tr>
+<tr>
+<td>Model 2 (En↔{Es, Pt})</td>
+<td>yes</td>
+<td>24.75</td>
+</tr>
+<tr>
+<td>Model 2 + a little Pt→Es data</td>
+<td>no</td>
+<td>31.77</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Lesson: one general model plus the right training signal can replace many specialists.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Laskin: Algorithm Distillation (2022)</h3><span class="slide-no">56/64</span></div><ul>
+<li>Policy distillation copies a fixed policy; it can't improve by trial and error.</li>
+<li>Algorithm Distillation (AD): train a causal transformer on the full learning histories of an RL algorithm.<ul>
+<li>Loss: predict each action given all earlier (observation, action, reward) steps across episodes.</li>
 </ul>
 </li>
-<li>Laskin: Algorithm Distillation trains a transformer on an RL algorithm's learning histories; it improves in context, no weight updates.</li>
-<li>Driess: PaLM-E feeds images and robot state into a language model; PaLM-E-562B was state of the art on OK-VQA.<ul>
-<li>π0: vision-language-action model (images + text in, robot actions out), trained on many robot types.</li>
-</ul>
-</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Lecture 20: open problems</h3><span class="slide-no">11/13</span></div><ul>
+<li>Because the policy in the data improves over time, the model must learn to improve.</li>
+<li>At test time it improves in context, with no weight updates.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Algorithm Distillation results</h3><span class="slide-no">57/64</span></div><ul>
+<li>Environments: adversarial bandit, Dark Room, Dark Key-to-Door, DMLab Watermaze (pixels).</li>
+<li>Learns in context in all of them; expert distillation (expert data only) mostly fails.</li>
+<li>Matches RL² (online meta-RL, 1 billion steps) on Dark tasks; within 13% on Watermaze.</li>
+<li>More data-efficient than the A3C or DQN source algorithm.</li>
+<li>Needs a context of 2–4 episodes; in-context RL starts at about one episode (Figure 7).</li>
+<li>Limit: real tasks have long episodes, needing longer-context models.</li>
+<li>Laskin later co-founded Reflection AI (March 2025), focused on autonomous coding agents.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Driess: PaLM-E (2023)</h3><span class="slide-no">58/64</span></div><ul>
+<li>Inject images, robot state and scene features into a pre-trained language model as "multimodal sentences".</li>
+<li>Trained end to end on robot planning, visual question answering and captioning.</li>
+<li>PaLM-E-562B on OK-VQA: 66.1, above fine-tuned Flamingo (57.8, 32-shot) and PaLI (64.5) (Table 5).</li>
+<li>Co-training on the full mixture more than doubled robot performance; robot tasks learned from 10–80 examples (Language-Table).</li>
+<li>Bigger model forgets less language: NLG drop 87.3% for PaLM-E-12B vs 3.9% for 562B (relative).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Driess: π0 (2024)</h3><span class="slide-no">59/64</span></div><ul>
+<li>Vision-language-action (VLA) model: images + text in, robot actions out.</li>
+<li>Base: PaliGemma, a 3 billion parameter vision-language model, plus a 300M "action expert": 3.3 billion total.</li>
+<li>Flow matching outputs action chunks of 50 steps, up to 50 Hz.</li>
+<li>Pre-trained on over 10,000 hours of robot data from 7 robot configurations and 68 tasks, plus open data (OXE).</li>
+<li>Out of the box, beat OpenVLA and Octo on every task (Figure 7); fine-tuned for laundry folding, table bussing, box assembly.</li>
+<li>Limits: unclear how to mix pre-training data; not all tasks work reliably.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture 20: open problems</h3><span class="slide-no">60/64</span></div><ul>
 <li>Our synthesis, not the lecture's content:<ul>
 <li>Rewards for work with no unit test.</li>
 <li>Long-horizon reliability: 80% horizons are several times shorter than 50% ones.</li>
@@ -442,16 +1357,34 @@ agree = [v[0][1] / K if v else 0 for v in votes]
 <li>Evaluations that keep up (live benchmarks).</li>
 </ul>
 </li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
-<li>These tricks need no training. They work on any local model with prompts and a few extra calls.</li>
-<li>Agreement tells the firm which contract answers go straight through and which need a lawyer.</li>
-<li>The firm's labeled contracts are a checkable reward, at small scale.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Prompt tricks on the firm&#x27;s machine</h3><span class="slide-no">61/64</span></div><ul>
+<li>None of the four tricks needs training. They work on any local Ollama model.</li>
+<li>CoT for multi-step checks: "Is the cap in months of fees above 12?" Let it reason; grade the final answer with code.</li>
+<li>Least-to-most for long contracts: list the playbook rules first, then check each clause one by one.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agreement as a review gate</h3><span class="slide-no">62/64</span></div><ul>
+<li>Run self-consistency with K = 5 on each contract question.</li>
+<li>High agreement → straight through. Below 60% → a lawyer reviews.</li>
+<li>Agreement measures consistency, not truth: spot-check high-agreement answers too.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Checkable rewards at small scale</h3><span class="slide-no">63/64</span></div><ul>
+<li>The firm's labeled contracts are a checkable reward, like Lean for proofs.</li>
+<li>Use them to pick prompts, check CoT-decoding picks, or later fine-tune.</li>
+<li>If your Ollama gives log-probs, CoT-decoding's Δ is a second confidence signal.</li>
+</ul></div><div class="deck-sec" id="sec-9"><span>Part 9</span>Wrap-up</div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">64/64</span></div><ul>
+<li>Treating these readings as the course's → CS329A listed no papers for the guest talks; we chose them.</li>
 <li>Forcing "only the number" on a multi-step problem → let it reason, grade the final answer with code.</li>
 <li>High agreement = correct → agreement measures consistency, not truth.</li>
 <li>CoT-decoding through the chat endpoint → needs raw completion and log-probs.</li>
+<li>Expecting big CoT gains on tiny models → the CoT paper found gains only at about 100B parameters.</li>
 <li>Copying the IMO recipe without a checker → RL worked because answers could be verified exactly.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What is the difference between self-consistency and CoT-decoding?</summary><p>Self-consistency samples whole reasoning paths from a CoT prompt and votes. CoT-decoding uses no prompt, branches only on the first token, continues greedily and picks by answer confidence.</p></details>
+
+<details><summary>Why did CoT not help small models in Wei et al.?</summary><p>CoT is emergent with scale. Below about 100B parameters, models wrote fluent but illogical chains and did worse than standard prompting.</p></details>
+
+<details><summary>Why does least-to-most beat CoT on SCAN&#x27;s length split?</summary><p>It splits a long command into short ones and solves them in order, reusing earlier answers. CoT got 16.2%, least-to-most 99.7%.</p></details>
+
+<details><summary>In CoT-decoding, what is Δ?</summary><p>The average gap between top-1 and top-2 token probabilities over the answer&#x27;s tokens. Paths with reasoning tend to have a much higher Δ.</p></details>
+
+<details><summary>What changed between the 2024 IMO silver and the 2025 IMO gold?</summary><p>2024 used formal Lean proofs and took up to three days (28/42). 2025 Gemini Deep Think worked end to end in natural language within 4.5 hours (35/42).</p></details>
 
 <details><summary>What made RL work in AlphaProof?</summary><p>Lean, a formal checker that verifies proofs exactly, gave a reliable reward.</p></details>
 

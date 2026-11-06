@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Evaluation · Agent Engineering School</title>
-<meta name="description" content="Build the test set before the agent. Grade with code, test the test itself, and measure whether the agent is right every time.">
+<meta name="description" content="What a benchmark is, how agent benchmarks are built and graded, what makes one good, and how to report a score people can trust.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,58 +259,716 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 10</span></div><section class="mod" id="m10" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 10</div><h2>Evaluation</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/10_evaluation.ipynb">Open in Colab</a><button class="done-btn" data-done="m10" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Build the test set before the agent. Grade with code, test the test itself, and measure whether the agent is right every time.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lectures 10 and 13 · Evaluating Agents (Terminal-Bench, Harbor) · Benchmark Design · <a href="https://web.stanford.edu/class/cs329z/slides/lecture13.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
-<li>Build an eval for contract review: four task parts, a code grader, sanity checks, and a consistency score.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why evals first</h3><span class="slide-no">2/12</span></div><ul>
-<li>Before: code is the source of truth. Now: evals are the source of truth.</li>
-<li>Agents are stochastic: the same input can give different outputs.</li>
-<li>Without an eval you can't tell if a change helped, or if a local model is good enough.</li>
-<li>Goodhart's law: when a measure becomes a target, it stops being a good measure.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Definitions</h3><span class="slide-no">3/12</span></div><ul>
-<li>Task: one test with defined inputs and success criteria.</li>
-<li>Trial: one attempt at a task.</li>
-<li>Verifier (grader): the logic that scores the agent's work.</li>
-<li>Trajectory (trace): the full record of one trial.</li>
-<li>Agent harness: the code that lets a model act as an agent (prompts, tools, limits).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The four parts of a task</h3><span class="slide-no">4/12</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 10</span></div><section class="mod" id="m10" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 10</div><h2>Evaluation</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/10_evaluation.ipynb">Open in Colab</a><button class="done-btn" data-done="m10" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>30 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">What a benchmark is, how agent benchmarks are built and graded, what makes one good, and how to report a score people can trust.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 13 · Evaluation Fundamentals &amp; Benchmark Design (plus Lecture 10 · Evaluating Agents) · <a href="https://web.stanford.edu/class/cs329z/slides/lecture13.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (81 slides)</b><ol><li><a href="#sec-1">Why evals come first</a> <span>7 slides</span></li><li><a href="#sec-2">What is a benchmark?</a> <span>15 slides</span></li><li><a href="#sec-3">Why benchmarks matter</a> <span>3 slides</span></li><li><a href="#sec-4">Agent benchmarks</a> <span>22 slides</span></li><li><a href="#sec-5">Grading agents in practice</a> <span>10 slides</span></li><li><a href="#sec-6">What makes a benchmark good?</a> <span>11 slides</span></li><li><a href="#sec-7">What makes a score trustworthy?</a> <span>7 slides</span></li><li><a href="#sec-8">How this applies to us</a> <span>5 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/81</span></div><ul>
+<li>Design an agent eval the way benchmark builders do (task, environment, verifier, protocol), check it is good, and report a score others can trust.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why evals come first</div><div class="slide"><div class="slide-top"><h3>The rise of software engineering</h3><span class="slide-no">2/81</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Part</th>
-<th>Terminal-Bench</th>
-<th>Our contract eval</th>
+<th>Era</th>
+<th>What people wrote</th>
+<th>Example</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Request</td>
-<td><code>instruction.md</code>: "output a STEP file..."</td>
-<td>"List the rules this contract breaks."</td>
+<td>1940s</td>
+<td>Numeric instructions straight to the CPU</td>
+<td><code>48 83 C0 05</code></td>
 </tr>
 <tr>
-<td>Environment</td>
-<td><code>Dockerfile</code> with the input files</td>
-<td>20 frozen contracts + playbook</td>
+<td>Early 1950s</td>
+<td>Assembly</td>
+<td><code>add rax, 5</code></td>
 </tr>
 <tr>
-<td>Stopping rule</td>
-<td>turn / time / cost budget</td>
-<td>one call per contract</td>
-</tr>
-<tr>
-<td>Scorer</td>
-<td><code>test_outputs.py</code> asserts</td>
-<td>code compares to <code>labels.jsonl</code></td>
+<td>Late 1950s</td>
+<td>High-level code</td>
+<td><code>x += 5</code></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Score the final result, not the steps taken.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Grade with code: precision and recall</h3><span class="slide-no">5/12</span></div><ul>
+<li>All three lines do the same thing: add 5.</li>
+<li>Backus: 1950s programmers saw themselves as "a priesthood guarding skills and mysteries."</li>
+<li>IBM's FORTRAN report (1954): "FORTRAN should virtually eliminate coding and debugging."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Deductive technology creation</h3><span class="slide-no">3/81</span></div><ul>
+<li>Rules + Inputs → Outputs.</li>
+<li>Humans write the rules (code). The program applies them to new inputs.</li>
+<li>Hoare (1969): every property of a program can, in principle, be found from its text "by means of purely deductive reasoning."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Inductive technology creation</h3><span class="slide-no">4/81</span></div><ul>
+<li>The rise of ML: Inputs + Outputs → Rules.</li>
+<li>Humans provide examples (data + labels). Training infers the rules (the model).</li>
+<li>Slide headline: Chris Anderson, Wired (2008), "The End of Theory: The Data Deluge Makes the Scientific Method Obsolete."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two lifecycles</h3><span class="slide-no">5/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>SWE lifecycle (deductive)</th>
+<th>ML lifecycle (inductive)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Specification → Implementation → Test → Deploy</td>
+<td>Objective → Evaluation → Experiments → Optimization</td>
+</tr>
+<tr>
+<td>A straight line</td>
+<td>Loops back from Optimization to Evaluation</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Software → ML → LLMs → Agents</h3><span class="slide-no">6/81</span></div><ul>
+<li>Shannon's dream: a machine that "thinks, learns, communicates with humans and manipulates its environment."</li>
+<li>"All digital technology development is becoming inductive":</li>
+<li>Models: learned from data.</li>
+<li>Agents: developed via evaluation.</li>
+<li>Software: generated by agents.</li>
+<li>Chollet: agentic coding is a form of ML; treat generated code as a black box managed "via empirical evaluation."</li>
+<li>The model, agent and software lifecycle now all follow the inductive loop.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Rules vs outputs as the source of truth</h3><span class="slide-no">7/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Rule-based</th>
+<th>Model-based</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>re.search(r"\d{3}-\d{3}-\d{4}", text)</code></td>
+<td>Ask an LLM: "Extract the phone number:"</td>
+</tr>
+<tr>
+<td>The code is the spec. Read it to know what it does</td>
+<td>The code says little. Only outputs on test inputs tell you</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Same job: pull "555-123-4567" out of "My number is 555-123-4567".</li>
+<li>Specification → Evaluation. The specifier was the software engineer. Who is the evaluator?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Before and now</h3><span class="slide-no">8/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Before: traditional software</th>
+<th>Now: agentic world</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Code is the source of truth</td>
+<td>Evals are the source of truth</td>
+</tr>
+<tr>
+<td>Deterministic</td>
+<td>Stochastic: same input, different outputs</td>
+</tr>
+<tr>
+<td>Deductive</td>
+<td>Empirical</td>
+</tr>
+<tr>
+<td>Software is handcrafted</td>
+<td>Software is learned</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Harbor (the Terminal-Bench team's tool): "tools for eval-driven development."</li>
+<li>Without an eval, you can't tell if a change helped or if a local model is good enough.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>What is a benchmark?</div><div class="slide"><div class="slide-top"><h3>How do we know it works?</h3><span class="slide-no">9/81</span></div><ul>
+<li>So far: how to build an agent (frameworks, memory, multi-agent).</li>
+<li>And how to train one (optimization, data).</li>
+<li>Open question: how do we know any of these advances are working?</li>
+<li>Start from how plain language models are evaluated.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Start from the basics</h3><span class="slide-no">10/81</span></div><ul>
+<li>Modeling: P(x1…xT) = product over t of P(xt | x&lt;t).<ul>
+<li>The chance of a sequence = the chance of each token given the ones before.</li>
+</ul>
+</li>
+<li>Training objective: cross-entropy loss L = −Σ yi · log(pi).<ul>
+<li>yi: 1 for the token in the data, 0 otherwise. pi: the model's probability for it. Sum over the vocabulary.</li>
+</ul>
+</li>
+<li>You could train until loss stops falling. But can the model do real language tasks?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Classic language tasks</h3><span class="slide-no">11/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sequence labeling</td>
+<td>POS tagging, named entities, slot filling</td>
+</tr>
+<tr>
+<td>Syntax and structure</td>
+<td>Parsing, coreference</td>
+</tr>
+<tr>
+<td>Classification</td>
+<td>Sentiment, topic, spam, intent</td>
+</tr>
+<tr>
+<td>Semantics and extraction</td>
+<td>Entity linking, relation extraction</td>
+</tr>
+<tr>
+<td>Question answering</td>
+<td>Extractive, open-domain, multi-hop, commonsense</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Linguists studied these for years. Early LMs reused them as benchmarks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>response = LM(prompt)</h3><span class="slide-no">12/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>SQuAD (extractive QA)</th>
+<th>MultiNLI (inference)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Passage on the Golden Gate Bridge</td>
+<td>Premise: "The museum extended its weekend hours after attendance doubled over the summer."</td>
+</tr>
+<tr>
+<td>Q: "In what year did the Golden Gate Bridge open?"</td>
+<td>"More people visited in the summer." → Entailment</td>
+</tr>
+<tr>
+<td>Gold: "1937"</td>
+<td>"The museum shortened its weekend hours." → Contradiction</td>
+</tr>
+<tr>
+<td>Scored by exact match and token F1</td>
+<td>Scored by accuracy</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>T5: every task as text in, text out</h3><span class="slide-no">13/81</span></div><ul>
+<li>T5 (Raffel et al., 2019): translation, grammar check, similarity and summarization all as text → text.<ul>
+<li>"cola sentence: The course is jumping well." → "not acceptable"</li>
+</ul>
+</li>
+<li>One model, one loss, one set of settings for every task.</li>
+<li>Its table: encoder-decoder with denoising scored best (GLUE 83.28, SQuAD 80.88, SuperGLUE 71.36).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Task collections</h3><span class="slide-no">14/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Bundle</th>
+<th>Paper</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SQuAD</td>
+<td>Rajpurkar et al., 2016</td>
+</tr>
+<tr>
+<td>GLUE, SuperGLUE</td>
+<td>Wang et al., 2019</td>
+</tr>
+<tr>
+<td>MMLU</td>
+<td>Hendrycks et al., 2021</td>
+</tr>
+<tr>
+<td>BIG-bench ("Beyond the Imitation Game")</td>
+<td>Srivastava et al., 2023</td>
+</tr>
+<tr>
+<td>HELM (Holistic Evaluation)</td>
+<td>Liang et al., 2023</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Many tasks in one bundle, for a broad view of a model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Harder evals as models got better</h3><span class="slide-no">15/81</span></div><ul>
+<li>Exam benchmarks: can LMs pass human tests (SAT, AMC 12, AIME, GRE, bar exam)?</li>
+<li>Chat benchmarks: open-ended questions, multi-turn conversation.</li>
+<li>Safety benchmarks: refuse malicious requests, respect user limits.</li>
+<li>Agent benchmarks: finish a task by acting in an environment over many turns. The focus of this course.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Exam: MMLU</h3><span class="slide-no">16/81</span></div><ul>
+<li>MMLU (Hendrycks, 2020): multiple-choice knowledge questions across 57 subjects.</li>
+<li>Figure: GPT-3 few-shot on MMLU ("Knowledge") vs commonsense and linguistics tests.<ul>
+<li>Small to Large models: about 25%, near chance for 4 options.</li>
+<li>X-Large: about 44%. Commonsense and linguistics were already 60–80%.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Exam: MMLU-Pro</h3><span class="slide-no">17/81</span></div><ul>
+<li>MMLU-Pro (Wang, 2024): 4 → 10 answer options; noisy questions removed.</li>
+<li>Every model scores lower than on MMLU; Gemma-7B drops by about half.</li>
+<li>Scores vary less with the prompt:<ul>
+<li>Llama-3-8B: spread σ = 0.008 on MMLU, 0.004 on MMLU-Pro.</li>
+<li>Llama-2-7B: σ = 0.016 vs 0.004.</li>
+</ul>
+</li>
+<li>Chain-of-thought helps more on MMLU-Pro than on MMLU (e.g., GPT-4o).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Exam: GPQA</h3><span class="slide-no">18/81</span></div><ul>
+<li>GPQA (Rein, 2023): "Google-proof" questions written by PhD students.</li>
+<li>Pipeline: write → expert check #1 → revise → expert check #2 → non-expert check.</li>
+<li>Non-experts are experts in other fields, allowed Google, at least 15 min (average about 37).</li>
+<li>Kept in the "Diamond" set if 2 of 2 experts agree and at most 1 of 3 non-experts gets it right.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Exam: Humanity&#x27;s Last Exam</h3><span class="slide-no">19/81</span></div><ul>
+<li>HLE (Phan, 2025): even harder; multiple choice and short answer.</li>
+<li>Examples: translate the Palmyrene script on a Roman tombstone; count paired tendons on a hummingbird bone.</li>
+<li>Questions come from named experts (e.g., Merton College, Oxford; MIT).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Chat: AlpacaEval</h3><span class="slide-no">20/81</span></div><ul>
+<li>Metric: win rate (how often a judge prefers your answer) or Elo (a rating from many pairwise wins).</li>
+<li>Length-controlled (LC) win rate: removes the judge's taste for long answers.<ul>
+<li>GPT-4 Omni: 57.5% LC vs 51.3% raw. Yi-Large Preview: 51.9% LC vs 57.5% raw.</li>
+</ul>
+</li>
+<li>How well each benchmark tracks Chatbot Arena (Spearman): output length 0.35, MMLU 0.87, MT-bench 0.94, LC AlpacaEval 2.0 0.98.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Chat: Chatbot Arena</h3><span class="slide-no">21/81</span></div><ul>
+<li>Chatbot Arena (Chiang, 2024): AlpacaEval's idea with live, real user prompts.</li>
+<li>A user sees two anonymous answers and votes: A better, tie, both bad, B better.</li>
+<li>Votes become a win-rate grid. Example cell: gpt-4-turbo beats mistral-7b-instruct 0.90 of the time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Safety: HarmBench and AIR-Bench</h3><span class="slide-no">22/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>HarmBench (Mazeika, 2024)</th>
+<th>AIR-Bench (Zeng, 2024)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>How often red-teaming attacks get harmful answers</td>
+<td>5,694 prompts across 314 risk categories models should refuse</td>
+</tr>
+<tr>
+<td>Example: "hiring a hitman" request; a refusal gets safety score 1</td>
+<td>Taxonomy levels: 4 → 16 → 45 → 314 categories</td>
+</tr>
+<tr>
+<td></td>
+<td>Built by generating, mutating (dialect, syntax) and hand-checking prompts</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What is a benchmark? Summary</h3><span class="slide-no">23/81</span></div><ul>
+<li>Benchmarks measure whether an LM system's behavior or abilities improved.</li>
+<li>Usually: a set of prompts (questions, instructions) plus a metric.</li>
+<li>They come in all shapes: task types, expected answers, ways to grade.</li>
+<li>From here on: benchmarks for LM agents.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Why benchmarks matter</div><div class="slide"><div class="slide-top"><h3>Not just an AI idea</h3><span class="slide-no">24/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Benchmark</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Computer vision</td>
+<td>ImageNet, MNIST digits, CIFAR images</td>
+</tr>
+<tr>
+<td>Recommender systems</td>
+<td>The Netflix Prize</td>
+</tr>
+<tr>
+<td>ML for science</td>
+<td>CASP protein folding (AlphaFold)</td>
+</tr>
+<tr>
+<td>Robotics</td>
+<td>DARPA Grand Challenge: 300 miles of rugged terrain, $1 million prize</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Three jobs a benchmark does</h3><span class="slide-no">25/81</span></div><ul>
+<li>Measurement: build models, prompts and scaffolds against real experiments.</li>
+<li>Direction: unites a field around shared problems; shows what it chose to work on.</li>
+<li>Communication: a common language. "+5 on X" means the same to everyone, across papers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The dark side: Goodhart&#x27;s law</h3><span class="slide-no">26/81</span></div><ul>
+<li>"When a measure becomes a target, it ceases to be a good measure."</li>
+<li>Figure: optimize against a learned reward model (RM).<ul>
+<li>The proxy score keeps rising as the policy drifts further (KL distance on the x-axis).</li>
+<li>The true ("gold") score peaks, then falls. Smaller RMs turn down sooner.</li>
+</ul>
+</li>
+<li>Also shown: a boat-racing game agent chasing points instead of finishing.</li>
+<li>"Grade essays by length and you'll get long essays, not necessarily good ones."</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Agent benchmarks</div><div class="slide"><div class="slide-top"><h3>What is an agent benchmark?</h3><span class="slide-no">27/81</span></div><ul>
+<li>Asks a system to finish a task by acting in an environment over many steps, then grades what it accomplished.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Exam / chat / safety</th>
+<th>Agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>A prompt</td>
+<td>A task + an environment to act in</td>
+</tr>
+<tr>
+<td>Interaction</td>
+<td>One response</td>
+<td>Many turns: action ↔ observation</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>Text</td>
+<td>A trajectory + a changed environment</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>LM vs agent benchmark</h3><span class="slide-no">28/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>LM benchmark</th>
+<th>Agent benchmark</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt → LM → response</td>
+<td>Task → agent (LM + tools, prompts, memory)</td>
+</tr>
+<tr>
+<td></td>
+<td>Agent ↔ environment (repo, website, terminal, database, simulated user), many turns</td>
+</tr>
+<tr>
+<td>Grader: match answer or judge text</td>
+<td>Verifier: runs tests or checks the final state</td>
+</tr>
+<tr>
+<td>Score</td>
+<td>Score (the trajectory can also be graded)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Single-turn vs agent eval (Lecture 10)</h3><span class="slide-no">29/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Single-turn</th>
+<th>Agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt: "How many toes does a {ANIMAL} have?" + data ANIMAL = Cat</td>
+<td>Task: "Write an MCP server to connect to my app"</td>
+</tr>
+<tr>
+<td>LLM → response</td>
+<td>Tools (web search, file edit) + environment (Python, sandbox)</td>
+</tr>
+<tr>
+<td>Grading: <code>response == 18</code></td>
+<td>Agent reads, edits, runs pytest, says "I did it!"</td>
+</tr>
+<tr>
+<td></td>
+<td>Grading: run tests to check the server actually works</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>From Anthropic, "Demystifying evals for AI agents."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two parts of every agent benchmark</h3><span class="slide-no">30/81</span></div><ul>
+<li>Task formulation: define the task to be solved.<ul>
+<li>Problem statement, environment, verification.</li>
+</ul>
+</li>
+<li>Evaluation protocol: settings for how an agent is run on the task.</li>
+<li>Flow: problem statement → agent reads it → works in the environment (ReAct loop) → submission → graded pass/fail.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Task formulation: problem statement</h3><span class="slide-no">31/81</span></div><ul>
+<li>What are you asking? What must the agent deliver?</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Fully specified →</th>
+<th></th>
+<th></th>
+<th>→ Open-ended goal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WebShop: "gluten-free snack pack, price lower than 30.00 dollars"</td>
+<td>SWE-bench: a real bug report written for humans</td>
+<td>τ-bench: goal hidden in a simulated user, revealed over turns</td>
+<td>CodeClash: "Improve your codebase to win the arena." Only an objective</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Task formulation: environment</h3><span class="slide-no">32/81</span></div><ul>
+<li>Where does the agent work? What does it start with?</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Type</th>
+<th>Starting assets</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TextWorld</td>
+<td>Text game</td>
+<td>Room descriptions + inventory</td>
+</tr>
+<tr>
+<td>WebShop</td>
+<td>Simulated store</td>
+<td>Search page + catalog</td>
+</tr>
+<tr>
+<td>WebArena</td>
+<td>Self-hosted copies of real sites</td>
+<td>Browser + homepages</td>
+</tr>
+<tr>
+<td>SWE-bench / Terminal-Bench</td>
+<td>Docker container</td>
+<td>Real repo or shell + tools</td>
+</tr>
+<tr>
+<td>OSWorld</td>
+<td>Full OS virtual machine</td>
+<td>Desktop + real apps</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Ordered from abstract and simulated to real.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Task formulation: verification</h3><span class="slide-no">33/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Static (vs a fixed reference)</th>
+<th>Relative (vs other agents or humans)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Binary (pass/fail)</td>
+<td>Answer match: BrowseComp. Unit tests: SWE-bench, Terminal-Bench. State checks: WebArena, OSWorld, τ-bench</td>
+<td>Win/loss vs opponents: CodeClash (into Elo)</td>
+</tr>
+<tr>
+<td>Continuous (graded)</td>
+<td>Partial credit: WebShop. Points: TextWorld, Vending-Bench (net worth)</td>
+<td>Normalized to a baseline: AIRS-bench (vs human SOTA)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Example: normalized scores</h3><span class="slide-no">34/81</span></div><ul>
+<li>SWE-fficiency scores agents against a human expert = 1.000×.<ul>
+<li>Claude 4.5 Opus (OpenHands): 0.225×. GPT-5: 0.157×. Gemini 3 Flash: 0.106×.</li>
+</ul>
+</li>
+<li>A baseline gives the number meaning: here, the best agent scores under a quarter of the expert.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Evaluation protocol</h3><span class="slide-no">35/81</span></div><ul>
+<li>Agent settings, not tied to the benchmark itself:<ul>
+<li>Attempts (rollouts, runs) per task.</li>
+<li>How a run ends: max turns, wall-clock time, compute budget, or the agent stops itself.</li>
+<li>Model settings: reasoning effort, temperature.</li>
+<li>Harness fixed or bring-your-own? Which tools? Internet?</li>
+<li>How runs are combined, and what is reported (cost, turns, tokens).</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Case studies</h3><span class="slide-no">36/81</span></div><ul>
+<li>The framework applied to coding, web and user-interaction benchmarks, roughly oldest to newest.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>TextWorld</h3><span class="slide-no">37/81</span></div><ul>
+<li>TextWorld (Côté, 2018): generates text-adventure games.</li>
+<li>Agent reads "You're in a kitchen. There's a closed fridge..." and types "open fridge", "take carrot", "go east".</li>
+<li>Score goes up by a point per quest step.</li>
+<li>Built from a knowledge base (actions, objects) + themes → game → engine.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ALFWorld</h3><span class="slide-no">38/81</span></div><ul>
+<li>ALFWorld (Shridhar, 2020): household tasks as text games that mirror a 3D simulator.<ul>
+<li>"Put a pan on the diningtable." "Put some pepper shaker on a drawer."</li>
+</ul>
+</li>
+<li>Figure: act-only agent loops ("Nothing happens") and fails; ReAct (think + act) plans where to look and succeeds.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>WebShop</h3><span class="slide-no">39/81</span></div><ul>
+<li>WebShop (Yao, 2022): buy the product that matches an instruction on a simulated store.</li>
+<li>Actions: search[query], choose[product], choose[option], back, next page, buy.</li>
+<li>Graded on how well the item matches (attributes, options, price); reward 0 to 1.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rules</td>
+<td>45.6</td>
+</tr>
+<tr>
+<td>Imitation learning (IL)</td>
+<td>59.9</td>
+</tr>
+<tr>
+<td>IL + RL</td>
+<td>62.4</td>
+</tr>
+<tr>
+<td>Human expert</td>
+<td>82.1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Using the instruction as the search: right item on page 1 only 32.2% of the time; not in the top 50 56.1%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWE-bench</h3><span class="slide-no">40/81</span></div><ul>
+<li>SWE-bench (Jimenez, 2023): fix real GitHub issues in popular Python repos.</li>
+<li>Input: issue text + a codebase snapshot (e.g., a scikit-learn bug).</li>
+<li>Output: a patch.</li>
+<li>Graded by the repo's own unit tests: tests that failed before the fix must pass after.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>WebArena</h3><span class="slide-no">41/81</span></div><ul>
+<li>WebArena (Zhou, 2023): everyday tasks on self-hosted copies of real sites (shopping, forums, GitLab, maps).</li>
+<li>Example: plan a route to all Pittsburgh art museums (Wikipedia + map), then save it to a GitLab repo.</li>
+<li>Actions: click, hover, type, press, scroll, tab, go back, go to URL.</li>
+<li>Task types: information seeking, site navigation, content and config. Graded on the outcome.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>τ-bench (tau-bench)</h3><span class="slide-no">42/81</span></div><ul>
+<li>τ-bench (Yao, 2024): customer-service agent, domain policy, LLM-simulated user.</li>
+<li>Agent has tools (get user, book, cancel) and a policy as system prompt.</li>
+<li>Example: user wants to change a basic economy flight. Policy: can't modify. Agent offers cancel + rebook.</li>
+<li>Graded on the final database state. User instructions are written so only one outcome is correct.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Terminal-Bench</h3><span class="slide-no">43/81</span></div><ul>
+<li>Terminal-Bench (Merrill, 2026): 89 hard tasks from real work, done in a terminal.</li>
+<li>Each task: an instruction, a Dockerfile, tests, an oracle solution.</li>
+<li>The agent gets the container and the instruction; tests and solution stay hidden.</li>
+<li>Example: "Re-implement the COBOL program... in Python. Your script must produce identical results."</li>
+<li>Tests run after the agent: e.g., "1 passed, 2 failed."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>OSWorld</h3><span class="slide-no">44/81</span></div><ul>
+<li>OSWorld (Xie, 2024): real desktop tasks across apps in a full OS, from screenshots.</li>
+<li>Example: "Update the bookkeeping sheet with my recent transactions."</li>
+<li>Each task has a check script: e.g., confirm Amazon cookies were deleted.</li>
+<li>Graded by checking the final system state.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CodeClash</h3><span class="slide-no">45/81</span></div><ul>
+<li>CodeClash (Yang, 2025): agents edit their codebases, then compete head to head; goals, not instructions.</li>
+<li>Tournament: 15 rounds of edits, each followed by a competition.</li>
+<li>Arenas: BattleSnake, CoreWar, Halite, Poker, RoboCode, RobotRumble.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Overall Elo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Sonnet 4.5</td>
+<td>1389</td>
+</tr>
+<tr>
+<td>GPT-5</td>
+<td>1360</td>
+</tr>
+<tr>
+<td>o3</td>
+<td>1343</td>
+</tr>
+<tr>
+<td>Qwen3 Coder</td>
+<td>952</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>BrowseComp</h3><span class="slide-no">46/81</span></div><ul>
+<li>BrowseComp (Wei, 2025): obscure facts that take long, creative browsing to find but are easy to check.</li>
+<li>Example: which teams played a 1990–94 match with a Brazilian referee and four yellow cards? Answer: Ireland v Romania.</li>
+<li>Topics: TV and movies (205), science and tech (173), art (127), history (125), sports (123), politics (59), others.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Vending-Bench</h3><span class="slide-no">47/81</span></div><ul>
+<li>Vending-Bench (Backlund, 2025): run a simulated vending-machine business over many days.</li>
+<li>Tools: email, web search, balance; restock, set prices, view inventory, collect cash. A main agent and a sub-agent.</li>
+<li>Scored by final net worth.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Net worth (mean)</th>
+<th>Net worth (worst run)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude 3.5 Sonnet</td>
+<td>$2,217.93</td>
+<td>$476.00</td>
+</tr>
+<tr>
+<td>o3-mini</td>
+<td>$906.86</td>
+<td>$369.05</td>
+</tr>
+<tr>
+<td>Human</td>
+<td>$844.05</td>
+<td>$844.05</td>
+</tr>
+<tr>
+<td>GPT-4o</td>
+<td>$335.46</td>
+<td>$265.65</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The best model beats the human on average, but its worst run is far below; the human is steady.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AIRS-bench</h3><span class="slide-no">48/81</span></div><ul>
+<li>AIRS-bench (Lupidi, 2026): 20 ML research tasks from recent papers. No baseline code.</li>
+<li>Each task: {problem, dataset, metric}, e.g., text similarity / SICK / Spearman; SOTA 0.854.</li>
+<li>Agent loop: research → plan → design → train → debug → evaluate.</li>
+<li>Average normalized score: best agents about 0.40; weakest one-shot agent 0.02.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Grading agents in practice</div><div class="slide"><div class="slide-top"><h3>Verifiers (Lecture 10)</h3><span class="slide-no">49/81</span></div><ul>
+<li>Verifier: an outcome-based classifier on the environment's final state.</li>
+<li>Judge it like any classifier, with a confusion matrix:<ul>
+<li>False positive: passes bad work. False negative: fails good work.</li>
+</ul>
+</li>
+<li>Map each check 1-to-1 to a requirement in the instruction.</li>
+<li>Two kinds: programmatic checks, and agent or LLM judges.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three kinds of graders</h3><span class="slide-no">50/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Code</th>
+<th>Model</th>
+<th>Human</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Methods</td>
+<td>String match, unit tests, static analysis, outcome and tool-call checks</td>
+<td>Rubrics, pairwise comparison, reference-based, multi-judge</td>
+<td>Expert review, spot checks, A/B tests</td>
+</tr>
+<tr>
+<td>Strengths</td>
+<td>Fast, cheap, objective, reproducible</td>
+<td>Flexible, handles open-ended output</td>
+<td>Gold standard; calibrates model graders</td>
+</tr>
+<tr>
+<td>Weaknesses</td>
+<td>Brittle to valid variations</td>
+<td>Non-deterministic, costs more, needs calibration</td>
+<td>Expensive, slow</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Source: Anthropic, "Demystifying evals for AI agents."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Grade with code: precision and recall</h3><span class="slide-no">51/81</span></div><ul>
 <li>Precision: of the issues flagged, how many are real.</li>
 <li>Recall: of the real issues, how many were flagged.</li>
 <li>Recall alone rewards flagging everything. Precision alone rewards flagging nothing.</li>
 <li>Clean contracts (msa_01 to msa_06 have no issues) punish false flags.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Test the eval itself</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Test the eval itself</h3><span class="slide-no">52/81</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Fake agent</th>
@@ -334,14 +996,25 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>Tasks are software. Software has bugs. Run these before trusting any score.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Consistency: pass@k vs pass^k</h3><span class="slide-no">7/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fake agents in code</h3><span class="slide-no">53/81</span></div><pre><code class="language-python">oracle = lambda c: {i[&quot;rule&quot;] for i in labels()[c][&quot;issues&quot;]}
+nothing = lambda c: set()
+everything = lambda c: set(RULES)
+for name, fn in [(&quot;oracle&quot;, oracle), (&quot;do nothing&quot;, nothing), (&quot;flag everything&quot;, everything)]:
+    print(f&quot;{name:16}&quot;, {k: f&quot;{v:.0%}&quot; for k, v in run_eval(fn, ALL).items()})
+</code></pre>
+<ul>
+<li>Line 1: the oracle returns the labeled rules for each contract.</li>
+<li>Line 2: do-nothing returns an empty set.</li>
+<li>Line 3: flag-everything returns all four playbook rules.</li>
+<li>Lines 4–5: score each on all 20 contracts; print precision, recall, exact match.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Consistency: pass@k vs pass^k</h3><span class="slide-no">54/81</span></div><ul>
 <li>pass@k: right on at least one of k tries. Fits a person picking the best draft.</li>
 <li>pass^k: right on all k tries. Fits repeated legal work.</li>
 <li>The gap between them is inconsistency.</li>
-<li>At 75% per try, pass^3 is only about 42%.</li>
+<li>At 75% per try, pass^3 is only about 42% (0.75 × 0.75 × 0.75).</li>
 <li>The notebook: 10 contracts × 3 runs at temperature 0.3, each with a 95% confidence interval.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>LLM judge, only for open-ended parts</h3><span class="slide-no">8/12</span></div><ul>
-<li>LLM judge: a model that grades another model's output, e.g. a redline's quality.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LLM judge, only for open-ended parts</h3><span class="slide-no">55/81</span></div><ul>
+<li>LLM judge: a model that grades another model's output, e.g., a redline's quality.</li>
 <li>Known biases: favors length, its own style, the first answer shown.</li>
 <li>Give it an expert reference. Ask twice with the order swapped.</li>
 </ul>
@@ -358,7 +1031,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>"...24 months before the claim, which is a commercially reasonable and widely accepted market standard."</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Order swap in code</h3><span class="slide-no">9/12</span></div><pre><code class="language-python">f = re.sub(r&quot;[^A-Z]&quot;, &quot;&quot;, ask(JUDGE.format(ref=ref, a=x, b=y)).upper())[:1]
+</table></div></div><div class="slide"><div class="slide-top"><h3>Order swap in code</h3><span class="slide-no">56/81</span></div><pre><code class="language-python">f = re.sub(r&quot;[^A-Z]&quot;, &quot;&quot;, ask(JUDGE.format(ref=ref, a=x, b=y)).upper())[:1]
 s = re.sub(r&quot;[^A-Z]&quot;, &quot;&quot;, ask(JUDGE.format(ref=ref, a=y, b=x)).upper())[:1]
 if f == &quot;A&quot; and s == &quot;B&quot;: return &quot;x wins&quot;
 if f == &quot;B&quot; and s == &quot;A&quot;: return &quot;y wins&quot;
@@ -368,22 +1041,383 @@ if f == &quot;B&quot; and s == &quot;A&quot;: return &quot;y wins&quot;
 <li>Line 2: ask again with the order swapped.</li>
 <li>Line 3: x wins only if picked in both positions.</li>
 <li>Line 4: same for y. Anything else is a tie; "A" twice means position bias.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>A trustworthy score</h3><span class="slide-no">10/12</span></div><ul>
-<li>Fair: same harness, budget and settings for every model compared.</li>
-<li>Reproducible: pin the model, harness and data versions.</li>
-<li>Transparent: report runs, error bars, cost. With about 100 documents, expect ±5–10 points.</li>
-<li>Honest: never tune on the test set. Keep 20–30% hidden until the end.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four ways to evaluate</h3><span class="slide-no">57/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Automated evals</td>
+<td>Fast, reproducible, no user impact, run on every commit</td>
+<td>Up-front work; drifts from real use</td>
+</tr>
+<tr>
+<td>Production monitoring</td>
+<td>Real user behavior at scale</td>
+<td>Reactive; noisy; no ground truth</td>
+</tr>
+<tr>
+<td>Reading transcripts</td>
+<td>Builds intuition; catches subtle issues</td>
+<td>Slow; doesn't scale</td>
+</tr>
+<tr>
+<td>Human studies</td>
+<td>Gold-standard judgments</td>
+<td>Expensive, slow; legal needs real experts</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Roadmap to excellent evals</h3><span class="slide-no">58/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Build the suite</th>
+<th>Build the harness</th>
+<th>Maintain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0. Start now, start early</td>
+<td>4. Build a robust eval harness</td>
+<td>6. Check the trajectories</td>
+</tr>
+<tr>
+<td>1. Start with manual tests</td>
+<td>5. Design graders thoughtfully</td>
+<td>7. Monitor for saturation</td>
+</tr>
+<tr>
+<td>2. Write unambiguous tasks</td>
+<td></td>
+<td>8. Maintain long-term</td>
+</tr>
+<tr>
+<td>3. Cover positive and negative cases</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-6"><span>Part 6</span>What makes a benchmark good?</div><div class="slide"><div class="slide-top"><h3>Seven qualities</h3><span class="slide-no">59/81</span></div><ul>
+<li>Challenging, natural, discriminative, easy to run, easy to verify, interpretable, durable.</li>
+<li>They pull against each other.</li>
+<li>Benchmarks are "living" software; the qualities change as models improve.</li>
+<li>Radar chart: SWE-bench at launch (2023) vs today. Today it is easier to run, but much less challenging, discriminative and durable.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The general idea</h3><span class="slide-no">60/81</span></div><ul>
+<li>A benchmark is a vehicle for telling others what your model can and cannot do.</li>
+<li>So make it as easy as possible for others to run.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Challenging</h3><span class="slide-no">61/81</span></div><ul>
+<li>Hard enough to expose gaps in behavior or ability.</li>
+<li>Chart: best score over a benchmark's life, from launch (under 10%) to saturated (near 100%).</li>
+<li>The useful window is the middle, while scores are still climbing.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Natural</h3><span class="slide-no">62/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Natural</th>
+<th>Contrived</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Resolve this GitHub issue in astropy" (SWE-bench)</td>
+<td>"Reverse every third word, then sort by length"</td>
+</tr>
+<tr>
+<td>"Change my flight per airline policy" (τ-bench)</td>
+<td>"Navigate a 50×50 grid of random symbols"</td>
+</tr>
+<tr>
+<td>"Pick up where this coding session left off" (SWE-Together)</td>
+<td>"Answer 4-option trivia with no context"</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Tasks reflect what people want, not difficulty for its own sake.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Discriminative</h3><span class="slide-no">63/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Clustered: can't tell systems apart</th>
+<th>Spread: clear ranking</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Models A–E: 89, 90, 91, 90, 92</td>
+<td>Models A–E: 18, 34, 47, 61, 78</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>A good benchmark shows fine-grained differences between models.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Easy to run</h3><span class="slide-no">64/81</span></div><ul>
+<li>As few commands as possible, ideally one.<ul>
+<li>One script that sets up everything.</li>
+<li>System requirements written down.</li>
+<li>Settings exposed on the command line, not in code.</li>
+</ul>
+</li>
+<li>Examples: <code>python -m swebench.harness.run_evaluation ...</code>; <code>uv run harbor run --path tasks/... --agent mini-swe-agent --model &lt;MODEL&gt; --n-attempts 1</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Easy to verify</h3><span class="slide-no">65/81</span></div><ul>
+<li>Hard natural task: "Write a really good TV show." How do you grade it?</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>LM-as-a-judge</th>
+<th>Live evaluation</th>
+<th>Heuristics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Score the script with a rubric</td>
+<td>Release it; measure ratings, viewers</td>
+<td>Proxy: awards, critic scores</td>
+</tr>
+<tr>
+<td>Favors length, own style; gameable; varies by prompt</td>
+<td>Marketing confounds; 1 sample per release; months per data point</td>
+<td>Subjective small juries; few winners; lagging</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Verification must run smoothly and be a useful metric.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Interpretable</h3><span class="slide-no">66/81</span></div><ul>
+<li>Easy to see how the model acted. Trajectories can be read.</li>
+<li>Example run viewer: one run's turns, duration, cost and token counts, step by step.</li>
+<li>Failure trace: read issue → find file → edit wrong function → tests: 1 fail → submit anyway.</li>
+<li>You can see exactly which step went wrong.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Durable</h3><span class="slide-no">67/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Private test sets</th>
+<th>Refreshed tasks</th>
+<th>Robust graders</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Keep part of the test set unpublished</td>
+<td>Add tasks after training cutoffs</td>
+<td>Close shortcuts, strengthen tests</td>
+</tr>
+<tr>
+<td>e.g., HLE private split</td>
+<td>e.g., SWE-bench-Live, LiveCodeBench</td>
+<td>e.g., SWE-bench Verified</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Resists contamination (test data leaking into training) and gaming.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Benchmark lifecycle</h3><span class="slide-no">68/81</span></div><ul>
+<li>Propose → Adapt → Saturate → Replace.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Exams</td>
+<td>MMLU → MMLU-Pro → GPQA → HLE</td>
+</tr>
+<tr>
+<td>Math</td>
+<td>GSM8K → MATH → AIME → FrontierMath</td>
+</tr>
+<tr>
+<td>Chat</td>
+<td>MT-Bench → AlpacaEval (length-controlled) → Arena-Hard</td>
+</tr>
+<tr>
+<td>Coding</td>
+<td>SWE-bench Verified → Multilingual → Pro → DeepSWE</td>
+</tr>
+<tr>
+<td>Computer use / web</td>
+<td>WebShop → WebArena → OSWorld → BrowseComp</td>
+</tr>
+<tr>
+<td>Terminal</td>
+<td>Terminal-Bench 1.0 → 2.1 → 4.0</td>
+</tr>
+<tr>
+<td>Tool use</td>
+<td>ToolEmu → τ-bench → τ²-bench</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>&quot;Good&quot; benchmark checklist</h3><span class="slide-no">69/81</span></div><ul>
+<li>Challenging: is there headroom to improve?</li>
+<li>Natural: does it reflect real work?</li>
+<li>Discriminative: does it separate the systems you care about?</li>
+<li>Easy to run: can a classmate run it in an afternoon?</li>
+<li>Easy to verify: can tasks be checked automatically and correctly?</li>
+<li>Interpretable: when an agent fails, can you tell why?</li>
+<li>Durable: does it resist shortcuts and contamination?</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>What makes a score trustworthy?</div><div class="slide"><div class="slide-top"><h3>Benchmark vs score</h3><span class="slide-no">70/81</span></div><ul>
+<li>A good benchmark is someone else's task formulation.</li>
+<li>A trustworthy score is about respecting the evaluation protocol when you run your agent on it.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fair</td>
+<td>Match the benchmark's harness, budget, settings</td>
+</tr>
+<tr>
+<td>Reproducible</td>
+<td>Pin and record every version</td>
+</tr>
+<tr>
+<td>Transparent</td>
+<td>Report runs, error bars, cost, exclusions</td>
+</tr>
+<tr>
+<td>Honest</td>
+<td>Never tune on or select by the test set</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Fair</h3><span class="slide-no">71/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Setup</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Minimal scaffold, 1 attempt</td>
+<td>48%</td>
+</tr>
+<tr>
+<td>Custom scaffold, 1 attempt</td>
+<td>61%</td>
+</tr>
+<tr>
+<td>Custom scaffold, best of 5</td>
+<td>72%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Same model, three numbers. Only setup changed.</li>
+<li>Match scaffold and tools, turn/time/cost budgets, model settings, attempts, internet access.</li>
+<li>If you deviate, say how and why.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reproducible</h3><span class="slide-no">72/81</span></div><ul>
+<li>Make every detail explicit so others get the same number. Pin everything:</li>
+</ul>
+<pre><code>model: my-model-2026-05-01
+reasoning_effort: high
+temperature: 0.0
+harness: mini-swe-agent==1.4.2
+dataset: swe-bench-verified@a1b2c3d
+image: sha256:9f86d0...
+seeds: [0, 1, 2, 3, 4]
+</code></pre></div><div class="slide"><div class="slide-top"><h3>Transparent</h3><span class="slide-no">73/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>pass@1</th>
+<th>± CI</th>
+<th>Cost/task</th>
+<th>Output tokens</th>
+<th>Steps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>claude-fable-5 [max]</td>
+<td>70%</td>
+<td>±4%</td>
+<td>$21.63</td>
+<td>119k</td>
+<td>88</td>
+</tr>
+<tr>
+<td>gpt-5.5 [xhigh]</td>
+<td>67%</td>
+<td>±6%</td>
+<td>$7.23</td>
+<td>46k</td>
+<td>82</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>DeepSWE leaderboard (July 2026): pass@1 over 4 runs per task, mini-SWE-agent harness.</li>
+<li>70% &gt; 67% at face value. But the gap sits inside the error bars, and the higher score costs 3× more.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Honest</h3><span class="slide-no">74/81</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Don't tune on test</th>
+<th>Don't cherry-pick runs</th>
+<th>Ship what you report</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ImageNet 2015: a team was disqualified for submitting to the test set too many times</td>
+<td>Reporting pass@1 when 10 runs were done picks the luckiest run</td>
+<td>Don't top the leaderboard with one variant and release another</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Trustworthy score checklist</h3><span class="slide-no">75/81</span></div><ul>
+<li>Fair: benchmark's harness, budget, settings? If not, did you say how you deviated?</li>
+<li>Reproducible: model snapshot, harness, dataset and image versions pinned?</li>
+<li>Transparent: runs, error bars, cost and excluded tasks reported?</li>
+<li>Honest: no tuning on test, no best-run picking; the system tested is the one released?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Summary</h3><span class="slide-no">76/81</span></div><ul>
+<li>To improve agents, we must measure them. Benchmarks are the main way.</li>
+<li>Three parts: problem statement, environment, metric.</li>
+<li>A protocol sets how an agent is run, so comparisons are fair.</li>
+<li>No single eval rules them all. Track many benchmarks.</li>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>A firm&#x27;s own benchmark</h3><span class="slide-no">77/81</span></div><ul>
+<li>Problem statement: "List the playbook rules this contract breaks."</li>
+<li>Environment: 20 frozen contracts + the playbook, on the firm's machine.</li>
+<li>Verifier: code compares to <code>labels.jsonl</code>; precision and recall.</li>
+<li>Protocol: one call per contract, fixed temperature, 3 runs, report pass^3.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fair local-vs-cloud comparison</h3><span class="slide-no">78/81</span></div><ul>
 <li>"A model on your own machine is good enough" is a claim only an eval can prove.</li>
 <li>Swap the local model, keep the harness, rerun. That is a fair comparison.</li>
-<li>Report pass^k, not just the average. Lawyers feel inconsistency.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Pin the model tag, prompt and data version, like the reproducible config.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What to show the partner</h3><span class="slide-no">79/81</span></div><ul>
+<li>pass^k, not just the average. Lawyers feel inconsistency.</li>
+<li>Error bars: with about 100 documents, expect ±5–10 points. A 3-point gap may be a tie.</li>
+<li>Cost per contract next to the score, like the transparency table.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Keep it durable</h3><span class="slide-no">80/81</span></div><ul>
+<li>Keep 20–30% of contracts hidden until the end.</li>
+<li>Add new real contracts over time (refreshed tasks).</li>
+<li>Read 10–20 failures. If every model misses one item, suspect the label.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">81/81</span></div><ul>
 <li>Tuning on the test set → keep a hidden split.</li>
 <li>Comparing models in different harnesses → you are measuring the harness.</li>
 <li>Claiming a win inside the error bars → say "tied".</li>
 <li>No clean cases → flag-everything looks great.</li>
-<li>Not reading failures → read 10–20. If every model misses one item, suspect the label.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A model averages 90% but scores 60% on pass^3. What does that tell a firm?</summary><p>It is usually right on a single run, but inconsistent. On many contracts at least one of three runs is wrong.</p></details>
+<li>Reporting your best of 5 runs as pass@1 → report all runs.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>How is an agent benchmark different from an exam benchmark?</summary><p>It gives a task and an environment instead of a prompt, runs many action-observation turns, and grades the trajectory and final state instead of text.</p></details>
+
+<details><summary>What are the two big parts of an agent benchmark?</summary><p>Task formulation (problem statement, environment, verification) and evaluation protocol (attempts, budgets, model settings, harness, how runs are combined).</p></details>
+
+<details><summary>The same model scores 48%, 61% and 72% on one benchmark. How?</summary><p>Different setups: minimal vs custom scaffold, and 1 attempt vs best of 5. That is why fair scores must match the protocol.</p></details>
+
+<details><summary>Model A scores 70% ±4%, model B 67% ±6%, and A costs 3× more. Which is better?</summary><p>You can&#x27;t say A is better: the gap is inside the error bars. B gives about the same result for a third of the cost.</p></details>
+
+<details><summary>A model averages 90% but scores 60% on pass^3. What does that tell a firm?</summary><p>It is usually right on a single run, but inconsistent. On many contracts at least one of three runs is wrong.</p></details>
 
 <details><summary>Why must the oracle score 100% before you trust an eval?</summary><p>It returns the true answers. If it scores less, the grader or labels are broken.</p></details>
 

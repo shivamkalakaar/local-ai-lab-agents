@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Retrieval (RAG) · Agent Engineering School</title>
-<meta name="description" content="How the RAG pipeline is built, what to index, how to search it, and how to check the model&#x27;s quotes.">
+<meta name="description" content="How RAG is built, what to index, how to search it, how agents retrieve in a loop, and where it breaks.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,9 +259,28 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 04</span></div><section class="mod" id="m4" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 04</div><h2>Retrieval (RAG)</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/04_retrieval_rag.ipynb">Open in Colab</a><button class="done-btn" data-done="m4" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How the RAG pipeline is built, what to index, how to search it, and how to check the model&#x27;s quotes.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 3 · RAG + Agents · <a href="https://web.stanford.edu/class/cs329z/slides/lecture03.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 04</span></div><section class="mod" id="m4" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 04</div><h2>Retrieval (RAG)</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/04_retrieval_rag.ipynb">Open in Colab</a><button class="done-btn" data-done="m4" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>26 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How RAG is built, what to index, how to search it, how agents retrieve in a loop, and where it breaks.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 3 · RAG + Agents (plus the RAG wrap-up in Lecture 4) · <a href="https://web.stanford.edu/class/cs329z/slides/lecture03.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (82 slides)</b><ol><li><a href="#sec-1">Why RAG</a> <span>7 slides</span></li><li><a href="#sec-2">The RAG pipeline</a> <span>9 slides</span></li><li><a href="#sec-3">Indexing: chunking, contextual retrieval</a> <span>19 slides</span></li><li><a href="#sec-4">Retrieval: BM25, DPR, ColBERT</a> <span>24 slides</span></li><li><a href="#sec-5">Agentic RAG: Self-RAG, Search-R1</a> <span>8 slides</span></li><li><a href="#sec-6">Failure modes</a> <span>2 slides</span></li><li><a href="#sec-7">Wrap up RAG (Lecture 4)</a> <span>7 slides</span></li><li><a href="#sec-8">How this applies to us</a> <span>5 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/82</span></div><ul>
 <li>Learn how the RAG pipeline is built and where it breaks, what to index, and how to search it.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why retrieval?</h3><span class="slide-no">2/12</span></div><div class="tbl"><table>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why RAG</div><div class="slide"><div class="slide-top"><h3>Why retrieval?</h3><span class="slide-no">2/82</span></div><p>"Which office hour this week is least crowded?"</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>LLMs alone</th>
+<th>LLMs + retrieval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Try the Wednesday afternoon session. Midweek hours are usually quietest."</td>
+<td>Retrieved: "Queue log, last 3 weeks: Tue 4pm: 14 waiting avg; Thu 9am: 3."</td>
+</tr>
+<tr>
+<td>A guess from general patterns</td>
+<td>"Thursday 9am, about 3 students ahead of you."</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Why retrieval? Our contract example</h3><span class="slide-no">3/82</span></div><p>"What is the liability cap in msa_20?"</p>
+<div class="tbl"><table>
 <thead>
 <tr>
 <th>LLM alone</th>
@@ -266,39 +289,346 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </thead>
 <tbody>
 <tr>
-<td>"What is the liability cap in msa_20?"</td>
-<td>Retrieved: msa_20, 7.1: "...shall not exceed the fees paid by Customer in the thirty-six (36) months preceding the claim."</td>
+<td>"Caps are usually 12 months of fees." (a guess)</td>
+<td>Retrieved msa_20, 7.1: "...SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE THIRTY-SIX (36) MONTHS PRECEDING THE CLAIM."</td>
 </tr>
 <tr>
-<td>"Caps are usually 12 months of fees." (a guess)</td>
+<td>No source to check</td>
 <td>"36 months of fees. Source: msa_20#7." Over our 12-month rule: flag it.</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Using retrieval to fix what LMs lack</h3><span class="slide-no">4/82</span></div><ul>
+<li>Don't ask the LM to memorize everything. Give it the right text just in time.</li>
+<li>Retrieval: the usual way to find that text.</li>
+<li>Dynamic: easy to add or update documents.</li>
+<li>Interpretable: the LM can point to the documents it used (citations), so a person can check it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Retrieval in open-domain QA (DrQA)</h3><span class="slide-no">5/82</span></div><ul>
+<li>Chen et al., 2017, "Reading Wikipedia to Answer Open-domain Questions" (DrQA).</li>
+<li>Open-domain QA: answer any question from a big collection, like all of Wikipedia.</li>
+<li>Question: "How many of Warsaw's inhabitants spoke Polish in 1933?"</li>
+<li>Document retriever: searches Wikipedia, returns the "Warsaw" article.</li>
+<li>Document reader: reads the article, outputs "833,500".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Retriever-reader framework</h3><span class="slide-no">6/82</span></div><ul>
+<li>Input: a big document collection D = D1 … DN, and a question Q.</li>
+<li>Output: an answer string A.</li>
+<li>Retriever: f(D, Q) → P1 … PK. K is fixed in advance (e.g., 100).</li>
+<li>Reader: g(Q, {P1 … PK}) → A. A reading-comprehension problem.</li>
+<li>In DrQA the retriever is plain TF-IDF (word-count search), fixed, not trained.</li>
+<li>Reader: a neural reading model trained on SQuAD and similar QA data, or a zero-shot LLM (ChatGPT etc.).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Retrieval-augmented generation (RAG)</h3><span class="slide-no">7/82</span></div><ul>
+<li>Lewis et al., 2021. See also REALM and DPR.</li>
+<li>Query encoder turns the question x into a vector q(x).</li>
+<li>MIPS (maximum inner product search) finds the closest passages z1 … z4 in a document index.</li>
+<li>Generator pθ reads the question plus each passage and merges ("marginalizes") over them.</li>
+<li>Trained end to end: gradients flow back through the query encoder q and the generator pθ.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One RAG model, three tasks</h3><span class="slide-no">8/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Input x</th>
+<th>Output y</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Question answering</td>
+<td>Define "middle ear"</td>
+<td>The middle ear includes the tympanic cavity and the three ossicles.</td>
+</tr>
+<tr>
+<td>Fact verification</td>
+<td>Barack Obama was born in Hawaii.</td>
+<td>supports</td>
+</tr>
+<tr>
+<td>Jeopardy question generation</td>
+<td>The Divine Comedy</td>
+<td>This 14th century work is divided into 3 sections: "Inferno", "Purgatorio" &amp; "Paradiso"</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-2"><span>Part 2</span>The RAG pipeline</div><div class="slide"><div class="slide-top"><h3>Deep dive: retriever + generator</h3><span class="slide-no">9/82</span></div><ul>
+<li>Retriever p(z|x): returns the top-K passages z for a query x.</li>
+<li>Generator p(y|x, z): writes the answer y one token at a time, given x and one passage z.</li>
+<li>Formula: <code>p(y|x) ≈ Σ over z in top-K of p(z|x) · p(y|x, z)</code><ul>
+<li>p(z|x): how much the retriever likes passage z.</li>
+<li>p(y|x, z): how likely the answer is, given that passage.</li>
+<li>The sum weights each passage's answer by the retriever's score.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RAG-Sequence vs RAG-Token</h3><span class="slide-no">10/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>RAG-Sequence</th>
+<th>RAG-Token</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pick one passage, write the whole answer with it</td>
+<td>Re-pick the passage at every token of the answer</td>
+</tr>
+<tr>
+<td>One passage per answer</td>
+<td>Different tokens can lean on different passages</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Don't ask the model to memorize everything. Give it the right text just in time.</li>
-<li>Dynamic: easy to add or update documents.</li>
-<li>Interpretable: the model can point to its source, so a person can check it.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The RAG pipeline</h3><span class="slide-no">3/12</span></div><ul>
-<li>RAG: retrieval-augmented generation. Search first, then answer from what you found.</li>
-<li>Retriever: finds the top-k passages for a question.</li>
-<li>Generator: the LLM writes the answer from the question plus those passages.</li>
-</ul>
-<pre><code>question → search → top chunks → LLM answers → code checks the quote
-</code></pre></div><div class="slide"><div class="slide-top"><h3>Do you even need it?</h3><span class="slide-no">4/12</span></div><ul>
-<li>Under about 200K tokens of documents: put everything in the prompt. Skip RAG.</li>
-<li>Above that: build the pipeline.</li>
-<li>Small local models do worse with long prompts, so RAG helps them sooner.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Chunking: basic unit in retrieval</h3><span class="slide-no">5/12</span></div><ul>
-<li>Chunk: one piece of a document. Search returns chunks, not whole files.</li>
-<li>Fixed-size (e.g., 100–500 tokens)<ul>
-<li>Too small: the chunk has no context</li>
-<li>Too large: one chunk mixes many topics</li>
+<li>Both use the same retriever, generator and top-K passages.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Training: retriever and generator together</h3><span class="slide-no">11/82</span></div><ul>
+<li>Train both parts at once to minimize <code>Σ_j −log p(y_j | x_j)</code>.<ul>
+<li>x_j, y_j: a training question and its right answer.</li>
+<li>"Negative marginal log-likelihood": p(y|x) already sums over the passages, so no label says which passage was right.</li>
 </ul>
 </li>
-<li>Overlap: 10–20%, so no sentence is lost at a boundary.</li>
-<li>Structure: split on headings. For contracts, one section = one chunk.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why contextual retrieval</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<li>The model learns which passages help by whether they make the right answer more likely.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Retriever: DPR</h3><span class="slide-no">12/82</span></div><ul>
+<li><code>p(z|x) ∝ exp(d(z)ᵀ q(x))</code><ul>
+<li>d(z) = BERT_d(z): passage vector from a passage encoder.</li>
+<li>q(x) = BERT_q(x): query vector from a query encoder.</li>
+<li>Dot product: bigger means more relevant.</li>
+</ul>
+</li>
+<li>top-k(p(·|x)): the k highest-scoring passages, found with MIPS (maximum inner product search).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Generator: BART</h3><span class="slide-no">13/82</span></div><ul>
+<li>Generator p(y|x, z): writes the answer one token at a time from query x and passage z.</li>
+<li>Any encoder-decoder model can play this role.</li>
+<li>RAG uses BART. x and z are joined (concatenated) into one input.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RAG results on open-domain QA</h3><span class="slide-no">14/82</span></div><p>Exact Match (answer must match the gold string exactly):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>NQ</th>
+<th>TQA</th>
+<th>WQ</th>
+<th>CT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T5-11B (closed book)</td>
+<td>34.5</td>
+<td>–/50.1</td>
+<td>37.4</td>
+<td>–</td>
+</tr>
+<tr>
+<td>T5-11B+SSM (closed book)</td>
+<td>36.6</td>
+<td>–/60.5</td>
+<td>44.7</td>
+<td>–</td>
+</tr>
+<tr>
+<td>REALM (open book)</td>
+<td>40.4</td>
+<td>–</td>
+<td>40.7</td>
+<td>46.8</td>
+</tr>
+<tr>
+<td>DPR (open book)</td>
+<td>41.5</td>
+<td>57.9/–</td>
+<td>41.1</td>
+<td>50.6</td>
+</tr>
+<tr>
+<td>RAG-Token</td>
+<td>44.1</td>
+<td>55.2/66.1</td>
+<td><strong>45.5</strong></td>
+<td>50.0</td>
+</tr>
+<tr>
+<td>RAG-Seq.</td>
+<td><strong>44.5</strong></td>
+<td>56.8/<strong>68.0</strong></td>
+<td>45.2</td>
+<td><strong>52.2</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>NQ: Natural Questions. TQA: TriviaQA (two test sets). WQ: WebQuestions. CT: CuratedTrec.</li>
+<li>Closed book: no retrieval. RAG beats it everywhere and is best on NQ, WQ and CT.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RAG results: human judges</h3><span class="slide-no">15/82</span></div><p>Jeopardy question generation, RAG vs BART alone:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Judged</th>
+<th>Factuality</th>
+<th>Specificity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BART better</td>
+<td>7.1%</td>
+<td>16.8%</td>
+</tr>
+<tr>
+<td>RAG better</td>
+<td><strong>42.7%</strong></td>
+<td><strong>37.4%</strong></td>
+</tr>
+<tr>
+<td>Both good</td>
+<td>11.7%</td>
+<td>11.8%</td>
+</tr>
+<tr>
+<td>Both poor</td>
+<td>17.7%</td>
+<td>6.9%</td>
+</tr>
+<tr>
+<td>No majority</td>
+<td>20.8%</td>
+<td>20.1%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Judges picked RAG as more factual about 6× as often as BART (42.7% vs 7.1%).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Different variants of RAG (Gao et al., 2024)</h3><span class="slide-no">16/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Naive RAG</th>
+<th>Advanced RAG</th>
+<th>Modular RAG</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Index documents → retrieve → prompt a frozen LLM → output</td>
+<td>Adds pre-retrieval steps: query routing, rewriting, expansion</td>
+<td>A set of modules: search, routing, predict, retrieve, rewrite, rerank, read, demonstrate, fusion, memory</td>
+</tr>
+<tr>
+<td>Retrieve → Read</td>
+<td>Adds post-retrieval steps: rerank, summary, fusion</td>
+<td>Modules combine into patterns</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Modular RAG patterns</h3><span class="slide-no">17/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Steps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Naive RAG</td>
+<td>Retrieve → Read</td>
+</tr>
+<tr>
+<td>Advanced RAG</td>
+<td>Rewrite → Retrieve → Rerank → Read</td>
+</tr>
+<tr>
+<td>DSP (Khattab et al., 2022)</td>
+<td>Demonstrate → Search → Predict</td>
+</tr>
+<tr>
+<td>ITER-RETGEN (Shao et al., 2023)</td>
+<td>Retrieve → Read → Retrieve → Read (loop)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Our notebook: hybrid retrieve → fuse → (optional rerank) → read. That is "advanced RAG."</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Indexing: chunking, contextual retrieval</div><div class="slide"><div class="slide-top"><h3>What makes a good retriever? Embeddings</h3><span class="slide-no">18/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Examples</th>
+<th>One vector covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Static word</td>
+<td>word2vec, GloVe</td>
+<td>a word type</td>
+</tr>
+<tr>
+<td>Contextual</td>
+<td>BERT, RoBERTa</td>
+<td>a token in context</td>
+</tr>
+<tr>
+<td>Passage</td>
+<td>Sentence-BERT, DPR, E5</td>
+<td>a chunk</td>
+</tr>
+<tr>
+<td>Multimodal</td>
+<td>CLIP</td>
+<td>text or image, shared space</td>
+</tr>
+<tr>
+<td>Graph</td>
+<td>node2vec, GNN encoders</td>
+<td>a node or relation</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Retrieval needs a fixed-size vector per chunk and a similarity metric (cosine or inner product).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our embedding model</h3><span class="slide-no">19/82</span></div><ul>
+<li><code>BAAI/bge-small-en-v1.5</code>: a small passage embedding model. Runs on the firm's machine.</li>
+<li>Vectors are normalized, so the dot product equals cosine similarity.</li>
+<li>Queries get a prefix the model expects: "Represent this sentence for searching relevant passages: ".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Chunking: basic unit in retrieval</h3><span class="slide-no">20/82</span></div><ul>
+<li>Fixed-size chunking: cut by size (e.g., 100–500 tokens).<ul>
+<li>Too small: the vector has no context.</li>
+<li>Too large: one vector averages many topics.</li>
+</ul>
+</li>
+<li>Overlap: 10–20%, so no sentence is lost at a chunk boundary.</li>
+<li>Semantic chunking: cut at logical boundaries (sentences, sections).</li>
+<li>Context-enriched chunking: carry extra metadata or a summary with each chunk.</li>
+<li>AI-driven dynamic chunking: an LLM finds natural breakpoints.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Chunking: same text, three splits</h3><span class="slide-no">21/82</span></div><p>Text: "Grading. The project milestone is due Week 6, Thursday 11:59pm. Late days may not be applied to the milestone. The final report is due Week 10."</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Fixed-size (50 tokens)</th>
+<th>Fixed-size + overlap</th>
+<th>Structure (split on headings)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"… The project milestone is due Week 6, Thursday"</td>
+<td>"… The project milestone is due Week 6, Thursday 11:59pm."</td>
+<td>"Grading — Milestone: Week 6, Thu 11:59pm. Late days: not allowed on the milestone. Final report: Week 10."</td>
+</tr>
+<tr>
+<td>"11:59pm. Late days may not be applied to the milestone …"</td>
+<td>"… due Week 6, Thursday 11:59pm. Late days may not be applied …"</td>
+<td>(one chunk)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Fixed-size cuts the deadline in two. Overlap repeats it. Structure keeps it whole.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our chunks: one contract section each</h3><span class="slide-no">22/82</span></div><pre><code class="language-python">chunks = []
+for cid in ids():
+    for s in sections(contract(cid)):
+        chunks.append({&quot;id&quot;: f&quot;{cid}#{s['id']}&quot;, &quot;contract&quot;: cid, &quot;section&quot;: s[&quot;id&quot;],
+                       &quot;context&quot;: f&quot;From {cid}, section {s['id']} ({s['title']}).&quot;, &quot;text&quot;: s[&quot;text&quot;]})
+</code></pre>
+<ul>
+<li>Line 1: start an empty list.</li>
+<li>Line 2: loop over all 20 contracts.</li>
+<li>Line 3: split each contract on its numbered headings.</li>
+<li>Lines 4–5: one chunk per section, with an id like <code>msa_20#7</code> and a one-line context note.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why contextual retrieval</h3><span class="slide-no">23/82</span></div><p>Query: "What was the revenue growth for ACME Corp in Q2 2023?"</p>
+<div class="tbl"><table>
 <thead>
 <tr>
 <th>Chunk</th>
@@ -307,15 +637,549 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </thead>
 <tbody>
 <tr>
-<td>"Each party's total liability ... shall not exceed the fees paid ... in the thirty-six (36) months preceding the claim."</td>
-<td>"From msa_20, section 7 (Limitation of Liability). Each party's total liability ... shall not exceed the fees paid ... in the thirty-six (36) months ..."</td>
+<td>"The company's revenue grew by 3% over the previous quarter."</td>
+<td>"From ACME Corp's Q2 2023 SEC filing; Q1 2023 revenue was $314M. The company's revenue grew by 3% over the previous quarter."</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>The clause alone never says which contract it is from.</li>
-<li>Add a one-line label to each chunk before indexing (idea from Anthropic).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Two ways to search</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<li>The chunk alone never names the company or the quarter. Search can't match it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Same problem in our contracts</h3><span class="slide-no">24/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Chunk</th>
+<th>Contextualized chunk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"7.1 EACH PARTY'S TOTAL LIABILITY ... SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE THIRTY-SIX (36) MONTHS PRECEDING THE CLAIM."</td>
+<td>"From msa_20, section 7 (Limitation Of Liability). 7.1 EACH PARTY'S TOTAL LIABILITY ..."</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The clause never says it is from msa_20. 18 of our 20 contracts have a 7.1 worded almost the same way.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Contextual retrieval: the pipeline (Anthropic)</h3><span class="slide-no">25/82</span></div><ul>
+<li>Split each document into chunks 1 … X.</li>
+<li>For every chunk, run a prompt with the whole document and the chunk.</li>
+<li>The LLM (Claude) writes 50–100 tokens of context; it is prepended to the chunk.</li>
+<li>Index "context + chunk" two ways: embedding model → vector database; TF-IDF/BM25 → keyword index.</li>
+<li>Hybrid retrieval: embeddings catch meaning, TF-IDF/BM25 catches exact terms; results are merged.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Contextual retrieval: the prompt</h3><span class="slide-no">26/82</span></div><pre><code>{{WHOLE_DOCUMENT}}
+Here is the chunk we want to situate within the whole document
+{{CHUNK_CONTENT}}
+Please give a short succinct context to situate this chunk within the overall
+document for the purposes of improving search retrieval of the chunk. Answer
+only with the succinct context and nothing else.
+</code></pre>
+<ul>
+<li>Our notebook skips this LLM call. Contracts have numbered, titled sections, so a template note is free and exact.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Contextual embeddings cut retrieval failures</h3><span class="slide-no">27/82</span></div><p>Failed retrievals @20 (average %; lower is better):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Standard: embedding</th>
+<th>Standard: embedding + BM25</th>
+<th>Contextual embedding</th>
+<th>Contextual embedding + contextual BM25</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.7%</td>
+<td>5.0%</td>
+<td>3.7%</td>
+<td><strong>2.9%</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Failed@20: share of queries with no relevant chunk in the top 20.</li>
+<li>Context alone: 5.7% → 3.7%. Context on both searches: 2.9%.</li>
+<li>With reranking added too, Anthropic reports 1.9% (module notes).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Late chunking (Günther et al., 2024)</h3><span class="slide-no">28/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Naive chunking</th>
+<th>Late chunking</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Split the document first</td>
+<td>Embed the whole document first, with a long-context encoder</td>
+</tr>
+<tr>
+<td>Embed each chunk alone</td>
+<td>Mean-pool (average) the token vectors inside each chunk's span</td>
+</tr>
+<tr>
+<td>"i.i.d." vectors: each chunk blind to the rest</td>
+<td>"Conditional" vectors: each chunk saw the whole document</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Compared to contextual retrieval: no LLM call and no added tokens per chunk. The context lives in the vector.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Late chunking results</h3><span class="slide-no">29/82</span></div><p>nDCG@10, average over SciFact, NFCorpus, FiQA, TRECCOVID and three embedding models (J2s, J3, Nom):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Boundaries</th>
+<th>Naive</th>
+<th>Late</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fixed size (256 tokens per chunk)</td>
+<td>52.2</td>
+<td><strong>54.0</strong></td>
+</tr>
+<tr>
+<td>Sentences (5 per chunk)</td>
+<td>52.4</td>
+<td><strong>54.3</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Late wins or ties in almost every cell (one exception: SciFact with Nom, fixed size, 70.7 vs 70.6).</li>
+<li>Bar charts (WikiMultiHopQA, SummScreenFD, QMSum; chunk sizes 8 to 512 tokens): late ≥ naive at every size.</li>
+<li>The gap is biggest for small chunks, which have the least context of their own.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RAPTOR: tree-structured indexing (Sarthi et al., 2025)</h3><span class="slide-no">30/82</span></div><ul>
+<li>Problem: when the answer is spread across a document, no single chunk holds it.</li>
+<li>Build a tree bottom up: embed chunks → cluster them → summarize each cluster with an LLM → embed the summaries → repeat.</li>
+<li>Example tree: leaves 1–5 cluster into (3, 5), (1, 4, 5), (2, 3); their summaries are nodes 6, 7, 8; roots 9, 10.</li>
+<li>A node holds: index, child nodes, summary text, embedding (node 8 = summary of nodes 2 and 3).</li>
+<li>Retrieve across levels: a detail question matches a leaf; a theme question matches a higher node.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RAPTOR vs DPR: the Cinderella example</h3><span class="slide-no">31/82</span></div><ul>
+<li>Q1: "Central theme of the story?" Q2: "How did she find a happy ending?"</li>
+<li>DPR picks only leaf chunks (bottom layer).</li>
+<li>RAPTOR picks summary nodes from the middle and top layers, plus some leaves.</li>
+<li>RAPTOR's context usually already contains DPR's leaves, directly or inside a summary.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GraphRAG (Edge et al., 2024)</h3><span class="slide-no">32/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Indexing time</th>
+<th>Query time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source documents → text chunks (extract, chunk)</td>
+<td>Community summaries → community answers (query-focused summary)</td>
+</tr>
+<tr>
+<td>Chunks → entities &amp; relationships (LLM summary)</td>
+<td>Community answers → one global answer (query-focused summary)</td>
+</tr>
+<tr>
+<td>→ knowledge graph → community detection → graph communities → community summaries</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Community: a tight cluster of linked entities in the graph (shown as colored clusters).</li>
+<li>Built for "global" questions about a whole corpus, not one passage.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GraphRAG: more variants (Han et al., 2025)</h3><span class="slide-no">33/82</span></div><ul>
+<li>Same stages for RAG and GraphRAG: query processor → retriever → data source → organizer → generator.</li>
+<li>RAG side: text and image data (Wikipedia, MNIST, CIFAR-10).</li>
+<li>GraphRAG side: graph data. Nodes and edges (entities, papers, products, customers), knowledge triplets (California —state→ USA), molecules (benzene), social networks, road maps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Vector search</h3><span class="slide-no">34/82</span></div><ul>
+<li>The task: given a query vector, return the top-k of N chunk vectors.</li>
+<li>Exact search: scan them all, O(N·d) per query (N chunks, d dimensions).</li>
+<li>ANN (approximate nearest neighbor): trade a little recall for a lot of speed.<ul>
+<li>IVF (inverted file index): cluster the vectors; search only the clusters nearest the query.</li>
+<li>PQ (product quantization): compress each vector into a short code.</li>
+<li>HNSW: a multi-layer graph; walk greedily down from a coarse layer.</li>
+</ul>
+</li>
+<li>Our notebook uses exact search (<code>self.vecs @ qv</code>, then sort). Fine for 20 contracts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>HNSW: searching (Hierarchical Navigable Small World)</h3><span class="slide-no">35/82</span></div><ul>
+<li>Layers: all vectors at the bottom (layer 0), thinner samples above (layers 1, 2).</li>
+<li>Search: start at the top, hop greedily toward the query, drop a layer when stuck.</li>
+<li>Fast: about log N hops, high recall.</li>
+<li>Figure: entry point at layer 2 → hop → drop to layer 1 → hops → drop to layer 0 → nearest vector.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>HNSW: building the graph</h3><span class="slide-no">36/82</span></div><ul>
+<li>Insert one vector at a time.</li>
+<li>Pick its top layer at random: most nodes stay in layer 0, few reach the top.</li>
+<li>Link it at each layer to its M nearest neighbors.</li>
+<li>Plus a heuristic link across to another cluster, so the greedy walk can't get trapped in one cluster.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Retrieval: BM25, DPR, ColBERT</div><div class="slide"><div class="slide-top"><h3>Different types of retrievers</h3><span class="slide-no">37/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Example</th>
+<th>How it matches</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Word overlap</td>
+<td>BM25</td>
+<td>Shared words, weighted</td>
+</tr>
+<tr>
+<td>Vector retrieval</td>
+<td>DPR, sentence vectors</td>
+<td>One vector per passage; dot product</td>
+</tr>
+<tr>
+<td>Other neural</td>
+<td>ColBERT</td>
+<td>One vector per token; token-level match</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>BM25: the most widely used (even today)</h3><span class="slide-no">38/82</span></div><p><code>score(D, Q) = Σ over query terms qi of IDF(qi) · f(qi,D)·(k1+1) / ( f(qi,D) + k1·(1 − b + b·|D|/avgdl) )</code>
+- IDF(qi): how rare the word is in the collection.
+- f(qi, D): how often the word appears in document D.
+- k1: how fast repeats stop adding score.
+- b and |D|/avgdl: document length vs the average; long documents get scaled down.</p></div><div class="slide"><div class="slide-top"><h3>BM25: the IDF part</h3><span class="slide-no">39/82</span></div><p><code>IDF(qi) = ln( (N − n(qi) + 0.5) / (n(qi) + 0.5) )</code>
+- N: number of documents in the collection.
+- n(qi): number of documents that contain the word.
+- Rare word (small n): big IDF. Common word: small IDF.
+- The +0.5 terms keep it from blowing up at 0 or N.</p></div><div class="slide"><div class="slide-top"><h3>IDF comparison and term-frequency saturation</h3><span class="slide-no">40/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Left chart: IDF vs document frequency (N = 10,000)</th>
+<th>Right chart: TF part vs term frequency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard IDF falls but stays at or above 0</td>
+<td>Lines for k1 = 0.5, 1.2, 2.0, 5.0</td>
+</tr>
+<tr>
+<td>BM25 IDF hits 0 when a word is in 50% of documents</td>
+<td>All score 1 at one occurrence, then flatten</td>
+</tr>
+<tr>
+<td>Above 50%: BM25 IDF turns negative (shaded region)</td>
+<td>Ceiling near k1+1: k1 = 1.2 levels off near 2; k1 = 5.0 keeps climbing toward 5</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>In words: the tenth "liability" in a clause adds little over the second.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>BM25 in our notebook</h3><span class="slide-no">41/82</span></div><pre><code class="language-python">tok = lambda s: re.findall(r&quot;\w+&quot;, s.lower())
+self.bm25 = BM25Okapi([tok(d) for d in docs])
+return list(np.argsort(-self.bm25.get_scores(tok(q)))[:n])
+</code></pre>
+<ul>
+<li>Line 1: split text into lowercase word tokens, so "msa_15," matches "msa_15".</li>
+<li>Line 2: build the BM25 index over every "context + chunk" text.</li>
+<li>Line 3: score all chunks for the query; return the n best.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DPR: dense passage retrieval (Karpukhin et al., 2020)</h3><span class="slide-no">42/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Offline (once)</th>
+<th>Online (per query)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Passages → passage encoder E_P(p)</td>
+<td>Query q → query encoder E_Q(q)</td>
+</tr>
+<tr>
+<td>→ passage vectors → vector index</td>
+<td>→ query vector → dot product E_Q(q)ᵀ E_P(p) against the index</td>
+</tr>
+<tr>
+<td></td>
+<td>→ top-k passages</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>DPR: training</h3><span class="slide-no">43/82</span></div><ul>
+<li>Similarity: <code>s(q, p) = E_Q(q)ᵀ E_P(p)</code>; both vectors in R^d.</li>
+<li>Contrastive loss: <code>L_i = −log [ exp(s(qi, pi+)) / ( exp(s(qi, pi+)) + Σ_j exp(s(qi, pi,j−)) ) ]</code><ul>
+<li>pi+: the right passage. pi,j−: n wrong passages.</li>
+<li>Low loss when the right passage scores far above the wrong ones.</li>
+</ul>
+</li>
+<li>Gradients update both the question encoder and the passage encoder.</li>
+<li>Negatives: in-batch (other questions' passages in the same batch) plus BM25 hard negatives (high BM25 score, wrong passage).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scoring a retriever: Hit@k and Failed@k</h3><span class="slide-no">44/82</span></div><ul>
+<li><code>Hit@k = (1/|Q|) · Σ_q 1[ R_q ∩ Top_k(q) ≠ ∅ ]</code><ul>
+<li>R_q: the relevant passages for query q. Top_k(q): the k returned.</li>
+<li>1 if any relevant passage is in the top k, else 0. Position in the top k does not matter.</li>
+</ul>
+</li>
+<li><code>Failed@k = (1/|Q|) · Σ_q 1[ R_q ∩ Top_k(q) = ∅ ] = 1 − Hit@k</code><ul>
+<li>Share of queries with no relevant passage in the top k. Anthropic's chart above is Failed@20.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scoring a retriever: nDCG@k</h3><span class="slide-no">45/82</span></div><ul>
+<li><code>DCG_q@k = Σ_{i=1..k} rel_{q,i} / log2(i + 1)</code><ul>
+<li>rel_{q,i}: relevance of the passage at rank i.</li>
+<li>log2(i + 1): lower ranks count less ("discounted by rank").</li>
+</ul>
+</li>
+<li><code>nDCG@k = (1/|Q|) · Σ_q DCG_q@k / IDCG_q@k</code><ul>
+<li>IDCG: the DCG of the ideal ranking. Dividing by it puts every query on a 0–1 scale.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scoring a retriever: MRR@k and Recall@k</h3><span class="slide-no">46/82</span></div><ul>
+<li><code>MRR@k = (1/|Q|) · Σ_q 1 / rank_q</code><ul>
+<li>rank_q: rank of the first relevant passage. Counts as 0 if not in the top k.</li>
+</ul>
+</li>
+<li><code>Recall@k = (1/|Q|) · Σ_q |R_q ∩ Top_k(q)| / |R_q|</code><ul>
+<li>Relevant passages found in the top k, out of all relevant passages for the query.</li>
+</ul>
+</li>
+<li>Our notebook has one gold chunk per query, so its recall@3 equals Hit@3.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The metrics on one query</h3><span class="slide-no">47/82</span></div><p>Suppose we ask "msa_20 cap on damages", the gold chunk is <code>msa_20#7</code>, and search returns it at rank 2 of 3.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hit@3</td>
+<td>1</td>
+<td>Gold is in the top 3</td>
+</tr>
+<tr>
+<td>Failed@3</td>
+<td>0</td>
+<td>1 − Hit@3</td>
+</tr>
+<tr>
+<td>MRR@3</td>
+<td>0.5</td>
+<td>1 / rank 2</td>
+</tr>
+<tr>
+<td>nDCG@3</td>
+<td>0.63</td>
+<td>(1/log2 3) ÷ (1/log2 2)</td>
+</tr>
+<tr>
+<td>Recall@3</td>
+<td>1</td>
+<td>1 of 1 gold chunks found</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>DPR beats BM25 on 4 of 5 datasets</h3><span class="slide-no">48/82</span></div><p>Top-20 retrieval accuracy (share of questions with an answer passage in the top 20):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Training</th>
+<th>Retriever</th>
+<th>NQ</th>
+<th>TriviaQA</th>
+<th>WQ</th>
+<th>TREC</th>
+<th>SQuAD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>None</td>
+<td>BM25</td>
+<td>59.1</td>
+<td>66.9</td>
+<td>55.0</td>
+<td>70.9</td>
+<td><strong>68.8</strong></td>
+</tr>
+<tr>
+<td>Single</td>
+<td>DPR</td>
+<td>78.4</td>
+<td>79.4</td>
+<td>73.2</td>
+<td>79.8</td>
+<td>63.2</td>
+</tr>
+<tr>
+<td>Single</td>
+<td>BM25 + DPR</td>
+<td>76.6</td>
+<td>79.8</td>
+<td>71.0</td>
+<td>85.2</td>
+<td>71.5</td>
+</tr>
+<tr>
+<td>Multi</td>
+<td>DPR</td>
+<td><strong>79.4</strong></td>
+<td>78.8</td>
+<td><strong>75.0</strong></td>
+<td><strong>89.1</strong></td>
+<td>51.6</td>
+</tr>
+<tr>
+<td>Multi</td>
+<td>BM25 + DPR</td>
+<td>78.0</td>
+<td><strong>79.9</strong></td>
+<td>74.7</td>
+<td>88.5</td>
+<td>66.2</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Single: trained on that dataset. Multi: trained on all combined.</li>
+<li>SQuAD is the exception: BM25 68.8 vs DPR 63.2.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DPR vs BM25: top-100</h3><span class="slide-no">49/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Training</th>
+<th>Retriever</th>
+<th>NQ</th>
+<th>TriviaQA</th>
+<th>WQ</th>
+<th>TREC</th>
+<th>SQuAD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>None</td>
+<td>BM25</td>
+<td>73.7</td>
+<td>76.7</td>
+<td>71.1</td>
+<td>84.1</td>
+<td>80.0</td>
+</tr>
+<tr>
+<td>Single</td>
+<td>DPR</td>
+<td>85.4</td>
+<td><strong>85.0</strong></td>
+<td>81.4</td>
+<td>89.1</td>
+<td>77.2</td>
+</tr>
+<tr>
+<td>Single</td>
+<td>BM25 + DPR</td>
+<td>83.8</td>
+<td>84.5</td>
+<td>80.5</td>
+<td>92.7</td>
+<td><strong>81.3</strong></td>
+</tr>
+<tr>
+<td>Multi</td>
+<td>DPR</td>
+<td><strong>86.0</strong></td>
+<td>84.7</td>
+<td><strong>82.9</strong></td>
+<td>93.9</td>
+<td>67.6</td>
+</tr>
+<tr>
+<td>Multi</td>
+<td>BM25 + DPR</td>
+<td>83.9</td>
+<td>84.4</td>
+<td>82.3</td>
+<td><strong>94.1</strong></td>
+<td>78.6</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Gaps shrink at top-100, but DPR still leads on 4 of 5.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>1,000 QA pairs are enough to beat BM25</h3><span class="slide-no">50/82</span></div><ul>
+<li>Chart: top-k accuracy vs k (number of passages, up to 100).</li>
+<li>Lines: BM25, and DPR trained on 1k, 10k, 20k, 40k and all (59k) QA pairs.</li>
+<li>DPR with just 1k pairs sits above BM25 at every k.</li>
+<li>More training data → higher line; all lines rise fast then flatten toward k = 100.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DPR end to end: no extra pretraining needed</h3><span class="slide-no">51/82</span></div><p>Exact Match on full QA:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Training</th>
+<th>Model</th>
+<th>NQ</th>
+<th>TriviaQA</th>
+<th>WQ</th>
+<th>TREC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single</td>
+<td>ORQA</td>
+<td>33.3</td>
+<td>45.0</td>
+<td>36.4</td>
+<td>30.1</td>
+</tr>
+<tr>
+<td>Single</td>
+<td>REALM (Wiki)</td>
+<td>39.2</td>
+<td>–</td>
+<td>40.2</td>
+<td>46.8</td>
+</tr>
+<tr>
+<td>Single</td>
+<td>REALM (News)</td>
+<td>40.4</td>
+<td>–</td>
+<td>40.7</td>
+<td>42.9</td>
+</tr>
+<tr>
+<td>Single</td>
+<td>BM25</td>
+<td>32.6</td>
+<td>52.4</td>
+<td>29.9</td>
+<td>24.9</td>
+</tr>
+<tr>
+<td>Single</td>
+<td>DPR</td>
+<td><strong>41.5</strong></td>
+<td>56.8</td>
+<td>34.6</td>
+<td>25.9</td>
+</tr>
+<tr>
+<td>Multi</td>
+<td>DPR</td>
+<td><strong>41.5</strong></td>
+<td>56.8</td>
+<td><strong>42.4</strong></td>
+<td>49.4</td>
+</tr>
+<tr>
+<td>Multi</td>
+<td>BM25 + DPR</td>
+<td>38.8</td>
+<td><strong>57.9</strong></td>
+<td>41.1</td>
+<td><strong>50.6</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>ORQA and REALM need special retrieval pretraining. DPR beats them without it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Hybrid search and reciprocal rank fusion</h3><span class="slide-no">52/82</span></div><ul>
+<li>The two fail differently: BM25 misses paraphrase; dense search misses rare literals (error codes, product IDs).</li>
+<li>Hybrid search: run both retrievers, then fuse the two ranked lists.</li>
+<li>RRF (reciprocal rank fusion): merge positions, not raw scores. No per-corpus tuning; works with any number of retrievers.</li>
+<li><code>RRF(d) = Σ over retrievers r of 1 / (k + rank_r(d))</code>, with k = 60.</li>
+<li>Example: ranked 1st by BM25 and 3rd by embeddings → 1/61 + 1/63 ≈ 0.032.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two ways to search our contracts</h3><span class="slide-no">53/82</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Keyword search (BM25)</th>
@@ -325,7 +1189,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <tbody>
 <tr>
 <td>Scores chunks by shared words</td>
-<td>Turns text into numbers; similar meaning → similar numbers</td>
+<td>Turns text into vectors; similar meaning → nearby vectors</td>
 </tr>
 <tr>
 <td>Finds "7.2(b)", "msa_15"</td>
@@ -336,23 +1200,654 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>Misses exact IDs and clause numbers</td>
 </tr>
 </tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>RRF in our notebook</h3><span class="slide-no">54/82</span></div><pre><code class="language-python">scores = {}
+for ranking in (self.keyword(q, pool), self.semantic(q, pool)):
+    for r, i in enumerate(ranking):
+        scores[i] = scores.get(i, 0) + 1 / (rrf_k + r + 1)
+return [self.chunks[i] for i in sorted(scores, key=scores.get, reverse=True)[:k]]
+</code></pre>
+<ul>
+<li>Line 1: a score per chunk, starting empty.</li>
+<li>Line 2: take the top 50 (<code>pool</code>) from keyword search, then from meaning search.</li>
+<li>Line 3: walk each list; r is the position (0 = first).</li>
+<li>Line 4: add 1 / (60 + rank). r + 1 makes rank start at 1.</li>
+<li>Line 5: sort by total score; keep the top k.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Cross-encoders and reranking (Humeau et al., 2020)</h3><span class="slide-no">55/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Bi-encoder (retrieval)</th>
+<th>Cross-encoder (reranking)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Query and passage encoded separately</td>
+<td>Query and passage go through the model together</td>
+</tr>
+<tr>
+<td>Score = dot product of two vectors</td>
+<td>Full attention across both; one score out</td>
+</tr>
+<tr>
+<td>Passage vectors precomputed; fast over a whole corpus</td>
+<td>Nothing precomputed; only for a shortlist</td>
+</tr>
+</tbody>
 </table></div>
 <ul>
-<li>Hybrid retrieval: run both, then merge. Each catches what the other misses.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Merging and reranking</h3><span class="slide-no">8/12</span></div><ul>
-<li>RRF (reciprocal rank fusion): merge two ranked lists.<ul>
-<li>Each chunk gets 1 / (60 + its rank) from each list. Add up, sort.</li>
+<li>Notebook solution 2: <code>cross-encoder/ms-marco-MiniLM-L-6-v2</code> reranks the top 20 and keeps 3.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Late interaction: score tokens, not documents</h3><span class="slide-no">56/82</span></div><ul>
+<li>Keep one vector per token. Encode query and passage separately. Interact only at scoring time.</li>
+<li>Scoring is MaxSim: <code>S(q, d) = Σ over query tokens i of max over doc tokens j of q_i · d_j</code><ul>
+<li>For each query token, find its best-matching passage token. Add those up.</li>
 </ul>
 </li>
-<li>Rerank (optional): fetch a wide pool, then a slower, more accurate model reorders it and keeps the best few.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Scoring a retriever</h3><span class="slide-no">9/12</span></div><ul>
-<li>recall@k (also called Hit@k): how often the right chunk is in the top k.</li>
-<li>Measure retrieval on its own, before the answers.<ul>
-<li>If the final answer is wrong, you can't tell which part failed.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Design</th>
+<th>Example</th>
+<th>How query and document meet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Representation-based</td>
+<td>DSSM, SNRM</td>
+<td>One vector each; compare once</td>
+</tr>
+<tr>
+<td>Query-document interaction</td>
+<td>DRMM, KNRM, Conv-KNRM</td>
+<td>Word-match matrix → CNN/MLP</td>
+</tr>
+<tr>
+<td>All-to-all interaction</td>
+<td>BERT</td>
+<td>Every token attends to every token</td>
+</tr>
+<tr>
+<td>Late interaction</td>
+<td>ColBERT</td>
+<td>Token vectors, MaxSim at the end</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>General architecture of ColBERT</h3><span class="slide-no">57/82</span></div><ul>
+<li>Khattab &amp; Zaharia, SIGIR 2020.</li>
+<li>Query encoder f_Q: one vector per query token.</li>
+<li>Document encoder f_D: one vector per document token, computed offline (indexing).</li>
+<li>MaxSim for each query token, then sum → score.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ColBERT vs other approaches: full retrieval</h3><span class="slide-no">58/82</span></div><p>MS MARCO, end-to-end retrieval:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>MRR@10 (Dev)</th>
+<th>Latency (ms)</th>
+<th>Recall@50</th>
+<th>Recall@1000</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BM25 (Anserini)</td>
+<td>18.7</td>
+<td>62</td>
+<td>59.2</td>
+<td>85.7</td>
+</tr>
+<tr>
+<td>doc2query</td>
+<td>21.5</td>
+<td>85</td>
+<td>64.4</td>
+<td>89.1</td>
+</tr>
+<tr>
+<td>DeepCT</td>
+<td>24.3</td>
+<td>62 (est.)</td>
+<td>69</td>
+<td>91</td>
+</tr>
+<tr>
+<td>docTTTTTquery</td>
+<td>27.7</td>
+<td>87</td>
+<td>75.6</td>
+<td>94.7</td>
+</tr>
+<tr>
+<td>ColBERT (re-rank)</td>
+<td>34.8</td>
+<td>–</td>
+<td>75.3</td>
+<td>81.4</td>
+</tr>
+<tr>
+<td>ColBERT (end-to-end)</td>
+<td><strong>36.0</strong></td>
+<td>458</td>
+<td><strong>82.9</strong></td>
+<td><strong>96.8</strong></td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>ColBERT vs other approaches: reranking</h3><span class="slide-no">59/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>MRR@10 (Dev)</th>
+<th>Re-ranking latency (ms)</th>
+<th>FLOPs/query</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BM25 (official)</td>
+<td>16.7</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>KNRM</td>
+<td>19.8</td>
+<td>3</td>
+<td>592M (0.085×)</td>
+</tr>
+<tr>
+<td>Duet</td>
+<td>24.3</td>
+<td>22</td>
+<td>159B (23×)</td>
+</tr>
+<tr>
+<td>fastText+ConvKNRM</td>
+<td>29.0</td>
+<td>28</td>
+<td>78B (11×)</td>
+</tr>
+<tr>
+<td>BERT-base</td>
+<td>34.7</td>
+<td>10,700</td>
+<td>97T (13,900×)</td>
+</tr>
+<tr>
+<td>BERT-large</td>
+<td>36.5</td>
+<td>32,900</td>
+<td>340T (48,600×)</td>
+</tr>
+<tr>
+<td>ColBERT (over BERT-base)</td>
+<td>34.9</td>
+<td>61</td>
+<td>7B (1×)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>ColBERT matches BERT-base accuracy at 61 ms instead of 10,700 ms.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fast vs slow retrievers</h3><span class="slide-no">60/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Retriever</th>
+<th>Precomputed offline</th>
+<th>Query latency</th>
+<th>Wins on</th>
+<th>Breaks on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BM25 (sparse)</td>
+<td>Inverted index</td>
+<td>62 ms, fast</td>
+<td>Exact terms: IDs, names, error codes</td>
+<td>Paraphrase, synonyms</td>
+</tr>
+<tr>
+<td>DPR (bi-encoder)</td>
+<td>One vector per passage</td>
+<td>Tens of ms, fast</td>
+<td>Meaning match at corpus scale</td>
+<td>Rare literals; needs labeled pairs</td>
+</tr>
+<tr>
+<td>ColBERT (late interaction)</td>
+<td>One vector per token</td>
+<td>458 ms end to end, middle</td>
+<td>Token-level evidence at scale</td>
+<td>Index size: tokens, not documents</td>
+</tr>
+<tr>
+<td>Cross-encoder (BERT-base)</td>
+<td>Nothing</td>
+<td>10,700 ms per 1k passages, slow</td>
+<td>Accuracy on a shortlist</td>
+<td>Can't scan a corpus</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Latencies from Khattab &amp; Zaharia (2020) on MS MARCO; DPR from Karpukhin et al. (2020), different hardware.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Agentic RAG: Self-RAG, Search-R1</div><div class="slide"><div class="slide-top"><h3>Agentic RAG: retrieval inside the loop</h3><span class="slide-no">61/82</span></div><ul>
+<li>Everything so far answers one question well.</li>
+<li>None of it decides whether to retrieve, what to ask, or when to stop.</li>
+<li>Retrieval should be an action the agent takes.</li>
+<li>Three decisions:<ul>
+<li>Retrieve, or answer directly?</li>
+<li>What query to issue?</li>
+<li>Is the result good enough?</li>
 </ul>
 </li>
-<li>Test with questions in different words from the contract: "how do we stop it renewing?"</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Checking citations in code</h3><span class="slide-no">10/12</span></div><pre><code class="language-python">hits = index.search(question, k=k)
+</ul></div><div class="slide"><div class="slide-top"><h3>Self-RAG: self-reflective RAG (Asai et al., 2024)</h3><span class="slide-no">62/82</span></div><ul>
+<li>Learns to retrieve, critique and generate, for better quality, factuality and verifiability.</li>
+<li>Prompt: "How did US states get their names?"</li>
+<li>Step 1, retrieve on demand: the model writes "US states got their names from a variety of sources." then emits a Retrieve token.</li>
+<li>Step 2, generate in parallel: one candidate segment per retrieved passage (3 here).</li>
+<li>Step 3, critique and pick the best segment; retrieve again; repeat.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Self-RAG: the critique step</h3><span class="slide-no">63/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Passage</th>
+<th>Relevance tag</th>
+<th>Segment</th>
+<th>Support tag</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Relevant</td>
+<td>"11 of 50 state names come from persons."</td>
+<td>Supported</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Irrelevant</td>
+<td>"Texas is named after a Native American tribe."</td>
+<td>–</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Relevant</td>
+<td>"California's name has its origins in a 16th-century novel Las Sergas de Esplandián."</td>
+<td>Partially</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Ranking: 1 &gt; 3 &gt; 2. Segment 1 is kept; the model retrieves again for the next sentence.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CRAG: a critic grades the retrieval (Yan et al., 2024)</h3><span class="slide-no">64/82</span></div><ul>
+<li>Retrieval evaluator: judges whether the retrieved documents fit the question, with a confidence score.</li>
+<li>Example: "Who was the screenwriter for Death of a Batman?"</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Verdict</th>
+<th>Action</th>
+<th>Generator gets</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Correct</td>
+<td>Knowledge refinement: split docs into strips, filter, recompose</td>
+<td>x + k_in</td>
+</tr>
+<tr>
+<td>Incorrect</td>
+<td>Knowledge search: rewrite query ("Death of a Batman; screenwriter; Wikipedia"), web search, select</td>
+<td>x + k_ex</td>
+</tr>
+<tr>
+<td>Ambiguous</td>
+<td>Both</td>
+<td>x + k_in + k_ex</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Search-R1: learn the search policy with RL (Jin et al., 2025)</h3><span class="slide-no">65/82</span></div><p>Question: "Who is older, Jed Hoyer or John William Henry II?"</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Model output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>think</td>
+<td>Find both ages.</td>
+</tr>
+<tr>
+<td>search</td>
+<td>"Jed Hoyer or John William Henry II" → a Jed Hoyer bio, no birth date</td>
+</tr>
+<tr>
+<td>search</td>
+<td>"John William Henry II" → born September 13, 1949</td>
+</tr>
+<tr>
+<td>search</td>
+<td>"Jed Hoyer birth year"</td>
+</tr>
+<tr>
+<td>think</td>
+<td>"Jed Hoyer was born on December 7, 1973."</td>
+</tr>
+<tr>
+<td>answer</td>
+<td>John William Henry II (correct)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Many search turns inside one reasoning trace.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Search-R1: how it is trained</h3><span class="slide-no">66/82</span></div><ul>
+<li>Prompt: reason inside <code>&lt;think&gt;</code>; call search with <code>&lt;search&gt; query &lt;/search&gt;</code>; results come back in <code>&lt;information&gt;</code>; give the answer in <code>&lt;answer&gt;</code>.</li>
+<li>"You can search as many times as you want."</li>
+<li>RL (reinforcement learning): reward the final answer; the model learns when and what to search.</li>
+<li>PPO with a search engine: policy LLM + search engine roll out; value LLM, reward model, reference LLM → advantage.</li>
+<li>GRPO with a search engine: G rollouts per question; rewards compared within the group; KL keeps it near the reference LLM.</li>
+<li>Trained: policy LLM (and value LLM). Frozen: reward model, reference LLM.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Search-R1 results (Qwen2.5-7B)</h3><span class="slide-no">67/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>NQ</th>
+<th>TriviaQA</th>
+<th>PopQA</th>
+<th>HotpotQA</th>
+<th>2wiki</th>
+<th>Musique</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Direct inference</td>
+<td>0.134</td>
+<td>0.408</td>
+<td>0.140</td>
+<td>0.183</td>
+<td>0.250</td>
+<td>0.031</td>
+</tr>
+<tr>
+<td>CoT</td>
+<td>0.048</td>
+<td>0.185</td>
+<td>0.054</td>
+<td>0.092</td>
+<td>0.111</td>
+<td>0.022</td>
+</tr>
+<tr>
+<td>IRCoT</td>
+<td>0.224</td>
+<td>0.478</td>
+<td>0.301</td>
+<td>0.133</td>
+<td>0.149</td>
+<td>0.072</td>
+</tr>
+<tr>
+<td>Search-o1</td>
+<td>0.151</td>
+<td>0.443</td>
+<td>0.131</td>
+<td>0.187</td>
+<td>0.176</td>
+<td>0.058</td>
+</tr>
+<tr>
+<td>RAG</td>
+<td>0.349</td>
+<td>0.585</td>
+<td>0.392</td>
+<td>0.299</td>
+<td>0.235</td>
+<td>0.058</td>
+</tr>
+<tr>
+<td>SFT</td>
+<td>0.318</td>
+<td>0.354</td>
+<td>0.121</td>
+<td>0.217</td>
+<td>0.259</td>
+<td>0.066</td>
+</tr>
+<tr>
+<td>R1-base</td>
+<td>0.297</td>
+<td>0.539</td>
+<td>0.202</td>
+<td>0.242</td>
+<td>0.273</td>
+<td>0.083</td>
+</tr>
+<tr>
+<td>R1-instruct</td>
+<td>0.270</td>
+<td>0.537</td>
+<td>0.199</td>
+<td>0.237</td>
+<td>0.292</td>
+<td>0.072</td>
+</tr>
+<tr>
+<td>Rejection sampling</td>
+<td>0.360</td>
+<td>0.592</td>
+<td>0.380</td>
+<td>0.331</td>
+<td>0.296</td>
+<td>0.123</td>
+</tr>
+<tr>
+<td>Search-R1-base</td>
+<td><strong>0.480</strong></td>
+<td><strong>0.638</strong></td>
+<td><strong>0.457</strong></td>
+<td><strong>0.433</strong></td>
+<td>0.382</td>
+<td><strong>0.196</strong></td>
+</tr>
+<tr>
+<td>Search-R1-instruct</td>
+<td>0.393</td>
+<td>0.610</td>
+<td>0.397</td>
+<td>0.370</td>
+<td><strong>0.414</strong></td>
+<td>0.146</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>First three columns: general QA. Last three: multi-hop QA (needs several facts).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Search-R1: training curves</h3><span class="slide-no">68/82</span></div><ul>
+<li>Train reward climbs from about 0.1 to over 0.4 in about 200 steps.</li>
+<li>Valid searches per answer rise from about 1.4 to about 1.9 as reward rises.</li>
+<li>Response length drops early, then climbs back as the model learns to search.</li>
+<li>In words: RL teaches the model to search more, and that pays off.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Failure modes</div><div class="slide"><div class="slide-top"><h3>Issues with RAG</h3><span class="slide-no">69/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Retrieval-side</th>
+<th>Reader-side</th>
+<th>Loop-side</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Recall ceiling: missing evidence limits the agent</td>
+<td>Lost in the middle: position bias</td>
+<td>Compounding error: early mistakes affect later decisions</td>
+</tr>
+<tr>
+<td>Stale index: embeddings not updated</td>
+<td>Distraction: similar but irrelevant content</td>
+<td>No stopping rule: no clear condition for finishing</td>
+</tr>
+<tr>
+<td>Permission leak: uses content it may not access</td>
+<td>Evidence conflict: sources or knowledge disagree</td>
+<td>Prompt injection: retrieved text steers the agent</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The same failures in contract review</h3><span class="slide-no">70/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Failure</th>
+<th>Example</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Recall ceiling</td>
+<td><code>msa_20#7</code> not in the top k; the model can't see the cap</td>
+<td>Measure recall@k first</td>
+</tr>
+<tr>
+<td>Stale index</td>
+<td>An amended contract was never re-indexed</td>
+<td>Re-index on every change</td>
+</tr>
+<tr>
+<td>Permission leak</td>
+<td>Another client's contract comes back</td>
+<td>Filter by client or matter during search</td>
+</tr>
+<tr>
+<td>Distraction</td>
+<td>msa_20 3.1 also says "thirty-six (36) months" (the term, not the cap)</td>
+<td>Check the cited quote is in the cited clause</td>
+</tr>
+<tr>
+<td>Prompt injection</td>
+<td>A contract contains "ignore previous instructions"</td>
+<td>Treat retrieved text as data</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-7"><span>Part 7</span>Wrap up RAG (Lecture 4)</div><div class="slide"><div class="slide-top"><h3>Problem: how many documents can we use?</h3><span class="slide-no">71/82</span></div><ul>
+<li>Why not fetch lots of documents and pass them all to the LM?</li>
+<li>Test prompt: "Write a high-quality answer for the given question using only the provided search results (some of which might be irrelevant)."</li>
+<li>Three documents; only Document [2] (List of Nobel laureates in Physics) has the answer.</li>
+<li>Question: "who got the first nobel prize in physics". Desired answer: Wilhelm Conrad Röntgen.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LMs can&#x27;t pay attention to the entire context (Liu et al., 2023)</h3><span class="slide-no">72/82</span></div><ul>
+<li>Three charts: 10, 20 and 30 retrieved documents (~2K, ~4K, ~6K tokens).</li>
+<li>X axis: position of the document with the answer. Y axis: accuracy.</li>
+<li>U-shape: best when the answer is first, good when last, worst in the middle.</li>
+<li>Best closed-book (no documents): GPT-3.5-Turbo, ~56%.</li>
+<li>Best oracle (only the relevant document): GPT-3.5-Turbo, ~88.5%.</li>
+<li>Models: claude-1.3, claude-1.3-100k, gpt-3.5-turbo-0613, gpt-3.5-turbo-16k-0613, mpt-30b-instruct, longchat-13b-16k.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>In practice: LMs can&#x27;t use many documents</h3><span class="slide-no">73/82</span></div><ul>
+<li>Retriever (Contriever) recall rises slowly with more documents: about 68% at 5 to about 89% at 50.</li>
+<li>RAG accuracy (the other lines) stays around 50–60% and saturates after 10–20 documents.</li>
+<li>More documents → retriever finds more, but the reader can't use it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LLM citations can be hallucinated</h3><span class="slide-no">74/82</span></div><ul>
+<li>Unique benefit of RAG: citing the source.</li>
+<li>But the citations are themselves written by the LLM.</li>
+<li>Example: Bing Chat's Toronto itinerary with numbered citations to cntower.ca, travel.usnews.com, bing.com, rom.on.ca, tripadvisor.com.</li>
+<li>So citations can be made up too. How often?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How often? (Liu et al., 2023)</h3><span class="slide-no">75/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Engine</th>
+<th>Perceived utility (1–5)</th>
+<th>Fluency (1–5)</th>
+<th>Citation precision</th>
+<th>Citation recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bing Chat</td>
+<td>4.34</td>
+<td>4.40</td>
+<td>89.5%</td>
+<td>58.7%</td>
+</tr>
+<tr>
+<td>NeevaAI</td>
+<td>4.48</td>
+<td>4.43</td>
+<td>72.0%</td>
+<td>67.6%</td>
+</tr>
+<tr>
+<td>perplexity.ai</td>
+<td>4.56</td>
+<td>4.51</td>
+<td>72.7%</td>
+<td>68.7%</td>
+</tr>
+<tr>
+<td>YouChat</td>
+<td>4.62</td>
+<td>4.59</td>
+<td>63.6%</td>
+<td>11.1%</td>
+</tr>
+<tr>
+<td>Average</td>
+<td>4.50</td>
+<td>4.48</td>
+<td>74.5%</td>
+<td>51.5%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Answers look useful and read well. But precision and recall of citations are both low.</li>
+<li>Citation precision: share of citations that support their sentence. Citation recall: share of sentences fully supported.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Hallucinated references in the wild</h3><span class="slide-no">76/82</span></div><ul>
+<li>GPTZero analyzed 4,841 accepted papers and found at least 100 with confirmed hallucinated citations (headline partly hidden on the slide).</li>
+<li>ICLR, "Taking Actions on Hallucinated References": many submissions cited papers that didn't exist or had badly wrong details.</li>
+<li>ICLR's checker matched references against bibliographic databases and web search. It had many false alarms, so humans reviewed each flagged paper (at least three people).</li>
+<li>Confirmed cases were desk-rejected, with an appeal channel.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Needle in a haystack</h3><span class="slide-no">77/82</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Claude 2.1 (200K)</th>
+<th>GPT-4 (128K, 1106-preview)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A fact placed at 35 depths × 35 lengths (1K–200K tokens); graded by GPT-4</td>
+<td>15 depths × 15 lengths (1K–128K tokens)</td>
+</tr>
+<tr>
+<td>Accuracy fell as context grew; many misses at long lengths, mostly in the upper part of the document</td>
+<td>Perfect up to 64K tokens; degraded at large lengths (73K–128K) when the fact sat at 10%–50% depth</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Source: github.com/gkamradt/needle-in-a-haystack.</li>
+<li>A big window doesn't mean the model reads all of it.</li>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Our pipeline, end to end</h3><span class="slide-no">78/82</span></div><pre><code>question → hybrid search (BM25 + bge, RRF) → top 4 chunks → local LLM answers with id + quote → code checks the quote
+</code></pre>
+<ul>
+<li>Everything runs on the firm's machine: BM25, the bge embedding model, and the LLM through Ollama.</li>
+<li>No contract text leaves the building.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Do you even need RAG?</h3><span class="slide-no">79/82</span></div><ul>
+<li>Under about 200K tokens of documents: put everything in the prompt. Skip RAG.</li>
+<li>Above that: build the pipeline.</li>
+<li>Small local models do worse with long prompts, so RAG helps them sooner.</li>
+<li>Lost in the middle: send a few well-ranked chunks, not everything.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Measure retrieval on its own</h3><span class="slide-no">80/82</span></div><ul>
+<li>recall@3 on 30 test questions: 10 contracts × 3 questions ("cap on damages", "which state's law applies", "how do we stop it renewing").</li>
+<li>The questions use different words from the contract, and name the contract by ID.</li>
+<li>Compare keyword vs meaning vs hybrid before touching the LLM.</li>
+<li>If the final answer is wrong, you then know whether search or reading failed.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Checking citations in code</h3><span class="slide-no">81/82</span></div><pre><code class="language-python">hits = index.search(question, k=k)
 ctx = &quot;\n\n&quot;.join(f&quot;[{c['id']}] {c['text']}&quot; for c in hits)
 a = structured([... &quot;Answer only from the sources. Give the source id and an exact quote.&quot; ...], Answer)
 src = next((c for c in hits if c[&quot;id&quot;] == cid), None)
@@ -362,23 +1857,29 @@ a_ok = src is not None and quote_is_in_doc(a.quote, src[&quot;text&quot;])
 <li>Line 1: hybrid search, keep the top k chunks.</li>
 <li>Line 2: join them, each tagged with its id, e.g. <code>[msa_20#7]</code>.</li>
 <li>Line 3: ask for an answer, a source id and an exact quote.</li>
-<li>Lines 4–5: find that chunk; check the quote is really in it.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
-<li>A firm has too many contracts to fit in one prompt. RAG sends only the clauses that matter.</li>
-<li>Search, embeddings and the LLM all run on the firm's own machine.</li>
-<li>A checked quote is what makes the answer usable for a lawyer.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+<li>Lines 4–5: find that chunk; check the quote is really in it. This catches hallucinated citations.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">82/82</span></div><ul>
 <li>Meaning search alone → misses clause numbers. Add keyword search.</li>
 <li>Judging only the final answer → measure recall@k separately.</li>
-<li>Treating retrieved text as instructions → it is data. A contract can say "ignore previous instructions."</li>
+<li>Stuffing 30 chunks into the prompt → the model ignores the middle. Send a few, best first.</li>
+<li>Trusting the model's citation → check the quote in code.</li>
+<li>Treating retrieved text as instructions → it is data.</li>
 <li>Filtering access after search → filter by client or matter during search.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A lawyer asks &quot;what does 7.2(b) say?&quot; and meaning search returns the wrong clause. Why?</summary><p>Embeddings capture meaning, not exact strings like &quot;7.2(b)&quot;. Keyword search finds it, which is why we use both.</p></details>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A lawyer asks &quot;what does 7.2(b) say?&quot; and meaning search returns the wrong clause. Why?</summary><p>Embeddings capture meaning, not exact strings like &quot;7.2(b)&quot;. Keyword search (BM25) finds it, which is why we use both.</p></details>
 
-<details><summary>Why add a one-line label to each chunk?</summary><p>The clause text alone doesn&#x27;t say which contract or section it is from. The label carries that, so search can match it.</p></details>
+<details><summary>Why add a one-line label to each chunk?</summary><p>The clause alone doesn&#x27;t say which contract or section it is from. The label carries that, so both searches can match it.</p></details>
 
-<details><summary>Why fetch a wide pool and then rerank?</summary><p>Fast search is noisy. A wide pool makes sure the right chunk is in it; the slower reranker moves it to the top.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>What is the difference between RAG-Sequence and RAG-Token?</summary><p>RAG-Sequence writes the whole answer from one passage. RAG-Token can switch passages at every token.</p></details>
+
+<details><summary>Why fetch a wide pool and then rerank with a cross-encoder?</summary><p>Fast search is noisy, so a wide pool makes sure the right chunk is in it. The cross-encoder is too slow for the whole corpus but accurate on a shortlist.</p></details>
+
+<details><summary>How does late chunking differ from contextual retrieval?</summary><p>Late chunking embeds the whole document first and averages token vectors per chunk, so context lives in the vector. Contextual retrieval adds LLM-written text to each chunk.</p></details>
+
+<details><summary>Why not just send 50 retrieved contracts to the model?</summary><p>Models use the start and end of the context best and miss the middle. RAG accuracy stops improving after 10–20 documents.</p></details>
+
+<details><summary>What three decisions make RAG &quot;agentic&quot;?</summary><p>Whether to retrieve at all, what query to issue, and whether the result is good enough to stop.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run the recall@3 comparison: keyword vs meaning vs hybrid.</li>
-<li>Run the solution that removes the chunk labels and see what drops.</li>
+<li>Run solution 1 (no chunk labels) and see what drops. Run solution 2 (cross-encoder rerank).</li>
 <li>Ask about msa_20 and check the answer says "citation verified: True".</li>
 </ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   

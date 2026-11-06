@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Context engineering · Agent Engineering School</title>
-<meta name="description" content="Keep only what the next step needs in the model&#x27;s context. Event log, observation masking, compaction, pinned rules and just-in-time loading.">
+<meta name="description" content="Keep only what the next step needs in the model&#x27;s context. Why long context is hard, context rot, avoiding bloat, the KV cache, compaction, recursive LMs, and the notebook&#x27;s masking…">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,45 +259,309 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 03</span></div><section class="mod" id="m3" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 03</div><h2>Context engineering</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/03_context_engineering.ipynb">Open in Colab</a><button class="done-btn" data-done="m3" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Keep only what the next step needs in the model&#x27;s context. Event log, observation masking, compaction, pinned rules and just-in-time loading.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 2 · LLMs for Builders (context engineering; patterns from Lecture 6) · <a href="https://web.stanford.edu/class/cs329z/slides/lecture02.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/14</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 03</span></div><section class="mod" id="m3" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 03</div><h2>Context engineering</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/03_context_engineering.ipynb">Open in Colab</a><button class="done-btn" data-done="m3" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>15 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Keep only what the next step needs in the model&#x27;s context. Why long context is hard, context rot, avoiding bloat, the KV cache, compaction, recursive LMs, and the notebook&#x27;s masking…</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 2 · LLMs for Builders (context engineering; patterns from Lecture 6) · <a href="https://web.stanford.edu/class/cs329z/slides/lecture02.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (32 slides)</b><ol><li><a href="#sec-1">Why long context is hard</a> <span>4 slides</span></li><li><a href="#sec-2">Context engineering</a> <span>13 slides</span></li><li><a href="#sec-3">Context management in practice</a> <span>10 slides</span></li><li><a href="#sec-4">How this applies to us</a> <span>4 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/32</span></div><ul>
 <li>Choose what goes into the context window each turn, and trim it without losing the full record.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What goes in the context of an agent?</h3><span class="slide-no">2/14</span></div><ul>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why long context is hard</div><div class="slide"><div class="slide-top"><h3>A note about context length</h3><span class="slide-no">2/32</span></div><ul>
 <li>Context window: all the text the model can see in one call.</li>
-<li>What fills it:<ul>
+<li>Nothing in the transformer or linear attention sets a hard length limit...</li>
+<li>...except how the model handles positional embeddings (the vectors that encode each token's position).</li>
+<li>The model must learn to use those positions, so in practice it is limited to the context length it was trained on.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Long context costs time and memory</h3><span class="slide-no">3/32</span></div><ul>
+<li>Full attention compares every token with every earlier token: work grows with the square of the length, O(n²).</li>
+<li>The KV cache (stored keys and values of earlier tokens) grows with every token in the prompt.</li>
+<li>On a local GPU, both show up as slower answers and more memory used. (Mechanics: module 02.)</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Linear attention struggles more with long context</h3><span class="slide-no">4/32</span></div><ul>
+<li>RULER benchmark: "needle in a haystack" (NIAH) tests hidden in essays.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>What the model must find</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single NIAH</td>
+<td>"One of the special magic numbers for long-context is: 12345." → 12345</td>
+</tr>
+<tr>
+<td>Multi-keys NIAH</td>
+<td>Same, with a second distractor key (large-model: 54321)</td>
+</tr>
+<tr>
+<td>Multi-values NIAH</td>
+<td>Two numbers for the same key → "12345 54321"</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>RULER: accuracy vs length</h3><span class="slide-no">5/32</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model (architecture)</th>
+<th>1K</th>
+<th>2K</th>
+<th>4K</th>
+<th>8K</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama2-7b (transformer)</td>
+<td>about 96</td>
+<td>about 91</td>
+<td>about 85</td>
+<td>about 0</td>
+</tr>
+<tr>
+<td>RWKV-v5-7b (linear / recurrent)</td>
+<td>about 87</td>
+<td>about 73</td>
+<td>about 51</td>
+<td>about 12</td>
+</tr>
+<tr>
+<td>Mamba-2.8b-slimpj (linear / recurrent)</td>
+<td>about 62</td>
+<td>about 52</td>
+<td>about 16</td>
+<td>about 1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Up to 4K, the transformer holds up far better. At 8K, all three are low or near zero.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Context engineering</div><div class="slide"><div class="slide-top"><h3>Prompt engineering vs context engineering</h3><span class="slide-no">6/32</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Prompt engineering (single-turn queries)</th>
+<th>Context engineering (agents)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Context window holds a system prompt and a user message</td>
+<td>Many possible inputs: docs, tools, memory files, instructions, domain knowledge, message history</td>
+</tr>
+<tr>
+<td>One call → one assistant message</td>
+<td>Curation: pick what goes in the window each turn</td>
+</tr>
+<tr>
+<td></td>
+<td>The model's tool calls return results that join the history for the next turn</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Figure from Anthropic, "Effective context engineering for AI agents".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What goes in the context of an agent?</h3><span class="slide-no">7/32</span></div><ul>
 <li>System prompt</li>
 <li>Message history</li>
 <li>Memories</li>
 <li>Tool call results</li>
 <li>Attached files</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why not just put everything? Context rot</h3><span class="slide-no">8/32</span></div><ul>
+<li>Context rot: answer quality drops as the context grows, well before the window is full.</li>
+<li>OOLONG (arXiv 2511.02817) tests reasoning over many pieces spread through a long input:<ul>
+<li>"Were there more news articles about the economy in September or August?" over dated articles → "September".</li>
+<li>"How many times does the character Jester cast Healing Word?" over transcripts of 12 hours of dialogue → "two times".</li>
 </ul>
 </li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why not just put everything? Context rot</h3><span class="slide-no">3/14</span></div><ul>
-<li>Context rot: quality drops as the context grows, well before the window is full.</li>
-<li>OOLONG test: measurable decline from about 8K tokens.</li>
-<li>Local models also slow down: every extra token costs time on your own GPU.</li>
-</ul>
-<div class="tbl"><table>
+<li>The model must classify and count many items, not find one needle.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>OOLONG results: every model gets worse</h3><span class="slide-no">9/32</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>10 contracts pasted in</th>
-<th>Just msa_09, loaded when needed</th>
+<th>OOLONG-synth</th>
+<th>8K</th>
+<th>128K</th>
+<th>256K</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Many prompt tokens, slow</td>
-<td>Few prompt tokens, fast</td>
+<td>gpt-5</td>
+<td>about 0.85</td>
+<td>about 0.46</td>
+<td>about 0.40</td>
 </tr>
 <tr>
-<td>Answer buried among 10 documents</td>
-<td>Only the document that matters</td>
+<td>gemini-2.5-pro</td>
+<td>about 0.88</td>
+<td>about 0.25</td>
+<td>about 0.13</td>
+</tr>
+<tr>
+<td>claude-sonnet-4</td>
+<td>about 0.74</td>
+<td>about 0.48</td>
+<td>about 0.47 (about 0.42 at 512K)</td>
+</tr>
+<tr>
+<td>llama-4-maverick, deepseek-r1</td>
+<td>about 0.15</td>
+<td>below the random baseline (about 0.22)</td>
+<td></td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Two principles</h3><span class="slide-no">4/14</span></div><ul>
+</table></div>
+<ul>
+<li>Decline starts at the shortest length tested, 8K tokens.</li>
+<li>OOLONG-real (64K–512K): gemini-2.5-pro is best, about 0.60 at 64K → about 0.30 at 512K.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>There is no one way to build the context</h3><span class="slide-no">10/32</span></div><ul>
+<li>You will experiment with it (in the course, homework 1).</li>
+<li>The lecture gives practical tips instead of a recipe:<ul>
+<li>Avoid bloat.</li>
+<li>Add sequentially.</li>
+<li>Evaluate context choices empirically.</li>
+<li>Compact carefully, or change the approach (recursive LMs).</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Avoid bloat: a few tools may be all you need</h3><span class="slide-no">11/32</span></div><ul>
+<li>Pi, a coding agent, has just four tools: read, write, edit, bash.</li>
+<li>Terminal-Bench 2, same model, different harness (the code around the model):</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Pi</th>
+<th>Codex</th>
+<th>Claude Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Fable 5</td>
+<td>$1.08 · 71.1%</td>
+<td>$0.98 · 72.2%</td>
+<td>$1.55 · 75.6%</td>
+</tr>
+<tr>
+<td>Claude Opus 4.8</td>
+<td>$0.76 · 72.2%</td>
+<td>$0.85 · 72.2%</td>
+<td>$0.90 · 68.9%</td>
+</tr>
+<tr>
+<td>Claude Sonnet 4.6</td>
+<td>$0.61 · 65.6%</td>
+<td>$0.55 · 63.3%</td>
+<td>$0.67 · 62.2%</td>
+</tr>
+<tr>
+<td>Claude Haiku 4.5</td>
+<td>$0.25 · 47.8%</td>
+<td>$0.21 · 31.1%</td>
+<td>$0.25 · 41.1%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Cost per rollout · success rate. The minimal harness was best or tied on 3 of 4 models.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Avoid bloat: retrieve, don&#x27;t paste</h3><span class="slide-no">12/32</span></div><ul>
+<li>Use retrieval to bring back only the most relevant memories or files.</li>
+<li>Retrieval chain: prompt → embedding model → vector DB search → reranking model → LLM → response.</li>
+<li>Full details in module 04 (RAG).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Add sequentially: keep the KV cache valid</h3><span class="slide-no">13/32</span></div><ul>
+<li>The server keeps keys and values for tokens it already read: "The class was about".</li>
+<li>Add new text to the end, and the cached part is reused.</li>
+<li>Insert "Actually" at the start: every later token's position embedding changes.<ul>
+<li>The whole KV cache is invalidated and must be recomputed.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Evaluate context choices empirically</h3><span class="slide-no">14/32</span></div><ul>
+<li>Set up benchmarks or evals and test each change.</li>
+<li>Toolformer example: the same model with tool calls allowed vs disabled, at sizes up to about 6.7B parameters.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark (largest model)</th>
+<th>Toolformer</th>
+<th>Tools disabled</th>
+<th>GPT-3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LAMA (facts)</td>
+<td>about 29</td>
+<td>about 18.5</td>
+<td>about 24.5</td>
+</tr>
+<tr>
+<td>Math</td>
+<td>about 26.5</td>
+<td>about 11</td>
+<td>about 14.5</td>
+</tr>
+<tr>
+<td>QA</td>
+<td>about 31</td>
+<td>about 27.5</td>
+<td>about 39</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Tools helped on all three; only on QA did GPT-3 stay ahead.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Compaction</h3><span class="slide-no">15/32</span></div><ul>
+<li>Compaction: the LLM summarizes earlier context into fewer tokens.</li>
+<li>By the time you compact, the context is already extremely long.</li>
+<li>The new decision is what to keep in the new context.<ul>
+<li>Keep too much → you have to compact again soon.</li>
+<li>Drop too much → you lose context the task needs.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Compaction gone wrong</h3><span class="slide-no">16/32</span></div><ul>
+<li>Reported Feb 2026: an AI agent (OpenClaw) bulk-deleted emails from a user's personal inbox.</li>
+<li>She had told it to suggest emails for deletion, but take no action until she said so.</li>
+<li>The inbox was too large, so the system compacted the context and lost "confirm before acting".</li>
+<li>It started deleting on its own; she had to rush to her computer to kill the process.</li>
+<li>Lesson: rules that must hold cannot live only in the history.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A different philosophy: recursive LMs (RLMs)</h3><span class="slide-no">17/32</span></div><ul>
+<li>Recursive Language Models (arXiv 2512.24601): don't put the long prompt in the context at all.</li>
+<li>The prompt is loaded as a variable in a Python environment (a REPL).</li>
+<li>The LM writes code to look at it: <code>print(prompt[:100])</code>, <code>prompt.split("Chapter 2")</code>.</li>
+<li>It calls itself on pieces: <code>llm_query(f"In Chapter 1, find... {part1}")</code>, depth 1.</li>
+<li>Sub-answers come back as variables; it prints <code>FINAL_ANSWER</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RLM results</h3><span class="slide-no">18/32</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>OOLONG trec_coarse, 263K-token context</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-5</td>
+<td>34.2%</td>
+</tr>
+<tr>
+<td>GPT-5-mini</td>
+<td>23.2%</td>
+</tr>
+<tr>
+<td>RLM(GPT-5-mini)</td>
+<td>51.1%</td>
+</tr>
+<tr>
+<td>RLM(GPT-5) without sub-calls</td>
+<td>40.9%</td>
+</tr>
+<tr>
+<td>ReAct + GPT-5 + BM25</td>
+<td>30.7%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>A small model working through the input with code beat the big model reading it all.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Context management in practice</div><div class="slide"><div class="slide-top"><h3>Two principles</h3><span class="slide-no">19/32</span></div><ul>
 <li>Focus the context: keep only what the task at hand needs. The whole history does not need to be there.</li>
 <li>Preserve continuity: keep the requirements, goals, constraints and progress.</li>
 <li>Excess information is context bloat.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Context management patterns</h3><span class="slide-no">5/14</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context management patterns</h3><span class="slide-no">20/32</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Pattern</th>
@@ -331,12 +599,33 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>Real systems combine them.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Persistent event log</h3><span class="slide-no">6/14</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Measure it first</h3><span class="slide-no">21/32</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>10 contracts pasted in</th>
+<th>Just msa_09, loaded when needed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Many prompt tokens, slow</td>
+<td>Few prompt tokens, fast</td>
+</tr>
+<tr>
+<td>Answer buried among 10 documents</td>
+<td>Only the document that matters</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Notebook step 1: the same question ("What governing law does msa_09 use?") with 1, 5 and 10 contracts in the prompt.</li>
+<li>It prints prompt tokens and seconds for each. The truth is Texas.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Persistent event log</h3><span class="slide-no">22/32</span></div><ul>
 <li>Store every step exactly as it happened. Append only.</li>
 <li>Rebuild the model's input from the log on every call.</li>
 <li>Trim what the model sees; the full record stays for audit and replay.</li>
 <li>Notebook: an agent reads msa_15 sections 3, 4, 7, 9 and 10. Each read is logged as a tool event.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Observation masking</h3><span class="slide-no">7/14</span></div><pre><code class="language-python">def build_context(events, keep_recent=4):
+</ul></div><div class="slide"><div class="slide-top"><h3>Observation masking</h3><span class="slide-no">23/32</span></div><pre><code class="language-python">def build_context(events, keep_recent=4):
     msgs = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: PINNED}, events[0]]             # pinned rules + the user's goal
     for e in events[1:-keep_recent]:
         if e[&quot;kind&quot;] == &quot;tool&quot;:
@@ -350,7 +639,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <li>Lines 3–5: in the middle, swap each tool output for a one-line placeholder.</li>
 <li>Lines 6–7: keep other events, like "Reading section 7."</li>
 <li>Line 8: add the last 4 events word for word.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Masking: before and after</h3><span class="slide-no">8/14</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Masking: before and after</h3><span class="slide-no">24/32</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Full event</th>
@@ -367,34 +656,55 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <ul>
 <li>No extra model call. Try this first.</li>
 <li>In one coding agent, about 84% of tokens were tool outputs. Hiding old ones roughly halved cost (Lecture 6).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Pin the hard rules</h3><span class="slide-no">9/14</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pin the hard rules</h3><span class="slide-no">25/32</span></div><ul>
 <li>Pinned rules: in the system prompt, outside anything that gets trimmed.</li>
 <li><code>PINNED</code>: "You never send, file or delete anything. You only write a review for a lawyer." / "Every issue must cite a clause number."</li>
-<li>One real agent deleted a user's inbox after "confirm before acting" was summarized away.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Compaction</h3><span class="slide-no">10/14</span></div><ul>
-<li>Compaction: the LLM summarizes earlier steps into fewer tokens.</li>
-<li>Notebook: the middle becomes at most 5 bullets, clause numbers and numbers exact.</li>
-<li>Keep too much → you compact again soon.</li>
-<li>Drop too much → you lose context the task needs.</li>
+<li>This is the fix for the inbox story: compaction can't remove what is never summarized.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Compaction in the notebook</h3><span class="slide-no">26/32</span></div><pre><code class="language-python">def compact(events, keep_recent=2):
+    middle = &quot;\n&quot;.join(e[&quot;content&quot;] for e in events[1:-keep_recent])
+    summary = ask(&quot;Summarize these contract-review notes in at most 5 short bullets. Keep clause numbers and numbers exact.\n\n&quot; + middle)
+    return [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: PINNED}, events[0],
+            {&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: &quot;Summary of earlier work:\n&quot; + summary}] + events[-keep_recent:]
+</code></pre>
+<ul>
+<li>Line 2: join everything between the goal and the last 2 events.</li>
+<li>Line 3: the LLM writes at most 5 bullets, clause numbers and numbers exact.</li>
+<li>Lines 4–5: pinned rules + goal + summary + last 2 events.</li>
 <li>Check: "never send" is still in the pinned rules afterward.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Keep the start stable</h3><span class="slide-no">11/14</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Keep the start stable</h3><span class="slide-no">27/32</span></div><ul>
 <li>KV cache: the server's saved work on tokens it already read.</li>
 <li>Add to the end only. The cached start is reused.</li>
 <li>Edit an earlier message → positions change → the server recomputes everything after it.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Load just in time</h3><span class="slide-no">12/14</span></div><ul>
+<li>Keep the system prompt and tool list identical across calls.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Load just in time</h3><span class="slide-no">28/32</span></div><ul>
 <li>Keep IDs, not contents. Load one contract when the step needs it.</li>
 <li>Progressive disclosure: show tools and files later, as needed.</li>
 <li>Notes file: the agent appends one line per section to <code>notes.md</code>. A new session starts from the notes, not the whole contract.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">13/14</span></div><ul>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Local models feel context rot sooner</h3><span class="slide-no">29/32</span></div><ul>
 <li>Local models have smaller useful windows and slow down with long prompts.</li>
+<li>Time to first token grows with every pasted contract; the notebook's 1/5/10 test shows it on your own GPU.</li>
+<li>Load one contract at a time; retrieve clauses (module 04) instead of pasting the archive.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What to trim, what to keep</h3><span class="slide-no">30/32</span></div><ul>
 <li>Old clause text the agent already read is the main clutter. Mask it.</li>
+<li>Keep the goal, the playbook rules and the last few turns word for word.</li>
+<li>Keep the full event log on disk for audit; trim only what the model sees.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Rules that never get summarized</h3><span class="slide-no">31/32</span></div><ul>
 <li>Rules like "never send anything" stay pinned on the firm's machine, every turn.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">14/14</span></div><ul>
+<li>Keep the pinned prompt and tool list fixed, so the local server reuses its cache.</li>
+<li>For very long files, consider the RLM idea: let the agent read the contract with code, section by section.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">32/32</span></div><ul>
 <li>Every document "just in case" → worse answers. Load what the step needs.</li>
 <li>Summarizing first → costs a call and loses detail. Mask first.</li>
 <li>Safety rules only in chat history → compaction can delete them. Pin them.</li>
 <li>Editing earlier messages → breaks the KV cache. Rebuild from the log.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Your local agent gets slow and worse after 20 turns. What do you try first?</summary><p>Hide old tool outputs. It needs no model call and tool outputs are most of the tokens; summarize only if that isn&#x27;t enough.</p></details>
+<li>Trusting the advertised window → test quality at the lengths you actually use.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A model was trained on 4K-token inputs. Why not just feed it 16K?</summary><p>It only learned to use positional embeddings up to its trained length, so in practice it is limited to that length.</p></details>
+
+<details><summary>What is context rot?</summary><p>Answer quality falls as the context grows, well before the window is full. On OOLONG every model scored lower at longer lengths.</p></details>
+
+<details><summary>Why should you add new text only at the end of the context?</summary><p>Inserting text earlier shifts every later token&#x27;s position, which invalidates the KV cache and forces the server to recompute it.</p></details>
+
+<details><summary>Your local agent gets slow and worse after 20 turns. What do you try first?</summary><p>Hide old tool outputs. It needs no model call and tool outputs are most of the tokens; summarize only if that isn&#x27;t enough.</p></details>
 
 <details><summary>Why rebuild the context from a log instead of keeping one growing list?</summary><p>The log stays the complete record for audit and replay, while what the model sees can be trimmed freely.</p></details>
 

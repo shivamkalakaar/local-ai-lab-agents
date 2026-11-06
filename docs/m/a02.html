@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,9 +259,9 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A02</span></div><section class="mod" id="a02" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A02</div><h2>Robust verification</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a02_verification.ipynb">Open in Colab</a><button class="done-btn" data-done="a02" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Verifiers score answers so you can pick the right try. Check whole answers or each step, and combine weak checkers.</p><article class="lesson"><p class="deck-src">Based on CS329A · Robust verification · <a href="https://arxiv.org/abs/2506.18203" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
-<li>Learn how to build and score verifiers, why step checks beat answer checks, and how to combine weak checkers into a strong one.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why verification?</h3><span class="slide-no">2/13</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A02</span></div><section class="mod" id="a02" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A02</div><h2>Robust verification</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a02_verification.ipynb">Open in Colab</a><button class="done-btn" data-done="a02" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>22 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Verifiers score answers so you can pick the right try. Check whole answers or each step, and combine weak checkers.</p><article class="lesson"><p class="deck-src">Based on CS329A · Robust verification · <a href="https://arxiv.org/abs/2506.18203" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (58 slides)</b><ol><li><a href="#sec-1">Why this lecture exists</a> <span>4 slides</span></li><li><a href="#sec-2">Training Verifiers to Solve Math Word Problems (Cobbe et al. 2021)</a> <span>9 slides</span></li><li><a href="#sec-3">Let&#x27;s Verify Step by Step (Lightman et al. 2023)</a> <span>11 slides</span></li><li><a href="#sec-4">Math-Shepherd (Wang et al. 2023)</a> <span>13 slides</span></li><li><a href="#sec-5">Weaver: combining weak verifiers (Saad-Falcon et al. 2025)</a> <span>12 slides</span></li><li><a href="#sec-6">The notebook in code</a> <span>3 slides</span></li><li><a href="#sec-7">How this applies to us</a> <span>4 slides</span></li><li><a href="#sec-8">Wrap-up</a> <span>1 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/58</span></div><ul>
+<li>Learn how to build and score verifiers, why step checks beat answer checks, how to make step labels without people, and how to combine weak checkers into a strong one.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why this lecture exists</div><div class="slide"><div class="slide-top"><h3>Why verification?</h3><span class="slide-no">2/58</span></div><ul>
 <li>a01: coverage grew fast with more tries, but majority vote kept only part of the gain.</li>
 <li>Verifier: anything that scores a candidate answer.<ul>
 <li>Exact checker, unit tests, a trained model, an LLM judge, a rule</li>
@@ -265,13 +269,13 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </li>
 <li>Generation-verification gap: coverage minus what your verifier actually picks.</li>
 <li>No verifier → more tries mostly add cost.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Scoring a verifier</h3><span class="slide-no">3/13</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scoring a verifier</h3><span class="slide-no">3/58</span></div><ul>
 <li>A verifier accepts or rejects each candidate. Score it like a classifier.</li>
 <li>Precision: of the accepted candidates, how many were right.</li>
 <li>Recall: of the right candidates, how many it accepted.</li>
 <li>Oracle: compares with the true answer. Perfect, but rare in business work.</li>
 <li>To pick one answer, precision matters more than recall.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Outcome vs process verifiers</h3><span class="slide-no">4/13</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Outcome vs process verifiers</h3><span class="slide-no">4/58</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Outcome reward model (ORM)</th>
@@ -285,23 +289,223 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tr>
 <tr>
 <td>One score per solution</td>
-<td>Solution score = product of step scores</td>
+<td>Solution score = product (or minimum) of step scores</td>
 </tr>
 <tr>
 <td>Says "wrong"</td>
 <td>Says where it went wrong</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Training Verifiers (Cobbe et al. 2021)</h3><span class="slide-no">5/13</span></div><ul>
-<li>Released GSM8K: 8.5K grade-school word problems.</li>
-<li>Trained a verifier to judge full solutions; picked the best of 100 samples.</li>
-<li>Gain: about the same as a 30x larger model.</li>
-<li>Large generator + small verifier beat small generator + large verifier.</li>
-<li>Warning: past 400 samples, accuracy fell.<ul>
-<li>Search found wrong answers that fooled the verifier</li>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Four papers, one story</h3><span class="slide-no">5/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>What it adds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Training Verifiers (Cobbe et al. 2021)</td>
+<td>GSM8K; a trained outcome verifier + best-of-100</td>
+</tr>
+<tr>
+<td>Let's Verify Step by Step (Lightman et al. 2023)</td>
+<td>Human step labels (PRM800K); PRM beats ORM</td>
+</tr>
+<tr>
+<td>Math-Shepherd (Wang et al. 2023)</td>
+<td>Step labels from rollouts, no people; PRM for reranking and RL</td>
+</tr>
+<tr>
+<td>Weaver (Saad-Falcon et al. 2025)</td>
+<td>Combine many weak verifiers without labels; distill to a small model</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Training Verifiers to Solve Math Word Problems (Cobbe et al. 2021)</div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">6/58</span></div><ul>
+<li>Large models still fail at multi-step math. One mistake ruins the solution.</li>
+<li>Autoregressive models (write one token at a time) can't go back and fix errors.</li>
+<li>Scaling alone looks too expensive:<ul>
+<li>Log-linear extrapolation: about 10^16 parameters to reach 80% on GSM8K with fine-tuning.</li>
+<li>175B model would need at least two more orders of magnitude of data.</li>
 </ul>
 </li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Let&#x27;s Verify Step by Step (Lightman et al. 2023)</h3><span class="slide-no">6/13</span></div><div class="tbl"><table>
+<li>Idea: train a verifier to judge solutions, then pick the best of many samples.</li>
+<li>Verification is often easier than generation.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The GSM8K dataset</h3><span class="slide-no">7/58</span></div><ul>
+<li>8.5K grade-school math word problems written by people: 7.5K train, 1K test.</li>
+<li>2 to 8 steps each; only + − × ÷.</li>
+<li>Design principles:<ul>
+<li>High quality: under 2 percent of problems have breaking errors (estimated).</li>
+<li>High diversity: no shared templates.</li>
+<li>Moderate difficulty: hard for big models, not hopeless.</li>
+<li>Natural-language solutions, not just equations.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two methods compared (Section 4)</h3><span class="slide-no">8/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Fine-tuning (baseline)</th>
+<th>Verification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Train the model on solutions</td>
+<td>Also train a separate verifier</td>
+</tr>
+<tr>
+<td>Test: one sample at T = 0</td>
+<td>Test: 100 samples at higher temperature</td>
+</tr>
+<tr>
+<td>Check that one answer</td>
+<td>Verifier scores each; return the top one</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Models: GPT-3 family, mostly 6B and 175B.</li>
+<li>Calculator: training data has calculation annotations; at test time a calculator overrides the model's arithmetic.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fine-tuning and coverage (Figure 3)</h3><span class="slide-no">9/58</span></div><ul>
+<li>test@N: share of problems solved at least once in N guesses (T = 0 for test@1, T = 0.7 for test@100).</li>
+<li>test@1 keeps improving with more epochs.</li>
+<li>test@100 peaks in the first few epochs, then drops sharply.<ul>
+<li>The model gets overconfident, so its samples stop covering different solutions.</li>
+</ul>
+</li>
+<li>So the generator for verifier data is trained only 2 epochs.</li>
+<li>Writing out steps matters: answer-only 6B model drops from 20.6% to 5.2%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How the verifier is trained (Figure 4)</h3><span class="slide-no">10/58</span></div><ul>
+<li>
+<ol>
+<li>Fine-tune a generator for 2 epochs.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Sample 100 solutions per training problem; label each right or wrong by its final answer.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Train a verifier for 1 epoch on these.</li>
+</ol>
+</li>
+<li>Verifier output: probability the solution is correct.</li>
+<li>Extra objective: the verifier also does language modeling (predict the next token).</li>
+<li>Weakness: right answer with wrong reasoning gets labeled "correct" (false positives).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results (Figure 5)</h3><span class="slide-no">11/58</span></div><ul>
+<li>Small training sets: verification does not help. It overfits to the right answer.</li>
+<li>Enough data: a strong boost over fine-tuning.</li>
+<li>Full dataset: 6B verification slightly beats a fine-tuned 175B model.<ul>
+<li>About the same as a 30x larger model.</li>
+</ul>
+</li>
+<li>175B verifiers "take off" earlier: need fewer problems to pass the baseline.</li>
+<li>Verification scales better with more data than fine-tuning does.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Verifier ablations (Figure 6)</h3><span class="slide-no">12/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Finding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Token-level vs solution-level</td>
+<td>Token-level (a score after every token) trains slower but wins and overfits less</td>
+</tr>
+<tr>
+<td>Verification only vs + language modeling</td>
+<td>Adding language modeling is a strict improvement</td>
+</tr>
+<tr>
+<td>Bigger generator vs bigger verifier</td>
+<td>Large generator + small verifier beats small generator + large verifier</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Token-level verifier: like a value function, judging the reasoning all the way through.</li>
+<li>A small verifier works well, so it may use coarse heuristics, not full checking.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>More samples is not always better (Figure 7)</h3><span class="slide-no">13/58</span></div><ul>
+<li>6B verifier: accuracy rises up to 400 completions per problem, then falls.<ul>
+<li>Search starts finding wrong answers that fool the verifier.</li>
+</ul>
+</li>
+<li>Default: 100 completions, most of the gain at modest cost.</li>
+<li>Vote among the top-ranked samples instead of taking only the top one:<ul>
+<li>100 samples: let the top 3–5 vote.</li>
+<li>3200 samples: let about the top 30 vote.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Regularization (Section 5.2)</h3><span class="slide-no">14/58</span></div><ul>
+<li>Residual dropout: randomly zero 20% of each layer's residual path during training.</li>
+<li>Helps fine-tuning and verification a lot.</li>
+<li>Solution-level verifiers with dropout reach about the level of token-level verifiers.</li>
+<li>Token-level verifiers gain only slightly; they already overfit less.</li>
+<li>GPT-3 was not pretrained with dropout, so they pretrained a bit more with it first.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Let&#x27;s Verify Step by Step (Lightman et al. 2023)</div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">15/58</span></div><ul>
+<li>Even the best models make logical mistakes; one error derails a long solution.</li>
+<li>Outcome supervision: feedback on the final result only.</li>
+<li>Process supervision: feedback on every step.</li>
+<li>Earlier work (Uesato et al. 2022) found both similar on grade-school math.</li>
+<li>This paper: a stronger base model (GPT-4), far more human feedback, harder data (MATH).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why process supervision appeals</h3><span class="slide-no">16/58</span></div><ul>
+<li>More precise: it says exactly where the error is.</li>
+<li>Easier for people to read and check.</li>
+<li>Rewards a human-endorsed chain of thought, not just the answer.</li>
+<li>ORM-trained models often reach right answers with wrong reasoning.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setup (Section 2)</h3><span class="slide-no">17/58</span></div><ul>
+<li>Large scale: all models fine-tuned from base GPT-4 (no RLHF).</li>
+<li>Small scale: similar models with roughly 200 times less pretraining compute.</li>
+<li>All models also trained on MathMix: about 1.5B math-related tokens.</li>
+<li>Generator: taught to write one step per line, so steps are easy to split.</li>
+<li>No RL on the generator. Reward models are judged by best-of-N search only.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Collecting step labels (Section 2.4)</h3><span class="slide-no">18/58</span></div><ul>
+<li>People label each step of GPT-4's solutions:<ul>
+<li>Positive: correct and reasonable</li>
+<li>Negative: incorrect or unreasonable</li>
+<li>Neutral: ambiguous, e.g. subtly misleading</li>
+</ul>
+</li>
+<li>PRM800K: 800K step labels across 75K solutions to 12K problems.</li>
+<li>4.5K MATH test problems went into training, so tests use the other 500.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Show people the convincing wrong answers</h3><span class="slide-no">19/58</span></div><ul>
+<li>Showing obviously wrong solutions wastes labels.</li>
+<li>Instead surface "convincing wrong-answer" solutions:<ul>
+<li>Convincing: rated highly by the current best PRM</li>
+<li>Wrong-answer: final answer is wrong</li>
+</ul>
+</li>
+<li>The PRM must be wrong about at least one step, so each label teaches something.</li>
+<li>Retrain the PRM on the latest data several times during collection.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Training ORM and PRM (Sections 2.5–2.6)</h3><span class="slide-no">20/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>ORM</th>
+<th>PRM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Uniform samples, labeled by final answer</td>
+<td>Human step labels from PRM800K</td>
+</tr>
+<tr>
+<td>Score = prediction at the final token</td>
+<td>One prediction after each step</td>
+</tr>
+<tr>
+<td>100 samples per problem; no overlap with PRM800K</td>
+<td>Supervised only up to the first wrong step</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>PRM solution score = probability every step is correct = product of step probabilities.</li>
+<li>Labels stop at the first mistake, so ORM and PRM get about the same information on correct solutions.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Large-scale results (Figure 3)</h3><span class="slide-no">21/58</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Picker (best of 1,860, MATH subset)</th>
@@ -324,49 +528,532 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
-<li>PRM800K: 800K human step labels on 75K solutions.</li>
-<li>Active learning (label the convincing wrong answers first): about 2.6x more data-efficient.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Step labels without people (Math-Shepherd)</h3><span class="slide-no">7/13</span></div><ul>
-<li>Cut the solution after step i. Let a model finish it N times (N=8 in the paper).</li>
-<li>Soft label: share of finishes that reach the right answer.</li>
-<li>Hard label: 1 if any finish is right.</li>
-<li>Step-by-step RL on these labels: Mistral-7B on GSM8K 77.9% → 84.1%; 89.1% with verification.</li>
-<li>Costs many calls per step: an offline data-making tool.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Combine weak verifiers (Weaver, 2025)</h3><span class="slide-no">8/13</span></div><ul>
-<li>Turn each verifier's score into a yes/no vote.</li>
-<li>Weak supervision: estimate each verifier's accuracy from how it agrees with the others. No labels.</li>
-<li>Drop verifiers no better than chance; weight the rest by accuracy.</li>
-<li>Distill: a 400M model kept about 98% of the accuracy, cutting verification compute by up to 99.97%.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Weaver results</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+<li>PRM wins at every N, and the gap widens as N grows.</li>
+<li>ORM only slightly beats majority vote.</li>
+<li>RM-weighted voting (PRM + majority) did not noticeably help.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A fair comparison at small scale (Section 4.1)</h3><span class="slide-no">22/58</span></div><ul>
+<li>Problem: large-scale ORM and PRM had different training sets.</li>
+<li>Fix: use the big PRM (PRM_large) as a cheap stand-in labeler for small models.</li>
+<li>Same data, three kinds of labels:<ul>
+<li>Process labels from PRM_large</li>
+<li>Outcome labels from PRM_large</li>
+<li>Outcome labels from final-answer checking</li>
+</ul>
+</li>
+<li>Figure 4a (best-of-500): process supervision wins at every data size.</li>
+<li>Figure 4b: PRM_large outcome labels beat final-answer labels; they catch right answers with wrong reasoning.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Active learning (Section 4.2)</h3><span class="slide-no">23/58</span></div><ul>
+<li>PRM_selector: a small PRM trained on one sample per problem; scores 1000 samples per problem.</li>
+<li>Choose N per problem: 80% most convincing wrong-answer, 20% most convincing of the rest.</li>
+<li>Result: about 2.6x more data-efficient than uniform labeling (from line-of-best-fit slopes).</li>
+<li>At 200 samples per problem it slightly underperforms the trend (200 is a big share of the 1000 pool).</li>
+<li>Retraining the selector during collection was unstable; no gain.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Out-of-distribution tests (Table 1)</h3><span class="slide-no">24/58</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Picker (avg of 4 benchmarks)</th>
-<th>Accuracy</th>
+<th>Exam</th>
+<th>ORM</th>
+<th>PRM</th>
+<th>Majority vote</th>
+<th>Problems</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Majority vote</td>
-<td>72.2%</td>
-</tr>
-<tr>
-<td>GPT-4o</td>
-<td>69.0%</td>
-</tr>
-<tr>
-<td>o3-mini</td>
+<td>AP Calculus</td>
+<td>68.9%</td>
 <td>86.7%</td>
+<td>80.0%</td>
+<td>45</td>
 </tr>
 <tr>
-<td>Weaver (open models, 100 samples)</td>
-<td>87.7%</td>
+<td>AP Chemistry</td>
+<td>68.9%</td>
+<td>80.0%</td>
+<td>71.7%</td>
+<td>60</td>
+</tr>
+<tr>
+<td>AP Physics</td>
+<td>77.8%</td>
+<td>86.7%</td>
+<td>82.2%</td>
+<td>45</td>
+</tr>
+<tr>
+<td>AMC10/12</td>
+<td>49.1%</td>
+<td>53.2%</td>
+<td>32.8%</td>
+<td>84</td>
+</tr>
+<tr>
+<td>Aggregate</td>
+<td>63.8%</td>
+<td>72.9%</td>
+<td>61.3%</td>
+<td>234</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Within 4.2% of the pass@100 oracle.</li>
-<li>Struggles when right answers are very rare.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Three weak verifiers in code</h3><span class="slide-no">10/13</span></div><pre><code class="language-python">VERIFIERS = {&quot;judge&quot;: lambda c: c[&quot;judge&quot;] &gt;= 0.7, &quot;agree&quot;: lambda c: c[&quot;agree&quot;] &gt;= 0.5, &quot;arith&quot;: lambda c: c[&quot;arith&quot;] &gt;= 0.75}
+<li>Best-of-100 on recent exams released after pretraining data was collected.</li>
+<li>(The text says 224 questions; the table sums to 234.)</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why it works, and what it costs (Section 6)</h3><span class="slide-no">25/58</span></div><ul>
+<li>Credit assignment: an ORM must figure out where a wrong solution failed. Hard when most solutions have some error.</li>
+<li>A PRM is told how many steps were fine and which step broke.</li>
+<li>Negative alignment tax: the safer method (rewarding good reasoning) also performs better.</li>
+<li>Limits: possible MATH test contamination (they argue it affects all methods alike); math only.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Math-Shepherd (Wang et al. 2023)</div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">26/58</span></div><ul>
+<li>PRMs beat ORMs (Lightman et al.), but human step labels are expensive.</li>
+<li>Labeling complex math steps needs skilled annotators.</li>
+<li>Goal: build PRM training data automatically.</li>
+<li>Use it two ways:<ul>
+<li>Verification: rerank many candidate answers</li>
+<li>Reinforcement learning: step-by-step PPO (Proximal Policy Optimization, a standard RL method)</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ORM and PRM losses (Equations 1–2)</h3><span class="slide-no">27/58</span></div><ul>
+<li>ORM loss = y_s · log r_s + (1 − y_s) · log(1 − r_s)<ul>
+<li>y_s: 1 if the solution's answer is right, else 0</li>
+<li>r_s: the ORM's score (0 to 1)</li>
+<li>Standard cross-entropy: push r_s toward y_s</li>
+</ul>
+</li>
+<li>PRM loss = the same, summed over steps i = 1..K, with step labels y_si and step scores r_si.</li>
+<li>Binary step labels worked about as well as Lightman's good/neutral/bad.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Label a step by finishing it (Section 3.3)</h3><span class="slide-no">28/58</span></div><ul>
+<li>Quality of a step: its potential to reach the correct answer.</li>
+<li>Completer: a model that finishes the solution from step i, N times.</li>
+<li>Check each finished answer against the golden answer.</li>
+<li>Hard estimate (HE): 1 if any finish is right, else 0.</li>
+<li>Soft estimate (SE): share of finishes that are right.</li>
+<li>Inspired by Monte Carlo tree search.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A worked example (Figure 2)</h3><span class="slide-no">29/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Outcome label</th>
+<th>Process label for step 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Whole solution answers 20; golden answer 24</td>
+<td>Finish from step 1 three times: 24, 24, 20</td>
+</tr>
+<tr>
+<td>y = 0 for the whole solution</td>
+<td>Soft = 2/3; hard = 1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The outcome label blames every step. The process label sees step 1 was on track.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Ranking and RL (Sections 3.4–3.5)</h3><span class="slide-no">30/58</span></div><ul>
+<li>Solution score = minimum step score (following Lightman et al.).</li>
+<li>Self-consistency + RM: group solutions by final answer, sum RM scores per group, pick the top group.<ul>
+<li>answer = argmax over a of Σ_i 1{a_i = a} · RM(p, S_i) (Equation 5)</li>
+</ul>
+</li>
+<li>Step-by-step PPO: reward at the end of each step, not just at the end of the answer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setup (Section 4)</h3><span class="slide-no">31/58</span></div><ul>
+<li>Generators and completer trained on MetaMATH.</li>
+<li>Data: 7B and 13B models sample 15 solutions per problem; duplicates removed.</li>
+<li>Completer: LLemma-7B, N = 8 finishes per step.</li>
+<li>About 170k labeled solutions for GSM8K and 270k for MATH.</li>
+<li>PRM trained on hard labels (two special tokens: "has potential" / "no potential").</li>
+<li>Verification: 256 candidates per problem; MATH500 = Lightman's 500-problem test set.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>As a verifier (Table 1)</h3><span class="slide-no">32/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Generator</th>
+<th>Verifier</th>
+<th>GSM8K</th>
+<th>MATH500</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLaMA2-70B</td>
+<td>Self-consistency</td>
+<td>88.0</td>
+<td>39.4</td>
+</tr>
+<tr>
+<td>LLaMA2-70B</td>
+<td>ORM</td>
+<td>91.8</td>
+<td>40.4</td>
+</tr>
+<tr>
+<td>LLaMA2-70B</td>
+<td>Math-Shepherd</td>
+<td>93.2</td>
+<td>44.5</td>
+</tr>
+<tr>
+<td>DeepSeek-67B</td>
+<td>Self-consistency</td>
+<td>88.2</td>
+<td>45.4</td>
+</tr>
+<tr>
+<td>DeepSeek-67B</td>
+<td>Math-Shepherd</td>
+<td>93.3</td>
+<td>47.0</td>
+</tr>
+<tr>
+<td>DeepSeek-67B</td>
+<td>Self-consistency + Math-Shepherd</td>
+<td>92.5</td>
+<td>48.1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>PRM's lead over ORM is bigger on MATH (more steps) than GSM8K.</li>
+<li>Adding self-consistency hurt on GSM8K, helped on MATH.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>As an RL reward (Table 2)</h3><span class="slide-no">33/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model (greedy decoding)</th>
+<th>GSM8K</th>
+<th>MATH</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mistral-7B: MetaMATH</td>
+<td>77.9</td>
+<td>28.6</td>
+</tr>
+<tr>
+<td>+ RFT (fine-tune on own correct samples)</td>
+<td>79.0</td>
+<td>29.9</td>
+</tr>
+<tr>
+<td>+ ORM-PPO</td>
+<td>81.8</td>
+<td>31.3</td>
+</tr>
+<tr>
+<td>+ Math-Shepherd step-by-step PPO</td>
+<td>84.1</td>
+<td>33.0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>LLaMA2-7B: 66.6 → 73.2 (GSM8K), 19.2 → 21.6 (MATH) with step-by-step PPO.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RL plus verification (Table 3)</h3><span class="slide-no">34/58</span></div><ul>
+<li>Mistral-7B after step-by-step PPO, then verified over 256 outputs:<ul>
+<li>Self-consistency + Math-Shepherd: 89.1 (GSM8K), 43.5 (MATH500).</li>
+</ul>
+</li>
+<li>RL and verification add up: on MATH, PPO beats the SFT model by 7.2% with self-consistency, vs 4.4% with greedy.</li>
+<li>After RL, reward-model-only verification fell below self-consistency.<ul>
+<li>The old reward model is too weak to judge the stronger policy.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the analysis found (Section 5)</h3><span class="slide-no">35/58</span></div><ul>
+<li>More candidates (1 to 256): PRM's lead over ORM and majority vote grows (Figure 3).</li>
+<li>On MATH, their automatic labels beat human PRM800K.<ul>
+<li>Reasons: PRM800K is on GPT-4 outputs (distribution gap); their data is four times larger.</li>
+</ul>
+</li>
+<li>PRM is more data-efficient: about 4% better than ORM at 10k training solutions (Figure 6a).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How good are automatic labels?</h3><span class="slide-no">36/58</span></div><ul>
+<li>160 GSM8K steps labeled by hand for comparison.</li>
+<li>LLaMA2-70B completer, hard labels: 86% accurate at N = 4.</li>
+<li>Larger N lowered hard-label accuracy: more chances for a lucky right answer (false positives).</li>
+<li>Soft labels get closer to human labels as N grows.</li>
+<li>Bigger completers and better completer training data give better labels.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Annotation method</th>
+<th>Accuracy</th>
+<th>Loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DIVERSE-NLI, DeBERTa</td>
+<td>61.3%</td>
+<td>5.43</td>
+</tr>
+<tr>
+<td>DIVERSE-NLI, LLaMA2-13B</td>
+<td>75.6%</td>
+<td>3.27</td>
+</tr>
+<tr>
+<td>DIVERSE-Rule</td>
+<td>75.0%</td>
+<td>3.43</td>
+</tr>
+<tr>
+<td>Math-Shepherd, LLaMA2-13B (N = 4)</td>
+<td>85.0%</td>
+<td>2.05</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Model size and new data</h3><span class="slide-no">37/58</span></div><ul>
+<li>Bigger reward models are more robust: 70B gains with more candidates; 7B declines.</li>
+<li>Large reward model on a small generator: big gain.</li>
+<li>Small reward model on a large generator: worse than self-consistency.</li>
+<li>Out of distribution: Hungarian national exam (33 questions, 100 points), LLemma-34B, 256 candidates.<ul>
+<li>PRM beats ORM by 9 points (Figure 6b).</li>
+</ul>
+</li>
+<li>Case study (Table 5): ORM picked a wrong solution (score 0.84); the PRM scored its bad steps 0.53 and 0.38.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations (Section 6)</h3><span class="slide-no">38/58</span></div><ul>
+<li>Completion is expensive: N finishes for every step. Still cheaper than people.</li>
+<li>Labels are noisy, like outcome labels.</li>
+<li>Gap between PRM800K and open-model outputs makes a clean human-vs-automatic comparison hard.</li>
+<li>Suggestion: combine human and automatic step labels.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Weaver: combining weak verifiers (Saad-Falcon et al. 2025)</div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">39/58</span></div><ul>
+<li>Strong verifiers are rare: people don't scale; Lean only fits formal proofs.</li>
+<li>LLM judges and reward models are general but weak: noisy, poorly calibrated, many false positives.</li>
+<li>Three challenges:<ul>
+<li>Naive averaging lets bad verifiers drag the score down.</li>
+<li>Learning weights needs labels, which are expensive.</li>
+<li>Verification is costly: 10× to 128× the compute per query to beat majority vote.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Definitions (Section 3)</h3><span class="slide-no">40/58</span></div><ul>
+<li>K: responses sampled per query.</li>
+<li>Pass@K: share of queries where at least one response is right. Ignores the picker.</li>
+<li>Success rate: share of queries where the picked response is right.</li>
+<li>Generation-verification gap = Pass@K − success rate.</li>
+<li>D_dev: a small labeled set, 1% of the data (e.g. 5 to 10 queries), used only for global statistics.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Weighted beats naive (Section 4.1)</h3><span class="slide-no">41/58</span></div><ul>
+<li>Setup: Llama 3.3 70B Instruct generates; 33 reward models and LLM judges (7B–72B) verify.</li>
+<li>Individual verifiers differ a lot: success rates span up to 37.5%.</li>
+<li>Weighted ensembles with all labels: up to 11.2 points over naive averaging.<ul>
+<li>Figure 2: top-K verifiers +3.6%, supervised weights +7.8% on average.</li>
+</ul>
+</li>
+<li>But with only 1% labels, the supervised weights lose 20.1% accuracy on average.</li>
+<li>So: how to weight without many labels?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Weaver step 1: normalize and binarize</h3><span class="slide-no">42/58</span></div><ul>
+<li>Normalize: min-max scale each verifier to [0, 1]: s′ = (s − min) / (max − min).</li>
+<li>Binarize: turn each score into a yes/no vote, with a threshold set from the small dev set.<ul>
+<li>Judges already say yes/no; reward models give continuous scores.</li>
+</ul>
+</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Binarization (Table 4)</th>
+<th>Average accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Naive 0.5 threshold</td>
+<td>79.0%</td>
+</tr>
+<tr>
+<td>Threshold from 1% dev set</td>
+<td>84.5%</td>
+</tr>
+<tr>
+<td>Threshold from 5% dev set</td>
+<td>87.5%</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Weaver step 2: drop low-signal verifiers</h3><span class="slide-no">43/58</span></div><ul>
+<li>Drop verifiers whose yes-rate is extreme for the task:<ul>
+<li>Class balance 20–80%: drop verifiers with yes-rates outside 20–80%.</li>
+<li>Under 20% right answers: drop verifiers that say yes over 80% of the time.</li>
+<li>Over 80% right answers: drop verifiers that say yes under 20% of the time.</li>
+</ul>
+</li>
+<li>Also helps the math: weak supervision assumes most verifiers beat chance.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Filtering (Table 5)</th>
+<th>Average accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No verifiers dropped</td>
+<td>79.4%</td>
+</tr>
+<tr>
+<td>Extreme yes-rates dropped</td>
+<td>85.2%</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Weaver step 3: the weak supervision model (Equation 1)</h3><span class="slide-no">44/58</span></div><ul>
+<li>Assume verifiers are independent given the true label Y (each catches different aspects).</li>
+<li>Pr(Y = 1 | votes) = Π_i Pr(S_i = s_i | Y = 1) · Pr(Y = 1) / Pr(votes)<ul>
+<li>Pr(Y = 1): share of right answers, from the dev set</li>
+<li>Pr(S_i = 1 | Y = 1): verifier i's accuracy, unknown</li>
+<li>Pr(votes): how often this vote pattern appears</li>
+</ul>
+</li>
+<li>Pick the response with the highest posterior.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Estimating accuracies without labels (Equations 2–5)</h3><span class="slide-no">45/58</span></div><ul>
+<li>Two verifiers' joint vote rates must equal a mix of their accuracies:<ul>
+<li>Pr(S_i, S_j) = Pr(S_i|Y=1)·Pr(S_j|Y=1)·Pr(Y=1) + Pr(S_i|Y=0)·Pr(S_j|Y=0)·Pr(Y=0)</li>
+</ul>
+</li>
+<li>Each verifier's yes-rate must too: Pr(S_i = 1) = Pr(S_i=1|Y=1)·Pr(Y=1) + Pr(S_i=1|Y=0)·Pr(Y=0).</li>
+<li>Left sides are counted from the votes; right sides contain the unknown accuracies.</li>
+<li>Minimize the mismatch with gradient descent → accuracy estimates → weights.</li>
+<li>Optional: separate models per difficulty bucket (Appendix B.4).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Main results (Table 1)</h3><span class="slide-no">46/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>K</th>
+<th>MATH500</th>
+<th>GPQA Diamond</th>
+<th>MMLU College</th>
+<th>MMLU Pro</th>
+<th>Average</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First sample</td>
+<td>1</td>
+<td>78.0%</td>
+<td>42.9%</td>
+<td>82.6%</td>
+<td>69.9%</td>
+<td>68.4%</td>
+</tr>
+<tr>
+<td>Majority voting</td>
+<td>100</td>
+<td>83.0%</td>
+<td>47.4%</td>
+<td>84.1%</td>
+<td>74.4%</td>
+<td>72.2%</td>
+</tr>
+<tr>
+<td>Top-10 RM naive ensemble</td>
+<td>100</td>
+<td>75.4%</td>
+<td>41.3%</td>
+<td>88.1%</td>
+<td>71.4%</td>
+<td>69.1%</td>
+</tr>
+<tr>
+<td>Multi-Agent Verification</td>
+<td>100</td>
+<td>81.3%</td>
+<td>47.8%</td>
+<td>84.1%</td>
+<td>72.6%</td>
+<td>71.6%</td>
+</tr>
+<tr>
+<td>Weaver</td>
+<td>100</td>
+<td>93.4%</td>
+<td>72.1%</td>
+<td>94.9%</td>
+<td>90.2%</td>
+<td>87.7%</td>
+</tr>
+<tr>
+<td>GPT-4o</td>
+<td>1</td>
+<td>77.4%</td>
+<td>35.9%</td>
+<td>87.1%</td>
+<td>75.4%</td>
+<td>69.0%</td>
+</tr>
+<tr>
+<td>o3-mini</td>
+<td>1</td>
+<td>94.4%</td>
+<td>74.0%</td>
+<td>92.2%</td>
+<td>86.0%</td>
+<td>86.7%</td>
+</tr>
+<tr>
+<td>Oracle (Pass@100)</td>
+<td>100</td>
+<td>98.6%</td>
+<td>81.0%</td>
+<td>96.0%</td>
+<td>92.0%</td>
+<td>91.9%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Weaver: 15.5% over majority vote, within 4.2% of the oracle.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scaling generations and model size</h3><span class="slide-no">47/58</span></div><ul>
+<li>More generations (Figure 3): Weaver keeps narrowing the gap to Pass@K; other pickers plateau after a few generations.<ul>
+<li>Strongest on hard tasks like GPQA.</li>
+</ul>
+</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Generator (Table 3)</th>
+<th>Majority vote</th>
+<th>Weaver</th>
+<th>Gain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama 3.1 8B (verifiers 8B and below)</td>
+<td>57.2%</td>
+<td>70.0%</td>
+<td>+12.8%</td>
+</tr>
+<tr>
+<td>Llama 3.3 70B (verifiers 72B and below)</td>
+<td>71.6%</td>
+<td>87.6%</td>
+<td>+16.0%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Weaver at 8B comes within 1.6% of majority vote at 70B.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scaling the number of verifiers (Figure 4)</h3><span class="slide-no">48/58</span></div><ul>
+<li>Add verifiers from most to least accurate, 1 to 15.</li>
+<li>Up to 8.5% over the single best verifier.</li>
+<li>Weaver beats naive averaging by +2.4% to +10.1% (GPQA Diamond +10.1%, MMLU Pro +5.1%).</li>
+<li>Gains shrink as more are added: later verifiers share the same blind spots on hard examples.</li>
+<li>More verifiers beat more scores from the same verifier (prompt or temperature variation).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Distill into a small model (Section 6)</h3><span class="slide-no">49/58</span></div><ul>
+<li>Train a cross-encoder (reads query + response together, outputs one score) on Weaver's scores.</li>
+<li>Model: ModernBERT-Large, 396M parameters.</li>
+<li>Cost per query, 100 samples: full Weaver 35.35 exaFLOPs; cross-encoder 1.01 exaFLOPs.</li>
+<li>Keeps 98.2% of Weaver's performance (abstract: 98.7%), saving 99.97% of verifier FLOPs.</li>
+<li>Beats majority vote by 23.2% for 0.57% more compute than generation alone.</li>
+<li>One A100 GPU instead of an 8-GPU node per 70B verifier.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations (Section 7)</h3><span class="slide-no">50/58</span></div><ul>
+<li>Very hard datasets (e.g. AIMO 2024): so few right answers that Weaver struggles to pick one.<ul>
+<li>More generations help by raising the count of right answers.</li>
+</ul>
+</li>
+<li>Independence assumption: verifiers that share blind spots look more accurate than they are.</li>
+<li>Full ensemble needs 30+ verifier calls per response before distillation.</li>
+<li>Future: specialized verifiers, Weaver labels for RLHF, multimodal verification.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>The notebook in code</div><div class="slide"><div class="slide-top"><h3>Three weak verifiers in code</h3><span class="slide-no">51/58</span></div><pre><code class="language-python">VERIFIERS = {&quot;judge&quot;: lambda c: c[&quot;judge&quot;] &gt;= 0.7, &quot;agree&quot;: lambda c: c[&quot;agree&quot;] &gt;= 0.5, &quot;arith&quot;: lambda c: c[&quot;arith&quot;] &gt;= 0.75}
 VOTES = {c[&quot;key&quot;]: {v: int(f(c)) for v, f in VERIFIERS.items()} for c in CANDS}
 </code></pre>
 <ul>
@@ -374,7 +1061,28 @@ VOTES = {c[&quot;key&quot;]: {v: int(f(c)) for v, f in VERIFIERS.items()} for c 
 <li><code>agree</code>: yes if at least half of the other tries reached the same answer.</li>
 <li><code>arith</code>: yes if at least 75% of the "a op b = c" lines recompute correctly in Python.</li>
 <li><code>VOTES</code>: one yes/no vote per verifier per candidate; weighted next without labels.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Weak checkers on a contract answer</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Math-Shepherd labels in code</h3><span class="slide-no">52/58</span></div><pre><code class="language-python">        outs = pmap(lambda _: gen(CONTINUE.format(q=p[&quot;question&quot;], prefix=prefix)), range(ROLLOUTS))
+        hits = sum(extract_int(o) == p[&quot;answer&quot;] for o in outs)
+        rows.append({&quot;after_step&quot;: i, &quot;soft&quot;: hits / ROLLOUTS, &quot;hard&quot;: int(hits &gt; 0),
+</code></pre>
+<ul>
+<li><code>prefix</code>: the solution cut after step i.</li>
+<li><code>outs</code>: the model finishes it ROLLOUTS = 3 times, in parallel.</li>
+<li><code>hits</code>: how many finishes reach the true answer.</li>
+<li><code>soft</code>: share of right finishes; <code>hard</code>: 1 if any finish is right.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Label-free weights in code</h3><span class="slide-no">53/58</span></div><pre><code class="language-python">        a = min(0.95, max(0.05, acc_fn(v)))
+        out[v] = math.log(a / (1 - a)) if a &gt;= min_acc else 0.0     # filter: weak-looking verifiers get no say
+</code></pre>
+<ul>
+<li><code>acc_fn(v)</code>: estimated accuracy; without labels, how well v agrees with the other verifiers.</li>
+<li>Clamp to 5–95% so no verifier gets infinite weight.</li>
+<li>Weight = log(a / (1 − a)): accurate verifiers count more; 50% counts zero.</li>
+<li>Below 55% estimated accuracy: weight 0 (Weaver's filter step, simplified).</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">54/58</span></div><ul>
+<li>All checkers run on the firm's machine: code rules, agreement, a local judge model.</li>
+<li>A step score shows a reviewer where an answer broke.</li>
+<li>Distill the combined checker into a small model so checking stays cheap.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Weak checkers on a contract answer</h3><span class="slide-no">55/58</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Checker</th>
@@ -402,20 +1110,52 @@ VOTES = {c[&quot;key&quot;]: {v: int(f(c)) for v, f in VERIFIERS.items()} for c 
 </table></div>
 <ul>
 <li>Different checkers fail in different ways. That is why combining helps.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
-<li>All checkers run on the firm's machine: code rules, agreement, a local judge model.</li>
-<li>A step score shows a reviewer where an answer broke.</li>
-<li>Distill the combined checker into a small model so checking stays cheap.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Outcome vs step check on a renewal clause</h3><span class="slide-no">56/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Outcome check</th>
+<th>Step check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"msa_20 renewal: compliant." Judge: 8/10</td>
+<td>Step 1 quote: "shall automatically renew for successive three (3) year periods" — found in 4.1 ✓</td>
+</tr>
+<tr>
+<td>No idea where it went wrong</td>
+<td>Step 2: "3 years ≤ 1-year limit" ✗ — this step broke</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The playbook says renewal terms must be one year or shorter.</li>
+<li>The step check tells the lawyer which line to read.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Making step labels from your own checks</h3><span class="slide-no">57/58</span></div><ul>
+<li>Math-Shepherd needs only a final-answer check. The playbook rules are that check.</li>
+<li>Cut a contract review after each step; let the local model finish it a few times; score the finishes with code.</li>
+<li>Run it overnight, offline: it costs many calls per step.</li>
+<li>Use the labels to train or tune a step judge, then check it against a few human-reviewed contracts.</li>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>Wrap-up</div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">58/58</span></div><ul>
 <li>Trusting a judge that says yes to everything → measure its precision first.</li>
 <li>Searching too hard against one verifier → cap samples; wrong answers start to fool it.</li>
 <li>Combining verifiers with the same blind spot → they agree, so label-free weighting overrates them.</li>
+<li>Reading step scores from a prompted 8B model as if they were a trained PRM → measure them against an oracle first.</li>
+<li>Too few rollouts per step → each rollout moves a soft label by 1/N; use more or prefer hard labels.</li>
 <li>Fitting weights on the test set → use a separate set or a label-free method.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why can majority vote fail even when the right answer was sampled?</summary><p>If the right answer is rare and wrong answers cluster, the vote picks the cluster.</p></details>
 
+<details><summary>Why did Cobbe et al.&#x27;s accuracy fall past 400 samples?</summary><p>With more samples, search finds wrong answers that fool the verifier. The default became 100 samples.</p></details>
+
 <details><summary>What does a process verifier give you that an outcome verifier doesn&#x27;t?</summary><p>A score per step, so you see where a solution broke. Lightman et al. found it also picked better: 78.2% vs 72.4%.</p></details>
 
-<details><summary>How does Math-Shepherd label a step without people?</summary><p>It finishes the solution from that step several times. The share of right final answers is the soft label; whether any is right is the hard label.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>Why did Lightman et al. show labelers &quot;convincing wrong-answer&quot; solutions?</summary><p>The PRM rated them highly but they are wrong, so the PRM must be wrong about some step. That made labeling about 2.6x more data-efficient.</p></details>
+
+<details><summary>How does Math-Shepherd label a step without people?</summary><p>It finishes the solution from that step several times. The share of right final answers is the soft label; whether any is right is the hard label.</p></details>
+
+<details><summary>How does Weaver estimate a verifier&#x27;s accuracy without labels?</summary><p>From how verifiers agree with each other. Assuming they are independent given the truth, their joint vote rates pin down each one&#x27;s accuracy.</p></details>
+
+<details><summary>Why distill Weaver into a 400M model?</summary><p>The full ensemble costs 35.35 exaFLOPs per query; the cross-encoder costs 1.01 and keeps 98.2% of the performance.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run sections 3–4 and compare precision and recall for the judge, agreement and arithmetic checks.</li>
 <li>Run the Math-Shepherd rollouts: on the wrong solution, see where the soft label drops.</li>
 <li>Run section 8: compare the first try, majority vote, Weaver-lite and oracle. With 6 problems, one flip is 17 points.</li>

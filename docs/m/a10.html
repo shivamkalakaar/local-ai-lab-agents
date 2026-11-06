@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,9 +259,18 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A10</span></div><section class="mod" id="a10" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A10</div><h2>Agentic evaluations and long-horizon tasks</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a10_evals_long_horizon.ipynb">Open in Colab</a><button class="done-btn" data-done="a10" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Measure an agent in terms a customer understands. METR&#x27;s time horizon, GDPval&#x27;s expert comparisons, and DeepScholar&#x27;s separate scores for research reports.</p><article class="lesson"><p class="deck-src">Based on CS329A · Lecture 17 · Agentic evaluations and long-horizon tasks · <a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/14</span></div><ul>
-<li>Measure an agent in human terms: task length it can finish, expert preference for its work, and separate scores for coverage and citations.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Three questions, three papers</h3><span class="slide-no">2/14</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A10</span></div><section class="mod" id="a10" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A10</div><h2>Agentic evaluations and long-horizon tasks</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a10_evals_long_horizon.ipynb">Open in Colab</a><button class="done-btn" data-done="a10" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>20 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Measure an agent in terms a customer understands. METR&#x27;s time horizon, GDPval&#x27;s expert comparisons, and DeepScholar&#x27;s separate scores for research reports.</p><article class="lesson"><p class="deck-src">Based on CS329A · Lecture 17 · Agentic evaluations and long-horizon tasks · <a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (56 slides)</b><ol><li><a href="#sec-1">Why this lecture exists</a> <span>3 slides</span></li><li><a href="#sec-2">METR: measuring the time horizon</a> <span>15 slides</span></li><li><a href="#sec-3">Our toy version of METR</a> <span>2 slides</span></li><li><a href="#sec-4">GDPval: grading real deliverables</a> <span>15 slides</span></li><li><a href="#sec-5">Our toy version of GDPval</a> <span>3 slides</span></li><li><a href="#sec-6">DeepScholar-Bench: scoring research reports</a> <span>10 slides</span></li><li><a href="#sec-7">Our toy version of DeepScholar</a> <span>2 slides</span></li><li><a href="#sec-8">How this applies to us</a> <span>4 slides</span></li><li><a href="#sec-9">Wrap-up</a> <span>1 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/56</span></div><ul>
+<li>Measure an agent in human terms: how long a task it can finish, whether an expert would prefer its work, and separate scores for coverage, retrieval and citations.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why this lecture exists</div><div class="slide"><div class="slide-top"><h3>A benchmark score is not a product claim</h3><span class="slide-no">2/56</span></div><ul>
+<li>"78% on a benchmark" doesn't tell a customer what the agent can do.</li>
+<li>Old benchmarks have three problems (METR, Section 1):<ul>
+<li>Artificial tasks, not paid work</li>
+<li>Tasks picked because models fail them, which skews the human comparison</li>
+<li>They saturate fast, so GPT-2 and Claude 3.7 can't sit on one scale</li>
+</ul>
+</li>
+<li>This lecture: three ways to report results in human terms.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three questions, three papers</h3><span class="slide-no">3/56</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Question</th>
@@ -282,16 +295,129 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>Separate coverage, retrieval, citation scores</td>
 </tr>
 </tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What the three share</h3><span class="slide-no">4/56</span></div><ul>
+<li>Ground truth comes from people: timed humans, expert deliverables, human-written sections.</li>
+<li>Each reports more than one number: 50% and 80% horizons; speed with and without review; 7 metrics.</li>
+<li>Each names its limits: tidy tasks, one-shot prompts, LLM judges.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>METR: measuring the time horizon</div><div class="slide"><div class="slide-top"><h3>The metric</h3><span class="slide-no">5/56</span></div><ul>
+<li>X% time horizon: the length of tasks (in human time) a model finishes X% of the time.</li>
+<li>50% time horizon: the human time of tasks the model finishes half the time.</li>
+<li>Human time: how long a skilled person with domain knowledge, but no task-specific context, takes.</li>
+<li>Inspired by Item Response Theory (IRT): the psychometrics behind standardized tests.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The method in three steps (Figure 2)</h3><span class="slide-no">6/56</span></div><ul>
+<li>
+<ol>
+<li>Build a task suite: 170 tasks from seconds to hours.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Humans and agents both try the tasks.</li>
+<li>Record the time of successful humans.</li>
+<li>Record the success rate of each agent (model + scaffold).</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Fit a logistic curve per agent; read the 50% point; plot it against release date.</li>
+</ol>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The task suite (Section 2.1)</h3><span class="slide-no">7/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Suite</th>
+<th>Tasks</th>
+<th>Length</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HCAST</td>
+<td>97 diverse software tasks</td>
+<td>1 minute to 30 hours</td>
+</tr>
+<tr>
+<td>RE-Bench</td>
+<td>7 hard ML research-engineering tasks</td>
+<td>All 8 hours</td>
+</tr>
+<tr>
+<td>SWAA (new)</td>
+<td>66 single-step software actions</td>
+<td>1 to 30 seconds</td>
+</tr>
+</tbody>
 </table></div>
 <ul>
-<li>"78% on a benchmark" doesn't tell a customer what the agent can do.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>METR: time horizon</h3><span class="slide-no">3/14</span></div><ul>
-<li>Time skilled humans on 170 tasks: over 800 baselines, 2,529 hours.</li>
-<li>Human baseline: a timed attempt; task difficulty = geometric mean of successful times.</li>
-<li>Per model, fit a logistic curve (S-shaped, 0 to 1): success vs log of human time.</li>
-<li>50% time horizon: task length where the curve crosses 50%.</li>
-<li>8 runs per agent and task.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>50% vs 80% horizon</h3><span class="slide-no">4/14</span></div><div class="tbl"><table>
+<li>SWAA: Software Atomic Actions; added so pre-2023 models (GPT-2, GPT-3) score above zero.</li>
+<li>All tasks are scored automatically by code.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example tasks by length (Table 1)</h3><span class="slide-no">8/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Task family</th>
+<th>Length</th>
+<th>What it asks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>find shell script</td>
+<td>3 seconds</td>
+<td>Which file is a shell script: run.sh, run.txt, run.py, run.md</td>
+</tr>
+<tr>
+<td>wikipedia research</td>
+<td>1 minute</td>
+<td>Find simple facts on Wikipedia</td>
+</tr>
+<tr>
+<td>oxdna simple</td>
+<td>9 minutes</td>
+<td>Fix a bug in input files for a molecular simulation</td>
+</tr>
+<tr>
+<td>munge data</td>
+<td>56 minutes</td>
+<td>Write a script to convert JSON from one format to another</td>
+</tr>
+<tr>
+<td>cuda backtesting</td>
+<td>8 hours</td>
+<td>Speed up a backtesting tool with custom CUDA kernels, aiming for 30x</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Human baselines (Section 2.2)</h3><span class="slide-no">9/56</span></div><ul>
+<li>Over 800 baselines, 2,529 hours in total.<ul>
+<li>558 baselines (286 successful) on HCAST and RE-Bench</li>
+<li>249 baselines (236 successful) on SWAA</li>
+</ul>
+</li>
+<li>148 of 169 tasks have human baselines; 21 HCAST tasks use researcher estimates.</li>
+<li>Baseliners: software, ML and cybersecurity professionals, about 5 years of experience on average.</li>
+<li>Task difficulty = geometric mean time of successful baselines.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Running the agents (Section 2.3)</h3><span class="slide-no">10/56</span></div><ul>
+<li>12 frontier (and 4 near-frontier) models, released 2019 to 2025.</li>
+<li>About 8 runs per agent and task.</li>
+<li>Each task weighted by 1 / √(tasks in its family), so big families don't dominate.</li>
+<li>Recent models finish about 50% of all tasks; earlier ones far fewer (Figure 3).</li>
+<li>Success falls as human time rises: y = −0.07x + 0.66, R² 0.83 (Figure 3, right).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The formula (Section 3.1)</h3><span class="slide-no">11/56</span></div><ul>
+<li><code>p_success(agent, task) = σ((log h_agent − log t_task) · β_agent)</code></li>
+<li>σ: the logistic (S-shaped) function, from 0 to 1.</li>
+<li>t_task: geometric mean time of successful humans on the task.</li>
+<li>h_agent: learned; the task length where success is 50%. This is the 50% time horizon.</li>
+<li>β_agent: learned slope; how fast success drops as tasks get longer.</li>
+<li>Continuous scores are turned into pass/fail with a threshold tied to human performance.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results: doubling every 7 months (Section 3.2, Figure 1)</h3><span class="slide-no">12/56</span></div><ul>
+<li>Regress log(horizon) on release date.</li>
+<li>50% horizon doubled every 207 days; 95% CI 166–240 days.</li>
+<li>GPT-2: about 2 seconds. o3: about 110 minutes (v4 abstract).<ul>
+<li>The first version's abstract gave Claude 3.7 Sonnet about 50 minutes.</li>
+</ul>
+</li>
+<li>o3 sits above the long-run trend (p = 0.006): 2024–2025 may be faster.</li>
+<li>More confident in the slope than in any one model's horizon.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>50% vs 80% horizon (Section 3.2.1)</h3><span class="slide-no">13/56</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>50% horizon</th>
@@ -304,18 +430,159 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>Tasks it finishes 80% of the time</td>
 </tr>
 <tr>
-<td>Claude 3.7 Sonnet: about 50 minutes</td>
-<td>Roughly 4–6x shorter than the 50% horizon</td>
+<td>Doubling time 207 days</td>
+<td>Doubling time 204 days</td>
 </tr>
 <tr>
-<td>Doubled about every 7 months since 2019</td>
-<td>Closer to what business use needs</td>
+<td>The headline number</td>
+<td>4–6x shorter</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Half of tasks failing is not a product. Quote the 80% (or higher) number.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Our toy: multi-step contract checks</h3><span class="slide-no">5/14</span></div><ul>
+<li>Models that sometimes solve hard tasks can't reliably do medium ones.</li>
+<li>95% horizons can't be measured with this data set.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Success by task source (Table 7)</h3><span class="slide-no">14/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>HCAST</th>
+<th>RE-Bench</th>
+<th>SWAA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-2</td>
+<td>–</td>
+<td>–</td>
+<td>0.40</td>
+</tr>
+<tr>
+<td>GPT-4 0314</td>
+<td>0.23</td>
+<td>0.00</td>
+<td>0.98</td>
+</tr>
+<tr>
+<td>Claude 3.7 Sonnet</td>
+<td>0.58</td>
+<td>0.04</td>
+<td>1.00</td>
+</tr>
+<tr>
+<td>o1</td>
+<td>0.54</td>
+<td>0.07</td>
+<td>1.00</td>
+</tr>
+<tr>
+<td>o3</td>
+<td>0.65</td>
+<td>0.40</td>
+<td>–</td>
+</tr>
+<tr>
+<td>o4-mini</td>
+<td>0.61</td>
+<td>0.27</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Why models fail (Table 2, Section 3.3)</h3><span class="slide-no">15/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Failure type</th>
+<th>GPT-4 1106 (31 runs)</th>
+<th>o1 (32 runs)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Poor planning / tool choice</td>
+<td>4</td>
+<td>6</td>
+</tr>
+<tr>
+<td>Wrong mental math / reasoning</td>
+<td>6</td>
+<td>7</td>
+</tr>
+<tr>
+<td>Gives up early</td>
+<td>8</td>
+<td>16</td>
+</tr>
+<tr>
+<td>Repeats failed actions</td>
+<td>12</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Other</td>
+<td>1</td>
+<td>1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Newer models adapt to mistakes instead of looping.</li>
+<li>Gains came from reliability, recovering from mistakes, logical reasoning and tool use.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Messy tasks (Appendix F.2)</h3><span class="slide-no">16/56</span></div><ul>
+<li>16 "messiness" factors: under-specified, no clear feedback, limited resources, real-time coordination...</li>
+<li>Mean score of HCAST and RE-Bench tasks: 3.2/16; none above 8/16.<ul>
+<li>"Write a good research paper" would score 9–15/16.</li>
+</ul>
+</li>
+<li>Each extra point of messiness cuts success by roughly 8.1% (b = −0.081, R² 0.251).</li>
+<li>But the improvement trend is similar on messy and clean tasks: sub-hour tasks gained 40 percentage points from Jan 2023 to May 2025 in both splits.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Whose time? (Appendix C.2, Table 5)</h3><span class="slide-no">17/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Internal PR</th>
+<th>Repo maintainer</th>
+<th>Contract baseliner</th>
+<th>Slowdown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Issue 1</td>
+<td>5 min</td>
+<td>81 min</td>
+<td>16x</td>
+</tr>
+<tr>
+<td>Issue 8</td>
+<td>20 min</td>
+<td>113 min (score .25)</td>
+<td>~5.5x</td>
+</tr>
+<tr>
+<td>Issue 11</td>
+<td>5 min</td>
+<td>93 min (score .75)</td>
+<td>18.6x</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Maintainers were 5–18x faster: context matters.</li>
+<li>Agent results matched contractor time, not maintainer time.</li>
+<li>The horizon depends on which humans you time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>External checks (Section 4)</h3><span class="slide-no">18/56</span></div><ul>
+<li>SWE-bench Verified: same exponential trend, faster doubling (about 70 days vs 143 days for the 2024 models).<ul>
+<li>Likely because its time labels underestimate how long contractors take on easy tasks.</li>
+</ul>
+</li>
+<li>Extrapolation: one-month (167 work hours) horizon between mid-2028 and mid-2031 (Figure 6); central estimate mid-2029.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>METR&#x27;s stated limits (Appendix B.2, Section 6)</h3><span class="slide-no">19/56</span></div><ul>
+<li>All tasks are scored by code: less open-ended than real work.</li>
+<li>No other agents to work with or against.</li>
+<li>Lax resource limits; few tasks punish a single mistake.</li>
+<li>Static environments.</li>
+<li>Horizon is always relative to a domain, task mix and the baseliners' skill.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Our toy version of METR</div><div class="slide"><div class="slide-top"><h3>Multi-step contract checks</h3><span class="slide-no">20/56</span></div><ul>
 <li>A task with N steps: walk through N facts from a contract fact sheet, keep a running total.<ul>
 <li>"Add the notice days of msa_..." / "Subtract the renewal years of msa_..."</li>
 </ul>
@@ -325,48 +592,237 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <li>Our guess. METR timed real people. The horizon is only as good as these times.</li>
 </ul>
 </li>
-</ul></div><div class="slide"><div class="slide-top"><h3>GDPval: grade the real deliverable</h3><span class="slide-no">6/14</span></div><ul>
-<li>1,320 tasks, 44 occupations, 9 sectors contributing most to US GDP.</li>
-<li>Written by professionals with 14 years of experience on average.</li>
-<li>Deliverable: the actual work product (document, slides, spreadsheet).</li>
-<li>Experts compare model vs expert deliverables, blind and pairwise.</li>
-<li>Win-or-tie rate: share judged as good as or better than the expert's.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Count review time</h3><span class="slide-no">7/14</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fitting the curve in code</h3><span class="slide-no">21/56</span></div><pre><code class="language-python">def horizon(w, level=0.5):
+    a, b = w
+    if b &gt;= 0:                       # success does not fall with length: no horizon in this range
+        return float(&quot;inf&quot;)
+    return float(2 ** ((math.log(level / (1 - level)) - a) / b))
+</code></pre>
+<ul>
+<li>Model: P(success) = sigmoid(a + b · log2(minutes)), fit by Newton's method.</li>
+<li>Line 2: a is the intercept, b the slope.</li>
+<li>Lines 3–4: if success doesn't fall with length, there is no crossing point.</li>
+<li>Line 5: solve a + b·x = log(level / (1 − level)); 2^x is the horizon in minutes.</li>
+<li>level 0.8 gives the 80% horizon. A bootstrap over tasks gives a rough range.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>GDPval: grading real deliverables</div><div class="slide"><div class="slide-top"><h3>The idea</h3><span class="slide-no">22/56</span></div><ul>
+<li>Measure economic value directly: can a model do the work people are paid for?</li>
+<li>Usage and GDP statistics lag; capability tests lead.</li>
+<li>Task = a request (often with reference files) + a deliverable (the work product).</li>
+<li>Score: head-to-head comparison with an expert's deliverable, judged by other experts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Choosing occupations (Section 2.1)</h3><span class="slide-no">23/56</span></div><ul>
+<li>Sectors contributing over 5% of US GDP (Q2 2024): 9 sectors.</li>
+<li>In each, the 5 occupations with the most total wages that are "predominantly digital".<ul>
+<li>Digital: GPT-4o labeled each O*NET task; occupation counts if at least 60% of its weighted tasks are digital.</li>
+</ul>
+</li>
+<li>44 occupations, earning $3T a year together.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The 9 sectors (Table 1)</h3><span class="slide-no">24/56</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Raw comparison (GPT-5)</th>
-<th>"Try once, then fix"</th>
+<th>Sector</th>
+<th>% GDP</th>
+<th>Example occupations</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>About 90x faster than an expert</td>
-<td>About 1.12x faster</td>
+<td>Real estate and rental</td>
+<td>13.8%</td>
+<td>Property managers, real estate agents</td>
 </tr>
 <tr>
-<td>About 474x cheaper</td>
-<td>About 1.18x cheaper</td>
+<td>Government</td>
+<td>11.3%</td>
+<td>Compliance officers, social workers</td>
 </tr>
 <tr>
-<td>Ignores review</td>
-<td>Expert reviews and fixes or redoes the output</td>
+<td>Manufacturing</td>
+<td>10.0%</td>
+<td>Industrial engineers, buyers</td>
+</tr>
+<tr>
+<td>Professional, scientific, technical</td>
+<td>8.1%</td>
+<td>Software developers, lawyers, accountants</td>
+</tr>
+<tr>
+<td>Health care</td>
+<td>7.6%</td>
+<td>Registered nurses, health services managers</td>
+</tr>
+<tr>
+<td>Finance and insurance</td>
+<td>7.4%</td>
+<td>Financial managers, analysts</td>
+</tr>
+<tr>
+<td>Retail trade</td>
+<td>6.3%</td>
+<td>Pharmacists, general managers</td>
+</tr>
+<tr>
+<td>Wholesale trade</td>
+<td>5.8%</td>
+<td>Sales reps, sales managers</td>
+</tr>
+<tr>
+<td>Information</td>
+<td>5.4%</td>
+<td>Editors, journalists, producers</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Who wrote the tasks (Section 2.2–2.4)</h3><span class="slide-no">25/56</span></div><ul>
+<li>Experts with at least 4 years in their occupation; 14 years on average.</li>
+<li>Passed a video interview, background check, training and quiz.</li>
+<li>1,320 tasks in the full set (at least 30 per occupation); 220 in the public gold subset (5 per occupation).</li>
+<li>Each task: an average of 5 human reviews (minimum 3).</li>
+<li>Task value = estimated hours × median hourly wage for the occupation.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the tasks look like</h3><span class="slide-no">26/56</span></div><ul>
+<li>Real files: CAD, photos, video, audio, slide decks, spreadsheets, support chats.</li>
+<li>Up to 17 reference files per task in the gold subset, 38 in the full set.</li>
+<li>Average 7 hours of expert work; some span weeks.</li>
+<li>Gold subset (Table 3): mean 9.49 hours, mean value $398.46, max $4,114.20.</li>
+<li>67.7% of tasks need at least one reference file.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How grading works (Section 2.5)</h3><span class="slide-no">27/56</span></div><ul>
+<li>Blind pairwise comparison: an occupation expert sees the request and two unlabeled deliverables, and ranks them.</li>
+<li>Each comparison took over an hour on average.</li>
+<li>Each model sampled 3 times per task, each sample graded by 3 experts: 9 comparisons per task per model.</li>
+<li>Win rate: share judged better than the expert. Win-or-tie: better or as good.</li>
+<li>Blinding isn't perfect: OpenAI outputs used em dashes; Claude used first person; Grok named itself.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Headline results (Section 3.1, Figure 5, Table 2)</h3><span class="slide-no">28/56</span></div><ul>
+<li>Best on the gold subset: Claude Opus 4.1, 47.6% of deliverables win or tie vs the expert.<ul>
+<li>Strong on aesthetics: formatting, slide layout.</li>
+</ul>
+</li>
+<li>GPT-5 strongest on accuracy: following instructions, correct calculations.</li>
+<li>Strict win rates (Table 2): GPT-4o 12.5%, o4-mini 29.1%, o3 35.2%, GPT-5 39.0%.</li>
+<li>OpenAI models improved roughly linearly over time (Figure 6).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why models lost (Section 3.3, Figure 8)</h3><span class="slide-no">29/56</span></div><ul>
+<li>Claude, Grok and Gemini: mostly instruction-following failures.</li>
+<li>GPT-5: mostly formatting errors; fewest instruction-following problems.</li>
+<li>Gemini and Grok often promised but didn't deliver files, ignored reference data, or used the wrong format.</li>
+<li>All models sometimes made up data or miscalculated.</li>
+<li>Win rates highest on 0–2 hour tasks; they fall as tasks get longer (Figure 13).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How bad were GPT-5&#x27;s losses? (Appendix A.2.6)</h3><span class="slide-no">30/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Rating</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Catastrophic (~3%)</td>
+<td>Harmful or dangerously wrong: insults a customer, wrong diagnosis, recommends fraud</td>
+</tr>
+<tr>
+<td>Bad (with catastrophic: ~29%)</td>
+<td>Not fit for use, but not dangerous</td>
+</tr>
+<tr>
+<td>Acceptable but subpar (most common)</td>
+<td>Usable, but the human's was better</td>
+</tr>
+<tr>
+<td>Model better (23%)</td>
+<td>Second grader disagreed with the first</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Speed and cost: the definitions (Appendix A.2.1)</h3><span class="slide-no">31/56</span></div><ul>
+<li>HT, HC: expert time and cost to do the task. Gold average: 404 minutes, $361.</li>
+<li>RT, RC: expert time and cost to review a model deliverable. Average: 109 minutes, $86.</li>
+<li>MT, MC: model time and cost (from API).</li>
+<li>w: model win rate.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Speed and cost: three scenarios</h3><span class="slide-no">32/56</span></div><ul>
+<li>Naive: <code>HT / MT</code> (ignores quality and review).</li>
+<li>Try once, then fix: <code>E[T] = MT + RT + (1 − w) · HT</code>.<ul>
+<li>Model tries; expert reviews; with chance (1 − w) the expert does it themselves.</li>
+</ul>
+</li>
+<li>Try n times, then fix: resample and review up to n times before doing it yourself.</li>
+<li>Same formulas for cost with MC, RC, HC.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Speed and cost: the numbers (Table 2)</h3><span class="slide-no">33/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Win rate</th>
+<th>Naive speed</th>
+<th>Try 1x</th>
+<th>Try nx</th>
+<th>Naive cost</th>
+<th>Try 1x</th>
+<th>Try nx</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-4o</td>
+<td>12.5%</td>
+<td>327x</td>
+<td>0.87x</td>
+<td>0.46x</td>
+<td>5172x</td>
+<td>0.90x</td>
+<td>0.53x</td>
+</tr>
+<tr>
+<td>o4-mini</td>
+<td>29.1%</td>
+<td>186x</td>
+<td>1.02x</td>
+<td>1.06x</td>
+<td>1265x</td>
+<td>1.06x</td>
+<td>1.22x</td>
+</tr>
+<tr>
+<td>o3</td>
+<td>35.2%</td>
+<td>161x</td>
+<td>1.08x</td>
+<td>1.28x</td>
+<td>480x</td>
+<td>1.13x</td>
+<td>1.47x</td>
+</tr>
+<tr>
+<td>GPT-5</td>
+<td>39.0%</td>
+<td>90x</td>
+<td>1.12x</td>
+<td>1.39x</td>
+<td>474x</td>
+<td>1.18x</td>
+<td>1.63x</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Automated grader agreed with experts 65.7% of the time; experts with each other 70.8%.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Order swap in code</h3><span class="slide-no">8/14</span></div><pre><code class="language-python">first = grade_once(cid, model_text, expert_text)     # model is A
-second = grade_once(cid, expert_text, model_text)    # model is B
-if first == &quot;A&quot; and second == &quot;B&quot;: return &quot;win&quot;
-if first == &quot;B&quot; and second == &quot;A&quot;: return &quot;loss&quot;
-return &quot;tie&quot;
-</code></pre>
-<ul>
-<li>Lines 1–2: grade the same pair twice, positions swapped.</li>
-<li>Line 3: model picked both times → win.</li>
-<li>Line 4: expert picked both times → loss.</li>
-<li>Line 5: any disagreement → tie. Small graders often pick the same position both times.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Expert email vs wrong email (msa_17)</h3><span class="slide-no">9/14</span></div><div class="tbl"><table>
+<li>Below 1x: slower or costlier than the expert alone.</li>
+<li>Not counted: review of human work, and the cost of catastrophic mistakes.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What helped (Section 3.4)</h3><span class="slide-no">34/56</span></div><ul>
+<li>More reasoning effort (low → medium → high) raised scores for o3 and GPT-5 (Figure 9a).</li>
+<li>A checking prompt for GPT-5: render files as images, check layout, avoid odd unicode.<ul>
+<li>Black-square artifacts in PDFs: gone (had hit over half of PDFs).</li>
+<li>Bad PowerPoint formatting: 86% → 64%.</li>
+<li>Agents inspecting their own output: 15% → 97%.</li>
+<li>Win rate: +5 percentage points (Figure 9b).</li>
+</ul>
+</li>
+<li>Best-of-4 sampling with a GPT-5 judge.</li>
+<li>Less context hurt: prompts cut to 42% length made GPT-5 worse (Appendix A.2.7).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The automated grader (Appendix A.6)</h3><span class="slide-no">35/56</span></div><ul>
+<li>Agreement: <code>A = E[1 − |H − A|]</code> with scores 0 (human wins), 0.5 (tie), 1 (model wins).</li>
+<li>Grader vs expert: 65.7%. Expert vs expert: 70.8%.</li>
+<li>Based on GPT-5-high; agrees less on outputs from strong OpenAI models (self-preference).</li>
+<li>12 of 220 gold tasks can't be auto-graded: need internet, non-Python code, missing fonts, or audio.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GDPval&#x27;s stated limits (Section 5)</h3><span class="slide-no">36/56</span></div><ul>
+<li>Only 44 occupations, 30 tasks each.</li>
+<li>Computer work only; no manual labor, tacit knowledge, PII or people-to-people communication.</li>
+<li>Tasks are fully specified and one-shot; real work means finding the context first.</li>
+<li>Grader is a proxy, not a replacement for experts.</li>
+<li>Expensive to build and run.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Our toy version of GDPval</div><div class="slide"><div class="slide-top"><h3>Expert email vs wrong email (msa_17)</h3><span class="slide-no">37/56</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Expert reference</th>
@@ -391,13 +847,306 @@ return &quot;tie&quot;
 <ul>
 <li>Contract 4.1: "...successive five (5) year periods unless either party gives at least 15 days' prior written notice..."</li>
 <li>Sanity check: the wrong email must not win against the expert.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>DeepScholar-Bench: three axes</h3><span class="slide-no">10/14</span></div><ul>
-<li>Live benchmark: queries come from recent arXiv papers, so models can't have trained on them.</li>
-<li>Task: research and write a cited related-work section.</li>
-<li>Knowledge synthesis: organization; nugget coverage (key facts from the human-written section).</li>
-<li>Retrieval quality: relevance; reference coverage (important citations found).</li>
-<li>Verifiability: citation precision; claim coverage.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Each metric catches a different failure</h3><span class="slide-no">11/14</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>The three tasks</h3><span class="slide-no">38/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Contract</th>
+<th>Problem (from the labels)</th>
+<th>Expert fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>msa_08</td>
+<td>7.1 caps liability at 36 months of fees; playbook max is 12</td>
+<td>Cap at 12 months of fees</td>
+</tr>
+<tr>
+<td>msa_10</td>
+<td>10.1 picks Florida law; playbook needs California or Delaware</td>
+<td>Change to Delaware (or California)</td>
+</tr>
+<tr>
+<td>msa_17</td>
+<td>4.1: five-year renewals and 15 days' notice</td>
+<td>One-year renewals, at least 30 days' notice</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The model writes a client email; an LLM grader compares it with the expert's.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Order swap in code</h3><span class="slide-no">39/56</span></div><pre><code class="language-python">first = grade_once(cid, model_text, expert_text)     # model is A
+second = grade_once(cid, expert_text, model_text)    # model is B
+if first == &quot;A&quot; and second == &quot;B&quot;: return &quot;win&quot;
+if first == &quot;B&quot; and second == &quot;A&quot;: return &quot;loss&quot;
+return &quot;tie&quot;
+</code></pre>
+<ul>
+<li>Lines 1–2: grade the same pair twice, positions swapped.</li>
+<li>Line 3: model picked both times → win.</li>
+<li>Line 4: expert picked both times → loss.</li>
+<li>Line 5: any disagreement → tie. Small graders often pick the same position both times.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>DeepScholar-Bench: scoring research reports</div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">40/56</span></div><ul>
+<li>Research-synthesis systems search the web and write long, cited reports.</li>
+<li>Existing tests fall short:<ul>
+<li>QA benchmarks want short, easy-to-check answers.</li>
+<li>Expert-written datasets go stale and leak into training data.</li>
+</ul>
+</li>
+<li>Need a test that is realistic, fresh and scored on several axes.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The task and the data (Section 2)</h3><span class="slide-no">41/56</span></div><ul>
+<li>Task: given a paper's title and abstract, retrieve sources and write its related-work section.</li>
+<li>Data pipeline: scrape recent arXiv papers accepted at conferences; v1 only; must have a Related Work section and a .bib file.</li>
+<li>DeepScholar-June-2025: April–June 2025, 18 arXiv CS domains, related work under 1,000 words.</li>
+<li>63 papers. Each human section cites 23 unique references on average; over 63% are on arXiv.</li>
+<li>Live: new monthly sets planned. DeepScholar-Nov-2025: 200 queries, over 75 subject areas.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Seven metrics, three axes (Table 1)</h3><span class="slide-no">42/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Axis</th>
+<th>Metric</th>
+<th>What it measures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Knowledge synthesis</td>
+<td>Organization &amp; coherency</td>
+<td>Pairwise LLM judge vs the human section</td>
+</tr>
+<tr>
+<td></td>
+<td>Nugget coverage</td>
+<td>Share of key facts (nuggets) from the human section present</td>
+</tr>
+<tr>
+<td>Retrieval quality</td>
+<td>Relevance rate</td>
+<td>Average relevance of cited sources</td>
+</tr>
+<tr>
+<td></td>
+<td>Reference coverage</td>
+<td>Share of "important" human references found</td>
+</tr>
+<tr>
+<td></td>
+<td>Document importance</td>
+<td>How often the cited sources are cited elsewhere</td>
+</tr>
+<tr>
+<td>Verifiability</td>
+<td>Citation precision</td>
+<td>Share of citations that support their sentence</td>
+</tr>
+<tr>
+<td></td>
+<td>Claim coverage</td>
+<td>Share of sentences fully supported by citations</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The retrieval formulas (Section 3.2)</h3><span class="slide-no">43/56</span></div><ul>
+<li>Relevance rate: <code>RR(S) = (1 / 2|S|) · Σ Rel(s)</code><ul>
+<li>Rel(s): LLM judge scores each source 0, 1 or 2; divide by 2 to get 0–1.</li>
+</ul>
+</li>
+<li>Reference coverage: <code>RC(S, E) = (1 / |E|) · Σ 1[s ∈ E]</code><ul>
+<li>E: references in the human section labeled "important" (can't be swapped for another).</li>
+</ul>
+</li>
+<li>Document importance: <code>DI = min(median cites of S / median cites of human refs, 1)</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Verifiability details (Section 3.3)</h3><span class="slide-no">44/56</span></div><ul>
+<li>Citation precision: a citation counts if its source supports at least one claim in the sentence.</li>
+<li>Claim coverage: a sentence scores 1 if its cited sources support every claim in it.<ul>
+<li>Relaxed: citations in a window of w sentences before or after count (w = 1 in the tables).</li>
+<li>The query paper's own abstract counts as an implicit citation.</li>
+</ul>
+</li>
+<li>Both use LLM entailment checks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DeepScholar-ref: the open baseline (Section 4, Figure 2)</h3><span class="slide-no">45/56</span></div><ul>
+<li>
+<ol>
+<li>Write search queries, search, summarize results; repeat.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Sem-filter: an LLM drops irrelevant sources.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Sem-topk: an LLM ranks sources by relevance.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Sem-agg: an LLM writes the section from what's left.</li>
+</ol>
+</li>
+<li>Built on LOTUS, a library of LLM "semantic operators".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Main results (Table 2)</h3><span class="slide-no">46/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>System</th>
+<th>Org.</th>
+<th>Nug. Cov.</th>
+<th>Ref Cov.</th>
+<th>Cite-P</th>
+<th>Claim Cov</th>
+<th>Geo. mean</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Human-written</td>
+<td>.500</td>
+<td>1.000</td>
+<td>1.000</td>
+<td>.900</td>
+<td>.850</td>
+<td>.782</td>
+</tr>
+<tr>
+<td>STORM (Llama-4)</td>
+<td>.119</td>
+<td>.183</td>
+<td>.003</td>
+<td>.238</td>
+<td>.586</td>
+<td>.073</td>
+</tr>
+<tr>
+<td>Search Agent (o3)</td>
+<td>.849</td>
+<td>.348</td>
+<td>.165</td>
+<td>.425</td>
+<td>.495</td>
+<td>.287</td>
+</tr>
+<tr>
+<td>Search Agent (Claude)</td>
+<td>.698</td>
+<td>.307</td>
+<td>.131</td>
+<td>.701</td>
+<td>.760</td>
+<td>.256</td>
+</tr>
+<tr>
+<td>OpenAI DeepResearch</td>
+<td>.857</td>
+<td>.392</td>
+<td>.187</td>
+<td>.399</td>
+<td>.138</td>
+<td>.309</td>
+</tr>
+<tr>
+<td>DeepScholar-ref (GPT-4.1)</td>
+<td>.809</td>
+<td>.348</td>
+<td>.166</td>
+<td>.788</td>
+<td>.899</td>
+<td>.285</td>
+</tr>
+<tr>
+<td>DeepScholar-ref (GPT-4.1, Claude)</td>
+<td>.698</td>
+<td>.307</td>
+<td>.152</td>
+<td>.944</td>
+<td>.895</td>
+<td>.286</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Human verifiability scores are a manual estimate and left out of the human geometric mean.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the results say (Section 5.1)</h3><span class="slide-no">47/56</span></div><ul>
+<li>No system above a geometric mean of .31.</li>
+<li>Nugget coverage, reference coverage, document importance: every system below .40.</li>
+<li>OpenAI DeepResearch: best organization (.857) and nugget coverage (.392), but claim coverage only .138.</li>
+<li>Systems write well-organized text but miss key facts and key sources.</li>
+<li>DeepScholar-ref: up to 6.3x higher verifiability than DeepResearch.<ul>
+<li>The (GPT-4.1, o3) version is 4.3x cheaper and 2.28x faster than DeepResearch.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Ablation: better retrieval (Table 3)</h3><span class="slide-no">48/56</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>DeepScholar-ref (GPT-4.1, Claude)</th>
+<th>Nug. Cov.</th>
+<th>Ref Cov.</th>
+<th>Geo. mean</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>arxiv.org search</td>
+<td>.307</td>
+<td>.152</td>
+<td>.286</td>
+</tr>
+<tr>
+<td>parallel.ai search</td>
+<td>.444</td>
+<td>.160</td>
+<td>.334</td>
+</tr>
+<tr>
+<td>tavily.com search</td>
+<td>.327</td>
+<td>.070</td>
+<td>.258</td>
+</tr>
+<tr>
+<td>Oracle (important arXiv refs)</td>
+<td>.487</td>
+<td>1.000</td>
+<td>.808</td>
+</tr>
+<tr>
+<td>Oracle (all important refs)</td>
+<td>.528</td>
+<td>1.000</td>
+<td>.782</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Perfect sources nearly max out retrieval and verifiability.</li>
+<li>Nugget coverage still far from 1: synthesis is hard even with the right sources.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Do the LLM judges match humans? (Section 5.3, Table 4)</h3><span class="slide-no">49/56</span></div><ul>
+<li>11 CS PhD students, over 300 annotations.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Judgment</th>
+<th>Agreement with LLM judge</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Organization (pairwise)</td>
+<td>71.43%</td>
+</tr>
+<tr>
+<td>Nugget labeling</td>
+<td>83.33%</td>
+</tr>
+<tr>
+<td>Reference importance</td>
+<td>65.9%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The LLM under-labels important references, so reference coverage is conservative.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>Our toy version of DeepScholar</div><div class="slide"><div class="slide-top"><h3>Each metric catches a different failure</h3><span class="slide-no">50/56</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Metric</th>
@@ -429,40 +1178,65 @@ return &quot;tie&quot;
 </tbody>
 </table></div>
 <ul>
+<li>Six sources: three on agent evaluation (relevant), three on memory and serving (distractors).</li>
 <li>Our "supports" test: at least 3 shared content words. The paper uses an LLM judge.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What the papers showed</h3><span class="slide-no">12/14</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Oracle vs bad summary</h3><span class="slide-no">51/56</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Paper</th>
-<th>What it showed</th>
+<th>Oracle</th>
+<th>Bad</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>METR</td>
-<td>50% horizons doubled about every 7 months (207 days); GPT-2 about 2 seconds, Claude 3.7 Sonnet about 50 minutes</td>
+<td>"METR reports a 50% task-completion time horizon ... [S1]."</td>
+<td>"Memory systems page data between main context and archival storage [S1]."</td>
 </tr>
 <tr>
-<td>GDPval</td>
-<td>Best on the gold subset: Claude Opus 4.1, 47.6% win-or-tie vs experts</td>
+<td>Each sentence cites the right source</td>
+<td>Cites S1 for a MemGPT claim; cites a distractor (S5)</td>
 </tr>
 <tr>
-<td>DeepScholar-Bench</td>
-<td>No system above a 31% geometric mean; OpenAI DeepResearch 0.309 but claim coverage 0.138</td>
+<td>Hits the nuggets: 7 months, 44 occupations, 31%</td>
+<td>"Benchmarks are important." No citation</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">13/14</span></div><ul>
-<li>A firm needs a plain claim: "finishes X-minute contract checks Y% of the time". Time real lawyers on real tasks.</li>
-<li>Every agent output at a firm is reviewed. Count review time in any savings claim.</li>
-<li>Contract summaries cite clauses. Check each citation supports its sentence.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">14/14</span></div><ul>
+</table></div>
+<ul>
+<li>The notebook checks the oracle beats the bad summary on every metric.</li>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>A claim the firm can check</h3><span class="slide-no">52/56</span></div><ul>
+<li>Say "finishes X-minute contract checks Y% of the time", not "78% accurate".</li>
+<li>Time real lawyers and paralegals on real review tasks; don't guess.</li>
+<li>Time the right people: a partner who wrote the playbook is faster than a new associate (METR's 5–18x gap).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Count the review</h3><span class="slide-no">53/56</span></div><ul>
+<li>Every agent output at a firm gets reviewed. That time counts.</li>
+<li>Use GDPval's formula: model time + review time + (1 − win rate) × lawyer time.</li>
+<li>A local model that wins 30% of comparisons may save little; a checking prompt and best-of-N can raise it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Grade the deliverable, pairwise</h3><span class="slide-no">54/56</span></div><ul>
+<li>Compare the agent's client email with a senior lawyer's, blind, both orders.</li>
+<li>Use the local LLM grader for fast iteration; keep a lawyer spot-check, since graders agree with experts less than experts agree with each other.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Score citations separately</h3><span class="slide-no">55/56</span></div><ul>
+<li>Contract summaries cite clauses. Check each cited clause supports its sentence.</li>
+<li>Report coverage (did it find every risky clause?) apart from precision (are the cites right?).</li>
+<li>All of this runs on the firm's own machine: Ollama model, local contracts, code metrics.</li>
+</ul></div><div class="deck-sec" id="sec-9"><span>Part 9</span>Wrap-up</div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">56/56</span></div><ul>
 <li>Guessing human times → time real people; the horizon depends on them.</li>
 <li>Quoting the 50% horizon → quote 80% or more, and plan review around it.</li>
+<li>Claiming "90x faster" → count review and redo time; GDPval's GPT-5 gain fell to 1.12x.</li>
 <li>One-order LLM grader → swap positions; count disagreement as a tie.</li>
 <li>Rewarding copied text → word-overlap metrics can be gamed by pasting sources; keep a judge for synthesis.</li>
+<li>Fitting a curve when every run passed or failed → no crossing point; make longer or shorter tasks.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>How does METR turn success rates into a time horizon?</summary><p>For each model, fit a logistic curve of success against log human time, then find the task length where it crosses 50%.</p></details>
 
-<details><summary>Why did GDPval&#x27;s speed and cost advantage shrink?</summary><p>An expert must review the model&#x27;s output and fix or redo it when it is wrong. That review time counts.</p></details>
+<details><summary>Why is the 80% horizon shorter than the 50% horizon?</summary><p>Success falls as tasks get longer, so tasks must be shorter to succeed 80% of the time. METR found 4–6x shorter.</p></details>
+
+<details><summary>Why did GDPval&#x27;s speed and cost advantage shrink?</summary><p>An expert must review the model&#x27;s output and fix or redo it when it is wrong. With that counted, GPT-5 went from 90x to 1.12x faster.</p></details>
+
+<details><summary>How well does GDPval&#x27;s automated grader agree with experts?</summary><p>65.7%, vs 70.8% between two experts. Useful for iteration, not a full replacement.</p></details>
+
+<details><summary>Name DeepScholar-Bench&#x27;s three axes.</summary><p>Knowledge synthesis, retrieval quality and verifiability.</p></details>
+
+<details><summary>What did the oracle-retrieval ablation show?</summary><p>With perfect sources, retrieval and verifiability scores nearly max out, but nugget coverage stays near .5. Synthesis is still hard.</p></details>
 
 <details><summary>A summary cites a distractor source for a true sentence. Which of our metrics drops?</summary><p>Retrieval precision (a non-relevant source was cited), and probably citation precision (the source doesn&#x27;t support the sentence).</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Fit the logistic curve on the toy tasks; read the 50% and 80% horizons and the bootstrap range.</li>

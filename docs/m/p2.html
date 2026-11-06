@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,15 +259,15 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Project 2</span></div><section class="mod" id="p2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Project 2</div><h2>Build an eval task, then test agents on it</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/projects/P2_build_an_eval_task.ipynb">Open in Colab</a><button class="done-btn" data-done="p2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Build a test task for agents, prove the task itself is sound, then run a local agent on it and report pass^k like a benchmark.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 10 · Evaluating Agents: Terminal-Bench and Harbor · <a href="https://web.stanford.edu/class/cs329z/slides/lecture10.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Project 2</span></div><section class="mod" id="p2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Project 2</div><h2>Build an eval task, then test agents on it</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/projects/P2_build_an_eval_task.ipynb">Open in Colab</a><button class="done-btn" data-done="p2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>12 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Build a test task for agents, prove the task itself is sound, then run a local agent on it and report pass^k like a benchmark.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 10 · Evaluating Agents: Terminal-Bench and Harbor · <a href="https://web.stanford.edu/class/cs329z/slides/lecture10.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/20</span></div><ul>
 <li>Build an eval task in the Terminal-Bench layout, prove it is sound with four checks, and report pass@k and pass^k.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Definitions</h3><span class="slide-no">2/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Definitions</h3><span class="slide-no">2/20</span></div><ul>
 <li>Task: a single test with defined inputs and success criteria.</li>
 <li>Trial: one attempt at a task.</li>
 <li>Verifier: logic that scores the agent's work; writes a reward from 0 to 1.</li>
 <li>Oracle: the reference solution. Proves the task can be solved.</li>
 <li>Reward hacking: scoring well without doing the job.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The four parts of a task</h3><span class="slide-no">3/12</span></div><pre><code>contract-flags/
+</ul></div><div class="slide"><div class="slide-top"><h3>The four parts of a task</h3><span class="slide-no">3/20</span></div><pre><code>contract-flags/
   instruction.md        what the agent is asked to do (short, natural, fully specified)
   environment/          the files the agent starts with
   tests/test.py         HIDDEN verifier: runs after the agent, writes a reward from 0 to 1
@@ -271,7 +275,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </code></pre>
 <ul>
 <li>Our task: read contracts and the playbook, write <code>report.json</code> listing which rules each contract breaks.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Terminal-Bench vs our task</h3><span class="slide-no">4/12</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Terminal-Bench vs our task</h3><span class="slide-no">4/20</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Terminal-Bench task</th>
@@ -292,12 +296,74 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td><code>tests/test.py</code> compares <code>report.json</code> to the answer</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>The runner</h3><span class="slide-no">5/12</span></div><ul>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Writing tasks: three questions</h3><span class="slide-no">5/20</span></div><ul>
+<li>What are you measuring? Are you measuring it correctly?</li>
+<li>Align the instruction and the verifier.</li>
+<li>Prevent reward hacking.</li>
+<li>Keep it realistic, fair and interesting.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Instructions</h3><span class="slide-no">6/20</span></div><ul>
+<li>Fully specified: everything the verifier checks is asked for.</li>
+<li>As concise as possible.</li>
+<li>As natural as possible: the way a real user would ask.</li>
+<li>Which mix you want depends on your goal.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Instruction: before and after review</h3><span class="slide-no">7/20</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Original</th>
+<th>After feedback</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Long FreeCAD impeller spec with headings, bold, repeated parameter lists</td>
+<td>A few short paragraphs: the two files, the change (num_blades 12 → 6), the parameters</td>
+</tr>
+<tr>
+<td>Lists facts the agent can find itself (the FreeCAD version)</td>
+<td>Drops them</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Reviewer's ask: "as minimal as can be while still being fully specified."</li>
+<li>Remove LLM formatting (bold, em dashes), templating and repeats.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Environments</h3><span class="slide-no">8/20</span></div><ul>
+<li>Where the agent acts; as close to the real ("prod") setting as possible.</li>
+<li>Extra inputs: documents, code, state.</li>
+<li>Real software and services beat mocks (use several containers if needed).</li>
+<li>As open-world as possible; internet access has trade-offs.</li>
+<li>Bake in network dependencies to reduce flakiness.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Environment: before and after review</h3><span class="slide-no">9/20</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Original</th>
+<th>After feedback</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Target: a "Happy New Year 2025" poster. 7 candidate image assets</td>
+<td>Same target. 14 candidate assets</td>
+</tr>
+<tr>
+<td>Every asset is one the poster uses</td>
+<td>Adds distractors the agent must reject</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>For us: add clean contracts and near-miss clauses, not just the broken ones.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reward hacking: isolate the verifier</h3><span class="slide-no">10/20</span></div><ul>
+<li>Lock down the agent's environment.</li>
+<li>Run the verifier in its own environment.</li>
+<li>Only the artifact (the agent's output) crosses over; tests live on the verifier side.</li>
+<li>Real case (Terminal-Bench Science, Sep 2026): a model searched online for a known Lean kernel bug and used it to fake a proof that passed the grader.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The runner</h3><span class="slide-no">11/20</span></div><ul>
 <li>Each attempt gets a fresh temp folder with a copy of <code>environment/</code>. Tests are not copied.</li>
 <li>The verifier runs as a separate step after the agent stops.</li>
 <li>The reward file lives outside the agent's folder. The agent can't write its own score.</li>
 <li>Harbor uses Docker. Colab can't, so we use temp folders. Same idea.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Test the task before any agent</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Test the task before any agent</h3><span class="slide-no">12/20</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Fake agent</th>
@@ -330,16 +396,53 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>Tasks are software. Software has bugs.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Run the agent</h3><span class="slide-no">7/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>The oracle solution</h3><span class="slide-no">13/20</span></div><ul>
+<li>Its job: debug your verifier and environment.</li>
+<li>Solve it the way an agent would. No hardcoded answers.</li>
+<li>Lecture example: harmonize a Bach chorale excerpt into <code>/app/harmony.mxl</code>; the oracle must really do the work.</li>
+<li>Ours: <code>solve.py</code> parses the contracts; it doesn't copy <code>labels.jsonl</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Task QA: tasks break in subtle ways</h3><span class="slide-no">14/20</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>What it catches</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Static checks</td>
+<td>Missing files, anti-patterns</td>
+</tr>
+<tr>
+<td>Agent judge</td>
+<td>Instruction and tests out of line</td>
+</tr>
+<tr>
+<td>Oracle agent</td>
+<td>Task unsolvable or verifier broken</td>
+</tr>
+<tr>
+<td>Frontier agents</td>
+<td>Too easy or too hard</td>
+</tr>
+<tr>
+<td>Cheat agents</td>
+<td>Reward hacks</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>An agent judge also reads the frontier and cheat trajectories.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Run the agent</h3><span class="slide-no">15/20</span></div><ul>
 <li>The agent is the Project 1 harness with three tools: list files, read a file, write a file.</li>
 <li>The tools only work inside its folder. It never sees the tests.</li>
 <li>Limits: 16 turns, 40,000-token budget. 5 attempts.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Report like a benchmark</h3><span class="slide-no">8/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Report like a benchmark</h3><span class="slide-no">16/20</span></div><ul>
 <li>Mean reward: average partial credit across contracts.</li>
 <li>pass@k: at least one of k attempts fully solved it.</li>
 <li>pass^k: every one of k attempts fully solved it. This is the number for repeated work.</li>
 <li>One success in five looks fine on pass@5 and scores 0% on pass^5.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Second task: fee-check</h3><span class="slide-no">9/12</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Second task: fee-check</h3><span class="slide-no">17/20</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Input</th>
@@ -359,7 +462,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>Shortcut: list every invoice → scores 0.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The fee-check verifier in code</h3><span class="slide-no">10/12</span></div><pre><code class="language-python">want = json.loads((Path(__file__).parent / &quot;expected.json&quot;).read_text())
+</ul></div><div class="slide"><div class="slide-top"><h3>The fee-check verifier in code</h3><span class="slide-no">18/20</span></div><pre><code class="language-python">want = json.loads((Path(__file__).parent / &quot;expected.json&quot;).read_text())
 p = ws / &quot;mismatches.json&quot;
 try:
     got = json.loads(p.read_text()) if p.exists() else None
@@ -374,11 +477,11 @@ out.write_text(&quot;1.0&quot; if ok else &quot;0.0&quot;)
 <li>Lines 3–6: read it; missing file or broken JSON counts as nothing.</li>
 <li>Line 7: pass only if it is a list with exactly the right names.</li>
 <li>Line 8: write reward 1.0 or 0.0.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">19/20</span></div><ul>
 <li>A firm needs its own tests, from its own contracts and playbook, run on its own machine.</li>
 <li>The same four checks prove a firm's task is fair before any model is scored.</li>
 <li>pass^k tells the firm whether the local agent works every time.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">20/20</span></div><ul>
 <li>Testing the agent before the task → run the four soundness checks first.</li>
 <li>Agent can see or edit the tests → keep tests and reward outside its folder.</li>
 <li>Grading the steps → test the final result.</li>

@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,94 +259,396 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5" aria-current="page" style="background:var(--accent-soft);font-weight:600"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP5</span></div><section class="mod" id="ap5" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP5</div><h2>ARCHON Augmented: Planning and Web-Enhanced Components</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap5_archon_augmented.ipynb">Open in Colab</a><button class="done-btn" data-done="ap5" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How a Stanford team added a planner and web search to a pipeline of model calls, and why search helps only when it finds the right pages.</p><article class="lesson"><p class="deck-src">Based on CS329A past project · ARCHON Augmented · <a href="https://cs329a.stanford.edu/winter2025projects/archon.pdf" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
-<li>Build a plan → search → generate → critique → fuse → verify pipeline, and ablate each block on your own data.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">2/12</span></div><ul>
-<li>Archon: stacks inference-time steps (generate, fuse, critique, rank, verify, unit tests) into a pipeline.</li>
-<li>Only seven building blocks.</li>
-<li>No tool use, no web search.</li>
-<li>Its strong results relied on models of about 70B parameters.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Archon&#x27;s blocks, one line each</h3><span class="slide-no">3/12</span></div><ul>
-<li>Generator: writes candidate answers.</li>
-<li>Critic: notes each candidate's flaws.</li>
-<li>Ranker: orders the candidates, best first.</li>
-<li>Fuser: merges the best candidates into one answer.</li>
-<li>Verifier: checks the answer is supported.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What the students built: three new blocks</h3><span class="slide-no">4/12</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Past project · AP5</span></div><section class="mod" id="ap5" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Past project · AP5</div><h2>ARCHON Augmented: Planning and Web-Enhanced Components</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a_projects/ap5_archon_augmented.ipynb">Open in Colab</a><button class="done-btn" data-done="ap5" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>13 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How a Stanford team added a planner and web search to a pipeline of model calls, and why search helps only when it finds the right pages.</p><article class="lesson"><p class="deck-src">Based on CS329A past project · ARCHON Augmented · <a href="https://cs329a.stanford.edu/winter2025projects/archon.pdf" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (38 slides)</b><ol><li><a href="#sec-1">The problem and why it matters</a> <span>4 slides</span></li><li><a href="#sec-2">Background they build on</a> <span>4 slides</span></li><li><a href="#sec-3">The method, step by step</a> <span>7 slides</span></li><li><a href="#sec-4">Setup</a> <span>2 slides</span></li><li><a href="#sec-5">Results</a> <span>5 slides</span></li><li><a href="#sec-6">Analysis and discussion</a> <span>3 slides</span></li><li><a href="#sec-7">Limitations and future work</a> <span>2 slides</span></li><li><a href="#sec-8">Our smaller Colab rebuild</a> <span>6 slides</span></li><li><a href="#sec-9">How this applies to us</a> <span>4 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/38</span></div><ul>
+<li>Build a plan → search → generate → critique → fuse → verify pipeline, ablate each block on your own data, and spot when a comparison isn't fair.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>The problem and why it matters</div><div class="slide"><div class="slide-top"><h3>The project at a glance</h3><span class="slide-no">2/38</span></div><ul>
+<li>ARCHON Augmented: Planning and Web-Enhanced Components.</li>
 <li>Team: Megan Mou, Sherry Xie, Emily Zhang, Andrew Park (CS329A, Winter 2025).</li>
-<li>Planner (first): rephrases the request, writes a step-by-step plan for every later block.</li>
-<li>Expander (after each generator): adds detail so critics and rankers can judge.</li>
-<li>Web Search Tool Call: queries from the plan, top 10 Google results per query.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Setup</h3><span class="slide-no">5/12</span></div><ul>
-<li>Closed-source config: GPT-4o generates and ranks; Qwen2-72B critiques and fuses.</li>
-<li>Open-source config: an ensemble of open models.</li>
-<li>HLE (Humanity's Last Exam): 500-question subset, 453 scored.</li>
-<li>AlpacaEval LC: instruction following, win rate adjusted for answer length.</li>
-<li>Ablation: add or remove one block at a time.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What they found: AlpacaEval LC</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<li>Poster title: "Multi-Component ARCHON".</li>
+<li>Sources: the 11-page report and the poster.</li>
+<li>Code: github.com/49emily/cs329a-archon.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What Archon is</h3><span class="slide-no">3/38</span></div><ul>
+<li>Archon: a framework that stacks inference-time techniques into a pipeline of model calls.</li>
+<li>Inference-time technique: a way to spend more compute at answer time (sample more, critique, merge) instead of training.</li>
+<li>Idea: many LLMs plus many techniques can beat any one of them alone.</li>
+<li>It picks a good stack for each benchmark by search.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four gaps they saw</h3><span class="slide-no">4/38</span></div><ul>
+<li>Only seven building blocks; room for more.</li>
+<li>No web search or tool use.</li>
+<li>The query category is fixed in advance; no per-query adjustment.</li>
+<li>Strong results relied on models of about 70B parameters; small open models untested.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Research question</h3><span class="slide-no">5/38</span></div><ul>
+<li>Can more inference-time components improve Archon for both closed-source and open-source models?</li>
+<li>Their answer, in short:<ul>
+<li>Expander value depends on the benchmark.</li>
+<li>New blocks let open models rival closed ones.</li>
+<li>Web search helps instruction following.</li>
+<li>Reasoning stays hard.</li>
+</ul>
+</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Background they build on</div><div class="slide"><div class="slide-top"><h3>Archon (Saad-Falcon et al., 2024)</h3><span class="slide-no">6/38</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Setup</th>
-<th>Closed</th>
-<th>Mixed</th>
+<th>Block</th>
+<th>What it does</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Archon</td>
+<td>Generator</td>
+<td>Writes candidate answers</td>
+</tr>
+<tr>
+<td>Fuser</td>
+<td>Merges candidates into one answer</td>
+</tr>
+<tr>
+<td>Critic</td>
+<td>Notes each candidate's strengths and flaws</td>
+</tr>
+<tr>
+<td>Ranker</td>
+<td>Orders candidates, best first</td>
+</tr>
+<tr>
+<td>Verifier</td>
+<td>Checks the answer is supported</td>
+</tr>
+<tr>
+<td>Unit Test Generator</td>
+<td>Writes tests for a coding answer</td>
+</tr>
+<tr>
+<td>Unit Test Evaluator</td>
+<td>Runs answers against those tests</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Blocks are stacked in layers.</li>
+<li>ITAS (inference-time architecture search): searches over stacks and settings.</li>
+<li>Its own limits section: adding new techniques is "a promising avenue".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Archon&#x27;s instruction-following stack (poster Figure 1)</h3><span class="slide-no">7/38</span></div><pre><code>Prompt → Generator (n=10 samples) → Critic → Ranker → Fuser → Output
+</code></pre>
+<ul>
+<li>In the Archon paper's all-source version, every block uses Claude 3.5 Sonnet.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Other work they draw on</h3><span class="slide-no">8/38</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Work</th>
+<th>Idea</th>
+<th>Use here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mixture-of-Agents, LLM-Blender</td>
+<td>Combine many LLMs at answer time</td>
+<td>Archon's roots; narrower scope</td>
+</tr>
+<tr>
+<td>ReAct (Yao et al., 2023)</td>
+<td>Interleave reasoning and actions</td>
+<td>Inspired a dedicated planning layer</td>
+</tr>
+<tr>
+<td>Toolformer (Schick et al., 2023)</td>
+<td>Models learn to call tools</td>
+<td>Inspired the web search block</td>
+</tr>
+<tr>
+<td>"LLMs still can't plan" (Valmeekam et al., 2024)</td>
+<td>Planning is hard even for o1</td>
+<td>Why a planner might matter most</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The two benchmarks</h3><span class="slide-no">9/38</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>What it tests</th>
+<th>How scored</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Humanity's Last Exam (HLE)</td>
+<td>Frontier academic knowledge and reasoning; 2,700 questions, 100+ subjects</td>
+<td>Accuracy</td>
+</tr>
+<tr>
+<td>AlpacaEval</td>
+<td>Following real-world instructions</td>
+<td>Win rate vs. a strong reference model, judged automatically</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>They used 500 HLE questions (compute limit). HLE is far from solved by frontier models.</li>
+<li>LC (length-controlled) win rate: corrects the judge's bias toward longer answers.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>The method, step by step</div><div class="slide"><div class="slide-top"><h3>Three new blocks (Figure 1)</h3><span class="slide-no">10/38</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Block</th>
+<th>Where</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Planner</td>
+<td>First</td>
+<td>Rephrases the request, writes a step-by-step plan; the plan is prepended to later inputs</td>
+</tr>
+<tr>
+<td>Web Search Tool Call</td>
+<td>After the Planner, before the Generator</td>
+<td>Writes q queries from the plan; top 10 Google results per query become context</td>
+</tr>
+<tr>
+<td>Expander</td>
+<td>After each Generator</td>
+<td>Adds context, detail or clarification so Critics and Rankers can judge</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Web search block was inspired by the course's Homework 2.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The full pipeline (poster Figure 2, ablation 3)</h3><span class="slide-no">11/38</span></div><pre><code>Planner → Web Search Tool Call (queries=5) → Generator (n=10) → Expander → Critic → Ranker → Fuser
+</code></pre>
+<ul>
+<li>The poster gives 5 queries; the report only says q.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The Planner prompt (A.1.1)</h3><span class="slide-no">12/38</span></div><ul>
+<li>System: "You are an expert at planning and reasoning given a user query."</li>
+<li>Step 1: "Summarize what the user is asking in a clearer way."</li>
+<li>Step 2: "Provide a step-by-step reasoning process on what you need to do in order to fully answer the user query."</li>
+<li>Their hypothesis: the planner would matter most, since reasoning is crucial yet hard.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The Expander prompt (A.1.2)</h3><span class="slide-no">13/38</span></div><ul>
+<li>"Only add information that is directly relevant to the original response."</li>
+<li>"Maintain factual accuracy and consistency with the original."</li>
+<li>"Focus on adding valuable context that enhances understanding."</li>
+<li>"Keep additions clear and well-structured."</li>
+<li>"Do not contradict or modify the original content."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The search prompts (A.2)</h3><span class="slide-no">14/38</span></div><ul>
+<li>Query writing: given the query and the step-by-step analysis, "output {num_searches} search queries", comma-separated, nothing else.</li>
+<li>Generation: "Use these search results to improve your answer to the user's query".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Blocks they considered and dropped</h3><span class="slide-no">15/38</span></div><ul>
+<li>Rewriter, summarizer, debugger.</li>
+<li>Too close to existing blocks (especially the verifier), or too costly for a small gain.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The ablations</h3><span class="slide-no">16/38</span></div><ul>
+<li>
+<ol>
+<li>Planner + base Archon.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Planner + Expander + base Archon.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Planner + Tool Call + Expander + base Archon.</li>
+</ol>
+</li>
+<li>Each compared with base Archon.</li>
+<li>Two questions: which blocks help most; how do they change open vs. closed models?</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Setup</div><div class="slide"><div class="slide-top"><h3>Two model configurations (Section 4.3)</h3><span class="slide-no">17/38</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Config</th>
+<th>Generation</th>
+<th>Critic</th>
+<th>Ranker</th>
+<th>Fuser</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Closed-source</td>
+<td>GPT-4o</td>
+<td>Qwen2-72B-Instruct</td>
+<td>GPT-4o</td>
+<td>Qwen2-72B-Instruct</td>
+</tr>
+<tr>
+<td>Open-source</td>
+<td>Ensemble (below)</td>
+<td>Qwen2-72B-Instruct</td>
+<td>Qwen2-72B-Instruct</td>
+<td>Qwen2-72B-Instruct</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Open ensemble (text): Qwen2-72B-Instruct, DeepSeek R1 Distill, WizardLM-2 8x22B, QwQ-32B, LLaMA-3 70B Chat, Mixtral 8x22B.</li>
+<li>The appendix diagram lists 7 generator models (Qwen2 twice).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What the appendix diagrams actually show (A.3)</h3><span class="slide-no">18/38</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Setup</th>
+<th>Diagram</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>archon-closed</td>
+<td>generator gpt-4o, critic Qwen2, ranker gpt-4o, fuser Qwen2</td>
+</tr>
+<tr>
+<td>planner-archon-closed</td>
+<td>every block gpt-4o</td>
+</tr>
+<tr>
+<td>planner-expander-archon-mixed</td>
+<td>planner Qwen2.5, 7-model generator, rest Qwen2</td>
+</tr>
+<tr>
+<td>planner-toolcall-expander-archon-mixed</td>
+<td>planner Qwen2.5; tools, generator, expander, ranker gpt-4o; critic and fuser Qwen2</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>So the "mixed" setup with search is mostly GPT-4o, not open models.</li>
+<li>A query-adaptive design (Figure 10) is drawn, but no results are given.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Results</div><div class="slide"><div class="slide-top"><h3>HLE results (Figure 2 table)</h3><span class="slide-no">19/38</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Closed source</th>
+<th>Open source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ARCHON</td>
+<td>3.3% (15/453)</td>
+<td>3.3% (15/453)</td>
+</tr>
+<tr>
+<td>Planner + ARCHON</td>
+<td>3.3% (15/453)</td>
+<td>2.6% (12/453)</td>
+</tr>
+<tr>
+<td>Planner + Expander + ARCHON</td>
+<td>4.2% (19/453)</td>
+<td>3.8% (17/453)</td>
+</tr>
+<tr>
+<td>Planner + Tool Call + Expander + ARCHON</td>
+<td>3.3% (15/453)</td>
+<td>2.9% (13/453)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Zero-shot GPT-4o: 3.1% (red line in Figure 4).</li>
+<li>453 of the 500 questions were scored; the report doesn't say why.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reading the HLE table</h3><span class="slide-no">20/38</span></div><ul>
+<li>Best: Planner + Expander, closed, 4.2%: 4 more right answers than base Archon.</li>
+<li>Open version of the same: 3.8%.</li>
+<li>Search lowered both: back to 3.3% and down to 2.9%.</li>
+<li>Why search hurt: pages were often off-topic or full of unrelated text, which confused the models.</li>
+<li>All gaps are a handful of questions out of 453: likely noise.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AlpacaEval LC results (Figure 3 table)</h3><span class="slide-no">21/38</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Closed source</th>
+<th>Mixed source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ARCHON</td>
 <td>67.73%</td>
 <td>57.01%</td>
 </tr>
 <tr>
-<td>+ Planner</td>
+<td>Planner + ARCHON</td>
 <td>69.62%</td>
 <td>67.06%</td>
 </tr>
 <tr>
-<td>+ Planner + Expander</td>
+<td>Planner + Expander + ARCHON</td>
 <td>66.01%</td>
 <td>68.30%</td>
 </tr>
 <tr>
-<td>+ Planner + Search + Expander</td>
+<td>Planner + Tool Call + Expander + ARCHON</td>
 <td>73.40%</td>
 <td>73.92%</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>The planner helped the weaker open setup catch up.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What they found: HLE</h3><span class="slide-no">7/12</span></div><div class="tbl"><table>
+<li>GPT-4o reference line on the poster chart: 57.5%.</li>
+<li>The poster's chart labels the second column "Open Source Models".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reading the AlpacaEval table</h3><span class="slide-no">22/38</span></div><ul>
+<li>Planner: +10.05 points for mixed (57.01 → 67.06), +1.89 for closed.</li>
+<li>Mixed started more than 10 points below closed; with all blocks it ends slightly above (73.92% vs. 73.40%).</li>
+<li>Expander: hurt closed (69.62 → 66.01), helped mixed (67.06 → 68.30).</li>
+<li>Full stack with search: best in both columns, above 70%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Caveat: is &quot;open rivals closed&quot; fair?</h3><span class="slide-no">23/38</span></div><ul>
+<li>The best "mixed" row (73.92%) uses GPT-4o for tools, generation, expansion and ranking (appendix Figure 9).</li>
+<li>So it isn't an open-model result.</li>
+<li>The cleaner evidence: Planner + ARCHON lifted the mixed setup from 57.01% to 67.06%.<ul>
+<li>Its diagram only adds a Qwen2.5 planner to the open ensemble, so that one is a fair test.</li>
+</ul>
+</li>
+<li>Closed "Planner + ARCHON" also switches critic and fuser to gpt-4o, so it changes two things at once.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Analysis and discussion</div><div class="slide"><div class="slide-top"><h3>What they conclude (Section 6)</h3><span class="slide-no">24/38</span></div><ul>
+<li>Planner: consistently helps structure answers.</li>
+<li>Expander: limited on AlpacaEval because length control rewards short answers; helped on HLE via longer reasoning.</li>
+<li>Tool Call: pushed AlpacaEval above 70%, beyond every original Archon setup.</li>
+<li>Planner and Tool Call let open models match closed ones on instruction following and retrieval.</li>
+<li>Block value depends on the benchmark: tailor the stack to the task.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why search split the two benchmarks</h3><span class="slide-no">25/38</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Setup</th>
-<th>Closed</th>
-<th>Open</th>
+<th>AlpacaEval</th>
+<th>HLE</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Archon</td>
-<td>3.3%</td>
-<td>3.3%</td>
+<td>Real-world requests; outside facts help</td>
+<td>Deep reasoning, not lookup</td>
 </tr>
 <tr>
-<td>+ Planner + Expander</td>
-<td>4.2% (19/453)</td>
-<td>3.8% (17/453)</td>
+<td>Search grounded answers, made them more relevant</td>
+<td>Pages off-topic or cluttered</td>
 </tr>
 <tr>
-<td>+ Planner + Search + Expander</td>
-<td>3.3%</td>
-<td>2.9%</td>
+<td>Score went up</td>
+<td>Score went down</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Zero-shot GPT-4o: 3.1%.</li>
-<li>Search hurt: results were off-topic or cluttered.</li>
-<li>A few questions out of 453 is noise.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Our Colab rebuild: smaller</h3><span class="slide-no">8/12</span></div><div class="tbl"><table>
+<li>Still, OpenAI's Deep Research reached 26.6% on HLE, so iterative plan-and-search loops may help.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reasoning remains the bottleneck</h3><span class="slide-no">26/38</span></div><ul>
+<li>Expander gains on HLE were too small to overcome reasoning limits.</li>
+<li>Adding search did not help hill-climb HLE.</li>
+<li>Suggested next steps: hierarchical planning, multi-step verification, process reward models.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>Limitations and future work</div><div class="slide"><div class="slide-top"><h3>Limitations</h3><span class="slide-no">27/38</span></div><ul>
+<li>Stated: reasoning still hard; search noise on HLE.</li>
+<li>Our notes:<ul>
+<li>One run per setup; HLE gaps are 2–4 questions.</li>
+<li>Configs change more than one block at a time (see appendix diagrams).</li>
+<li>"Mixed" with search is mostly GPT-4o.</li>
+<li>No cost or call counts reported.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Future work they list</h3><span class="slide-no">28/38</span></div><ul>
+<li>Query-adaptive planner: build a whole Archon stack per prompt.</li>
+<li>More tool calls: outside APIs and special databases.</li>
+<li>Early stopping: fewer calls for the same quality.</li>
+<li>Model size: can these blocks make up for smaller models (e.g., 7B)?</li>
+<li>Stronger reasoning methods, such as process reward models.</li>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>Our smaller Colab rebuild</div><div class="slide"><div class="slide-top"><h3>What we change</h3><span class="slide-no">29/38</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Paper</th>
@@ -359,19 +665,34 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>6 questions about made-up towns (search is required)</td>
 </tr>
 <tr>
-<td>~70B models</td>
+<td>~70B models and GPT-4o</td>
 <td>Generators: llama3.1:8b, llama3.1:8b, llama3.2:3b</td>
 </tr>
 <tr>
 <td>Planner, Expander, Search</td>
 <td>Planner and Search; Expander skipped to save calls</td>
 </tr>
+<tr>
+<td>Closed vs. open configs</td>
+<td>One local config; four setups at known call counts</td>
+</tr>
 </tbody>
 </table></div>
 <ul>
 <li>BM25: keyword search; rare words count more, long pages count less.</li>
-<li>The 16 pages: 8 real towns, 3 look-alike decoys ("New ..."), 5 clutter pages.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The pipeline</h3><span class="slide-no">9/12</span></div><pre><code>question → Planner (plan + search queries) → Web search (BM25) → 3 Generators (8B, 8B, 3B)
+</ul></div><div class="slide"><div class="slide-top"><h3>Our small web</h3><span class="slide-no">30/38</span></div><ul>
+<li>8 made-up towns, each with founding year, population, river, bridge and bridge year.</li>
+<li>3 decoy pages: "New ..." towns with different numbers.</li>
+<li>5 clutter pages: travel blogs with filler.</li>
+<li>6 questions; most need two pages, some need arithmetic.</li>
+<li>No model can know these facts, so the value of search is clear.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>BM25 scoring, in one line</h3><span class="slide-no">31/38</span></div><ul>
+<li><code>score = Σ_words IDF(w) · tf·(k1+1) / (tf + k1·(1 − b + b·len/avglen))</code>.</li>
+<li>IDF: rare words weigh more.</li>
+<li>tf: how often the word is on the page.</li>
+<li>k1 = 1.5: caps how much repeats count.</li>
+<li>b = 0.75: penalty for long pages.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The pipeline</h3><span class="slide-no">32/38</span></div><pre><code>question → Planner (plan + search queries) → Web search (BM25) → 3 Generators (8B, 8B, 3B)
          → Critic + Ranker → Fuser → Verifier → answer          (7 model calls)
 </code></pre>
 <ul>
@@ -380,7 +701,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <li>One call critiques and ranks all three candidates.</li>
 <li>Fuser: one answer from the top two.</li>
 <li>Verifier says "not supported" → fall back to the top-ranked candidate.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Four setups, compared</h3><span class="slide-no">10/12</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four setups, compared</h3><span class="slide-no">33/38</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Setup</th>
@@ -409,18 +730,53 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <ul>
 <li>RAG: retrieval-augmented generation; fetch pages, then answer.</li>
 <li>If the 2-call setup ties the 7-call one, use the 2-call one.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
-<li>Contract review needs outside facts: past deals, precedent memos, the playbook. Search the firm's own files, locally.</li>
-<li>A planner is cheap and helped open models catch up.</li>
-<li>Decoys matter: "Acme Holdings" vs. "Acme Holdings UK" may have different contracts. Test search with look-alikes.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Solutions: three free or cheap ablations</h3><span class="slide-no">34/38</span></div><ul>
+<li>Stop after the ranker: if it matches the full pipeline, the fuser and verifier add cost, not value.</li>
+<li>Score each generator alone and the best-of-3 oracle: does the ensemble beat its best member?</li>
+<li>Noisier web: add "Old ..." and "Upper ..." decoys; does search start to hurt, as on HLE?</li>
+</ul></div><div class="deck-sec" id="sec-9"><span>Part 9</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Search the firm&#x27;s own files</h3><span class="slide-no">35/38</span></div><ul>
+<li>Contract review needs outside facts: past deals, precedent memos, the playbook.</li>
+<li>Run search over the firm's own documents, on the firm's machine.</li>
+<li>No pages leave the building; no web noise.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Decoys are the real risk</h3><span class="slide-no">36/38</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Search finds the right page</th>
+<th>Search finds a look-alike</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Acme Holdings MSA: liability cap 12 months of fees"</td>
+<td>"Acme Holdings UK MSA: cap 24 months"</td>
+</tr>
+<tr>
+<td>Correct check against the playbook</td>
+<td>Wrong flag, confidently stated</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Test search with look-alike names before trusting it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Start with the cheap blocks</h3><span class="slide-no">37/38</span></div><ul>
+<li>A planner is one call and helped weaker models most.</li>
+<li>Add generators, critics and fusers only if an ablation shows they pay.</li>
+<li>Count calls per question next to accuracy.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">38/38</span></div><ul>
 <li>Assuming search always helps → check what it returns; on HLE it hurt.</li>
 <li>Adding blocks without testing → the Expander helped in one setup and hurt in another; ablate.</li>
 <li>Reading tiny gaps as wins → four questions out of 453 is noise.</li>
+<li>Changing two things at once → swap one block or one model per ablation.</li>
 <li>Ignoring cost → 7 calls per question; compare with the 2-call setup.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why did web search hurt on Humanity&#x27;s Last Exam?</summary><p>The results were often off-topic or cluttered. That confused the models instead of helping.</p></details>
 
 <details><summary>What does the Planner add to the pipeline?</summary><p>It rephrases the question and writes a plan and search queries. Every later block uses that plan.</p></details>
+
+<details><summary>How much did the Planner alone lift the mixed setup on AlpacaEval?</summary><p>From 57.01% to 67.06%, about 10 points (Figure 3 table).</p></details>
+
+<details><summary>Why is &quot;open models rival closed&quot; weaker than it looks?</summary><p>The best &quot;mixed&quot; setup uses GPT-4o for tools, generation, expansion and ranking, per the appendix diagram.</p></details>
+
+<details><summary>Why did the Expander help on HLE but not on AlpacaEval?</summary><p>AlpacaEval&#x27;s length control rewards short answers; on HLE the extra detail helped reasoning a little.</p></details>
 
 <details><summary>Why does the notebook use questions about made-up towns?</summary><p>No model can know the answers, so search is truly needed. The value of search is easy to see.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Compare the four setups: accuracy next to calls per question.</li>

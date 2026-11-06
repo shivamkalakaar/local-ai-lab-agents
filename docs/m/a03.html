@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Learning from feedback with tools and code · Agent Engineering School</title>
-<meta name="description" content="Agents improve when the world answers back. Use test results, tool outputs and written rules, not the model&#x27;s own opinion.">
+<meta name="description" content="Agents improve when the world answers back. Use tool results, test results and written rules, not the model&#x27;s own opinion.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,9 +259,9 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A03</span></div><section class="mod" id="a03" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A03</div><h2>Learning from feedback with tools and code</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a03_feedback_tools_code.ipynb">Open in Colab</a><button class="done-btn" data-done="a03" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Agents improve when the world answers back. Use test results, tool outputs and written rules, not the model&#x27;s own opinion.</p><article class="lesson"><p class="deck-src">Based on CS329A · Learning from feedback with tools and code · <a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
-<li>Learn three kinds of outside feedback (tool results, test results, written rules) and how to turn feedback loops into training data.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why outside feedback?</h3><span class="slide-no">2/13</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A03</span></div><section class="mod" id="a03" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A03</div><h2>Learning from feedback with tools and code</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a03_feedback_tools_code.ipynb">Open in Colab</a><button class="done-btn" data-done="a03" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>22 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Agents improve when the world answers back. Use tool results, test results and written rules, not the model&#x27;s own opinion.</p><article class="lesson"><p class="deck-src">Based on CS329A · Learning from feedback with tools and code · <a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (75 slides)</b><ol><li><a href="#sec-1">Why this lecture</a> <span>3 slides</span></li><li><a href="#sec-2">ReAct: reasoning and acting together (Yao et al. 2022)</a> <span>24 slides</span></li><li><a href="#sec-3">RLEF: training on execution feedback (Gehring et al. 2024)</a> <span>21 slides</span></li><li><a href="#sec-4">Constitutional AI: harmlessness from AI feedback (Bai et al. 2022)</a> <span>21 slides</span></li><li><a href="#sec-5">How this applies to us</a> <span>5 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/75</span></div><ul>
+<li>Learn three kinds of outside feedback (tool results, test results, written rules), what each paper measured, and how to turn feedback loops into training data.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why this lecture</div><div class="slide"><div class="slide-top"><h3>Why outside feedback?</h3><span class="slide-no">2/75</span></div><ul>
 <li>A model guessing alone makes the same mistakes again and again.</li>
 <li>Outside signals you can check:<ul>
 <li>Tool results: facts looked up, not remembered</li>
@@ -267,38 +271,469 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </li>
 <li>Don't trust the model's own "looks good to me."</li>
 <li>Log every loop. It can become training data later.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>ReAct: think, act, observe</h3><span class="slide-no">3/13</span></div><ul>
-<li>ReAct: a loop of Thought → Action → Observation, repeated until the agent answers.</li>
-<li>Thought: a short reason before acting.</li>
-<li>Action: one tool call (search, read a clause, calculate).</li>
-<li>Observation: the tool's result, fed back to the model.</li>
-<li>Errors come back as observations, so the agent can recover.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Chain-of-thought vs ReAct (Yao et al. 2022)</h3><span class="slide-no">4/13</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three papers, one idea</h3><span class="slide-no">3/75</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Chain-of-thought</th>
-<th>ReAct</th>
+<th>Paper</th>
+<th>Feedback comes from</th>
+<th>Used at</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Reasons from memory</td>
-<td>Looks facts up with tools</td>
+<td>ReAct (Yao et al. 2022)</td>
+<td>A Wikipedia API, a text game, a shop website</td>
+<td>Inference (prompting)</td>
 </tr>
 <tr>
-<td>HotpotQA failures from hallucination: 56%</td>
-<td>Failures from hallucination: 0%</td>
+<td>RLEF (Gehring et al. 2024)</td>
+<td>Running code on tests</td>
+<td>Training (RL) and inference</td>
 </tr>
 <tr>
-<td>FEVER: 56.3</td>
-<td>FEVER: 60.9</td>
+<td>Constitutional AI (Bai et al. 2022)</td>
+<td>An AI judge using written principles</td>
+<td>Training (SL, then RL)</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>ReAct's own failures: 47% were reasoning errors, such as repeating steps.</li>
-<li>ReAct + self-consistent CoT gave the best prompting results (35.1 EM on HotpotQA).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>ReAct on a contract</h3><span class="slide-no">5/13</span></div><div class="tbl"><table>
+<li>ReAct: use feedback inside one run.</li>
+<li>RLEF: train the model so it actually reads the feedback.</li>
+<li>CAI: replace human labels with written rules plus AI feedback.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Feedback inside a run vs feedback for training</h3><span class="slide-no">4/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Inside one run</th>
+<th>For training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The model reads a tool result and changes its next step</td>
+<td>Many runs become a dataset; the model's weights change</td>
+</tr>
+<tr>
+<td>No training needed</td>
+<td>Needs logged episodes and a reward</td>
+</tr>
+<tr>
+<td>ReAct, the repair loop</td>
+<td>RLEF (PPO), CAI (fine-tune, then RLAIF)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The same loop gives both: run it now, log it for later.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>ReAct: reasoning and acting together (Yao et al. 2022)</div><div class="slide"><div class="slide-top"><h3>The problem ReAct solves</h3><span class="slide-no">5/75</span></div><ul>
+<li>Reason-only (chain-of-thought, CoT): the model reasons from memory.<ul>
+<li>"Static black box": not grounded in the world, so it can make up facts and errors spread.</li>
+</ul>
+</li>
+<li>Act-only: the model picks actions (search, click) but never writes down why.<ul>
+<li>It loses track of the goal and of what it already saw.</li>
+</ul>
+</li>
+<li>ReAct: interleave the two. Reason to decide the next action; act to get facts for the reasoning.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One question, four methods (Figure 1)</h3><span class="slide-no">6/75</span></div><ul>
+<li>Question (HotpotQA): "Aside from the Apple Remote, what other device can control the program Apple Remote was originally designed to interact with?"</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>What happened</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard</td>
+<td>Answers directly</td>
+<td>"iPod" (wrong)</td>
+</tr>
+<tr>
+<td>CoT (reason only)</td>
+<td>Reasons from memory about Apple TV</td>
+<td>"iPhone, iPad, iPod Touch" (wrong)</td>
+</tr>
+<tr>
+<td>Act only</td>
+<td>Searches, but can't put facts together</td>
+<td>"yes" (wrong)</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>Search Apple Remote → Front Row → Front Row (software)</td>
+<td>"keyboard function keys" (right)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The idea in one formula</h3><span class="slide-no">7/75</span></div><ul>
+<li>Normal agent: at step t, sees context c_t (all past observations and actions), picks action a_t from the action set A.</li>
+<li>ReAct: action space Â = A ∪ L.<ul>
+<li>A: real actions (search, go to cabinet)</li>
+<li>L: the space of language. An action from L is a thought.</li>
+</ul>
+</li>
+<li>A thought does not change the world, so there is no observation.</li>
+<li>It only updates the context: c_t+1 = (c_t, thought), to help later steps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What thoughts are for</h3><span class="slide-no">8/75</span></div><ul>
+<li>Split the goal and make a plan ("I need to search x, find y, then find z").</li>
+<li>Pull the key fact out of an observation ("x was started in 1844").</li>
+<li>Add common sense ("x is not y, so z must instead be...").</li>
+<li>Do arithmetic ("1844 &lt; 1989").</li>
+<li>Fix the search ("maybe I can search x instead").</li>
+<li>Track progress and handle surprises.</li>
+<li>Say the final answer ("...so the answer is x").</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Dense vs sparse thoughts</h3><span class="slide-no">9/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Dense (QA, fact check)</th>
+<th>Sparse (games, web shop)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Thought → Action → Observation every step</td>
+<td>Thoughts only where they help</td>
+</tr>
+<tr>
+<td>Reasoning matters most</td>
+<td>Many actions per task</td>
+</tr>
+<tr>
+<td>HotpotQA, FEVER</td>
+<td>ALFWorld, WebShop</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>In sparse mode the model decides for itself when to think.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four selling points (Section 2)</h3><span class="slide-no">10/75</span></div><ul>
+<li>Intuitive: annotators just type their thoughts on top of their actions. No special format design.</li>
+<li>General: works for QA, fact checking, text games and web navigation.</li>
+<li>Performant: learns from only one to six in-context examples.</li>
+<li>Human-aligned: people can read the reasoning, check facts, and edit thoughts to steer the agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setup: knowledge tasks</h3><span class="slide-no">11/75</span></div><ul>
+<li>HotpotQA: multi-hop questions; need two or more Wikipedia passages.</li>
+<li>FEVER: fact checking; each claim is SUPPORTS, REFUTES or NOT ENOUGH INFO.</li>
+<li>Question-only setup: the model gets no support paragraphs. It must use memory or the tool.</li>
+<li>Model: PaLM-540B, frozen, few-shot prompted.</li>
+<li>Exemplars: 6 (HotpotQA) and 3 (FEVER) hand-written trajectories. More examples did not help.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The Wikipedia tool (3 actions)</h3><span class="slide-no">12/75</span></div><ul>
+<li>search[entity]: first 5 sentences of that page, or the top-5 similar page names.</li>
+<li>lookup[string]: next sentence on the page containing the string (like Ctrl+F).</li>
+<li>finish[answer]: end with an answer.</li>
+<li>Deliberately weak, much weaker than a modern retriever.<ul>
+<li>Forces the model to retrieve by reasoning in language, like a person browsing.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Baselines (all cut from the same ReAct trajectories)</h3><span class="slide-no">13/75</span></div><ul>
+<li>Standard: remove thoughts, actions and observations; answer directly.</li>
+<li>CoT: keep thoughts only (reason-only).</li>
+<li>CoT-SC (self-consistency): sample 21 CoT answers at temperature 0.7; take the majority.</li>
+<li>Act: keep actions and observations, remove thoughts (like WebGPT).</li>
+<li>Same examples for all, so the comparison is fair.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Mixing memory and lookup</h3><span class="slide-no">14/75</span></div><ul>
+<li>ReAct is more factual; CoT is better at structuring reasoning. So combine them:</li>
+<li>ReAct → CoT-SC: if ReAct gives no answer within the step limit, fall back to CoT-SC.<ul>
+<li>Limit: 7 steps (HotpotQA), 5 steps (FEVER). More steps did not help.</li>
+<li>Only 0.84% and 1.33% of correct trajectories used that many steps.</li>
+</ul>
+</li>
+<li>CoT-SC → ReAct: if the majority answer appears in fewer than n/2 of n samples, the model is unsure, so switch to ReAct.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results: HotpotQA and FEVER (Table 1, PaLM-540B)</h3><span class="slide-no">15/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>HotpotQA (EM)</th>
+<th>FEVER (Acc)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard</td>
+<td>28.7</td>
+<td>57.1</td>
+</tr>
+<tr>
+<td>CoT</td>
+<td>29.4</td>
+<td>56.3</td>
+</tr>
+<tr>
+<td>CoT-SC</td>
+<td>33.4</td>
+<td>60.4</td>
+</tr>
+<tr>
+<td>Act</td>
+<td>25.7</td>
+<td>58.9</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>27.4</td>
+<td>60.9</td>
+</tr>
+<tr>
+<td>CoT-SC → ReAct</td>
+<td>34.2</td>
+<td>64.6</td>
+</tr>
+<tr>
+<td>ReAct → CoT-SC</td>
+<td>35.1</td>
+<td>62.0</td>
+</tr>
+<tr>
+<td>Supervised SoTA</td>
+<td>67.5</td>
+<td>89.5</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>EM (exact match): answer must match the label exactly.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What Table 1 says</h3><span class="slide-no">16/75</span></div><ul>
+<li>ReAct beats Act on both: reasoning helps the agent use its actions, especially to put the final answer together.</li>
+<li>ReAct beats CoT on FEVER (60.9 vs 56.3). Claims can differ by tiny details, so fresh lookups matter.</li>
+<li>ReAct trails CoT a little on HotpotQA (27.4 vs 29.4).</li>
+<li>Best: a mix. ReAct → CoT-SC for HotpotQA, CoT-SC → ReAct for FEVER.</li>
+<li>All prompting methods are still far below fine-tuned state of the art.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why ReAct and CoT fail (Table 2)</h3><span class="slide-no">17/75</span></div><ul>
+<li>50 right and 50 wrong runs from each method, 200 in total, labeled by hand.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>ReAct</th>
+<th>CoT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Success: correct reasoning and facts</td>
+<td>94%</td>
+<td>86%</td>
+</tr>
+<tr>
+<td>Success: hallucinated reasoning or facts</td>
+<td>6%</td>
+<td>14%</td>
+</tr>
+<tr>
+<td>Failure: reasoning error (incl. repeating steps)</td>
+<td>47%</td>
+<td>16%</td>
+</tr>
+<tr>
+<td>Failure: search gave nothing useful</td>
+<td>23%</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Failure: hallucination</td>
+<td>0%</td>
+<td>56%</td>
+</tr>
+<tr>
+<td>Failure: label ambiguity</td>
+<td>29%</td>
+<td>28%</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Reading Table 2</h3><span class="slide-no">18/75</span></div><ul>
+<li>Hallucination is CoT's main failure (56%). ReAct's is 0%: it looks facts up.</li>
+<li>ReAct's main failure is reasoning error (47%).<ul>
+<li>Common pattern: it repeats its last thought and action and can't break the loop.</li>
+<li>Authors suspect greedy decoding; better decoding (like beam search) might help.</li>
+</ul>
+</li>
+<li>Bad search derails ReAct: 23% of its errors.</li>
+<li>The trade-off: facts (ReAct) vs flexible reasoning (CoT). Hence the mix.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fewer samples with the mix (Figure 2)</h3><span class="slide-no">19/75</span></div><ul>
+<li>x-axis: number of CoT-SC samples (0 to 20). y-axis: HotpotQA EM or FEVER accuracy.</li>
+<li>Both ReAct + CoT-SC mixes beat plain CoT-SC at every sample count.</li>
+<li>They reach CoT-SC's 21-sample score with only 3–5 samples.</li>
+<li>Lesson: combining memory and lookup saves calls.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fine-tuning on ReAct traces (Figure 3)</h3><span class="slide-no">20/75</span></div><ul>
+<li>Bootstrapping: 3,000 trajectories with correct answers, generated by ReAct, fine-tune PaLM-8B and 62B.</li>
+<li>Prompting: ReAct is the worst of four methods at 8B/62B. Small models can't learn it from a few examples.</li>
+<li>Fine-tuned: ReAct is the best of four.<ul>
+<li>Fine-tuned 8B ReAct beats every 62B prompting method.</li>
+<li>Fine-tuned 62B ReAct beats every 540B prompting method.</li>
+</ul>
+</li>
+<li>Fine-tuning Standard or CoT teaches facts to memorize; fine-tuning ReAct teaches how to look facts up.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setup: decision-making tasks</h3><span class="slide-no">21/75</span></div><ul>
+<li>ALFWorld: text game in a simulated house; 6 task types (e.g. "examine paper under desklamp").<ul>
+<li>Can have 50+ locations and take an expert 50+ steps.</li>
+<li>3 annotated runs per task type, sparse thoughts; 134 unseen test games.</li>
+<li>6 prompts per type (each pair of the 3 runs). Baseline BUTLER: imitation learning on 10^5 expert runs per type.</li>
+</ul>
+</li>
+<li>WebShop: real shopping site; 1.18M products, 12k instructions, 500 test instructions.<ul>
+<li>Score: share of wanted attributes met. Success rate: all requirements met.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ALFWorld results (Table 3, success %)</h3><span class="slide-no">22/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Pick</th>
+<th>Clean</th>
+<th>Heat</th>
+<th>Cool</th>
+<th>Look</th>
+<th>Pick 2</th>
+<th>All</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Act (best of 6)</td>
+<td>88</td>
+<td>42</td>
+<td>74</td>
+<td>67</td>
+<td>72</td>
+<td>41</td>
+<td>45</td>
+</tr>
+<tr>
+<td>ReAct (avg)</td>
+<td>65</td>
+<td>39</td>
+<td>83</td>
+<td>76</td>
+<td>55</td>
+<td>24</td>
+<td>57</td>
+</tr>
+<tr>
+<td>ReAct (best of 6)</td>
+<td>92</td>
+<td>58</td>
+<td>96</td>
+<td>86</td>
+<td>78</td>
+<td>41</td>
+<td>71</td>
+</tr>
+<tr>
+<td>ReAct-IM (avg)</td>
+<td>55</td>
+<td>59</td>
+<td>60</td>
+<td>55</td>
+<td>23</td>
+<td>24</td>
+<td>48</td>
+</tr>
+<tr>
+<td>ReAct-IM (best of 6)</td>
+<td>62</td>
+<td>68</td>
+<td>87</td>
+<td>57</td>
+<td>39</td>
+<td>33</td>
+<td>53</td>
+</tr>
+<tr>
+<td>BUTLER (best of 8)</td>
+<td>46</td>
+<td>39</td>
+<td>74</td>
+<td>100</td>
+<td>22</td>
+<td>24</td>
+<td>37</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Even the worst ReAct trial (48%) beats the best Act and BUTLER trials.</li>
+<li>ReAct beats Act in all six trials: relative gain 33% to 90%, average 62%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>WebShop results (Table 4)</h3><span class="slide-no">23/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Score</th>
+<th>Success rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Act</td>
+<td>62.3</td>
+<td>30.1</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>66.6</td>
+<td>40.0</td>
+</tr>
+<tr>
+<td>IL (1,012 human runs)</td>
+<td>59.9</td>
+<td>29.1</td>
+</tr>
+<tr>
+<td>IL+RL (+10,587 instructions)</td>
+<td>62.4</td>
+<td>28.7</td>
+</tr>
+<tr>
+<td>Human expert</td>
+<td>82.1</td>
+<td>59.6</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>One-shot Act already matches IL and IL+RL.</li>
+<li>ReAct: about 10 points better success rate than the previous best.</li>
+<li>Humans still far ahead: they explore more products and rewrite searches more.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Inner thoughts vs just reacting (ablation)</h3><span class="slide-no">24/75</span></div><ul>
+<li>Inner Monologue (IM, Huang et al. 2022): thoughts only restate what the environment says and the current subgoal.</li>
+<li>ReAct-IM: same runs, but thoughts limited to IM style.</li>
+<li>ReAct 71 vs ReAct-IM 53 overall (Table 3); better on 5 of 6 task types.</li>
+<li>ReAct-IM failed to notice when a subgoal was done, what came next, and where items likely were.</li>
+<li>Lesson: thoughts must plan and use common sense, not just echo feedback.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Extra findings (Appendix A)</h3><span class="slide-no">25/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>HotpotQA (EM)</th>
+<th>ALFWorld (success %)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PaLM-540B</td>
+<td>29.4</td>
+<td>70.9</td>
+</tr>
+<tr>
+<td>GPT-3 (text-davinci-002)</td>
+<td>30.8</td>
+<td>78.4</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Table 5: ReAct works on another model too (500 HotpotQA questions, all 134 ALFWorld games).</li>
+<li>Outdated labels: some HotpotQA labels are stale. Only ReAct found the up-to-date answer (Figure 4).</li>
+<li>Human-in-the-loop: editing two thoughts fixed a failing ALFWorld run (Figure 5).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ReAct&#x27;s limits</h3><span class="slide-no">26/75</span></div><ul>
+<li>Complex tasks need more examples than fit in the prompt.</li>
+<li>Small models can't learn ReAct from prompts alone; they need fine-tuning.</li>
+<li>Repeating loops and bad searches are its main failures.</li>
+<li>Hooking a model to real actions is risky: it could look up private data or take harmful actions. The paper limits actions to Wikipedia and simulated sites.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>ReAct on a contract</h3><span class="slide-no">27/75</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Step</th>
@@ -331,37 +766,383 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>Every fact comes from the contract, not the model's memory.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Execution feedback (RLEF, Gehring et al. 2024)</h3><span class="slide-no">6/13</span></div><ul>
-<li>Execution feedback: results of running code (failed tests, errors, timeouts) shown back to the model.</li>
-<li>Public tests: visible; give feedback during the loop.</li>
-<li>Private tests: hidden; decide the final grade, so the model can't overfit.</li>
-<li>Loop: write code → see public test results → try again (up to 3 attempts).</li>
-<li>Reward: +1 if private tests pass, −1 if not. Trained with RL (PPO).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>RLEF results</h3><span class="slide-no">7/13</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>A safe calculator tool</h3><span class="slide-no">28/75</span></div><pre><code class="language-python">def tool_calc(expr):
+    if not re.fullmatch(r&quot;[\d\s+\-*/().,]+&quot;, expr):                         # numbers and operators only
+        return &quot;ERROR: calculator accepts only numbers and + - * / ( )&quot;
+    out, err = run_python(f&quot;print({expr.replace(',', '')})&quot;, timeout=3)       # still in a subprocess
+    return out.strip() or f&quot;ERROR: {err.strip()[-200:]}&quot;
+</code></pre>
+<ul>
+<li>Line 1: the tool takes a math expression as text.</li>
+<li>Lines 2–3: anything but digits and operators is refused, with an error message.</li>
+<li>Line 4: runs the math in a separate process with a 3-second timeout.</li>
+<li>Line 5: returns the result, or the error. Errors become observations, so the agent can recover.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>RLEF: training on execution feedback (Gehring et al. 2024)</div><div class="slide"><div class="slide-top"><h3>The problem RLEF solves</h3><span class="slide-no">29/75</span></div><ul>
+<li>Code models can get test results and try again. But do they use them?</li>
+<li>Earlier work: for the same number of calls, fresh independent samples often beat repair loops.<ul>
+<li>Olausson et al. 2024; Kapoor et al. 2024</li>
+</ul>
+</li>
+<li>Agent scaffolds (AlphaCodium, MapCoder) help, but need dozens of LLM calls per solution.</li>
+<li>RLEF: train the model with RL inside the repair loop, so it learns to read the feedback.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The loop (Figure 2)</h3><span class="slide-no">30/75</span></div><ul>
+<li>Turn 1: the problem text → the model writes code.</li>
+<li>Run the code on public tests.</li>
+<li>If any fail: add the feedback to the chat ("Your code failed the following tests: ... Give it another try.").</li>
+<li>Repeat until public tests pass or the turn limit hits (3 attempts).</li>
+<li>Final code runs on private tests → reward → PPO update.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two test sets</h3><span class="slide-no">31/75</span></div><ul>
+<li>Public tests: visible; give feedback during the loop; pick the final answer.</li>
+<li>Private tests: hidden; decide the reward.</li>
+<li>Why separate:<ul>
+<li>Fixed tests can be gamed: the model could copy expected outputs from the feedback.</li>
+<li>A small public set keeps each loop fast.</li>
+</ul>
+</li>
+<li>CodeContests public tests: 1–7 per problem, median 1 (Appendix B.2).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The feedback message (Appendix C)</h3><span class="slide-no">32/75</span></div><ul>
+<li>Four error types, each with the failing input:<ul>
+<li>Wrong answer: "Expected output ... but got ..."</li>
+<li>Exception: the stack trace</li>
+<li>Timeout: "Execution took too long."</li>
+<li>Out of memory: "Out of memory."</li>
+</ul>
+</li>
+<li>Ends with "Give it another try."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Framing it as RL</h3><span class="slide-no">33/75</span></div><ul>
+<li>MDP (Markov decision process): states, actions, rewards. The LLM is the policy.</li>
+<li>Partially observable: the policy never sees the private tests.</li>
+<li>First observation: problem text. Each action: a full model reply.</li>
+<li>Next observation: the chat so far plus public-test feedback.</li>
+<li>Episode ends when public tests pass or the step limit hits.</li>
+<li>No discounting (γ = 1): only the end result counts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The reward</h3><span class="slide-no">34/75</span></div><ul>
+<li>R(s_t, a_t) = r(s_t, a_t) − β · log( π(a_t | c_t) / ρ(a_t | c_t) )</li>
+<li>r = +1 at episode end if all tests pass.</li>
+<li>r = −1 at episode end if any test fails.</li>
+<li>r = −0.2 if the reply has no valid code (stops junk in middle turns).</li>
+<li>π: the model being trained. ρ: the starting model.</li>
+<li>β · log(π/ρ): KL penalty. Keeps the model close to where it started; also acts as an entropy bonus.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>PPO details</h3><span class="slide-no">35/75</span></div><ul>
+<li>PPO (proximal policy optimization): a standard RL method for LLMs; uses a learned value function as a baseline.</li>
+<li>Advantage A_t = −V(c_t) + sum of rewards from t to the end.</li>
+<li>Hybrid choice: policy at the token level, value function per whole turn.<ul>
+<li>Value predicted from the last token of the prompt; one advantage for every token in the reply.</li>
+</ul>
+</li>
+<li>Reply probability = geometric mean of token probabilities, not the product.<ul>
+<li>Removes a bias toward short replies.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Experimental setup</h3><span class="slide-no">36/75</span></div><ul>
+<li>CodeContests: competitive programming; valid set 117 problems, test set 165.</li>
+<li>Training set: 13,328 problems, 669 dropped for missing tests.</li>
+<li>Starting models: Llama 3.0 and 3.1 Instruct, 8B and 70B. Python 3 output.</li>
+<li>3 attempts per problem.</li>
+<li>12,000 updates (8B) and 8,000 updates (70B); checkpoint picked on the valid set.</li>
+<li>H100 GPUs; one training run takes about 20 hours.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How they count: n@k</h3><span class="slide-no">37/75</span></div><ul>
+<li>n@k: chance that any of n chosen solutions passes all tests, out of k samples total.</li>
+<li>Each turn counts as one sample. So 1@3 = one rollout with up to 3 replies.</li>
+<li>This makes comparisons fair on compute.</li>
+<li>Temperatures: 0.2 for 1@3, 1.0 for 10@100; top-p 0.95. 200 rollouts per estimate.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Main results (Table 1, CodeContests solve rate %)</h3><span class="slide-no">38/75</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>CodeContests, 3 attempts</th>
-<th>Before training</th>
-<th>After RL training</th>
+<th>Model</th>
+<th>n@k</th>
+<th>Valid</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AlphaCode 9B</td>
+<td>10@1000</td>
+<td>16.9</td>
+<td>13.3</td>
+</tr>
+<tr>
+<td>AlphaCodium GPT-4</td>
+<td>5@100</td>
+<td>44</td>
+<td>29</td>
+</tr>
+<tr>
+<td>MapCoder GPT-4</td>
+<td>1@19</td>
+<td>-</td>
+<td>28.5</td>
+</tr>
+<tr>
+<td>Llama 3.0 8B → + RLEF</td>
+<td>1@3</td>
+<td>4.1 → 12.5</td>
+<td>3.2 → 12.1</td>
+</tr>
+<tr>
+<td>Llama 3.1 8B → + RLEF</td>
+<td>1@3</td>
+<td>8.9 → 17.2</td>
+<td>10.5 → 16.0</td>
+</tr>
+<tr>
+<td>Llama 3.1 70B → + RLEF</td>
+<td>1@3</td>
+<td>25.9 → 37.5</td>
+<td>27.5 → 40.1</td>
+</tr>
+<tr>
+<td>Llama 3.1 8B → + RLEF</td>
+<td>10@100</td>
+<td>21.7 → 29.8</td>
+<td>24.8 → 28.7</td>
+</tr>
+<tr>
+<td>Llama 3.1 70B → + RLEF</td>
+<td>10@100</td>
+<td>50.2 → 54.5</td>
+<td>50.3 → 54.5</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Reading Table 1</h3><span class="slide-no">39/75</span></div><ul>
+<li>70B + RLEF beats AlphaCodium with GPT-4 on the test set with one rollout (3 samples) vs 5 picks from 100.</li>
+<li>8B + RLEF edges AlphaCode 9B (16.0 vs 13.3) with 3 samples vs 1,000.</li>
+<li>Gains are smaller at 10@100. RL may reduce output variety (Kirk et al. 2024).</li>
+<li>RLEF also lifts the older Llama 3.0 8B a lot: maybe a partial stand-in for instruction tuning when tests exist.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Do models use feedback? (Table 2, 1@3)</h3><span class="slide-no">40/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>CC test ST</th>
+<th>CC test MT</th>
+<th>HumanEval+ ST</th>
+<th>HumanEval+ MT</th>
+<th>MBPP+ ST</th>
+<th>MBPP+ MT</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Llama 3.1 8B</td>
-<td>10.5%</td>
-<td>16.0%</td>
+<td>11.8</td>
+<td>10.5</td>
+<td>65.3</td>
+<td>63.9</td>
+<td>58.3</td>
+<td>60.5</td>
+</tr>
+<tr>
+<td>+ RLEF</td>
+<td>9.7</td>
+<td>16.0</td>
+<td>67.5</td>
+<td>69.5</td>
+<td>57.0</td>
+<td>63.1</td>
 </tr>
 <tr>
 <td>Llama 3.1 70B</td>
-<td>27.5%</td>
-<td>40.1%</td>
+<td>26.2</td>
+<td>27.4</td>
+<td>73.2</td>
+<td>75.0</td>
+<td>66.9</td>
+<td>70.2</td>
+</tr>
+<tr>
+<td>+ RLEF</td>
+<td>30.3</td>
+<td>40.1</td>
+<td>78.6</td>
+<td>80.4</td>
+<td>67.6</td>
+<td>72.2</td>
+</tr>
+<tr>
+<td>GPT-4o</td>
+<td>25.3</td>
+<td>24.3</td>
+<td>82.8</td>
+<td>80.7</td>
+<td>68.8</td>
+<td>71.7</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Untrained 8B barely used feedback: 11.8% single-turn vs 10.5% multi-turn.</li>
-<li>Given random feedback from another problem, trained models got much worse: they really read it.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The fair baseline</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<li>ST: 3 independent tries. MT: 3 turns with feedback.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reading Table 2</h3><span class="slide-no">41/75</span></div><ul>
+<li>Before RLEF, multi-turn barely helps; sometimes it hurts (8B: 11.8 → 10.5).</li>
+<li>Even GPT-4o does better with independent samples on CodeContests and HumanEval+.</li>
+<li>After RLEF, multi-turn wins clearly (70B: 30.3 → 40.1).</li>
+<li>Gains carry over to HumanEval+ and MBPP+, which use a slightly different feedback format.</li>
+<li>Exception: 8B + RLEF single-turn drops on CodeContests and MBPP+.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Proof the model reads feedback (Figure 3)</h3><span class="slide-no">42/75</span></div><ul>
+<li>Random feedback test: show errors from a wrong solution to an unrelated problem.</li>
+<li>20 rollouts per problem, 5,640 in total.</li>
+<li>After RLEF: fewer wrong outputs at turn 1, but more timeouts.</li>
+<li>After RLEF: many more errors fixed in turns 2 and 3.</li>
+<li>With random feedback: fixes drop sharply.</li>
+<li>chrF (character n-gram match) between turns: untrained models make tiny edits and often resend the same code.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>More turns? (Figure 4)</h3><span class="slide-no">43/75</span></div><ul>
+<li>Figure 4a: pass@1 and pass@10 vs turn limit, true vs random feedback.<ul>
+<li>Random feedback lowers pass@1, more so with more turns. pass@10 drops only a little.</li>
+<li>With true feedback, pass@1 keeps rising with more turns.</li>
+</ul>
+</li>
+<li>Figure 4b: same total samples, split into rollouts of 1, 3, 5 or 10 turns.<ul>
+<li>Before RLEF (8B): independent samples (1 turn) mostly best.</li>
+<li>After RLEF: 3, 5 and 10 turns all beat independent sampling; 5 turns is best.</li>
+<li>10 turns never helps at a fixed budget.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Ablation: how to teach the loop (Table 3a, 1@3)</h3><span class="slide-no">44/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>8B valid</th>
+<th>8B test</th>
+<th>70B valid</th>
+<th>70B test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Instruct</td>
+<td>8.9</td>
+<td>10.5</td>
+<td>25.9</td>
+<td>27.5</td>
+</tr>
+<tr>
+<td>Few-shot</td>
+<td>8.5</td>
+<td>8.5</td>
+<td>22.5</td>
+<td>20.3</td>
+</tr>
+<tr>
+<td>SFT</td>
+<td>10.3</td>
+<td>10.0</td>
+<td>27.7</td>
+<td>27.2</td>
+</tr>
+<tr>
+<td>RLEF</td>
+<td>17.2</td>
+<td>16.0</td>
+<td>37.5</td>
+<td>40.1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>SFT data: 70B rollouts filtered to correct final answers.</li>
+<li>Few-shot hurts instruct models. SFT helps only on valid. RLEF wins.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Ablation: train with one turn or many? (Table 3b)</h3><span class="slide-no">45/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Training</th>
+<th>Valid ST</th>
+<th>Valid MT</th>
+<th>Test ST</th>
+<th>Test MT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8B</td>
+<td>none</td>
+<td>9.4</td>
+<td>8.9</td>
+<td>11.6</td>
+<td>10.5</td>
+</tr>
+<tr>
+<td>8B</td>
+<td>single-turn</td>
+<td>10.3</td>
+<td>10.2</td>
+<td>9.9</td>
+<td>10.9</td>
+</tr>
+<tr>
+<td>8B</td>
+<td>multi-turn</td>
+<td>16.2</td>
+<td>17.2</td>
+<td>9.5</td>
+<td>16.0</td>
+</tr>
+<tr>
+<td>70B</td>
+<td>none</td>
+<td>25.6</td>
+<td>25.9</td>
+<td>25.9</td>
+<td>27.5</td>
+</tr>
+<tr>
+<td>70B</td>
+<td>single-turn</td>
+<td>28.3</td>
+<td>31.1</td>
+<td>27.3</td>
+<td>32.9</td>
+</tr>
+<tr>
+<td>70B</td>
+<td>multi-turn</td>
+<td>25.8</td>
+<td>37.5</td>
+<td>30.3</td>
+<td>40.1</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Multi-turn training gives the biggest gains. Single-turn training hurts 8B on test.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>More ablations (Appendix B)</h3><span class="slide-no">46/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Variant (8B, 1@3)</th>
+<th>Valid</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single-turn RL model + separate repair model</td>
+<td>14.8</td>
+<td>12.6</td>
+</tr>
+<tr>
+<td>RL with no feedback text ("Give it another try" only)</td>
+<td>12.2</td>
+<td>10.9</td>
+</tr>
+<tr>
+<td>Token-level value function</td>
+<td>13.1</td>
+<td>13.7</td>
+</tr>
+<tr>
+<td>RLEF (one model, turn-level value)</td>
+<td>17.2</td>
+<td>16.0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Feedback from 20 tests instead of public only: 70B valid 37.5 → 40.4, test 38.0 → 41.2; 8B valid 17.2 → 18.1, test 16.0 → 14.4.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RLEF&#x27;s limits</h3><span class="slide-no">47/75</span></div><ul>
+<li>Only improves one solution to one problem; bigger tasks need splitting into parts.</li>
+<li>Needs test cases, which may not exist. Auto-generated tests could help.</li>
+<li>Code runs in local sandboxes; safety guardrails still needed.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The fair baseline</h3><span class="slide-no">48/75</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Repair loop</th>
@@ -382,14 +1163,277 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <ul>
 <li>If the loop doesn't beat fresh samples, the model is not using the feedback.</li>
 <li>Then log the episodes: (prompt, attempts, feedback, final reward). That is RLEF's training data.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Constitutional AI (Bai et al. 2022)</h3><span class="slide-no">9/13</span></div><ul>
-<li>Constitution: a short list of written principles; replaces most human labels.</li>
-<li>Critique-and-revise: the model reviews its answer against one principle, then rewrites it.</li>
-<li>The paper: 16 principles, 4 critique-revision rounds per red-team prompt.</li>
-<li>RLAIF: an AI, not a person, picks the better of two answers; those picks train the reward model.</li>
-<li>Result: rated more harmless than RLHF models, and explained objections instead of dodging.</li>
-<li>Over-training → Goodharting: preachy boilerplate in many answers.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Our constitution in code</h3><span class="slide-no">10/13</span></div><pre><code class="language-python">CONSTITUTION = [
+</ul></div><div class="slide"><div class="slide-top"><h3>Our repair loop in code</h3><span class="slide-no">49/75</span></div><pre><code class="language-python">for turn in range(1, max_turns + 1):
+    reply = llm(history, system=SYSTEM, temperature=temperature, max_tokens=700)
+    code = extract_code(reply)
+    dp, dn, fb = run_tests(code, dev, public=True)                    # feedback signal
+    ap, an, _ = run_tests(code, t)                                    # grade: all tests
+</code></pre>
+<ul>
+<li>Line 1: up to 3 attempts, like RLEF.</li>
+<li>Lines 2–3: ask the model, pull out the code block.</li>
+<li>Line 4: run the dev tests the model may see; <code>fb</code> is the feedback text.</li>
+<li>Line 5: grade on all tests. The notebook also reports the held-out half the model never saw.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Constitutional AI: harmlessness from AI feedback (Bai et al. 2022)</div><div class="slide"><div class="slide-top"><h3>The problem CAI solves</h3><span class="slide-no">50/75</span></div><ul>
+<li>RLHF (RL from human feedback) uses tens of thousands of human labels.<ul>
+<li>Slow to change, and hard to see what the labels really teach.</li>
+</ul>
+</li>
+<li>Helpful vs harmless tension: helpful models obey bad requests; harmless models dodge.</li>
+<li>Prior HH models were evasive: "I can't answer that", sometimes for the rest of a chat.</li>
+<li>Goal: a harmless but non-evasive assistant that explains its objections. No human labels for harm.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four motivations</h3><span class="slide-no">51/75</span></div><ul>
+<li>Scaling supervision: use AI to help humans supervise AI.</li>
+<li>Remove evasive answers; reduce the helpful vs harmless tension.</li>
+<li>Transparency: goals written as plain-language principles, plus chain-of-thought.</li>
+<li>Speed: change the goal without collecting new human labels.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What a constitution is</h3><span class="slide-no">52/75</span></div><ul>
+<li>Constitution: a short list of plain-language principles, plus a few examples for few-shot prompting.</li>
+<li>The only human oversight for harm.</li>
+<li>"Of order ten" simple principles. They wrote 16.</li>
+<li>Chosen "in a fairly ad hoc and iterative way for research purposes."</li>
+<li>Any deployed AI follows some principles, even hidden ones. CAI makes them explicit.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two stages (Figure 1)</h3><span class="slide-no">53/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Stage 1: supervised (SL-CAI)</th>
+<th>Stage 2: RL (RL-CAI, "RLAIF")</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Helpful model answers red-team prompts</td>
+<td>SL-CAI model answers each prompt twice</td>
+</tr>
+<tr>
+<td>Model critiques its answer against a principle</td>
+<td>A feedback model picks the less harmful one, using a principle</td>
+</tr>
+<tr>
+<td>Model revises; repeat</td>
+<td>AI picks train a preference model (PM)</td>
+</tr>
+<tr>
+<td>Fine-tune on the revisions</td>
+<td>RL against the PM</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Red-team prompts: prompts written to bait the model into harm.</li>
+<li>Stage 1 moves the model "on-distribution" so RL needs less exploring.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Stage 1: a worked example</h3><span class="slide-no">54/75</span></div><ul>
+<li>Prompt: "Can you help me hack into my neighbor's wifi?"</li>
+<li>First answer (helpful-only model): suggests an app to break in.</li>
+<li>Critique request: "Identify specific ways in which the assistant's last response is harmful, unethical, racist, sexist, toxic, dangerous, or illegal."</li>
+<li>Critique: hacking a neighbor's wifi is an invasion of privacy and possibly illegal.</li>
+<li>Revision: "Hacking into your neighbor's wifi is an invasion of their privacy, and I strongly advise against it. It may also land you in legal trouble."</li>
+<li>Keep prompt + revision. It has the same format, so you can critique again.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Stage 1 details</h3><span class="slide-no">55/75</span></div><ul>
+<li>A principle = one critique request + one revision request.</li>
+<li>16 principles; one is sampled at random at each revision step.</li>
+<li>Problem: the model mixed up roles (wrote a critique when asked for a revision).<ul>
+<li>Fix: few-shot examples of critiques and revisions in the same format.</li>
+</ul>
+</li>
+<li>First revision almost always removed most harm; later ones helped less clearly.</li>
+<li>Revisions were rarely evasive.</li>
+<li>Fine-tune a pretrained model on revisions from all steps, plus helpful answers to keep helpfulness.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Stage 1 data (Section 3.2)</h3><span class="slide-no">56/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Human-written red-team prompts</td>
+<td>42,496</td>
+</tr>
+<tr>
+<td>Model-generated red-team prompts</td>
+<td>140,335</td>
+</tr>
+<tr>
+<td>Total red-team prompts</td>
+<td>182,831</td>
+</tr>
+<tr>
+<td>Critique-revision pairs per red-team prompt</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Human-written helpfulness prompts</td>
+<td>135,296</td>
+</tr>
+<tr>
+<td>Helpful answers sampled per helpfulness prompt</td>
+<td>2</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Sampling temperature T = 1. One epoch; learning rate 0.5 × pre-training rate; batch 1,024 sequences.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Can an AI judge harm? (Section 2, Figure 4)</h3><span class="slide-no">57/75</span></div><ul>
+<li>Test: 221 HHH comparisons from earlier work; models already score well over 90%.</li>
+<li>So they wrote 217 harder ones (subtle harm; evasive answers should lose): 438 in total.</li>
+<li>HHH: helpful, honest, harmless.</li>
+<li>Two ways to judge: a PM trained on hundreds of thousands of human labels, or a pretrained LM answering multiple choice.</li>
+<li>Chain-of-thought helps large models a lot; averaging 5 CoT samples helps a bit more.</li>
+<li>Trend: models larger than 52B should match human-feedback PMs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>More revisions, less harm (Figure 5)</h3><span class="slide-no">58/75</span></div><ul>
+<li>x-axis: number of revisions (0 = first answer). y-axis: score from a 52B PM trained only on human labels.</li>
+<li>Harmlessness score: rises with every revision.</li>
+<li>Combined helpful + harmless score: rises with every revision.</li>
+<li>Pure helpfulness score: falls.</li>
+<li>Caveat: PM scores are less calibrated at high values. "A grain of salt."</li>
+<li>They trained SL-CAI-n on up to the n-th revision, n = 1, 2, 3, 4.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How many principles? (Figure 6)</h3><span class="slide-no">59/75</span></div><ul>
+<li>Compared constitutions with different numbers of principles, from N = 1 up to N = 16.</li>
+<li>Harmlessness PM score: no clear gain from more principles.</li>
+<li>But more principles gave more varied revisions.</li>
+<li>Variety helps exploration in the RL stage.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Are critiques needed? (Figure 7)</h3><span class="slide-no">60/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Critiqued revision</th>
+<th>Direct revision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Critique first, then revise</td>
+<td>Skip the critique, revise directly</td>
+</tr>
+<tr>
+<td>Better harmlessness for small models</td>
+<td>Similar for large models</td>
+</tr>
+<tr>
+<td>Always slightly better</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>52B critiques were often inaccurate or overstated, yet the revisions were still less harmful.</li>
+<li>They kept critiques for transparency into the model's reasoning.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Stage 2: AI picks the better answer</h3><span class="slide-no">61/75</span></div><ul>
+<li>Feedback model (usually a pretrained LM) sees the prompt, two answers and one principle:<ul>
+<li>"Consider the following conversation between a human and an assistant: ... [PRINCIPLE] Options: (A) ... (B) ..."</li>
+</ul>
+</li>
+<li>Example principle: "Which of these assistant responses is less harmful? Choose the response that a wise, ethical, polite and friendly person would more likely say."</li>
+<li>Label: normalized log probabilities of (A) and (B). These are soft, fairly calibrated targets.</li>
+<li>After that, PM training and RL are exactly as in RLHF.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Stage 2 details</h3><span class="slide-no">62/75</span></div><ul>
+<li>16 principles; one sampled per comparison label.<ul>
+<li>Ensembling over principles gave a much more robust PM than one principle for all.</li>
+</ul>
+</li>
+<li>Few-shot examples of the judging task are added first.</li>
+<li>The SL-CAI model both makes the answer pairs and starts RL. Same model keeps the PM's data close to the policy.</li>
+<li>Human labels still used for helpfulness; AI labels only for harmlessness.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Stage 2 data (Section 4.2)</h3><span class="slide-no">63/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>PM training data</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Human helpfulness comparisons</td>
+<td>135,296</td>
+</tr>
+<tr>
+<td>AI-generated harmlessness comparisons</td>
+<td>182,831</td>
+</tr>
+</tbody>
+</table></div>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Extra RL training prompts</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model-generated red-team</td>
+<td>491,142</td>
+</tr>
+<tr>
+<td>Model-generated helpfulness</td>
+<td>474,300</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>RL prompts also include all SL-CAI prompts. Same hyperparameters as prior RLHF work.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Judging with chain-of-thought</h3><span class="slide-no">64/75</span></div><ul>
+<li>CoT judge: the helpful RLHF model, prompted "Let's think step-by-step", with hand-written examples.</li>
+<li>Problem: after reasoning, it states a choice, so probabilities are near 0 or 1. Badly calibrated.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Label type</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hard labels (0 or 1), no CoT</td>
+<td>Much worse than soft</td>
+</tr>
+<tr>
+<td>Soft labels (normalized probabilities), no CoT</td>
+<td>Much better</td>
+</tr>
+<tr>
+<td>CoT, clamped to 20–80%</td>
+<td>Slightly better</td>
+</tr>
+<tr>
+<td>CoT, clamped to 40–60%</td>
+<td>Better still; used for main results</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Main results (Figures 2, 3, 8)</h3><span class="slide-no">65/75</span></div><ul>
+<li>Elo scores from crowdworker A/B tests: 10,274 helpfulness and 8,135 more comparisons across 24 snapshots.</li>
+<li>RL-CAI: significantly more harmless than RLHF and SL-CAI.</li>
+<li>RL-CAI with CoT: slightly less helpful, slightly more harmless than without CoT.</li>
+<li>Figure 2: RL-CAI is less harmful at the same helpfulness: a better trade-off curve than RLHF.</li>
+<li>SL-CAI: more harmless than helpful RLHF, less than HH RLHF; less helpful than both.</li>
+<li>Figure 9: the feedback model's probabilities are reasonably well calibrated.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Harmless but not evasive</h3><span class="slide-no">66/75</span></div><ul>
+<li>Crowdworkers were told: if both answers are equally harmless, prefer the less evasive one.</li>
+<li>RL-CAI is "virtually never evasive"; gives nuanced, harmless answers.</li>
+<li>HH RLHF harmlessness Elo falls late in training: it grows more evasive (Figure 8).</li>
+<li>Helpful RLHF falls too: it helps with dangerous tasks.</li>
+<li>Absolute harm score 0–4 (Figure 10, 64 held-out prompts, 256 answers each): helpful RLHF gets more harmful; HH RLHF and both RL-CAI get less harmful.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Goodharting</h3><span class="slide-no">67/75</span></div><ul>
+<li>Goodharting: optimize a measure too hard and it stops measuring what you want.</li>
+<li>Over-trained RL-CAI became overly harsh, or added boilerplate to most red-team answers.<ul>
+<li>e.g. "you are valid, valued, and cared for"</li>
+</ul>
+</li>
+<li>What helped:<ul>
+<li>Rewrite principles to avoid over-reactive or accusatory answers</li>
+<li>Ensemble over the 16 principles</li>
+<li>Soft or clamped labels</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>CAI&#x27;s limits</h3><span class="slide-no">68/75</span></div><ul>
+<li>Still used human labels for helpfulness.</li>
+<li>Principles were ad hoc; should be refined by more stakeholders for real use.</li>
+<li>PM scores are less calibrated at high values; absolute harm scores vary by rater.</li>
+<li>Dual use: makes it easier to train harmful systems too.</li>
+<li>Less human testing could mean shipping models with unseen failures.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our constitution in code</h3><span class="slide-no">69/75</span></div><pre><code class="language-python">CONSTITUTION = [
     &quot;Cite the clause number (like 7.1) for every claim about the contract.&quot;,
     &quot;Judge the contract ONLY against the firm playbook rules given. ...&quot;,
     &quot;Name every playbook rule the contract breaks, and say clearly whether the contract can be signed as written.&quot;,
@@ -401,25 +1445,76 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <li>Rule 2: stick to the playbook; send anything else to counsel.</li>
 <li>Rule 3: name every broken rule and give a verdict.</li>
 <li>Rule 4: short and plain. Code partly checks rules 1 and 3.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>From revisions to preference data</h3><span class="slide-no">11/13</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>From revisions to preference data</h3><span class="slide-no">70/75</span></div><ul>
 <li>Preference pair: a prompt, a chosen answer and a rejected answer.</li>
 <li>Chosen = revision. Rejected = draft.</li>
 <li>AI judge: shuffle which answer is A and B, so position bias can't fake a preference.</li>
+</ul>
+<pre><code class="language-python">    a, b, flipped = r[&quot;draft&quot;], r[&quot;revision&quot;], False
+    if rng.random() &lt; 0.5:
+        a, b, flipped = b, a, True
+</code></pre>
+<ul>
+<li>Half the time, the revision is shown as A. <code>flipped</code> remembers which.</li>
 <li>Keep pairs where the AI judge and the code checks agree. Train with DPO or a reward model.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
-<li>Tools, test runs and the AI judge all run on the firm's machine with a local model.</li>
-<li>The firm's playbook is the constitution: edit a rule, regenerate the data.</li>
-<li>Logged (draft, revision) pairs become training data for a later fine-tune.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Everything runs on the firm&#x27;s machine</h3><span class="slide-no">71/75</span></div><ul>
+<li>Tools (sections, clause, calculator), the test runner and the AI judge all run locally with a local model.</li>
+<li>Contract text never leaves the building.</li>
+<li>Code checks (real clause numbers, a verdict present) cost nothing to run.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The playbook is the constitution</h3><span class="slide-no">72/75</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>CAI paper</th>
+<th>Our firm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>16 harm principles</td>
+<td>4 contract-review rules</td>
+</tr>
+<tr>
+<td>Red-team prompts</td>
+<td>Contracts with known issues (msa_15, msa_17, msa_20)</td>
+</tr>
+<tr>
+<td>Critique against one random principle</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>AI picks the less harmful answer</td>
+<td>AI judge plus code checks pick the better review</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Edit a rule, regenerate the data. No new human labels.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Check before you trust</h3><span class="slide-no">73/75</span></div><ul>
+<li>msa_15 breaks two rules: 36-month cap (7.1) and New York law (10.1).</li>
+<li>msa_17 breaks two rules in one clause (4.1): "automatically renew for successive five (5) year periods" and "at least 15 days' prior written notice".</li>
+<li>A good review cites 7.1 and 10.1 for msa_15, and 4.1 for msa_17. Code can check that.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Log now, train later</h3><span class="slide-no">74/75</span></div><ul>
+<li>Repair loops: log (prompt, attempts, feedback, final reward), as in RLEF.</li>
+<li>Reviews: log (draft, revision, which won), as in CAI.</li>
+<li>A later fine-tune of a small local model can learn from these, as ReAct's 3,000-trajectory fine-tune did.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">75/75</span></div><ul>
 <li>Calling a repair loop a win → compare to fresh samples with the same calls.</li>
 <li>Grading on the tests the model saw → keep a held-out set.</li>
-<li>Assuming every revision is better → score both with the same checks; drop pairs where the revision lost.</li>
+<li>Assuming every revision is better → score both with the same checks; drop or flip pairs where the revision lost.</li>
 <li>Over-optimizing an AI reward → watch for boilerplate (Goodharting).</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>In RLEF, why are the private tests hidden from the model?</summary><p>So the reward measures real correctness. If the model saw the grading tests, it could pass them without solving the task.</p></details>
+<li>Ignoring position bias in AI judges → shuffle A and B.</li>
+<li>Letting an agent loop forever → cap the steps and fall back (ReAct → CoT-SC).</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>In RLEF, why are the private tests hidden from the model?</summary><p>So the reward measures real correctness. If the model saw the grading tests, it could copy expected outputs without solving the task.</p></details>
 
-<details><summary>ReAct alone scored slightly below chain-of-thought on HotpotQA. Why does the paper still favor it?</summary><p>Its answers are grounded: hallucination caused 0% of its failures vs 56% for CoT. ReAct + CoT-SC gave the best score.</p></details>
+<details><summary>ReAct alone scored slightly below chain-of-thought on HotpotQA. Why does the paper still favor it?</summary><p>Its answers are grounded: hallucination caused 0% of its failures vs 56% for CoT (Table 2). ReAct → CoT-SC gave the best score (35.1 EM).</p></details>
 
-<details><summary>How does a critique-and-revise step become training data?</summary><p>The draft is the rejected answer and the revision is the chosen one. These pairs train a preference model or a DPO update.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>How did RLEF prove its trained models really read the feedback?</summary><p>It swapped in feedback from an unrelated problem. Error fixes dropped sharply, and pass@1 fell more as turns increased (Figures 3 and 4a).</p></details>
+
+<details><summary>How does a critique-and-revise step become training data?</summary><p>The draft is the rejected answer and the revision is the chosen one. These pairs train a preference model or a DPO update.</p></details>
+
+<details><summary>Why did CAI clamp chain-of-thought judge probabilities to 40–60%?</summary><p>After reasoning, the judge commits to one answer, so its probabilities are near 0 or 1. Clamping gave better, more robust RL.</p></details>
+
+<details><summary>What is Goodharting, and what did it look like in CAI?</summary><p>Optimizing a reward so hard that it stops matching the goal. Over-trained RL-CAI added boilerplate like &quot;you are valid, valued, and cared for&quot;.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run the feedback loop on the 10 coding tasks, then the fresh-sample baseline. Which wins?</li>
 <li>Run ReAct on msa_07, msa_08 and msa_20 and check each dollar cap against the truth.</li>
 <li>Run critique-and-revise on msa_15, msa_17, msa_20. Does the code score prefer the revision?</li>

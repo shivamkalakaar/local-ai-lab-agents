@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>What an agent is, and when you don&#x27;t need one · Agent Engineering School</title>
-<meta name="description" content="An agent is an LLM in a loop. Build one from scratch, add four safety limits, and see why a fixed workflow is often the better choice.">
+<meta name="description" content="Where agents came from, the five parts every agent has, and why a fixed workflow often beats an agent. Build the loop from scratch.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,13 +259,627 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 01</span></div><section class="mod" id="m1" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 01</div><h2>What an agent is, and when you don't need one</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/01_agent_loop.ipynb">Open in Colab</a><button class="done-btn" data-done="m1" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">An agent is an LLM in a loop. Build one from scratch, add four safety limits, and see why a fixed workflow is often the better choice.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 1 · Intro to Agentic Systems · <a href="https://web.stanford.edu/class/cs329z/slides/lecture01.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/11</span></div><ul>
-<li>Get familiar with an agent loop on top of an LLM, its key parts, and when a workflow beats an agent.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What is an agent?</h3><span class="slide-no">2/11</span></div><ul>
-<li>"Agent": from Latin <em>agens</em>, "one who acts."</li>
-<li>Russell and Norvig (1995): anything that perceives through sensors and acts through actuators.</li>
-<li>LLM agent: an LLM in a loop. It picks a step, calls a tool, sees the result, repeats until it can answer.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Anatomy of an agent</h3><span class="slide-no">3/11</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 01</span></div><section class="mod" id="m1" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 01</div><h2>What an agent is, and when you don't need one</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/01_agent_loop.ipynb">Open in Colab</a><button class="done-btn" data-done="m1" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>22 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Where agents came from, the five parts every agent has, and why a fixed workflow often beats an agent. Build the loop from scratch.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 1 · Intro to Agentic Systems · <a href="https://web.stanford.edu/class/cs329z/slides/lecture01.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (48 slides)</b><ol><li><a href="#sec-1">History of agents</a> <span>9 slides</span></li><li><a href="#sec-2">Agent architectures</a> <span>26 slides</span></li><li><a href="#sec-3">Compound AI systems: RAG, tool use, MCP</a> <span>7 slides</span></li><li><a href="#sec-4">How this applies to us</a> <span>3 slides</span></li><li><a href="#sec-5">Wrap-up</a> <span>2 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/48</span></div><ul>
+<li>Get familiar with an agent loop on top of an LLM, the key parts of an agent, and when a workflow beats an agent.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>History of agents</div><div class="slide"><div class="slide-top"><h3>Agents today</h3><span class="slide-no">2/48</span></div><ul>
+<li>Products called agents: Gemini, Cursor, OpenAI Codex, Claude.</li>
+<li>They do multi-step work, not one reply. The lecture's example is a "Cowork" task list:<ul>
+<li>read meeting transcripts → pull out key points → find action items → check Google Calendar → build a standup deck</li>
+</ul>
+</li>
+<li>Each step reads files or uses an app, then decides the next step.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Before 1990: the word and the first uses</h3><span class="slide-no">3/48</span></div><ul>
+<li>"Agent": from Latin <em>agens</em>, late 15th century, "one who acts."</li>
+<li>First indexed AI use: Hewitt, Bishop and Steiger, "A Universal Modular ACTOR Formalism," IJCAI 1973.<ul>
+<li>Actor: one kind of object that does everything (no separate data and control structures).</li>
+</ul>
+</li>
+<li>Contract Net Protocol (Reid G. Smith, 1980): agents negotiate who does which task.</li>
+<li>Marvin Minsky, <em>The Society of Mind</em> (1986): a mind built from many small agents.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The 1990s: defining an agent</h3><span class="slide-no">4/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pattie Maes, <em>Designing Autonomous Agents</em> (1994)</td>
+<td>Edited volume on autonomous agents, from biology to engineering</td>
+</tr>
+<tr>
+<td>Wooldridge and Jennings (1995)</td>
+<td>An agent has autonomy, social ability, reactivity and proactivity</td>
+</tr>
+<tr>
+<td>Russell and Norvig, AI textbook (1995)</td>
+<td>Anything that perceives through sensors and acts through actuators</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The Russell and Norvig definition is the one still quoted today.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The RL era</h3><span class="slide-no">5/48</span></div><ul>
+<li>Agent–environment loop (Sutton and Barto, 1998):<ul>
+<li>agent sees state S_t and reward R_t → takes action A_t → environment returns S_t+1 and R_t+1</li>
+</ul>
+</li>
+<li>RL: reinforcement learning; learn actions by trial and reward.</li>
+<li>DQN on Atari (Mnih et al., 2015): a neural network reads the game screen and picks a joystick move.</li>
+<li>AlphaGo (Go) and OpenAI Five vs the Dota 2 team OG: RL agents beat top human players.</li>
+<li>Limit: each agent learned one game. No language, no general tasks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The LLM era</h3><span class="slide-no">6/48</span></div><ul>
+<li>Transformer: the network design behind modern LLMs (encoder and decoder blocks with attention).</li>
+<li>GPT-3 showed in-context learning:<ul>
+<li>Few-shot: the prompt holds a task description plus a few examples. No gradient updates (no retraining).</li>
+<li>"Translate English to French: sea otter → loutre de mer, peppermint → menthe poivrée ... cheese →"</li>
+</ul>
+</li>
+<li>One model, many tasks, steered only by the prompt.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What LLMs made possible: reasoning and tool use</h3><span class="slide-no">7/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Idea</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chain of thought (CoT)</td>
+<td>Model writes steps before the answer. "23 apples − 20 = 3, + 6 = 9. The answer is 9." ✓</td>
+</tr>
+<tr>
+<td>WebGPT (OpenAI, Dec 16, 2021)</td>
+<td>Model browses the web to improve factual accuracy</td>
+</tr>
+<tr>
+<td>MRKL (2022)</td>
+<td>Modular Reasoning, Knowledge and Language: LLM routes the input to experts (weather API, currency, wiki API, calendar, database, calculator), then writes the output</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Reasoning + tools = the two parts that turned chat models into agents.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The emergence of &quot;agents&quot;</h3><span class="slide-no">8/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Event</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Oct 2022</td>
+<td>ReAct (Yao et al.): interleave Think, Act, Obs</td>
+</tr>
+<tr>
+<td>Nov 30, 2022</td>
+<td>ChatGPT</td>
+</tr>
+<tr>
+<td>Mar 14, 2023</td>
+<td>GPT-4</td>
+</tr>
+<tr>
+<td>Mar 28, 2023</td>
+<td>BabyAGI</td>
+</tr>
+<tr>
+<td>Mar 30, 2023</td>
+<td>AutoGPT</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>BabyAGI loop: pull first task → execution agent runs it → store result in a vector DB → task-creation and prioritization agents make and reorder new tasks → loop.</li>
+<li>ReAct example: find a pepper shaker (cabinets, countertops) and put it in a drawer, step by step.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LLMs getting better: model capability</h3><span class="slide-no">9/48</span></div><ul>
+<li>Chart (Epoch AI): accuracy on key benchmarks, GPT-3 → GPT-4 → GPT-5.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Jump</th>
+<th>Benchmark gains shown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-3 → GPT-4</td>
+<td>MMLU +43%, HumanEval +67%, TruthfulQA +40%, MATH +37%</td>
+</tr>
+<tr>
+<td>GPT-4 → GPT-5</td>
+<td>MATH Level 5 +75%, Mock AIME 24–25 +84%, GPQA Diamond +55%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Each generation did much better on key benchmarks than the one before.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agents getting better: agentic capability</h3><span class="slide-no">10/48</span></div><ul>
+<li>SWE-bench Verified: solving real issues from 12 open-source Python repos (24 results charted).<ul>
+<li>GPT-4o (Nov 2024): about 31%. Claude Opus 4: about 70%. Claude Opus 4.7 (max): above 80% by mid-2026.</li>
+</ul>
+</li>
+<li>OSWorld 2.0 (computer use) and Terminal-Bench 4.0 (command line): accuracy plotted against API cost.<ul>
+<li>More spend → higher accuracy, but at the same cost models differ a lot.</li>
+</ul>
+</li>
+<li>Agents now do real multi-step tasks, so how we build and check them matters.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Agent architectures</div><div class="slide"><div class="slide-top"><h3>Anatomy of an agent</h3><span class="slide-no">11/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>In a ReAct trace</th>
+<th>Agent part</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The model</td>
+<td>LLM core</td>
+</tr>
+<tr>
+<td>Think[...]</td>
+<td>Planning &amp; reasoning</td>
+</tr>
+<tr>
+<td>Traces so far</td>
+<td>Memory</td>
+</tr>
+<tr>
+<td>Act:</td>
+<td>Tools</td>
+</tr>
+<tr>
+<td>Obs:</td>
+<td>Environment</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Every agent in this course maps onto these five parts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agents: key components</h3><span class="slide-no">12/48</span></div><ul>
+<li>LLM core: reads the situation and decides or writes.</li>
+<li>Planning &amp; reasoning and memory feed into the LLM core.</li>
+<li>Tools: retrieval, calculator, code, search, read/write memory, file operations.</li>
+<li>Agent actions: tool call, interaction, response to users.</li>
+<li>Environment (external world): desktop OS, web browser, mobile apps, games, databases.<ul>
+<li>The agent observes the environment and acts on it.</li>
+</ul>
+</li>
+</ul>
+<pre><code>Planning &amp; Reasoning + Memory → LLM Core → Tools → Agent actions → act → Environment
+                                   ↑                                         |
+                                   └──────────────── observe ←───────────────┘
+</code></pre></div><div class="slide"><div class="slide-top"><h3>Similar definitions of agents</h3><span class="slide-no">13/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Lilian Weng (2023)</th>
+<th>Cognitive Language Agents (Sumers and Yao, 2024)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agent at the center, with four branches</td>
+<td>LLM inside a box with memory and reasoning</td>
+</tr>
+<tr>
+<td>Memory: short-term, long-term</td>
+<td>Memory: retrieval in, learning out</td>
+</tr>
+<tr>
+<td>Planning: reflection, self-critics, chain of thoughts, subgoal decomposition</td>
+<td>Reasoning: a loop back into the LLM</td>
+</tr>
+<tr>
+<td>Tools: Calendar(), Calculator(), CodeInterpreter(), Search()</td>
+<td>Observations in, actions out, to the environment</td>
+</tr>
+<tr>
+<td>Action</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Different drawings, same parts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reasoning and planning</h3><span class="slide-no">14/48</span></div><ul>
+<li>For humans: mental processes such as deduction, analogy and planning.</li>
+<li>For LLMs: intermediate text that imitates some (not all) human mental processes.<ul>
+<li>StrategyQA: "Would a pear sink in water?" → "density about 0.6 g/cm³, less than water, so it floats. No."</li>
+<li>Date understanding: "concert on 06/01/1943, delayed one day to today; date 10 days ago?" → 05/23/1943.</li>
+</ul>
+</li>
+<li>For agents: internal actions that update the agent's own state (no change to the world).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why reasoning helps agents</h3><span class="slide-no">15/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Obs t</td>
+<td>You are cooking a dish and see salt is out</td>
+</tr>
+<tr>
+<td>Reasoning</td>
+<td>"The dish should be savory; salt is out, so find the soy sauce. It is in the cabinet to my right."</td>
+</tr>
+<tr>
+<td>Act t</td>
+<td>Turn right</td>
+</tr>
+<tr>
+<td>Obs t+1</td>
+<td>You see a cabinet and a table</td>
+</tr>
+<tr>
+<td>Act t+1</td>
+<td>Open cabinet</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Mapping an observation straight to an action can be hard.</li>
+<li>Reason to act gives: 1. generalization (new situations), 2. alignment (actions match the goal).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reasoning without acting</h3><span class="slide-no">16/48</span></div><ul>
+<li>Question: "Aside from the Apple Remote, what other device can control the program Apple Remote was originally designed to interact with?"</li>
+<li>Standard (answer only): "iPod" ✗</li>
+<li>Reason only (CoT): "Apple Remote was designed for Apple TV. Apple TV can be controlled by iPhone, iPad, and iPod Touch." ✗<ul>
+<li>The first fact is made up. Reasoning from memory cannot check it.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reasoning with acting (ReAct)</h3><span class="slide-no">17/48</span></div><ol>
+<li>Thought: search Apple Remote. Act: Search[Apple Remote]. Obs: "originally designed to control the Front Row media center program."</li>
+<li>Act: Search[Front Row]. Obs: "Could not find [Front Row]. Similar: ... 'Front Row (software)'."</li>
+<li>Act: Search[Front Row (software)]. Obs: "a discontinued media center software."</li>
+<li>Thought: "controlled by an Apple Remote or the keyboard function keys." Act: Finish[keyboard function keys] ✓</li>
+<li>Each thought is checked against what the tool returns, and a failed search leads to a better one.</li>
+</ol></div><div class="slide"><div class="slide-top"><h3>Comparing ReAct with CoT and self-consistency</h3><span class="slide-no">18/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Prompt method</th>
+<th>HotpotQA (exact match)</th>
+<th>Fever (accuracy)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard</td>
+<td>28.7</td>
+<td>57.1</td>
+</tr>
+<tr>
+<td>CoT</td>
+<td>29.4</td>
+<td>56.3</td>
+</tr>
+<tr>
+<td>CoT-SC</td>
+<td>33.4</td>
+<td>60.4</td>
+</tr>
+<tr>
+<td>Act (no thoughts)</td>
+<td>25.7</td>
+<td>58.9</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>27.4</td>
+<td>60.9</td>
+</tr>
+<tr>
+<td>CoT-SC → ReAct</td>
+<td>34.2</td>
+<td><strong>64.6</strong></td>
+</tr>
+<tr>
+<td>ReAct → CoT-SC</td>
+<td><strong>35.1</strong></td>
+<td>62.0</td>
+</tr>
+<tr>
+<td>Supervised SoTA</td>
+<td>67.5</td>
+<td>89.5</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>ReAct beats Act consistently. Best results combine ReAct and CoT-SC (switch to the other when one is unsure).</li>
+<li>HotpotQA: multi-hop questions. Fever: fact checking.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Where ReAct and CoT fail</h3><span class="slide-no">19/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Definition</th>
+<th>ReAct</th>
+<th>CoT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>True positive</td>
+<td>Correct reasoning trace and facts</td>
+<td>94%</td>
+<td>86%</td>
+</tr>
+<tr>
+<td>False positive</td>
+<td>Hallucinated trace or facts</td>
+<td>6%</td>
+<td>14%</td>
+</tr>
+<tr>
+<td>Reasoning error</td>
+<td>Wrong trace, incl. failing to recover from repetitive steps</td>
+<td>47%</td>
+<td>16%</td>
+</tr>
+<tr>
+<td>Search result error</td>
+<td>Search returned nothing useful</td>
+<td>23%</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Hallucination</td>
+<td>Made-up trace or facts</td>
+<td>0%</td>
+<td>56%</td>
+</tr>
+<tr>
+<td>Label ambiguity</td>
+<td>Right answer, didn't match label exactly</td>
+<td>29%</td>
+<td>28%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Hallucination: the model states something false as fact. A serious problem for CoT; ReAct helps.</li>
+<li>ReAct's main failure is looping or wrong steps (47%). That is why our loop has a stuck detector.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Self-consistency (Wang et al., 2023)</h3><span class="slide-no">20/48</span></div><ul>
+<li>Prompt the model with chain of thought.</li>
+<li>Sample a diverse set of reasoning paths (temperature above 0).</li>
+<li>Pick the most consistent final answer (majority vote).</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Greedy CoT (one path)</th>
+<th>Self-consistency (three paths)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"3 + 4 = 7 eggs used, sells the rest... $14 per day." ✗</td>
+<td>$18, $26, $18 → majority: <strong>$18</strong> ✓</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Example: Janet's ducks lay 16 eggs; she eats 3, bakes with 4, sells the rest at $2.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reflexion: agents reflect in words (Shinn et al., 2023)</h3><span class="slide-no">21/48</span></div><ul>
+<li>Reflexion agents verbally reflect on task feedback, then keep that reflective text to make better decisions.</li>
+<li>Parts: Actor (LM) acts; Evaluator (LM) scores the trajectory; Self-reflection (LM) writes a lesson.</li>
+<li>Memory: trajectory (short-term) and experience (long-term, the lessons).</li>
+<li>Decision-making example: "tried to pick up the pan in stoveburner 1, but the pan was not in stoveburner 1" → next try: stoveburner 2 ✓</li>
+<li>Programming example: self-written unit tests fail → "it only checks the total count of parentheses, not the order" → fixed code.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reflexion results (ALFWorld)</h3><span class="slide-no">22/48</span></div><ul>
+<li>ALFWorld: text-based household tasks.</li>
+<li>Self-reflection distills long, failed trajectories into "self-hints" for next time.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Trial</th>
+<th>ReAct only</th>
+<th>ReAct + Reflexion (heuristic)</th>
+<th>ReAct + Reflexion (GPT)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>about 0.63 solved</td>
+<td>about 0.63</td>
+<td>about 0.63</td>
+</tr>
+<tr>
+<td>Last shown</td>
+<td>about 0.75 (trial 7)</td>
+<td>about 0.97 (trial 10)</td>
+<td>about 0.94 (trial 10)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Hallucination errors: ReAct only stays around 0.21 of environments; with Reflexion it falls from about 0.32 to about 0.03.</li>
+<li>Inefficient planning with Reflexion drops to 0.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Multi-agent debate (Du et al., 2023)</h3><span class="slide-no">23/48</span></div><ul>
+<li>Several model copies answer, read each other's answers, and update over rounds.</li>
+<li>Problem: 175 diamonds, 35 fewer rubies than diamonds, twice as many emeralds as rubies. Total gems?</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Round</th>
+<th>Agent 1</th>
+<th>Agent 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Sets up 3x + 105, guesses x = 40 → 225 ✗</td>
+<td>140 rubies, 280 emeralds → 595 ✓</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Fixes rubies to 140 but emeralds 2×140−35 → 560 ✗</td>
+<td>Agrees: 595 ✓</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Agrees: 595 ✓</td>
+<td>595 ✓</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Reading another agent's work fixed the error in two rounds.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Coordinate with an orchestrator (Magentic-One, Microsoft)</h3><span class="slide-no">24/48</span></div><ul>
+<li>Orchestrator: one agent that makes a task-specific plan and hands steps to specialist agents.</li>
+<li>Task: run a Python script from an image; its output is a URL with C++ code; compile, run, return the sum of the 3rd and 5th integers.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Agent</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>FileSurfer</td>
+<td>Open the image, extract the code</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Coder</td>
+<td>Analyze the Python</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ComputerTerminal</td>
+<td>Run it → a rosettacode.org URL</td>
+</tr>
+<tr>
+<td>4</td>
+<td>WebSurfer</td>
+<td>Go to the URL, get the C++ code</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Coder</td>
+<td>Analyze the C++</td>
+</tr>
+<tr>
+<td>6</td>
+<td>ComputerTerminal</td>
+<td>Run it → "5 8 12 21 35 99", sum of 3rd and 5th = 47 ✓</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Each specialist has few tools; the orchestrator holds the plan.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The need for memory</h3><span class="slide-no">25/48</span></div><ul>
+<li>The context window cannot hold every event the agent sees.</li>
+<li>Even if it could, the model may fail to attend to the relevant events or digest them.</li>
+<li>Generative agents (Park et al.): perceive → memory stream → retrieve → retrieved memories → act.<ul>
+<li>Plan and reflect both read from and write back to the memory stream.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Types of memory</h3><span class="slide-no">26/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Type (by content)</th>
+<th>Stores</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Episodic</td>
+<td>Experience</td>
+<td>Generative agents (Park et al., 2023)</td>
+</tr>
+<tr>
+<td>Semantic</td>
+<td>Knowledge</td>
+<td>Generative agents (Park et al., 2023)</td>
+</tr>
+<tr>
+<td>Procedural</td>
+<td>Skills</td>
+<td>Voyager (Wang et al., 2023)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Grouped only by what is stored, inspired by human long-term memory.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Episodic memory</h3><span class="slide-no">27/48</span></div><ul>
+<li>Write: append-only event stream with timestamps ("22:48:10 Isabella Rodriguez is stretching", "desk is idle").</li>
+<li>Read: retrieval by a heuristic score.<ul>
+<li><code>retrieval = recency + importance + relevance</code></li>
+<li>Recency: how recent. Importance: how notable. Relevance: how close to the question.</li>
+</ul>
+</li>
+<li>Q: "What are you looking forward to?" Top memory: planning a Valentine's Day party (2.34 = 0.91 + 0.63 + 0.80).</li>
+<li>Answer: "I'm looking forward to the Valentine's Day party that I'm planning at Hobbs Cafe!"</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Semantic memory</h3><span class="slide-no">28/48</span></div><ul>
+<li>Write: the LLM reasons over many events and writes a reflection.</li>
+<li>Read: retrieval.</li>
+<li>Example tree (Klaus Mueller):<ul>
+<li>Observations: "reading and taking notes on the articles", "engaging with a librarian"</li>
+<li>Reflections: "dedicated to research", "spends many hours reading"</li>
+<li>Top reflection: "Klaus Mueller is highly dedicated to research"</li>
+</ul>
+</li>
+<li>Knowledge is built from experience, not stored raw.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Procedural memory: Voyager (Wang et al., 2023)</h3><span class="slide-no">29/48</span></div><ul>
+<li>Minecraft agent that learns skills as code.</li>
+<li>Automatic curriculum: proposes the next task (mine wood log → make crafting table → combat zombie → mine diamond).</li>
+<li>Iterative prompting: writes code as actions; gets environment feedback and execution errors; refines.</li>
+<li>Self-verification: if the task worked, add the code to the skill library.</li>
+<li>Write: code-based skills. Read: embedding retrieval (find skills by meaning, e.g., craftStoneSword, craftShield).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Toolformer: LLMs teach themselves to use tools</h3><span class="slide-no">30/48</span></div><ul>
+<li>Toolformer (Schick et al., 2023) trains a model to decide which APIs to call, when, with what arguments, and how to use the results.</li>
+<li>Tools: calculator, Q&amp;A system, search engine, translation, calendar.</li>
+<li>Calls appear inline in text:<ul>
+<li>"Out of 1400 participants, 400 (or [Calculator(400 / 1400) → 0.29] 29%) passed the test."</li>
+<li>"[MT("tortuga") → turtle]", "[WikiSearch("Brown Act") → ...]"</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Gorilla: LLMs connected to massive APIs (Patil et al., 2023)</h3><span class="slide-no">31/48</span></div><ul>
+<li>Data: 1,645 API calls (94 Torch Hub, 626 TensorFlow Hub v2, 925 HuggingFace top 20 per domain).</li>
+<li>Self-instruct with examples → 16,450 (instruction, API) pairs → train Gorilla-7B.</li>
+<li>With a retriever: the API docs are fetched and added to the prompt.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>0-shot (no retriever)</th>
+<th>With BM25 retriever</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gorilla about 70% accuracy, lowest hallucination</td>
+<td>GPT-3.5, GPT-4, Claude, Gorilla cluster near 30–37% accuracy</td>
+</tr>
+<tr>
+<td>GPT-3.5, GPT-4, Claude lower; Claude hallucinates most; LLaMA near 0</td>
+<td>LLaMA stays low, with high hallucination</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>BM25: keyword search. A fine-tuned small model beat large general models at picking the right API.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Putting it all together: skeleton of an agent</h3><span class="slide-no">32/48</span></div><ul>
+<li>Planning &amp; reasoning: ReAct, self-consistency, Reflexion, debate, orchestrator.</li>
+<li>Memory: episodic, semantic, procedural.</li>
+<li>Tools: Toolformer, Gorilla, function calling.</li>
+<li>Environment: what the agent observes and acts on.</li>
+<li>LLM core in the middle.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The five parts in our notebook</h3><span class="slide-no">33/48</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Part</th>
@@ -296,34 +914,50 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>The contract files</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>The agent loop</h3><span class="slide-no">4/11</span></div><ol>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The agent loop</h3><span class="slide-no">34/48</span></div><ol>
 <li>Send the task plus a list of tools with short descriptions.</li>
 <li>Model replies: a tool call, or a final answer.</li>
 <li>Tool call → your code runs it, adds the result to the messages.</li>
 <li>Repeat until an answer or a safety limit.</li>
 </ol>
 <pre><code>task → LLM → tool call → run tool → result → LLM → ... → answer
-</code></pre></div><div class="slide"><div class="slide-top"><h3>Reasoning alone vs reasoning + acting</h3><span class="slide-no">5/11</span></div><div class="tbl"><table>
-<thead>
-<tr>
-<th>Reason only</th>
-<th>ReAct (reason + act)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>"Apple Remote was designed for Apple TV... answer: iPhone, iPad, iPod Touch"</td>
-<td>Search[Apple Remote] → Front Row → Search[Front Row (software)] → "keyboard function keys" ✓</td>
-</tr>
-<tr>
-<td>Answers from memory; can make facts up</td>
-<td>Checks each step against what the tool returns</td>
-</tr>
-</tbody>
-</table></div>
+</code></pre></div><div class="slide"><div class="slide-top"><h3>Four safety limits</h3><span class="slide-no">35/48</span></div><ul>
+<li>Turn cap: stop after <code>max_turns</code> rounds. Loops are the most common agent failure (ReAct: 47% of failures were reasoning errors, including repeated steps).</li>
+<li>Stuck detector: same tool call twice → "you already made this exact call."</li>
+<li>Errors as results: a failed tool sends its error back, so the model can fix its call.</li>
+<li>Format check: small models sometimes <em>write</em> a tool call as text. Send back "FORMAT ERROR."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The loop in code</h3><span class="slide-no">36/48</span></div><pre><code class="language-python">for turn in range(max_turns):                                   # limit 1: turn cap
+    msg = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS, temperature=0).choices[0].message
+    messages.append(msg)
+    if not msg.tool_calls:
+        return {&quot;answer&quot;: msg.content, &quot;turns&quot;: turn + 1, &quot;tool_calls&quot;: calls}
+    for call in msg.tool_calls:
+        ...
+        messages.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: call.id, &quot;content&quot;: str(result)})
+</code></pre>
 <ul>
-<li>ReAct paper: made-up facts were 56% of failures with reasoning alone, 0% with reasoning plus actions.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Workflows vs agents: who decides the steps?</h3><span class="slide-no">6/11</span></div><div class="tbl"><table>
+<li>Line 1: the loop runs at most <code>max_turns</code> times.</li>
+<li>Line 2: send all messages plus the tool list; get the reply.</li>
+<li>Line 3: keep the reply, so the model sees it next turn (memory).</li>
+<li>Lines 4–5: no tool call → the model is done. Return its answer.</li>
+<li>Lines 6–8: run each tool call (with the limits) and add the result (observation).</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Compound AI systems: RAG, tool use, MCP</div><div class="slide"><div class="slide-top"><h3>Agents: three layers</h3><span class="slide-no">37/48</span></div><ul>
+<li>Despite many components, agent engineering splits into three layers:<ul>
+<li>The system: architecture design (which parts, how they connect).</li>
+<li>The data: training examples, demonstrations, context.</li>
+<li>The evals: test cases plus the metric.</li>
+</ul>
+</li>
+<li>Our course: the system is the loop or workflow; the data is the 20 practice contracts; the evals are their known answers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Workflows vs agents: who decides the steps?</h3><span class="slide-no">38/48</span></div><ul>
+<li>Both are compound AI systems: an LLM plus other components (Zaharia et al., BAIR, 2024).</li>
+<li>Workflow: code fixes the steps (e.g., Agentless, AlphaCode 2).</li>
+<li>Agent: the LLM decides the steps (e.g., SWE-agent).</li>
+<li>AlphaCode 2: fine-tuned LLMs sample and score programs, plus a code-execution module. Generates up to 1 million solutions per problem, then filters and scores them.<ul>
+<li>Ranked at the 87th percentile of human contestants, vs about the 46th for the original AlphaCode (estimated).</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Workflow vs agent in our notebook</h3><span class="slide-no">39/48</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Workflow</th>
@@ -345,48 +979,146 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tr>
 </tbody>
 </table></div>
-<ul>
-<li>Both are compound AI systems: an LLM plus other parts.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Four safety limits</h3><span class="slide-no">7/11</span></div><ul>
-<li>Turn cap: stop after <code>max_turns</code> rounds. Loops are the most common agent failure.</li>
-<li>Stuck detector: same tool call twice → "you already made this exact call."</li>
-<li>Errors as results: a failed tool sends its error back, so the model can fix its call.</li>
-<li>Format check: small models sometimes <em>write</em> a tool call as text. Send back "FORMAT ERROR."</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The loop in code</h3><span class="slide-no">8/11</span></div><pre><code class="language-python">for turn in range(max_turns):                                   # limit 1: turn cap
-    msg = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS, temperature=0).choices[0].message
-    messages.append(msg)
-    if not msg.tool_calls:
-        return {&quot;answer&quot;: msg.content, &quot;turns&quot;: turn + 1, &quot;tool_calls&quot;: calls}
-    for call in msg.tool_calls:
-        ...
-        messages.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_call_id&quot;: call.id, &quot;content&quot;: str(result)})
-</code></pre>
-<ul>
-<li>Line 1: the loop runs at most <code>max_turns</code> times.</li>
-<li>Line 2: send all messages plus the tool list; get the reply.</li>
-<li>Line 3: keep the reply, so the model sees it next turn.</li>
-<li>Lines 4–5: no tool call → the model is done. Return its answer.</li>
-<li>Lines 6–8: run each tool call (with the limits) and add the result.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Try the simple workflow first</h3><span class="slide-no">9/11</span></div><ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>msa_07 clause 7.1 (the text both read)</th>
+<th>Right answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"EACH PARTY'S TOTAL LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE TWENTY-FOUR (24) MONTHS PRECEDING THE CLAIM."</td>
+<td>24 months → over our 12-month rule</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Try the simple workflow first</h3><span class="slide-no">40/48</span></div><ul>
 <li>The notebook runs both on msa_01, msa_07, msa_08, msa_15 and msa_18 and prints correct/seconds for each.</li>
 <li>Its check expects the workflow right on at least 4 of 5.</li>
 <li>Kapoor, "AI Agents That Matter": LATS, a complex agent, cost over 50× more than simple baselines and scored lower.</li>
+<li>"Cheap model first, escalate on failure": 85% at $0.27 vs 89.6% at $1.93 for GPT-4 alone (Kapoor).</li>
 <li>Always report accuracy next to cost and time.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">10/11</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Retrieval-augmented generation (RAG)</h3><span class="slide-no">41/48</span></div><ul>
+<li>RAG connects an LLM to outside knowledge at answer time.</li>
+<li>Retrieve: search your documents for relevant text.</li>
+<li>Augment: add that text to the user's question.</li>
+<li>Generate: the LLM answers using the retrieved facts.</li>
+<li>Example: "What protects the digestive system against infection?" → retriever finds a Wikipedia passage → reader answers "gastric acid and proteases [1]", with its source.</li>
+<li>Full pipeline: Module 4.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Tool use: anatomy of a call</h3><span class="slide-no">42/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Select</th>
+<th>Arguments</th>
+<th>Validate</th>
+<th>Execute</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Which tool, from the schemas in context</td>
+<td>Typed fields, filled from the task</td>
+<td>Schema check, constrained decoding</td>
+<td>Sandboxed; result returns to context</td>
+</tr>
+<tr>
+<td><code>read_file</code></td>
+<td><code>{"path": "test.py"}</code></td>
+<td><code>path: string</code> checked before the call</td>
+<td><code>def add(a, b): ...</code> returned to context</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Constrained decoding: the server only allows tokens that fit the schema, so the format can't break.</li>
+<li>Sandboxed: runs where it can't harm the machine.</li>
+<li>Ours: <code>get_clause</code> → <code>{"contract_id": "msa_07", "clause": "7.1"}</code> → both strings → clause text back. Full detail: Module 5.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Model Context Protocol (MCP)</h3><span class="slide-no">43/48</span></div><ul>
+<li>MCP: one standard protocol between AI apps and tools or data, with data flowing both ways.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>AI applications</th>
+<th>Data sources and tools</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chat interfaces: Claude Desktop, LibreChat</td>
+<td>Data and file systems: PostgreSQL, SQLite, GDrive</td>
+</tr>
+<tr>
+<td>IDEs and code editors: Claude Code, Goose</td>
+<td>Development tools: Git, Sentry</td>
+</tr>
+<tr>
+<td>Other AI apps: 5ire, Superinterface</td>
+<td>Productivity tools: Slack, Google Maps</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Write a tool once as an MCP server; any MCP app can use it.</li>
+<li>On a local box, an MCP server can expose the firm's document store without any cloud service.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Workflow first for contract review</h3><span class="slide-no">44/48</span></div><ul>
 <li>Checking a contract against a playbook has known steps: find the clause, read the cap, compare to 12 months. That is a workflow.</li>
+<li>Keep agents for tasks where the next step depends on what you find ("research this counterparty").</li>
+<li>Same three layers: system (workflow), data (practice contracts), evals (known answers).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Small local models need a tight harness</h3><span class="slide-no">45/48</span></div><ul>
 <li>Local models are small. Every choice handed to them is a chance to fail.</li>
-<li>Keep agents for tasks where the next step depends on what you find.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">11/11</span></div><ul>
+<li>ReAct's top failure was looping (47%). Turn caps and stuck detectors matter more for an 8B model.</li>
+<li>Tools should return clear errors ("NOT FOUND. Valid clauses: ...") so the model can recover.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pick ideas from the lecture that fit a firm&#x27;s box</h3><span class="slide-no">46/48</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Lecture idea</th>
+<th>Use on a firm's own machine</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ReAct grounding</td>
+<td>Model must quote the clause it read; code checks the quote</td>
+</tr>
+<tr>
+<td>Self-consistency</td>
+<td>Sample a few answers on hard clauses; agree or flag for a person</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>Store lessons from past mistakes per playbook rule</td>
+</tr>
+<tr>
+<td>MCP</td>
+<td>Expose the document store as a local server; nothing leaves the building</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Wrap-up</div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">47/48</span></div><ul>
 <li>Agent because it sounds impressive → if you know the steps, write a workflow.</li>
 <li>No turn limit → a confused agent rereads the same clauses forever.</li>
 <li>Crashing on tool errors → return "NOT FOUND. Valid clauses: ..." so it can recover.</li>
+<li>Reasoning only, no tools → made-up facts (56% of CoT failures). Make the model read the source.</li>
 <li>Accuracy without cost → retries buy accuracy. Show time and cost too.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture summary</h3><span class="slide-no">48/48</span></div><ul>
+<li>History: Latin <em>agens</em> → actors (1973) → definitions (1990s) → RL agents → LLM agents (ReAct, 2022).</li>
+<li>Architecture: LLM core, planning &amp; reasoning, memory, tools, environment.</li>
+<li>Compound AI systems: workflows vs agents; RAG, tool use, MCP.</li>
+<li>Key challenges (reliability, training, long horizon, safety, evaluation): Module 13.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A firm wants every NDA checked against its 12-point playbook. Agent or workflow?</summary><p>Workflow. The steps are known and the same every time; use the model to read clauses and do the checks in code.</p></details>
+
+<details><summary>What are the five parts of an agent, and which one is the `messages` list in our loop?</summary><p>LLM core, planning &amp; reasoning, memory, tools, environment. The growing `messages` list is the memory: the traces so far.</p></details>
+
+<details><summary>Why did ReAct have 0% hallucination failures while CoT had 56%?</summary><p>ReAct checks each step against what a search tool returns. CoT reasons only from what the model remembers, so it can&#x27;t catch a false fact.</p></details>
+
+<details><summary>What does self-consistency do?</summary><p>It samples several chain-of-thought answers and picks the one that appears most often.</p></details>
+
+<details><summary>Name the three memory types by content and an example of each.</summary><p>Episodic stores experience and semantic stores knowledge (both in generative agents); procedural stores skills (Voyager&#x27;s code skill library).</p></details>
 
 <details><summary>What does the stuck detector do?</summary><p>It spots the exact same tool call made twice and, instead of running it, tells the model to use what it has or answer.</p></details>
 
-<details><summary>When does an agent make sense?</summary><p>When the steps depend on what you find, so you can&#x27;t write them down in advance.</p></details></div><h2>Try it in Colab</h2><ul>
-<li>Run the agent on msa_07 and watch each turn print.</li>
+<details><summary>What problem does MCP solve?</summary><p>One standard protocol between AI apps and tools, so a tool written once as an MCP server works with any MCP app.</p></details></div><h2>Try it in Colab</h2><ul>
+<li>Run the agent on msa_07 and watch each turn print: Think, Act, Obs in practice.</li>
 <li>Run the five-contract comparison. Look at the "ok" columns and the seconds.</li>
 <li>Remove the stuck detector and ask for the vendor's tax ID (not in the contract). Watch it loop.</li>
 </ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>

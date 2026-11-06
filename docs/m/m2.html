@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>LLMs for builders · Agent Engineering School</title>
-<meta name="description" content="Treat the model as an unreliable part with a typed interface. Force a schema, check the content in code, and sample several answers when unsure.">
+<meta name="description" content="How LLMs work and what that means for builders: next-token sampling, transformers vs linear attention, training stages, inference speed, reasoning, and typed, checkable output.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,17 +259,114 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 02</span></div><section class="mod" id="m2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 02</div><h2>LLMs for builders</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/02_llms_for_builders.ipynb">Open in Colab</a><button class="done-btn" data-done="m2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Treat the model as an unreliable part with a typed interface. Force a schema, check the content in code, and sample several answers when unsure.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 2 · LLMs for Builders · <a href="https://web.stanford.edu/class/cs329z/slides/lecture02.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
-<li>Get structured, checkable output from a local model: schema, constrained decoding, code checks, and sampling.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What is a language model?</h3><span class="slide-no">2/13</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 02</span></div><section class="mod" id="m2" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 02</div><h2>LLMs for builders</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/02_llms_for_builders.ipynb">Open in Colab</a><button class="done-btn" data-done="m2" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>32 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How LLMs work and what that means for builders: next-token sampling, transformers vs linear attention, training stages, inference speed, reasoning, and typed, checkable output.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 2 · LLMs for Builders · <a href="https://web.stanford.edu/class/cs329z/slides/lecture02.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (93 slides)</b><ol><li><a href="#sec-1">What is a Language Model?</a> <span>11 slides</span></li><li><a href="#sec-2">Language Model Architecture</a> <span>19 slides</span></li><li><a href="#sec-3">Training</a> <span>18 slides</span></li><li><a href="#sec-4">Inference</a> <span>23 slides</span></li><li><a href="#sec-5">LLMs for Agents: Structured I/O</a> <span>14 slides</span></li><li><a href="#sec-6">How this applies to us</a> <span>5 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/93</span></div><ul>
+<li>Explain the main design choices in how LLMs are trained and run, and use them to get typed, checkable output from a local model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The LLM stack</h3><span class="slide-no">2/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>What lives there</th>
+<th>Course</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM applications</td>
+<td>Agents, chatbots, RAG, agent memory, evals, design</td>
+<td>CS329Z (this course)</td>
+</tr>
+<tr>
+<td>LLM adaptation</td>
+<td>In-context learning, finetuning, LoRA, distillation, RLHF/DPO</td>
+<td>CS224N</td>
+</tr>
+<tr>
+<td>LLM engineering</td>
+<td>Pretraining, post-training, RL, tokenizer, architectures, GPU kernels, scaling laws</td>
+<td>CS336</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>We work at the top layer. But how the model works below shapes what it can do for an agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture goals</h3><span class="slide-no">3/93</span></div><ul>
+<li>Understand the core design decisions in training and running (inferencing) modern LLMs.</li>
+<li>See how those decisions create limits that change how applications use LLMs.</li>
+<li>Five parts: what an LM is, architecture, training, inference, LLMs for agents.</li>
+<li>Context engineering, the last part of this lecture, is in module 03.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>What is a Language Model?</div><div class="slide"><div class="slide-top"><h3>A language model is a probability</h3><span class="slide-no">4/93</span></div><ul>
 <li>Language model: gives the probability of a sequence of tokens.</li>
-<li>Built one token at a time: probability of each token given the ones before it.</li>
-<li>Generative: so we can sample from it.</li>
+<li>Token: a word or piece of a word, the unit the model reads and writes.</li>
+<li>Formula: <code>P(x_1..x_T) = P(x_1) × P(x_2 | x_1) × ... × P(x_T | x_1..x_T-1)</code><ul>
+<li>Left side: probability of the whole sequence.</li>
+<li>Right side: product, from first to last token, of each token's probability given the tokens before it.</li>
 </ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Worked example: &quot;The class was about agents.&quot;</h3><span class="slide-no">5/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Probability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P(The)</td>
+<td>0.0377</td>
+</tr>
+<tr>
+<td>P(class | The)</td>
+<td>0.0001</td>
+</tr>
+<tr>
+<td>P(was | The, class)</td>
+<td>0.0344</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td>P(. | The, class, was, about, agents)</td>
+<td>0.0252</td>
+</tr>
+<tr>
+<td>Product of all steps</td>
+<td>1.2e-17</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Numbers this small underflow. In practice we add log probabilities instead of multiplying.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Generative vs discriminative models</h3><span class="slide-no">6/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Discriminative</th>
+<th>Generative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Learns to tell classes apart (draws a boundary)</td>
+<td>Learns the distribution of the data itself</td>
+</tr>
+<tr>
+<td>Logistic regression, SVM</td>
+<td>Naive Bayes, diffusion models</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Knowledge check: is a model of <code>P(x_1..x_T)</code> generative or discriminative?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LMs are generative</h3><span class="slide-no">7/93</span></div><ul>
+<li><code>P(x_1..x_T)</code> is a joint probability over all tokens: a distribution over text.</li>
+<li>So a language model is generative.</li>
+<li>Generative means we can sample from it: draw new text one token at a time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Sampling the next token</h3><span class="slide-no">8/93</span></div><p>"The class was about ___"</p>
 <div class="tbl"><table>
 <thead>
 <tr>
-<th>"The class was about ___"</th>
+<th>Next token</th>
 <th>Probability</th>
 </tr>
 </thead>
@@ -282,116 +383,981 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>the</td>
 <td>0.036</td>
 </tr>
+<tr>
+<td>a</td>
+<td>0.033</td>
+</tr>
+<tr>
+<td>two</td>
+<td>0.0147</td>
+</tr>
+<tr>
+<td>how</td>
+<td>0.0124</td>
+</tr>
+<tr>
+<td>getting</td>
+<td>0.0101</td>
+</tr>
+<tr>
+<td>three</td>
+<td>0.01</td>
+</tr>
+<tr>
+<td>time</td>
+<td>0.0091</td>
+</tr>
+<tr>
+<td>"</td>
+<td>0.0081</td>
+</tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Sampling: how the next token is picked</h3><span class="slide-no">3/13</span></div><ul>
+</table></div>
+<ul>
+<li>The model scores every token in its vocabulary. Here "to" is most likely.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>You don&#x27;t have to pick the most likely token</h3><span class="slide-no">9/93</span></div><p>"The class was about to ___"</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>be</th>
+<th>begin</th>
+<th>go</th>
+<th>start</th>
+<th>get</th>
+<th>become</th>
+<th>enter</th>
+<th>take</th>
+<th>end</th>
+<th>graduate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1501</td>
+<td>0.0855</td>
+<td>0.0627</td>
+<td>0.0496</td>
+<td>0.0390</td>
+<td>0.0342</td>
+<td>0.0313</td>
+<td>0.0220</td>
+<td>0.0192</td>
+<td>0.0180</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The slide samples "begin", the second choice, then "." → "The class was about to begin."</li>
+<li>How you pick is the sampling (decoding) strategy.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Decoding strategies</h3><span class="slide-no">10/93</span></div><ul>
 <li>Greedy: always take the most likely token.</li>
-<li>Top-k / top-p (nucleus): sample from the k most likely, or the smallest set adding up to p.</li>
-<li>Temperature: divide the probabilities by T, then renormalize. Low T = predictable. High T = varied.</li>
-<li>Math and code: lower temperature. Creative writing: more diversity.</li>
-<li>Our rule: 0–0.3 for extraction.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why structured output</h3><span class="slide-no">4/13</span></div><ul>
-<li>Agent parts need a shared contract for how they talk to each other.</li>
+<li>Top-k: sample only from the k most likely tokens.</li>
+<li>Nucleus (top-p): sample from the smallest set of tokens whose probabilities add up to p.</li>
+<li>Beam search: keep several partial sentences at once (next slide).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Temperature</h3><span class="slide-no">11/93</span></div><ul>
+<li>Temperature T: divide the scores by T, then renormalize so they sum to 1.</li>
+<li>Example: next token for "I am tired, I will take a ___" (nap, break, rest, bath, shower).</li>
 </ul>
 <div class="tbl"><table>
 <thead>
 <tr>
-<th>Input message</th>
-<th>Typed output fields (DSPy signature example)</th>
+<th>T</th>
+<th>"nap"</th>
+<th>Shape</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>"I'm Sarah(sarah@acme.co). Meet Thursday?"</td>
-<td><code>name</code>: text · <code>email</code>: text or None · <code>intent</code>: exactly one of meeting, intro, follow-up</td>
+<td>0.1</td>
+<td>about 100%</td>
+<td>Almost always "nap"</td>
+</tr>
+<tr>
+<td>0.5</td>
+<td>about 75%</td>
+<td>"break" about 18%, rest tiny</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>about 50%</td>
+<td>break ~25%, rest ~11%, bath ~8%, shower ~7%</td>
+</tr>
+<tr>
+<td>2.0</td>
+<td>about 34%</td>
+<td>All five between ~12% and ~34%</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>The next step can rely on the shape, not parse free text.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>A typed contract with Pydantic</h3><span class="slide-no">5/13</span></div><pre><code class="language-python">class Terms(BaseModel):
-    governing_law: str | None = Field(description=&quot;US state name, e.g. 'Delaware', or null&quot;)
-    liability_cap_months: int | None = Field(description=&quot;Cap as months of fees, e.g. 12. null if liability is unlimited&quot;)
-    renewal_years: int | None = Field(description=&quot;Length of each automatic renewal period in years&quot;)
-    notice_days: int | None = Field(description=&quot;Days of notice needed to stop renewal&quot;)
-    cap_quote: str | None = Field(description=&quot;Exact sentence from the contract stating the liability cap&quot;)
+<li>Low T = predictable. High T = varied.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Beam search</h3><span class="slide-no">12/93</span></div><ul>
+<li>Keep the best few partial sequences ("beams") at each step, not just one.</li>
+<li>Each beam grows by its likely next tokens; keep the top few overall.</li>
+<li>Slide example: from "start", beams "the" and "arrived" grow into "the green witch", "the witch who", ...</li>
+<li>Finds higher-probability sentences than greedy, but costs more time and memory.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Considerations for sampling</h3><span class="slide-no">13/93</span></div><ul>
+<li>Each strategy has trade-offs.</li>
+<li>Temperature and top-p / top-k add diversity.</li>
+<li>Pick by task:<ul>
+<li>Math and code are predictable: use lower temperature.</li>
+<li>Creative writing may benefit from more diversity.</li>
+</ul>
+</li>
+<li>Pick by budget: beam search costs more time and memory.</li>
+<li>Our rule: temperature 0–0.3 for extraction and structured output.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Further reading</h3><span class="slide-no">14/93</span></div><ul>
+<li>Decoding strategies: huggingface.co/blog/mlabonne/decoding-strategies</li>
+<li>Tokenizers: huggingface.co/learn/llm-course/en/chapter2/4</li>
+<li>Generative models: deepgenerativemodels.github.io/notes/introduction/</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Language Model Architecture</div><div class="slide"><div class="slide-top"><h3>A brief history of LM architectures</h3><span class="slide-no">15/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>N-gram models</td>
+<td>Before the 2010s</td>
+</tr>
+<tr>
+<td>First neural language model</td>
+<td>2003</td>
+</tr>
+<tr>
+<td>Recurrent neural network (RNN) LMs</td>
+<td>2010</td>
+</tr>
+<tr>
+<td>Long short-term memory (LSTM)</td>
+<td>Invented 1997, popular for LMs from 2014</td>
+</tr>
+<tr>
+<td>Transformer</td>
+<td>2017</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Transformers: Attention Is All You Need (2017)</h3><span class="slide-no">16/93</span></div><ul>
+<li>Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, Polosukhin.</li>
+<li>The original has an encoder (reads input) and a decoder (writes output).</li>
+<li>Decoder parts: masked multi-head attention, feed forward, "add &amp; norm", repeated N times, then linear + softmax → output probabilities.</li>
+<li>Today's LLMs keep only the decoder: a decoder-only transformer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Decoder-only: from tokens to vectors</h3><span class="slide-no">17/93</span></div><ul>
+<li>Input: "The class was about".</li>
+<li>Embedding: each token becomes a vector (a list of numbers).</li>
+<li>Positional embedding: a second vector that encodes the token's position.</li>
+<li>Add the two. Each token is now one vector that knows "what" and "where".</li>
+<li>The lecture warns: pay close attention to the next part, the rest depends on it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Attention, step 1: queries, keys, values</h3><span class="slide-no">18/93</span></div><ul>
+<li>Layer norm: rescale each token's vector first.</li>
+<li>Multiply by three weight matrices to get three activations per token:<ul>
+<li>Query (Q = x·W_Q): what this token is looking for.</li>
+<li>Key (K = x·W_K): what this token offers.</li>
+<li>Value (V = x·W_V): the content it passes on.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Attention, step 2: mix information across tokens</h3><span class="slide-no">19/93</span></div><ul>
+<li>Formula: <code>Attention(Q, K, V) = softmax(Q·Kᵀ / √d_k) · V</code><ul>
+<li><code>Q·Kᵀ</code>: how well each query matches each key; one score per token pair.</li>
+<li>Causal mask: a token may only look at itself and earlier tokens, never later ones.</li>
+<li><code>÷ √d_k</code>: scale scores by the key size so they don't get too large.</li>
+<li><code>softmax</code>: turn each row of scores into weights that sum to 1.</li>
+<li><code>· V</code>: each token's output is a weighted mix of earlier tokens' values.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Attention, step 3: project back and add</h3><span class="slide-no">20/93</span></div><ul>
+<li>W_O: multiply to project back to the model's vector size.</li>
+<li>Residual connection: add the result to the token's original vector.<ul>
+<li>The layer only adds new information; nothing is overwritten.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Multi-head attention</h3><span class="slide-no">21/93</span></div><ul>
+<li>
+<ol>
+<li>Multiple weight matrices: several sets of W_Q, W_K, W_V ("heads"), each with its own attention pattern.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Concatenate the heads' outputs.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>A bigger projection matrix W_O maps them back to model size.</li>
+</ol>
+</li>
+<li>Result: a multi-head, causal self-attention layer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The transformer block</h3><span class="slide-no">22/93</span></div><ul>
+<li>Layer norm → multi-head causal self-attention → add (residual).</li>
+<li>Layer norm → feed forward → add (residual).<ul>
+<li>Feed forward: a small network applied to each token on its own.</li>
+</ul>
+</li>
+<li>Stack the block N times.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>From vectors to next-token probabilities</h3><span class="slide-no">23/93</span></div><ul>
+<li>Final layer norm, then the LM head: a matrix that maps each vector to one score per vocabulary token.</li>
+<li>Softmax turns the scores into probabilities.</li>
+<li>This happens at every position at once: each token predicts the token after it.</li>
+<li>The last position gives the distribution we sample from ("to" 0.3171, ...).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Attention vs recurrence</h3><span class="slide-no">24/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Layer type</th>
+<th>Work per layer</th>
+<th>Sequential steps</th>
+<th>Max path length</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Self-attention</td>
+<td>O(n²·d)</td>
+<td>O(1)</td>
+<td>O(1)</td>
+</tr>
+<tr>
+<td>Recurrent</td>
+<td>O(n·d²)</td>
+<td>O(n)</td>
+<td>O(n)</td>
+</tr>
+<tr>
+<td>Convolutional</td>
+<td>O(k·n·d²)</td>
+<td>O(1)</td>
+<td>O(log_k(n))</td>
+</tr>
+<tr>
+<td>Self-attention (restricted)</td>
+<td>O(r·n·d)</td>
+<td>O(1)</td>
+<td>O(n/r)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>n = sequence length, d = vector size. Table from Attention Is All You Need.</li>
+<li>O(1) sequential steps: all tokens train in parallel on GPUs. A huge deal.</li>
+<li>O(n²) in length: long context becomes expensive.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Transformers were better and cheaper</h3><span class="slide-no">25/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>BLEU EN-DE</th>
+<th>BLEU EN-FR</th>
+<th>Training cost (FLOPs) EN-DE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GNMT + RL</td>
+<td>24.6</td>
+<td>39.92</td>
+<td>2.3·10^19</td>
+</tr>
+<tr>
+<td>ConvS2S</td>
+<td>25.16</td>
+<td>40.46</td>
+<td>9.6·10^18</td>
+</tr>
+<tr>
+<td>MoE</td>
+<td>26.03</td>
+<td>40.56</td>
+<td>2.0·10^19</td>
+</tr>
+<tr>
+<td>ConvS2S Ensemble</td>
+<td>26.36</td>
+<td>41.29</td>
+<td>7.7·10^19</td>
+</tr>
+<tr>
+<td>Transformer (base)</td>
+<td>27.3</td>
+<td>38.1</td>
+<td>3.3·10^18</td>
+</tr>
+<tr>
+<td>Transformer (big)</td>
+<td>28.4</td>
+<td>41.8</td>
+<td>2.3·10^19</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>BLEU: translation quality score, higher is better.</li>
+<li>The big transformer had the best scores; the base model was the cheapest to train.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Linear attention: drop the softmax</h3><span class="slide-no">26/93</span></div><ul>
+<li>Idea: remove the softmax from attention.</li>
+<li>Then everything is linear, so we can change the order of multiplication.<ul>
+<li>Softmax attention: <code>(Q·Kᵀ)·V</code>, an n × n score table.</li>
+<li>Linear attention: <code>Q·(Kᵀ·V)</code>, multiply K and V first.</li>
+</ul>
+</li>
+<li><code>Kᵀ·V</code> is a fixed-size matrix, the state S, no matter how long the text is.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Linear attention: the update rule</h3><span class="slide-no">27/93</span></div><ul>
+<li>Process tokens one at a time, like an RNN (recurrent network).</li>
+<li>Each new token adds its key × value into the state: S1 → S2 → S3 → S4.</li>
+<li>The query reads from the state to make the output.</li>
+<li>Clear unimportant memory: the update can fade or overwrite old content in S.</li>
+<li>Save the state and carry it to the next token. Memory stays constant.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Linear attention is faster and uses less memory</h3><span class="slide-no">28/93</span></div><ul>
+<li>Figure (Transformers are RNNs): forward + backward pass time and GPU memory vs sequence length, 2^9 to 2^16 tokens, log scale.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Softmax attention</th>
+<th>Linear attention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Growth with length</td>
+<td>Square (time and memory)</td>
+<td>Linear</td>
+</tr>
+<tr>
+<td>Longest length shown</td>
+<td>Stops at 2^12 tokens</td>
+<td>Runs to 2^16 tokens</td>
+</tr>
+<tr>
+<td>At 2^12 tokens</td>
+<td>More than 10× slower, more than 20× the memory of linear</td>
+<td>Fastest and smallest of all methods</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Reformer (lsh-X, another efficient method) also scales linearly but sits above linear attention.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Full softmax attention vs linear attention</h3><span class="slide-no">29/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Full softmax attention</th>
+<th>Linear attention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>O(n²) in context length</td>
+<td>O(n) in context length</td>
+</tr>
+<tr>
+<td>Every token can refer back to every earlier token</td>
+<td>New tokens interact with a compressed state</td>
+</tr>
+<tr>
+<td>Helps long context</td>
+<td>Harder for long context (results in module 03)</td>
+</tr>
+<tr>
+<td>KV cache (memory) grows O(n)</td>
+<td>State uses constant memory</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>In practice: mix global and linear attention</h3><span class="slide-no">30/93</span></div><ul>
+<li>Figure (DeltaNet Explained, Songlin Yang): two hybrid stacks.<ul>
+<li>Alternate SWA and DeltaNet layers. SWA = sliding-window attention, each token sees only nearby tokens.</li>
+<li>Mostly DeltaNet layers, with a global (full) attention layer every few layers.</li>
+</ul>
+</li>
+<li>DeltaNet: a linear-attention layer with a smarter state update.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Hybrids help retrieval most</h3><span class="slide-no">31/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Wiki perplexity ↓</th>
+<th>Avg. common-sense ↑</th>
+<th>Avg. retrieval ↑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DeltaNet</td>
+<td>28.24</td>
+<td>42.1</td>
+<td>22.7</td>
+</tr>
+<tr>
+<td>+ Sliding attention</td>
+<td>27.06</td>
+<td>42.1</td>
+<td>30.2</td>
+</tr>
+<tr>
+<td>+ Global attention</td>
+<td>27.51</td>
+<td>42.1</td>
+<td>32.7</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Perplexity: how surprised the model is by real text, lower is better.</li>
+<li>Common sense stays the same. Retrieval (finding facts in the context) gains the most from a little full attention.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Kimi K3: a real hybrid</h3><span class="slide-no">32/93</span></div><ul>
+<li>Each repeating unit (figure from the Kimi K3 paper):<ul>
+<li>3× linear attention (Kimi Delta Attention) + feed forward.</li>
+<li>1× multi-head latent attention (Gated MLA, a full-attention layer) + feed forward.</li>
+</ul>
+</li>
+<li>Feed forward is a mixture of experts (MoE): a router sends each token to a few expert networks, plus shared experts.</li>
+<li>So most layers are cheap linear attention; a few are full attention.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why does architecture matter for agents?</h3><span class="slide-no">33/93</span></div><ul>
+<li>Agents deal with extremely long contexts.</li>
+<li>Inference efficiency is a design choice when building agentic systems.</li>
+<li>Knowing the architecture helps you pick the right model for your agent.</li>
+<li>Build the harness and scaffolding around your model's strengths and weaknesses.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Training</div><div class="slide"><div class="slide-top"><h3>Defining the loss: the data</h3><span class="slide-no">34/93</span></div><ul>
+<li>Training data example: "The class was about how agents work, and how to build AI systems that use tools, retrieve information, and carry out tasks across multiple steps…"</li>
+<li>Feed "The class was about" and ask the model for the next token.</li>
+<li>The model predicts its distribution: "to" 0.3171, "as" 0.0491, ..., "how" 0.0124.</li>
+<li>The data says the real next token is "how".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Defining the loss: one token</h3><span class="slide-no">35/93</span></div><ul>
+<li>Look only at the probability the model gave the true token: "how" = 0.0124.</li>
+<li>Loss = −log(0.0124) = 1.907 on the slide (that value uses log base 10).</li>
+<li>Low probability on the true token → high loss. Training pushes it up.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Cross-entropy loss</h3><span class="slide-no">36/93</span></div><ul>
+<li>Formula: <code>L = − Σ_{i=1..V} y_i · log(p_i)</code><ul>
+<li><code>Σ over V</code>: for every token in the vocabulary.</li>
+<li><code>y_i</code>: 1 if this is the token in the data, 0 if not.</li>
+<li><code>log(p_i)</code>: the log probability the model gave that token.</li>
+</ul>
+</li>
+<li>Only the true token's term survives, so <code>L = −log(p_true)</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pretraining data pipeline</h3><span class="slide-no">37/93</span></div><pre><code>HTML → text extraction → language ID → rule-based filters → quality filters → deduplication → final training data
 </code></pre>
 <ul>
-<li>Line 1: a schema named <code>Terms</code>. Pydantic: Python library for typed data.</li>
-<li>Lines 2–5: each field has a type; <code>| None</code> = may be empty.</li>
-<li><code>description</code> tells the model what to write.</li>
-<li>Line 6: an exact quote, so code can check it.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Always give an &quot;absent&quot; option</h3><span class="slide-no">6/13</span></div><div class="tbl"><table>
+<li>Language ID: keep the languages you want.</li>
+<li>Rule-based filters: drop pages by simple rules (length, repetition, bad words).</li>
+<li>Quality filters: a model scores how useful a page is.</li>
+<li>Deduplication: remove repeated documents.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DCLM: how little web data survives</h3><span class="slide-no">38/93</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Schema allows null</th>
-<th>Schema forces a number</th>
+<th>Stage (DataComp-LM, arXiv 2406.11794)</th>
+<th>Removed</th>
+<th>Left</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>int</code> or <code>None</code></td>
-<td><code>int</code> only (<code>CapForced</code> in the solutions)</td>
+<td>Start: DCLM-Pool from Common Crawl</td>
+<td></td>
+<td>100%</td>
 </tr>
 <tr>
-<td>msa_16 → null is a valid answer</td>
-<td>msa_16 → the model has to invent a cap</td>
+<td>English filter</td>
+<td>50.8%</td>
+<td></td>
+</tr>
+<tr>
+<td>Repetition 9.6%, other filters 9.0%, page length 7.9%, word removal ratio 2.0%, URL 0.8%</td>
+<td>29.3%</td>
+<td>19.9%</td>
+</tr>
+<tr>
+<td>Bloom filter deduplication</td>
+<td>6.2%</td>
+<td>13.7%</td>
+</tr>
+<tr>
+<td>fastText quality filter</td>
+<td>12.3%</td>
+<td>1.4%</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>msa_16, clause 7.1: "IN NO EVENT SHALL EITHER PARTY'S TOTAL LIABILITY UNDER THIS AGREEMENT BE LIMITED..."</li>
-<li>System prompt: "If a term is absent, use null. Never guess."</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Constrained decoding</h3><span class="slide-no">7/13</span></div><ul>
-<li>Constrained decoding: the server only lets the model write tokens that fit the schema.</li>
-<li>SGLang does this with finite state machines.</li>
-<li>Output is always valid JSON. Parsing never fails.</li>
-<li>Valid format is not correct content. The value can still be wrong.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Check the content in code</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+<li>Percentages are of the original documents. DCLM-Baseline keeps 1.4%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What raw web data looks like</h3><span class="slide-no">39/93</span></div><ul>
+<li>Examples from DCLM, before cleaning:<ul>
+<li>An anime forum thread with usernames, dates and "Register to view this Article".</li>
+<li>A Fortran manual page: "8.48 EOSHIFT — End-off shift function".</li>
+<li>A newspaper story about a baking class at the Culinary Institute of America.</li>
+</ul>
+</li>
+<li>Navigation text, sign-up prompts and mixed topics are everywhere. Hence the filters.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Domain data: Nemotron-CC-Math</h3><span class="slide-no">40/93</span></div><ul>
+<li>Start from Common Crawl (98 snapshots).</li>
+<li>Pick math pages using URL lists from existing math datasets: 229.54M docs.</li>
+<li>Render pages with Lynx (a text browser) instead of the usual extractors.</li>
+<li>An LLM cleans the text; then deduplicate and decontaminate (remove test questions).</li>
+<li>Result: 101.15M docs, 133.26B tokens.</li>
+<li>Topics: mathematics 60.28%, computer science 11.99%, physics 11.22%, statistics 7.50%, other 4.12%, economics 3.18%, chemistry 1.71%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Data comes from many sources: The Pile</h3><span class="slide-no">41/93</span></div><ul>
+<li>The Pile: an 800GB dataset of diverse text (arXiv 2101.00027).</li>
+</ul>
+<div class="tbl"><table>
 <thead>
 <tr>
-<th>Quote</th>
-<th><code>quote_is_in_doc(..., contract("msa_07"))</code></th>
+<th>Category</th>
+<th>Sources</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>The cap quote the model extracted</td>
-<td>True only if it matches the contract text</td>
+<td>Academic</td>
+<td>PubMed Central, ArXiv, FreeLaw, USPTO, PMA, PhilPapers, NIH</td>
 </tr>
 <tr>
-<td>"Liability is capped at $1 million." (made up)</td>
-<td>False</td>
+<td>Internet</td>
+<td>Pile-CC, OpenWebText2, StackExchange, Wikipedia</td>
+</tr>
+<tr>
+<td>Prose</td>
+<td>Bibliotik, PG-19, BC2</td>
+</tr>
+<tr>
+<td>Dialogue</td>
+<td>Subtitles, IRC, EuroParl, HackerNews, YouTube</td>
+</tr>
+<tr>
+<td>Misc</td>
+<td>GitHub, DM Math</td>
 </tr>
 </tbody>
-</table></div>
-<ul>
-<li>The notebook also scores each field on 8 contracts against the known answers.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Fixed choices: use a list, not free text</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Data mixing: how much of each source?</h3><span class="slide-no">42/93</span></div><ul>
+<li>Olmix (arXiv 2602.12237), three steps:<ul>
+<li>
+<ol>
+<li>Swarm: train many small proxy models, each on a different mix p; record performance.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Regression: fit a model that predicts performance f(p) from the mix.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Optimization: pick the mix p* that the fitted model says is best.</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Midtraining</h3><span class="slide-no">43/93</span></div><ul>
+<li>Midtraining: late in pretraining, shift the data mix toward your target domains (math, code, etc.).</li>
+<li>Example (OpenAthena, "Curating 25 Trillion Tokens"): data sorted by domain and quality band Q0–Q4.<ul>
+<li>The pretraining mix and the cooldown (final phase) mix weight each domain and quality band differently.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Put domain data into pretraining</h3><span class="slide-no">44/93</span></div><ul>
+<li>The Finetuner's Fallacy (arXiv 2603.16177): mix 10–50× repeats of the domain dataset into general pretraining data.</li>
+<li>Test: base models with 200B pretraining tokens, then finetune.<ul>
+<li>Specialized pretraining (33× domain data) vs general pretraining.</li>
+</ul>
+</li>
+<li>The specialized model reaches a lower domain test loss and forgets less general skill during finetuning.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why midtraining helps</h3><span class="slide-no">45/93</span></div><ul>
+<li>Midtraining Bridges Pretraining and Posttraining Distributions (arXiv 2510.14865).</li>
+<li>Schematic: standard finetuning jumps straight from the pretrained model to the target, across a region where the training signals conflict.</li>
+<li>Midtraining takes a path through a middle point (θ_mid) where they agree.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Posttraining: instruction finetuning</h3><span class="slide-no">46/93</span></div><ul>
+<li>Instruction finetuning: train on (instruction, good answer) pairs.</li>
+<li>Flan (Scaling Instruction-Finetuned LMs, arXiv 2210.11416): 1.8K tasks.<ul>
+<li>"What is the boiling point of Nitrogen?" → "-320.4F"</li>
+<li>Chain-of-thought finetuning: answers with step-by-step reasoning.</li>
+</ul>
+</li>
+<li>The model then generalizes to unseen tasks, e.g. "Can Geoffrey Hinton have a conversation with George Washington?" → reasons → "no".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Learning from human preferences (RLHF)</h3><span class="slide-no">47/93</span></div><ul>
+<li>InstructGPT (arXiv 2203.02155), three steps:<ul>
+<li>
+<ol>
+<li>Labelers write good answers; finetune with supervised learning (SFT).</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Labelers rank several model outputs (D &gt; C &gt; A = B); train a reward model.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Optimize the model against the reward model with reinforcement learning (PPO).</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>PPO: a standard RL algorithm that updates the model in small steps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Problems with human feedback</h3><span class="slide-no">48/93</span></div><ul>
+<li>Human annotators can be unreliable.</li>
+<li>Everyone has different preferences.</li>
+<li>It creates bad incentives: sycophancy (agreeing with the user) and sounding authoritative.</li>
+<li>The data itself can be sourced unethically.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>RL with verifiable rewards (RLVR)</h3><span class="slide-no">49/93</span></div><ul>
+<li>Make the reward checkable by a program, not a person.</li>
+<li>Verifiable rewards: unit tests, Lean proofs, exact match, system state, ...</li>
+<li>Great for math and code. Be careful how you design the verifier.</li>
+<li>GRPO (DeepSeekMath, arXiv 2402.03300): sample a group of outputs per question, score each, and push up the ones that beat the group average. A KL term keeps the model close to a reference.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agent-specific training: SWE-smith</h3><span class="slide-no">50/93</span></div><ul>
+<li>SWE-smith (arXiv 2504.21798) makes training tasks for coding agents.<ul>
+<li>Real repositories with passing unit tests.</li>
+<li>Environment: SWE-agent installs the repo and runs tests; a developer writes a Dockerfile.</li>
+<li>Task generation: procedural changes, LM-generated bugs, combined bugs, PR mirroring.</li>
+<li>Output: environment image + synthetic tasks (generated issue, bugged patch, verified tests).</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>SWE-smith results (SWE-bench, % solved)</h3><span class="slide-no">51/93</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Free text</th>
-<th><code>Literal[...]</code> list</th>
+<th>Model</th>
+<th>System</th>
+<th>Train size</th>
+<th>Lite</th>
+<th>Verified</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>"State of Delaware", "DE", "Delaware law"</td>
-<td>"Delaware" only</td>
+<td>GPT-4o</td>
+<td>SWE-agent</td>
+<td>-</td>
+<td>18.3</td>
+<td>23.0</td>
 </tr>
 <tr>
-<td>Grading needs fuzzy matching</td>
-<td>Grading is exact</td>
+<td>Claude 3.5 Sonnet</td>
+<td>OpenHands</td>
+<td>-</td>
+<td>41.7</td>
+<td>53.0</td>
+</tr>
+<tr>
+<td>Claude 3.7 Sonnet</td>
+<td>SWE-agent</td>
+<td>-</td>
+<td>48.0</td>
+<td>58.2</td>
+</tr>
+<tr>
+<td>Qwen3-235B-A22B</td>
+<td>OpenHands</td>
+<td>-</td>
+<td>-</td>
+<td>34.4</td>
+</tr>
+<tr>
+<td>SWE-gym-32B</td>
+<td>OpenHands</td>
+<td>491</td>
+<td>15.3</td>
+<td>20.6</td>
+</tr>
+<tr>
+<td>SWE-agent-LM-7B</td>
+<td>SWE-agent</td>
+<td>2k</td>
+<td>11.7</td>
+<td>15.2</td>
+</tr>
+<tr>
+<td>SWE-agent-LM-32B</td>
+<td>SWE-agent</td>
+<td>5k</td>
+<td>30.7</td>
+<td>40.2</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><code>Literal["California", "Delaware", "New York", "Texas", "Florida", "Nevada", "Other"]</code></li>
-<li>Off-menu answers become impossible.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Spend compute at answer time</h3><span class="slide-no">10/13</span></div><ul>
-<li>Test-time scaling: sample more answers instead of using a bigger model.</li>
-<li>Repeated sampling with a checker: small Llama models beat GPT-4o's single answer on math (Lecture 2).</li>
-<li>No checker: self-consistency. Majority vote over 40 reasoning paths took ARC from 43% to 53%.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Best-of-n vs majority vote</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
+<li>5k synthetic tasks lifted an open 32B model to the best open-weight score in the table.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Inference</div><div class="slide"><div class="slide-top"><h3>Prefill and decode</h3><span class="slide-no">52/93</span></div><ul>
+<li>Prefill: read the whole prompt at once and store each token's key and value vectors.<ul>
+<li>"The quick brown fox" → first output "jumps".</li>
+</ul>
+</li>
+<li>Decode: write one new token at a time, reusing the stored (cached) vectors.<ul>
+<li>"jumps" → "over" → ...</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GPUs</h3><span class="slide-no">53/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>CPU</th>
+<th>GPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A few powerful compute units (ALUs)</td>
+<td>Thousands of small compute units</td>
+</tr>
+<tr>
+<td>Large control logic and cache</td>
+<td>Little control logic per unit</td>
+</tr>
+<tr>
+<td>Good at varied, sequential work</td>
+<td>Good at the same math on lots of data at once</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Both read from DRAM (main memory). Moving data from memory is often the bottleneck.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Roofline performance model</h3><span class="slide-no">54/93</span></div><ul>
+<li>X axis: arithmetic intensity, FLOPs done per byte read from memory.</li>
+<li>Y axis: attainable FLOPs per second.</li>
+<li>Low intensity: bandwidth-bound. Speed is limited by memory reads (sloped line).</li>
+<li>High intensity: compute-bound. Speed hits the chip's peak FLOP/s (flat line).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Prefill: all prompt tokens in parallel</h3><span class="slide-no">55/93</span></div><ul>
+<li>All prompt tokens go through attention together as big matrix multiplications.</li>
+<li>The causal mask makes each token see only earlier tokens.</li>
+<li>Lots of math per byte loaded → compute-bound.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Decode: one token at a time</h3><span class="slide-no">56/93</span></div><ul>
+<li>Only the newest token runs through the layers.</li>
+<li>Its query attends over the keys and values of all earlier tokens.</li>
+<li>Queries and outputs for earlier tokens are no longer needed: clear them.</li>
+<li>Repeat for each new token: "The" → "class" → "was" → "about".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The KV cache</h3><span class="slide-no">57/93</span></div><ul>
+<li>KV cache: the stored keys and values of every earlier token, kept on the GPU.</li>
+<li>Decode reads the whole cache for every new token, but computes only one row.</li>
+<li>It grows with context length: longer prompts use more GPU memory.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Prefill vs decode on the roofline</h3><span class="slide-no">58/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Prefill</th>
+<th>Decode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Many tokens at once</td>
+<td>One token at a time</td>
+</tr>
+<tr>
+<td>Compute-bound</td>
+<td>Bandwidth-bound (reads weights and KV cache for little math)</td>
+</tr>
+<tr>
+<td>Sets time to first token</td>
+<td>Sets time per output token</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Metrics</h3><span class="slide-no">59/93</span></div><ul>
+<li>Time to first token (TTFT): how long prefill takes. Grows with prompt length.</li>
+<li>Time per output token (TPOT): the gap between decoded tokens.</li>
+<li>Total time ≈ TTFT + (output tokens × TPOT).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Speculative decoding</h3><span class="slide-no">60/93</span></div><ul>
+<li>A small draft model guesses several tokens: "Once" → "upon a time there".</li>
+<li>The big target model checks all the guesses in one parallel pass (like prefill).</li>
+<li>Keep the guesses until the first one it rejects: "upon", "a", "time" ✓, "there" ✗.</li>
+<li>Same output as the big model alone, in fewer slow steps.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Some domains are more predictable</h3><span class="slide-no">61/93</span></div><ul>
+<li>Accelerating LLM Decoding with Speculative Sampling (arXiv 2302.01318), draft length K = 0–7:</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>HumanEval (code)</th>
+<th>XSum (summaries)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Time for 128 tokens, K = 0</td>
+<td>about 1800 ms</td>
+<td>about 1800 ms</td>
+</tr>
+<tr>
+<td>Best time shown</td>
+<td>about 680 ms at K = 7</td>
+<td>about 940 ms at K = 3</td>
+</tr>
+<tr>
+<td>Acceptance rate at K = 7</td>
+<td>about 0.68</td>
+<td>about 0.46</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Each loop costs more as K grows (about 14 ms → 28 ms). Code is easier to guess than summaries.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Inference-time scaling</h3><span class="slide-no">62/93</span></div><ul>
+<li>Inference-time (test-time) scaling: spend more compute when answering, not when training.</li>
+<li>Ways: write out reasoning, reason longer, or sample many answers and pick one.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Chain of thought</h3><span class="slide-no">63/93</span></div><ul>
+<li>Chain-of-Thought Prompting (Wei et al., arXiv 2201.11903).</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Standard prompting</th>
+<th>Chain-of-thought prompting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Example answer: "The answer is 11."</td>
+<td>Example answer: "Roger started with 5 balls. 2 cans of 3 tennis balls each is 6 tennis balls. 5 + 6 = 11."</td>
+</tr>
+<tr>
+<td>Cafeteria: 23 apples, used 20, bought 6 → "The answer is 27." ✗</td>
+<td>"23 − 20 = 3 ... 3 + 6 = 9. The answer is 9." ✓</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Reasoning LLMs</h3><span class="slide-no">64/93</span></div><p>Query: a jacket costs $80, the price rises 25%, then a 25% discount on the new price. Final price?</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Traditional LLM</th>
+<th>Reasoning LLM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"$80 × 1.25 = $100. $100 × 0.75 = $75."</td>
+<td>First guess: +25% and −25% cancel → $80. "Wait… the discount applies to the increased price." Recomputes $75, then checks: $80 + $20 − $25 = $75.</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>A reasoning model writes a long chain of thought before answering, and checks itself.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>&quot;Aha&quot; moments</h3><span class="slide-no">65/93</span></div><ul>
+<li>Prompt: a ticket and a popcorn cost $18; the ticket costs $6 more. Ticket price?</li>
+<li>Inside <code>&lt;think&gt;</code>: sets p + 6 = 18 → ticket 18. "Wait, that can't be right."</li>
+<li>Fixes it: p + (p + 6) = 18 → p = 6 → ticket = 12. Answer: 12.</li>
+<li>The model learns to self-correct during training.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reasoning effort trades cost for score</h3><span class="slide-no">66/93</span></div><ul>
+<li>Chart (Agents' Last Exam): score vs cost per task. Each model's effort levels form a line.</li>
+<li>GPT-6 Astra: Low ≈ 53%, Medium and High higher, Max ≈ 59%. Each step up costs more per task.</li>
+<li>Apps expose this as an effort setting (Low / Medium / High / Max).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setting the reasoning level (GPT-OSS)</h3><span class="slide-no">67/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>System prompt</th>
+<th>User prompt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Reasoning: low</code></td>
+<td>Solve this math problem...</td>
+</tr>
+<tr>
+<td><code>Reasoning: medium</code></td>
+<td>Solve this math problem...</td>
+</tr>
+<tr>
+<td><code>Reasoning: high</code></td>
+<td>Solve this math problem...</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>One line in the system prompt sets how long the model thinks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How effort control is trained</h3><span class="slide-no">68/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Inkling (Thinking Machines)</th>
+<th>Kimi K3 (Moonshot)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>R(e) = R_task − λ(e) · N_tokens</code></td>
+<td>Reward 1 if correct, 0 if wrong, −1 if wrong and over budget</td>
+</tr>
+<tr>
+<td>Penalty per token used; λ higher for low effort, lower for high effort</td>
+<td>Multi-teacher distillation: 9 teachers (general task, general agent, coding agent × high, medium, low) train one student</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Scaling with repeated sampling</h3><span class="slide-no">69/93</span></div><ul>
+<li>Large Language Monkeys (arXiv 2407.21787).</li>
+<li>Step 1: generate many candidate solutions.</li>
+<li>Step 2: a verifier picks the final answer (unit tests, proof checkers, majority voting).</li>
+<li>Coverage: can we generate a correct answer at all?</li>
+<li>Precision: can we pick the correct one out of the samples?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Small models + many samples beat one big answer</h3><span class="slide-no">70/93</span></div><ul>
+<li>Coverage (pass@k: at least one of k samples correct) for Llama-3-8B and -70B vs a single GPT-4o attempt:</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Single-attempt GPT-4o</th>
+<th>Llama-3 with up to 10,000 samples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MATH (oracle verifier)</td>
+<td>about 0.64</td>
+<td>8B: about 0.27 at 1 sample → near 1.0</td>
+</tr>
+<tr>
+<td>CodeContests</td>
+<td>about 0.21</td>
+<td>70B passes GPT-4o near 100 samples, reaches about 0.38</td>
+</tr>
+<tr>
+<td>MiniF2F-MATH (formal proofs)</td>
+<td>about 0.27</td>
+<td>Both reach about 0.5</td>
+</tr>
+<tr>
+<td>GSM8K (oracle verifier)</td>
+<td>about 0.93</td>
+<td>Both reach near 1.0</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>No verifier? Self-consistency</h3><span class="slide-no">71/93</span></div><ul>
+<li>Self-Consistency (Wang et al., arXiv 2203.11171).</li>
+<li>Greedy chain of thought on Janet's ducks: "3 + 4 = 7 eggs ... $14." ✗</li>
+<li>Self-consistency: sample many reasoning paths, then take the majority answer.<ul>
+<li>"$18", "$26", "$18" → majority: "The answer is $18." ✓</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Self-consistency results (ARC Challenge)</h3><span class="slide-no">72/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Sampled paths</th>
+<th>Greedy (1 path)</th>
+<th>Sample &amp; rank</th>
+<th>Self-consistency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>about 43%</td>
+<td>about 35%</td>
+<td>about 36%</td>
+</tr>
+<tr>
+<td>5</td>
+<td>about 43%</td>
+<td>about 39%</td>
+<td>about 47%</td>
+</tr>
+<tr>
+<td>10</td>
+<td>about 43%</td>
+<td>about 42%</td>
+<td>about 50%</td>
+</tr>
+<tr>
+<td>40</td>
+<td>about 43%</td>
+<td>about 44%</td>
+<td>about 54%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Majority vote beats ranking samples by the model's own probability.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Best-of-n vs majority vote (in the notebook)</h3><span class="slide-no">73/93</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>You have...</th>
@@ -415,16 +1381,223 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <ul>
 <li>Agreement rate = confidence. Low agreement → send to a person.</li>
 <li>Nothing passes best-of-n → escalate, don't guess.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Best-of-n in code</h3><span class="slide-no">74/93</span></div><pre><code class="language-python">def best_of_n(cid, n=4):
+    for i in range(n):
+        t = structured([{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: contract(cid)}], Terms, temperature=0.7)
+        if quote_is_in_doc(t.cap_quote, contract(cid)):
+            return t, i + 1
+    return None, n   # nothing passed: escalate to a person instead of guessing
+</code></pre>
+<ul>
+<li>Line 2: try up to n times.</li>
+<li>Line 3: one extraction at temperature 0.7, so each try can differ.</li>
+<li>Lines 4–5: keep the first answer whose quote is really in the contract.</li>
+<li>Line 6: none passed, so hand it to a person.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>LLMs for Agents: Structured I/O</div><div class="slide"><div class="slide-top"><h3>The LLM is the core of an agent</h3><span class="slide-no">75/93</span></div><ul>
+<li>Agent parts: planning &amp; reasoning, memory, tools (retrieval, calculator, code, search, file operations).</li>
+<li>All feed the LLM core, which picks actions: tool calls, interactions, responses to users.</li>
+<li>The agent observes the environment (desktop OS, browser, apps, games, databases) and acts on it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Motivating structured I/O</h3><span class="slide-no">76/93</span></div><ul>
+<li>More and more AI results come from compound systems: model calls, retrievers, databases, calculators, terminals working together.</li>
+<li>Those parts need a shared contract for how they talk to each other.</li>
+<li>Free text breaks the next step. Typed fields don't.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Constrained decoding</h3><span class="slide-no">77/93</span></div><ul>
+<li>Constrained decoding: the server forces the model to output a set structure.</li>
+<li>SGLang (arXiv 2312.07104) turns the structure into a finite state machine (FSM): a map of which characters may come next.</li>
+<li>Example: the fixed text <code>{"summary": "</code></li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Normal FSM</th>
+<th>Compressed FSM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>13 states, one character at a time</td>
+<td>Fixed text jumps in one step</td>
+</tr>
+<tr>
+<td>Calls the LLM between pieces</td>
+<td>Calls the LLM only where a real choice exists</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>SGLang throughput</h3><span class="slide-no">78/93</span></div><ul>
+<li>Normalized throughput on Llama-7B, higher is better (SGLang = 1.0).</li>
+<li>Compared with vLLM, Guidance and LMQL on 11 workloads (MMLU, ReAct agents, JSON decoding, DSPy RAG, multi-turn chat, ...).</li>
+<li>SGLang was fastest on every workload; vLLM came close only on Generative Agents and long multi-turn chat.</li>
+<li>FSM decoding is one of several SGLang optimizations.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSPy signatures</h3><span class="slide-no">79/93</span></div><pre><code class="language-python">class Extract(dspy.Signature):
+    &quot;&quot;&quot;Extract contact info.&quot;&quot;&quot;
+    message: str = dspy.InputField()
+    name: str = dspy.OutputField()
+    email: Optional[str] = dspy.OutputField()
+    intent: Literal[&quot;meeting&quot;, &quot;intro&quot;, &quot;follow-up&quot;] = dspy.OutputField()
+</code></pre>
+<ul>
+<li>Signature: declares the task's inputs and typed outputs. DSPy writes the prompt.</li>
+<li><code>extract(message="I'm Sarah(sarah@acme.co). Meet Thursday?")</code> → <code>name="Sarah", email="sarah@acme.co", intent="meeting"</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSPy signatures: peek inside</h3><span class="slide-no">80/93</span></div><ul>
+<li>The system prompt DSPy builds lists the input and output fields with types.</li>
+<li>It sets a format with markers: <code>[[ ## message ## ]]</code>, <code>[[ ## name ## ]]</code>, ..., <code>[[ ## completed ## ]]</code>.</li>
+<li>Per-field notes: email "must adhere to the JSON schema" string or null; intent "must exactly match one of: meeting; intro; follow-up".</li>
+<li>It ends with the objective: "Extract contact info."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A typed contract with Pydantic (our notebook)</h3><span class="slide-no">81/93</span></div><pre><code class="language-python">class Terms(BaseModel):
+    governing_law: str | None = Field(description=&quot;US state name, e.g. 'Delaware', or null&quot;)
+    liability_cap_months: int | None = Field(description=&quot;Cap as months of fees, e.g. 12. null if liability is unlimited&quot;)
+    renewal_years: int | None = Field(description=&quot;Length of each automatic renewal period in years&quot;)
+    notice_days: int | None = Field(description=&quot;Days of notice needed to stop renewal&quot;)
+    cap_quote: str | None = Field(description=&quot;Exact sentence from the contract stating the liability cap&quot;)
+</code></pre>
+<ul>
+<li>Line 1: a schema named <code>Terms</code>. Pydantic: Python library for typed data.</li>
+<li>Lines 2–5: each field has a type; <code>| None</code> = may be empty.</li>
+<li><code>description</code> tells the model what to write.</li>
+<li>Line 6: an exact quote, so code can check it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Always give an &quot;absent&quot; option</h3><span class="slide-no">82/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Schema allows null</th>
+<th>Schema forces a number</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>int</code> or <code>None</code></td>
+<td><code>int</code> only (<code>CapForced</code> in the solutions)</td>
+</tr>
+<tr>
+<td>msa_16 → null is a valid answer</td>
+<td>msa_16 → the model has to invent a cap</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>msa_16, clause 7.1: "IN NO EVENT SHALL EITHER PARTY'S TOTAL LIABILITY UNDER THIS AGREEMENT BE LIMITED..."</li>
+<li>System prompt: "If a term is absent, use null. Never guess."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Valid format is not correct content</h3><span class="slide-no">83/93</span></div><ul>
+<li>Constrained decoding: output is always valid JSON. Parsing never fails.</li>
+<li>The value can still be wrong, made up, or in the wrong unit.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Quote</th>
+<th><code>quote_is_in_doc(..., contract("msa_07"))</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The cap quote the model extracted</td>
+<td>True only if it matches the contract text</td>
+</tr>
+<tr>
+<td>"Liability is capped at $1 million." (made up)</td>
+<td>False</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The notebook also scores each field on 8 contracts against the known answers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fixed choices: use a list, not free text</h3><span class="slide-no">84/93</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Free text</th>
+<th><code>Literal[...]</code> list</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"State of Delaware", "DE", "Delaware law"</td>
+<td>"Delaware" only</td>
+</tr>
+<tr>
+<td>Grading needs fuzzy matching</td>
+<td>Grading is exact</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><code>Literal["California", "Delaware", "New York", "Texas", "Florida", "Nevada", "Other"]</code></li>
+<li>Off-menu answers become impossible.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Constrain the model: classifiers</h3><span class="slide-no">85/93</span></div><ul>
+<li>Train a small head on top of embeddings to map text to class labels.</li>
+<li>Slide example: DistilBERT turns "a visually stunning rumination on love" into a vector; logistic regression on top outputs 85% positive, 15% negative → positive.</li>
+<li>The output can only be one of the labels.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Constrain the model: &quot;System One&quot; models</h3><span class="slide-no">86/93</span></div><ul>
+<li>A popular term, but roughly: classifiers with adaptable options, for fast decisions.</li>
+<li>Contrastive state-action pretraining: a state encoder and an action encoder learn to match states with the right actions.</li>
+<li>At use time, write the options as text ("Mario should {action}") and score each against the current state.</li>
+<li>Mario example: left 5%, jump 80%, right run 15% → "Mario should jump!"</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example: tool calling</h3><span class="slide-no">87/93</span></div><ul>
+<li>Toolformer (arXiv 2302.04761): the model writes tool calls inside its own text.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Call in the text</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QA</td>
+<td><code>[QA("Who is the publisher of The New England Journal of Medicine?") → Massachusetts Medical Society]</code></td>
+</tr>
+<tr>
+<td>Calculator</td>
+<td><code>[Calculator(400 / 1400) → 0.29]</code> 29% passed</td>
+</tr>
+<tr>
+<td>Translation</td>
+<td><code>[MT("tortuga") → turtle]</code></td>
+</tr>
+<tr>
+<td>Wiki search</td>
+<td><code>[WikiSearch("Brown Act") → The Ralph M. Brown Act is an act of the California State Legislature ...]</code></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>A tool call is structured output: a name plus arguments that code can run.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture summary</h3><span class="slide-no">88/93</span></div><ul>
+<li>What language models are: probabilities over token sequences you can sample from.</li>
+<li>Architecture: transformers and linear attention.</li>
+<li>Training: pretraining, midtraining, posttraining, agent training.</li>
+<li>Inference: prefill/decode, inference-time scaling.</li>
+<li>LLMs for agents: structured I/O (this module) and context engineering (module 03).</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Running it on the firm&#x27;s own machine</h3><span class="slide-no">89/93</span></div><ul>
+<li>A local GPU has limited memory. The KV cache grows with the prompt, so long contracts cost memory and time to first token.</li>
+<li>Decode is bandwidth-bound: output tokens come at a steady pace, so short structured answers are faster than prose.</li>
+<li>Hybrid (linear + full attention) models are cheaper on long inputs; test their retrieval on your own contracts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Sampling settings for contract review</h3><span class="slide-no">90/93</span></div><ul>
+<li>Extraction and yes/no checks: temperature 0–0.3.</li>
+<li>Generating candidates for best-of-n: higher temperature (0.7 in the notebook), so tries differ.</li>
+<li>Reasoning effort: start low; raise it only where the eval shows a gain.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Typed output the next step can use</h3><span class="slide-no">91/93</span></div><ul>
 <li>A review is only useful if the next step can rely on it: a number, not prose.</li>
-<li>Small local models make more mistakes. Sampling plus a checker closes much of the gap.</li>
+<li><code>liability_cap_months</code> = 24 for msa_07 ("TWENTY-FOUR (24) MONTHS"). Code can compare it to our 12-month rule.</li>
 <li>The quote check gives the lawyer a sentence they can find in the contract.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Small local models + a checker</h3><span class="slide-no">92/93</span></div><ul>
+<li>Small local models make more mistakes. Sampling plus a checker closes much of the gap (Large Language Monkeys).</li>
+<li>Our checker: the quote must appear in the contract text.</li>
+<li>No checker for a judgment call ("is this clause favorable?"): majority vote, and send low agreement to a person.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">93/93</span></div><ul>
 <li>Asking for JSON in the prompt and hoping → use the server's schema mode.</li>
 <li>No "absent" option → the model invents values. See msa_16.</li>
 <li>Free text for fixed choices → use <code>Literal</code>.</li>
 <li>Trusting the model's own confidence → use agreement across samples or a code check.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Constrained decoding guarantees valid JSON. Why check the answer anyway?</summary><p>Valid format is not correct content. Check it against the source, for example that the quote is really in the document.</p></details>
+<li>High temperature for extraction → keep it at 0–0.3.</li>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why can we sample from a language model at all?</summary><p>It models the probability of whole token sequences, so it is generative. We draw each next token from its predicted distribution.</p></details>
+
+<details><summary>What does the causal mask do in attention?</summary><p>It stops a token from looking at later tokens. Each token&#x27;s output mixes only itself and earlier tokens.</p></details>
+
+<details><summary>Why is decode slower per token than prefill?</summary><p>Prefill processes all prompt tokens in parallel and is compute-bound. Decode makes one token at a time and must re-read the weights and KV cache each step, so it is bandwidth-bound.</p></details>
+
+<details><summary>What does linear attention give up for its speed?</summary><p>New tokens see only a compressed, fixed-size state, not every earlier token. That makes long-context recall harder, so real models mix in some full attention.</p></details>
+
+<details><summary>Constrained decoding guarantees valid JSON. Why check the answer anyway?</summary><p>Valid format is not correct content. Check it against the source, for example that the quote is really in the document.</p></details>
 
 <details><summary>When do you use majority vote instead of best-of-n?</summary><p>When you have no checker. Majority vote works for short answers you can compare, like yes/no or a number.</p></details>
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Augmenting agents with memory · Agent Engineering School</title>
-<meta name="description" content="Give an agent more memory than its context window. MemGPT pages facts in and out, KV-cache reuse skips rereading, Cartridges study a corpus once.">
+<meta name="description" content="Give an agent more memory than its context window. MemGPT pages facts in and out, KV-cache reuse skips rereading (CacheBlend, LMCache), Cartridges study a corpus once.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,14 +259,39 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A09</span></div><section class="mod" id="a09" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A09</div><h2>Augmenting agents with memory</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a09_memory.ipynb">Open in Colab</a><button class="done-btn" data-done="a09" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Give an agent more memory than its context window. MemGPT pages facts in and out, KV-cache reuse skips rereading, Cartridges study a corpus once.</p><article class="lesson"><p class="deck-src">Based on CS329A · Lecture 14 · Augmenting agents with memory (guest: Junchen Jiang, LMCache) · <a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/14</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A09</span></div><section class="mod" id="a09" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A09</div><h2>Augmenting agents with memory</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a09_memory.ipynb">Open in Colab</a><button class="done-btn" data-done="a09" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>20 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Give an agent more memory than its context window. MemGPT pages facts in and out, KV-cache reuse skips rereading (CacheBlend, LMCache), Cartridges study a corpus once.</p><article class="lesson"><p class="deck-src">Based on CS329A · Lecture 14 · Augmenting agents with memory (guest: Junchen Jiang, LMCache) · <a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (64 slides)</b><ol><li><a href="#sec-1">Why this lecture: the context window is the bottleneck</a> <span>4 slides</span></li><li><a href="#sec-2">MemGPT (Packer et al. 2023)</a> <span>15 slides</span></li><li><a href="#sec-3">CacheBlend (Yao et al. 2024)</a> <span>16 slides</span></li><li><a href="#sec-4">LMCache (background reading, our pick)</a> <span>4 slides</span></li><li><a href="#sec-5">Cartridges (Eyuboglu et al. 2025)</a> <span>16 slides</span></li><li><a href="#sec-6">Our notebook</a> <span>4 slides</span></li><li><a href="#sec-7">How this applies to us</a> <span>4 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/64</span></div><ul>
 <li>Choose between three ways to give an agent more memory: agent paging (MemGPT), KV-cache reuse (CacheBlend, LMCache), and trained memory (Cartridges).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why memory?</h3><span class="slide-no">2/14</span></div><ul>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why this lecture: the context window is the bottleneck</div><div class="slide"><div class="slide-top"><h3>Why memory?</h3><span class="slide-no">2/64</span></div><ul>
 <li>Context window: the text a model can see in one call. Everything else is invisible.</li>
 <li>Prefill: the model reads the whole prompt before writing. Longer prompt, longer wait.</li>
 <li>A contract archive is far bigger than any window.</li>
 <li>The same playbook and contracts are sent again and again.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Three layers</h3><span class="slide-no">3/14</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two costs of long context</h3><span class="slide-no">3/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Example from the papers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doesn't fit</td>
+<td>SEC 10-K filings "can easily pass the million token mark" (MemGPT)</td>
+</tr>
+<tr>
+<td>Fits, but slow</td>
+<td>Prefill of a 4,000-token input: about 3 s (Llama-34B) or 6 s (Llama-70B) on one A40 GPU (CacheBlend)</td>
+</tr>
+<tr>
+<td>Fits, but uses lots of memory</td>
+<td>LLaMA 70B needs 84 GB at 16-bit for one question over 128k tokens (Cartridges)</td>
+</tr>
+<tr>
+<td>Fits, but used badly</td>
+<td>Long-context models recall the start and end better than the middle (Liu et al. 2023, cited by MemGPT)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Three layers</h3><span class="slide-no">4/64</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Tool</th>
@@ -277,7 +306,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>many documents; the agent picks what to read; you want an audit trail</td>
 </tr>
 <tr>
-<td>Prefix / KV caching</td>
+<td>Prefix / KV caching (CacheBlend, LMCache)</td>
 <td>the server</td>
 <td>the same long text is sent again and again</td>
 </tr>
@@ -287,7 +316,68 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>one big corpus, queried thousands of times</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>MemGPT: memory tiers like an OS</h3><span class="slide-no">4/14</span></div><div class="tbl"><table>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The four papers</h3><span class="slide-no">5/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>Main idea</th>
+<th>Headline result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MemGPT (Packer et al., UC Berkeley, 2023)</td>
+<td>OS-style memory tiers; the LLM pages data with function calls</td>
+<td>Deep memory retrieval, GPT-4: 32.1% → 92.5% (Table 2)</td>
+</tr>
+<tr>
+<td>CacheBlend (Yao et al., UChicago, EuroSys 2025)</td>
+<td>Reuse KV caches of RAG chunks anywhere; recompute ~15% of tokens</td>
+<td>TTFT 2.2–3.3x lower, throughput 2.8–5x higher</td>
+</tr>
+<tr>
+<td>LMCache (Liu, Yao, Cheng et al., 2025; background, not assigned)</td>
+<td>Open-source KV cache layer outside the GPU</td>
+<td>Up to 15x throughput with vLLM (authors' report)</td>
+</tr>
+<tr>
+<td>Cartridges (Eyuboglu, Ehrlich, Arora et al., Stanford, 2025)</td>
+<td>Train a small KV cache per corpus with self-study</td>
+<td>ICL quality with 38.6x less memory, 26.4x more throughput</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-2"><span>Part 2</span>MemGPT (Packer et al. 2023)</div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">6/64</span></div><ul>
+<li>LLMs support only a few dozen messages or a short document before the window fills.</li>
+<li>Longer context costs quadratic time and memory in self-attention.</li>
+<li>Even long-context models struggle to use extra context well.</li>
+<li>Idea: give the illusion of infinite context while keeping a fixed-context model.</li>
+<li>Borrowed from operating systems: virtual memory pages data between RAM and disk.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The OS analogy</h3><span class="slide-no">7/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Operating system</th>
+<th>MemGPT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Physical memory (RAM)</td>
+<td>Main context: the prompt tokens</td>
+</tr>
+<tr>
+<td>Disk</td>
+<td>External context: databases outside the window</td>
+</tr>
+<tr>
+<td>Page fault: load data back from disk</td>
+<td>Function call: search and pull data into the prompt</td>
+</tr>
+<tr>
+<td>Interrupts and events</td>
+<td>User messages, system alerts, timers trigger the LLM</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Memory tiers (Figure 3)</h3><span class="slide-no">8/64</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Main context (in the prompt)</th>
@@ -301,7 +391,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tr>
 <tr>
 <td>Working context: writable notes</td>
-<td>Archival storage: searchable documents</td>
+<td>Archival storage: searchable documents (any length text)</td>
 </tr>
 <tr>
 <td>FIFO queue of recent messages</td>
@@ -311,12 +401,605 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>FIFO: first in, first out. Oldest messages leave first.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>MemGPT: how it moves data</h3><span class="slide-no">5/14</span></div><ul>
-<li>The agent calls tools: search archival storage, save a note, finish.</li>
-<li>About 70% full: a "memory pressure" warning tells the agent to save what matters.</li>
-<li>Full: old messages are evicted, but stay in recall storage.</li>
-<li>Search results come back in pages, so one search can't flood the window.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Example: four contracts, small window</h3><span class="slide-no">6/14</span></div><div class="tbl"><table>
+<li>Queue slot 0: a recursive summary of all evicted messages.</li>
+<li>Working context: key facts, user preferences, the agent's persona. Writable only via function calls.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Queue manager: eviction policy</h3><span class="slide-no">9/64</span></div><ul>
+<li>Each new message: append to the FIFO queue, run the LLM, write input and output to recall storage.</li>
+<li>Warning token count (e.g. 70% of the window): insert a "memory pressure" system message.<ul>
+<li>The agent should save important facts to working context or archival storage</li>
+</ul>
+</li>
+<li>Flush token count (e.g. 100%): evict a set of messages (e.g. 50% of the window).<ul>
+<li>Write a new recursive summary from the old summary + evicted messages</li>
+</ul>
+</li>
+<li>Evicted messages stay in recall storage forever, searchable.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Function executor</h3><span class="slide-no">10/64</span></div><ul>
+<li>LLM output is parsed as a function call; arguments checked; function run.</li>
+<li>Results and errors (e.g. "main context is full") go back to the LLM: a feedback loop.</li>
+<li>Memory edits and searches are self-directed: the model decides what to save and fetch.</li>
+<li>System instructions describe the memory tiers and give a function schema.</li>
+<li>Retrieval is paginated, so one search can't overflow the window.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Control flow and function chaining</h3><span class="slide-no">11/64</span></div><ul>
+<li>Events trigger inference: user messages, system warnings, user actions (logged in, upload done), scheduled timers.</li>
+<li>Function chaining: a call with <code>request_heartbeat=true</code> returns control to the LLM right away.<ul>
+<li>Lets the agent page through results or combine several searches before replying</li>
+</ul>
+</li>
+<li>No heartbeat flag = yield: wait for the next outside event.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Memory in action (Figures 1, 2, 4)</h3><span class="slide-no">12/64</span></div><ul>
+<li>Memory pressure alert → <code>working_context.append("Birthday is February 7")</code>, <code>append("Boyfriend named James")</code>.</li>
+<li>User mentions Six Flags → <code>recall_storage.search("six flags")</code> finds "james and I actually first met at six flags".</li>
+<li>User says they broke up → <code>working_context.replace("Boyfriend named James", "Ex-boyfriend named James")</code>.</li>
+<li>The agent edits its own memory as facts change.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context windows at the time (Table 1)</h3><span class="slide-no">13/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Context</th>
+<th>Approx. messages</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama 2</td>
+<td>4k</td>
+<td>60</td>
+</tr>
+<tr>
+<td>GPT-4 (release)</td>
+<td>8k</td>
+<td>140</td>
+</tr>
+<tr>
+<td>GPT-3.5 Turbo</td>
+<td>16k</td>
+<td>300</td>
+</tr>
+<tr>
+<td>Claude 2</td>
+<td>100k</td>
+<td>∼2000</td>
+</tr>
+<tr>
+<td>GPT-4 Turbo</td>
+<td>128k</td>
+<td>∼2600</td>
+</tr>
+<tr>
+<td>Yi-34B-200k</td>
+<td>200k</td>
+<td>∼4000</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Assumes a 1k-token pre-prompt and about 50 tokens per message.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Conversational agents: setup</h3><span class="slide-no">14/64</span></div><ul>
+<li>Two goals: consistency (remember facts and stay coherent) and engagement (use long-term knowledge to personalize).</li>
+<li>Dataset: Multi-Session Chat (MSC): 5 sessions per chat, about a dozen messages each, consistent personas.</li>
+<li>New session 6: one question-answer pair about earlier sessions.</li>
+<li>Baselines see a lossy summary of the 5 sessions; MemGPT sees full history but only through paginated search.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Deep memory retrieval (Table 2)</h3><span class="slide-no">15/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Accuracy</th>
+<th>ROUGE-L (recall)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-3.5 Turbo</td>
+<td>38.7%</td>
+<td>0.394</td>
+</tr>
+<tr>
+<td>+ MemGPT</td>
+<td>66.9%</td>
+<td>0.629</td>
+</tr>
+<tr>
+<td>GPT-4</td>
+<td>32.1%</td>
+<td>0.296</td>
+</tr>
+<tr>
+<td>+ MemGPT</td>
+<td>92.5%</td>
+<td>0.814</td>
+</tr>
+<tr>
+<td>GPT-4 Turbo</td>
+<td>35.3%</td>
+<td>0.359</td>
+</tr>
+<tr>
+<td>+ MemGPT</td>
+<td>93.4%</td>
+<td>0.827</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Deep memory retrieval (DMR): a question that can only be answered from past sessions.</li>
+<li>Scored with an LLM judge and ROUGE-L recall (answers were wordier than gold).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Conversation opener (Table 3)</h3><span class="slide-no">16/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>SIM-1</th>
+<th>SIM-3</th>
+<th>SIM-H</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Human</td>
+<td>0.800</td>
+<td>0.800</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>MemGPT + GPT-3.5 Turbo</td>
+<td>0.830</td>
+<td>0.812</td>
+<td>0.817</td>
+</tr>
+<tr>
+<td>MemGPT + GPT-4</td>
+<td>0.868</td>
+<td>0.843</td>
+<td>0.773</td>
+</tr>
+<tr>
+<td>MemGPT + GPT-4 Turbo</td>
+<td>0.857</td>
+<td>0.828</td>
+<td>0.767</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>SIM-1/SIM-3: similarity to the gold persona facts; SIM-H: similarity to the human opener.</li>
+<li>MemGPT openers match or beat human ones on persona similarity; more verbose, cover more facts.</li>
+<li>Storing facts in working context is key to engaging openers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Document QA (Figures 5, 6)</h3><span class="slide-no">17/64</span></div><ul>
+<li>Task: NaturalQuestions-Open question; a retriever finds Wikipedia passages; the LLM answers.</li>
+<li>50 sampled questions; late-2018 Wikipedia dump; OpenAI text-embedding-ada-002; PostgreSQL + pgvector with an HNSW index.</li>
+<li>Fixed-context baselines: capped by the retriever. If the gold passage isn't in the top K, they never see it.</li>
+<li>Baselines past their window: truncate passages → accuracy drops.</li>
+<li>MemGPT pages through archival search; accuracy stays flat as documents increase.<ul>
+<li>Example: <code>archival_storage.search("nobel physics", page=2)</code> → "Wilhelm Conrad Rontgen"</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Document QA: caveats</h3><span class="slide-no">18/64</span></div><ul>
+<li>Gold passage often appears outside the first dozen results.</li>
+<li>MemGPT often stops paging before exhausting the retriever.</li>
+<li>MemGPT with GPT-3.5 does much worse: weak function calling.</li>
+<li>MemGPT with GPT-4 and GPT-4 Turbo: equivalent results.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Nested key-value retrieval (Figures 7, 8)</h3><span class="slide-no">19/64</span></div><ul>
+<li>Keys and values are 128-bit UUIDs; a value can itself be a key (multi-hop lookup).</li>
+<li>140 UUID pairs, about 8k tokens; nesting levels 0 to 4; 30 orderings.</li>
+<li>Results:<ul>
+<li>GPT-3.5: 0% at 1 nesting level (returns the first value)</li>
+<li>GPT-4 and GPT-4 Turbo: 0% by 3 nesting levels</li>
+<li>MemGPT + GPT-4: unaffected by depth</li>
+<li>MemGPT + GPT-4 Turbo and GPT-3.5: better than baselines, but drop at 2 levels</li>
+</ul>
+</li>
+<li>MemGPT stops when a search for the value returns only one result (so it is not also a key).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations</h3><span class="slide-no">20/64</span></div><ul>
+<li>Depends on the model's function-calling skill (GPT-3.5 struggles).</li>
+<li>The model decides what to save: if it skips a note, the fact leaves the window.</li>
+<li>Stops searching early on document QA.</li>
+<li>Future work named: other domains, other memory tiers (databases, caches), better memory policies.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>CacheBlend (Yao et al. 2024)</div><div class="slide"><div class="slide-top"><h3>KV cache basics</h3><span class="slide-no">21/64</span></div><ul>
+<li>KV cache: key and value vectors the model computes for every prompt token at every layer.</li>
+<li>Prefill: compute the KV cache for the whole input, layer by layer.</li>
+<li>Decode: generate tokens one by one, appending new K and V.</li>
+<li>Time to first token (TTFT): how long until the first word appears; set by prefill on long prompts.</li>
+<li>Prefill time grows super-linearly with input length.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three existing options (Figure 1)</h3><span class="slide-no">22/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Speed</th>
+<th>Quality</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full KV recompute</td>
+<td>Slowest</td>
+<td>Good</td>
+<td>Prefill everything every time</td>
+</tr>
+<tr>
+<td>Prefix caching</td>
+<td>Marginally faster for RAG</td>
+<td>Good</td>
+<td>Reuses KV only for an exact matching start; only chunk 1 is a prefix</td>
+</tr>
+<tr>
+<td>Full KV reuse (PromptCache)</td>
+<td>Much faster</td>
+<td>Low</td>
+<td>Reuses each chunk's KV but ignores cross-attention</td>
+</tr>
+<tr>
+<td>CacheBlend</td>
+<td>Much faster</td>
+<td>Good</td>
+<td>Reuses all chunks, recomputes a small share of tokens</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Why RAG needs many chunks (Figure 2)</h3><span class="slide-no">23/64</span></div><ul>
+<li>Chunk queries into 128-token chunks; retrieve top-k by embedding distance.</li>
+<li>On Musique and 2WikiMQA: F1 rises a lot as more chunks are added.</li>
+<li>Too many chunks hurts again ("lost in the middle").</li>
+<li>The gap between full recompute and full reuse grows with more chunks: more cross-attention.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why cross-attention matters (Figure 3)</h3><span class="slide-no">24/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Full KV recompute</th>
+<th>Full KV reuse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chunk 1: "Lionel Messi scored 13 goals at FIFA World Cups."</td>
+<td>Same chunks, KV computed separately</td>
+</tr>
+<tr>
+<td>Chunk 2: "Cristiano scored 8 goals at FIFA World Cups."</td>
+<td>Chunk 2 never "saw" chunk 1</td>
+</tr>
+<tr>
+<td>"Lionel Messi scored more goals ... than Cristiano Ronaldo." ✓</td>
+<td>"The question is asking for information about FIFA World Cups..." ✗</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Cross-attention: attention from one chunk's tokens to earlier chunks. Can't be precomputed, since the earlier chunks aren't known in advance.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Definitions (Table 1)</h3><span class="slide-no">25/64</span></div><ul>
+<li>KV deviation: Δkv(KV_i, KV_i^full)[j] = absolute difference between token j's KV on layer i and its fully recomputed KV.</li>
+<li>Attention deviation: Δattn(A_i, A_i^full) = L2 norm of the difference between forward attention matrices.<ul>
+<li>Forward attention: attention from the last tokens (the query) to the context; directly sets the output</li>
+</ul>
+</li>
+<li>Goal: update KV^pre to KV^new so attention deviation is as small as possible on every layer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Selective KV recompute (Figure 5)</h3><span class="slide-no">26/64</span></div><ul>
+<li>Per layer:<ul>
+<li>Mask the input down to the selected tokens</li>
+<li>Compute Q, K, V only for those tokens</li>
+<li>Fill in K and V for the other tokens from the cache</li>
+<li>Run attention as usual; output feeds the next layer</li>
+</ul>
+</li>
+<li>Cost: recomputing r% of tokens costs about r% of a full prefill.</li>
+<li>Positions fixed with RoPE: multiply K by a rotation matrix once (negligible cost).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Which tokens to recompute</h3><span class="slide-no">27/64</span></div><ul>
+<li>Insight 1: recomputing tokens with higher KV deviation cuts attention deviation the most (Figure 6).<ul>
+<li>Biggest drop from the first few top-deviation tokens</li>
+</ul>
+</li>
+<li>HKVD tokens: high-KV-deviation tokens on a layer.</li>
+<li>Attention is sparse: only about 10–15% of tokens have much higher KV deviation (Figure 7).</li>
+<li>So recomputing 10–20% of tokens is enough.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Finding HKVD tokens cheaply</h3><span class="slide-no">28/64</span></div><ul>
+<li>Problem: you'd need the full KV to measure deviation, which defeats the purpose.</li>
+<li>Insight 2: tokens with high deviation on one layer tend to have high deviation on the next (high Spearman rank correlation, Figure 8).</li>
+<li>Gradual filtering (Figure 9):<ul>
+<li>Layer 1: recompute all, pick r1% (a bit more than r)</li>
+<li>Layer 2: recompute those, pick r2% (a bit less than r1)</li>
+<li>Continue layer by layer</li>
+</ul>
+</li>
+<li>Extra memory is negligible: layer i's old KV is dropped when moving to layer i+1.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pipelining with KV loading (Figure 10)</h3><span class="slide-no">29/64</span></div><ul>
+<li>Recompute layer i while loading layer i+1's KV from storage.</li>
+<li>Llama-7B, 4K context: recompute 15% takes 3 ms per layer; loading one layer from NVMe SSD takes 16 ms → no extra delay.</li>
+<li>Llama-70B: recompute 15% takes 7 ms; loading 4 ms → recompute not fully hidden.</li>
+<li>So KV caches can live on slower, bigger, cheaper storage.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Loading controller</h3><span class="slide-no">30/64</span></div><ul>
+<li>Formula: T_recompute(r%, LLM, L) = r% × Prefill(LLM, L)</li>
+<li>Formula: T_load(LLM, L, device) = PerTokenKVSize(LLM) × L ÷ Throughput(device)<ul>
+<li>L: context length; both prefill time and device throughput profiled offline</li>
+</ul>
+</li>
+<li>Pick r so T_recompute ≈ T_load, but never below r* = 15% (minimum for quality, from Figure 16).</li>
+<li>Or fix r = 15% and pick the cheapest storage device where T_recompute ≥ T_load.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>System design (Figure 11)</h3><span class="slide-no">31/64</span></div><ul>
+<li>KV cache store: split input into chunks, hash each, look up its KV (like vLLM block hashing). Evict least recently used.</li>
+<li>Fusor: merges cached KVs with selective recompute, layer by layer.</li>
+<li>Built on vLLM, about 3K lines of Python (PyTorch v2.0).</li>
+<li>Interfaces: <code>fetch_kv(text, layer_id)</code>, <code>prefill_layer(input_dict, KVCache)</code>, <code>synchronize()</code>.</li>
+<li>Hash tables kept in CPU memory: 16MB for one million chunks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Evaluation setup</h3><span class="slide-no">32/64</span></div><ul>
+<li>Models: Mistral-7B, Yi-34B, Llama-70B (8-bit quantization for Yi-34B and Llama-70B).</li>
+<li>Hardware: 2 Nvidia A40 GPUs, 128 GB RAM, 1TB NVMe SSD (4.8 GB/s).</li>
+<li>Datasets: 2WikiMQA (200 cases), Musique (150), SAMSum (200), MultiNews (60).</li>
+<li>512-token chunks; top-6 chunks per request.</li>
+<li>Metrics: F1 for QA, Rouge-L for summarization.</li>
+<li>Baselines: full recompute, prefix caching (assumed zero loading delay, a favorable assumption), full KV reuse, MapReduce, MapRerank.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Main results (Figures 12, 14)</h3><span class="slide-no">33/64</span></div><ul>
+<li>vs full recompute and prefix caching: TTFT 2.2–3.3x lower; F1 / Rouge-L within 0.02.</li>
+<li>vs full KV reuse: slightly slower, but quality far better (often more than 2x).<ul>
+<li>Intro: 0.1–0.2 higher F1 on QA, 0.03–0.25 higher Rouge-L on summarization</li>
+</ul>
+</li>
+<li>Throughput at the same delay: 2.8–5x higher than baselines.</li>
+<li>Prefix caching also wastes storage: one chunk needs a separate KV copy per distinct prefix.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Versus other RAG methods (Figure 13)</h3><span class="slide-no">34/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>How</th>
+<th>Result vs CacheBlend</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MapReduce</td>
+<td>Summarize each chunk, then answer from summaries</td>
+<td>2–5x higher TTFT, lower F1</td>
+</tr>
+<tr>
+<td>MapRerank</td>
+<td>Answer from each chunk alone, pick the most confident</td>
+<td>Slightly lower TTFT, much worse quality</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Sensitivity (Figures 15–17)</h3><span class="slide-no">35/64</span></div><ul>
+<li>Recompute ratio 5–18% (Yi-34B): quality loss at most 0.002 F1 / Rouge-L.<ul>
+<li>That gives 4.1–6.6x lower TTFT than full recompute and 3.4–6.1x lower than prefix caching</li>
+</ul>
+</li>
+<li>Gains stay similar across chunk counts and chunk lengths.</li>
+<li>Larger batches: prefill dominates more, so CacheBlend helps more.</li>
+<li>Works with KV in CPU RAM or a slower disk; gap to full reuse shrinks on slow disks (loading dominates).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations</h3><span class="slide-no">36/64</span></div><ul>
+<li>Only transformer models; not Mamba or Griffin.</li>
+<li>Not tested with more models, datasets or quantization settings.</li>
+<li>Only vLLM; not newer engines (DistServe, StableGen).</li>
+<li>Not studied: sharing KV caches across compute nodes.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>LMCache (background reading, our pick)</div><div class="slide"><div class="slide-top"><h3>Why move KV caches out of the GPU</h3><span class="slide-no">37/64</span></div><ul>
+<li>Traditional: KV cache lives in GPU memory for one query only.</li>
+<li>Two new needs:<ul>
+<li>Cross-query caching: keep KV for a shared prefix for later queries</li>
+<li>Prefill–decode (PD) disaggregation: prefill on some GPUs, decode on others; KV must move between them</li>
+</ul>
+</li>
+<li>Usage data: stored KV cache grows far beyond GPU memory (Figure 3).</li>
+<li>Over 19% of users reuse stored tokens more than 1.5 times (Figure 4).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What LMCache does</h3><span class="slide-no">38/64</span></div><ul>
+<li>Extracts KV caches from vLLM and SGLang; stores them in CPU memory, local disk, remote disk, Redis; moves them over Ethernet, RDMA, NVLink.</li>
+<li>Three contributions:<ul>
+<li>Fast data movement: batching, compute–I/O pipelining</li>
+<li>A modular connector that survives fast engine changes (15–20 new open-weight models a week in 2025)</li>
+<li>Control API: pin, lookup, cleanup, move, compress KV caches</li>
+</ul>
+</li>
+<li>From the same group as CacheBlend; CacheBlend's code is in the LMCache repo.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Performance tricks</h3><span class="slide-no">39/64</span></div><ul>
+<li>Chunks, not pages: vLLM pages are 16 tokens per layer (20 KB–63 KB); LMCache moves 256-token chunks by default.<ul>
+<li>Small transfers can't fill the link (Table 1: 64KB → 4GBps; 16MB → 49GBps)</li>
+</ul>
+</li>
+<li>Layer-wise pipelining: load layer i+1's KV while layer i computes (separate CUDA streams).</li>
+<li>Delayed decode storing: buffer new tokens' KV and write a full chunk at once.</li>
+<li>Zero-copy moves between tiers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lessons from deployment</h3><span class="slide-no">40/64</span></div><ul>
+<li>Remote storage can beat prefill: one user loading KV from their object store saw 22–32% lower TTFT than full prefill.</li>
+<li>Context truncation kills prefix hits: real traces showed hit ratio drop from roughly 85% to 45% when keeping only the latest tokens.</li>
+<li>Hit rates higher than expected: e.g. 50% at one company; reuse comes from chat histories, coding assistants, RAG.</li>
+<li>Reported: up to 15x throughput with vLLM on multi-round QA and document analysis.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Cartridges (Eyuboglu et al. 2025)</div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">41/64</span></div><ul>
+<li>Users ask many questions over one big corpus: codebases, legal texts, 10-K filings, medical records.</li>
+<li>In-context learning (ICL): put the whole corpus in the prompt. Flexible but costly.</li>
+<li>KV cache grows linearly with input length.<ul>
+<li>LLaMA 8B on one H100: peak throughput drops 77x from 1k to 120k tokens of context</li>
+</ul>
+</li>
+<li>Prompt and KV-cache compression: quality drops fast beyond 2x compression (Figure 4).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The idea: train the cache offline</h3><span class="slide-no">42/64</span></div><ul>
+<li>Cartridge: a small trained KV cache Z that stands in for the corpus C.</li>
+<li>Freeze the LLM; train only the key and value vectors (a simplified prefix-tuning).</li>
+<li>At question time: load the Cartridge, append the question, decode.</li>
+<li>Training cost is paid once and shared by every query on that corpus.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What a Cartridge must do</h3><span class="slide-no">43/64</span></div><ul>
+<li>Generality: answer many query types (facts, math, summaries, creative) unknown at training time.</li>
+<li>Long-range structure: understand how distant parts of the corpus relate.</li>
+<li>Composition: two Cartridges concatenated should act like two documents in context.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Parameterization</h3><span class="slide-no">44/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>ICL KV cache</th>
+<th>Cartridge KV cache</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(k[1], v[1]) ... (k[n_C], v[n_C]) for the corpus</td>
+<td>(z_k[1], z_v[1]) ... (z_k[p], z_v[p]) trainable</td>
+</tr>
+<tr>
+<td>then KV pairs for the query</td>
+<td>then KV pairs for the query</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Size: Z ∈ R^(L × p × d × 2): L layers, p virtual tokens, d dimension, keys and values.</li>
+<li>Memory = a KV cache for a p-token prompt. p is the knob.</li>
+<li>Served like a cached prefix: works with existing servers (unlike LoRA, which needs custom serving).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Initialization</h3><span class="slide-no">45/64</span></div><ul>
+<li>Random init of prefix-tuning is unstable; earlier work used an MLP re-projection.</li>
+<li>Cartridges: initialize Z to the KV cache of the first p tokens of the corpus.</li>
+<li>LongHealth accuracy (Section 5.3):</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Initialization</th>
+<th>Accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Random vectors</td>
+<td>29.9%</td>
+</tr>
+<tr>
+<td>KV of random tokens</td>
+<td>51.3%</td>
+</tr>
+<tr>
+<td>KV of first p corpus tokens</td>
+<td>55.3%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Freezing the attention sink (first token) also helps stability.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Naive training fails (Figure 3)</h3><span class="slide-no">46/64</span></div><ul>
+<li>Next-token prediction on the raw corpus:<ul>
+<li>Memorizes with near-perfect perplexity, 107x less memory than ICL</li>
+<li>Fails to generalize to other query types (synthesis, reasoning, creative)</li>
+</ul>
+</li>
+<li>Tested on GenConvo, built from FinanceBench (e.g. AMD's 10-K, almost 100k tokens).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Self-study, step 1: synthetic conversations</h3><span class="slide-no">47/64</span></div><pre><code>c̃ = chunk(C)                      # 512–4096 tokens of the corpus
+s = get_seed_prompt()
+for i in 1..k:
+  a_i ~ F(· | c̃ ⊕ s ⊕ a_1 ⊕ ... ⊕ b_(i-1))   # A asks, sees the seed
+  b_i ~ F(· | c̃ ⊕ a_1 ⊕ ... ⊕ a_i)           # B answers, no seed
+</code></pre>
+<ul>
+<li>A and B are the same model; both see the chunk in the system prompt.</li>
+<li>Main experiments use k = 1 (one question, one answer).</li>
+<li>Chunking lets it cover corpora longer than the context window.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Seed prompts</h3><span class="slide-no">48/64</span></div><ul>
+<li>Five generic types: structuring, summarization, question, use cases, creative.</li>
+<li>Same seeds for every corpus; never mention the domain.</li>
+<li>Single seed example: "Please generate a single chat message to begin a conversation about the information in the corpus. Ask a question about the corpus or make a request."</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>1 seed prompt</th>
+<th>5 seed types</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MTOB (chrF)</td>
+<td>24.1</td>
+<td>32.0</td>
+</tr>
+<tr>
+<td>LongHealth (accuracy)</td>
+<td>43.6</td>
+<td>48.4</td>
+</tr>
+<tr>
+<td>QASPER</td>
+<td>no significant gain</td>
+<td></td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Self-study, step 2: context distillation</h3><span class="slide-no">49/64</span></div><ul>
+<li>Teacher: the model with the chunk in context, F(· | c̃ ⊕ x).</li>
+<li>Student: the same model with the Cartridge, F_Z(· | x).</li>
+<li>Formula (Eq. 3): minimize Σ over (x, c̃) Σ over positions i of KL( F(·|c̃ ⊕ x[:i]) || F_Z(·|x[:i]) )<ul>
+<li>KL: how different two next-token distributions are</li>
+<li>Sum over every token position of every synthetic conversation</li>
+</ul>
+</li>
+<li>Result on MTOB: chrF 24.9 (next-token) → 33.5 (distillation), same data.</li>
+<li>LongHealth: +3.7 accuracy points at equal data (Appendix A).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Datasets</h3><span class="slide-no">50/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>Corpus</th>
+<th>Metric</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LongHealth</td>
+<td>Patient medical records</td>
+<td>Accuracy</td>
+</tr>
+<tr>
+<td>QASPER</td>
+<td>Scientific papers</td>
+<td>Log perplexity</td>
+</tr>
+<tr>
+<td>MTOB</td>
+<td>Kalamang grammar book (translate Kalamang → English)</td>
+<td>chrF (character n-gram score)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Corpora from 100k to 484k tokens; one Cartridge per dataset.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Quality vs memory (Figure 4)</h3><span class="slide-no">51/64</span></div><ul>
+<li>Baselines: ICL, truncated prompt, GPT-4o summary, DuoAttention (KV compression).</li>
+<li>Cartridges beat ICL at some cache sizes on LongHealth and QASPER (Llama-3B).</li>
+<li>Memory savings at similar quality: up to 10x (LongHealth), up to 100x (QASPER).</li>
+<li>Compression baselines drop at only 2x compression.</li>
+<li>Average across benchmarks: 38.6x less memory, 26.4x higher peak throughput.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>More compute, better Cartridge (Figure 5)</h3><span class="slide-no">52/64</span></div><ul>
+<li>Sizes p ∈ {128, 512, 2048, 8192}; batch 64, max length 1024, one epoch (no data reused).</li>
+<li>Quality rises steadily with training steps for every size.</li>
+<li>Larger Cartridges reach higher quality.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Beyond the context window (Section 5.2)</h3><span class="slide-no">53/64</span></div><ul>
+<li>MTOB: full textbook is 484k tokens; Llama-8B window is 128k (356k tokens too long).</li>
+<li>Chunked self-study builds a Cartridge from the full book anyway.</li>
+<li>Matches ICL on the hand-curated 60k-token version, with much less memory.</li>
+<li>Beats ICL on the first 130,000 tokens of the book by 11.0 chrF.</li>
+<li>Effective context: 128k → 484k tokens.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Prefix-tuning vs LoRA (Figure 6, 8)</h3><span class="slide-no">54/64</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>Prefix-tuning Cartridge</th>
+<th>LoRA Cartridge</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MTOB at ∼0.6 GB</td>
+<td>+4.5 chrF over LoRA</td>
+<td>baseline</td>
+</tr>
+<tr>
+<td>MMLU as size grows</td>
+<td>54.7 → 54.3 (0.15 → 0.96 GB)</td>
+<td>54.7 → 45.3 (0.15 → 1.06 GB)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Prefix-tuning keeps the model's general skills; LoRA damages them as it grows.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Composition (Figure 7)</h3><span class="slide-no">55/64</span></div><ul>
+<li>Train Cartridges on 10-Ks of AMD, Pepsi, AMEX, Boeing; sizes {512, 1024, 2048, 4096}.</li>
+<li>Concatenate two, no joint training; ask questions needing both (6 pairs per size).</li>
+<li>Beats one Cartridge alone and truncated ICL on multi-document questions.</li>
+<li>Example: "Who audited the Boeing and AMD statements?" → Ernst &amp; Young LLP (AMD), Deloitte &amp; Touche LLP (Boeing).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations</h3><span class="slide-no">56/64</span></div><ul>
+<li>Training is far costlier than a prefill: about 30 minutes on one 8×H100 node for an ICL-quality Llama-8B Cartridge.</li>
+<li>Not a drop-in replacement for ICL; a trade of compute for memory.</li>
+<li>Pays off when many queries hit the same corpus, and training can run on idle compute (e.g. at night).</li>
+<li>Room for faster training (better shared-prefix attention kernels).</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Our notebook</div><div class="slide"><div class="slide-top"><h3>Example: four contracts, small window</h3><span class="slide-no">57/64</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>The problem</th>
@@ -339,8 +1022,9 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
+<li>msa_07, 2.1: "Customer shall pay Vendor $4,500 per month".</li>
 <li>Weak spot: if the agent skips a note, the fact is gone from view. The model decides what to remember.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Eviction in code</h3><span class="slide-no">7/14</span></div><pre><code class="language-python">def add(self, unit):
+</ul></div><div class="slide"><div class="slide-top"><h3>Eviction in code</h3><span class="slide-no">58/64</span></div><pre><code class="language-python">def add(self, unit):
     self.queue.append(unit)
     self.recall.extend(unit)
     while self.size() &gt; self.budget and len(self.queue) &gt; 2:
@@ -353,12 +1037,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <li>Line 4: while over budget, keep at least the task and the newest step.</li>
 <li>Line 5: drop the oldest step after the task (<code>queue[0]</code> is never evicted).</li>
 <li>Line 6: count it, so the agent can be told "older steps were evicted".</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>KV cache and prefix caching</h3><span class="slide-no">8/14</span></div><ul>
-<li>KV cache: key and value vectors the model computes for every prompt token at every layer.</li>
-<li>Time to first token (TTFT): how long until the first word appears; mostly prefill on long prompts.</li>
-<li>Prefix caching: reuse the KV cache when a new prompt starts with exactly the same text.</li>
-<li>All or nothing from the first change. Ollama does it automatically within one model slot.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Same contracts, four requests</h3><span class="slide-no">9/14</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Same contracts, four requests</h3><span class="slide-no">59/64</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Request</th>
@@ -385,58 +1064,43 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
+<li>Prefix caching: all or nothing from the first change. Ollama does it automatically within one model slot.</li>
 <li>Rule: stable text first (rules, playbook, contract), the question last. No timestamp at the top.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>CacheBlend: reuse chunks anywhere</h3><span class="slide-no">10/14</span></div><ul>
-<li>RAG glues different retrieved chunks in a different order. Prefix caching misses.</li>
-<li>CacheBlend reuses each chunk's cached KV wherever it sits.</li>
-<li>Recomputes only a small share of tokens (15% per layer by default).</li>
-<li>KV deviation: how much a token's cached KV differs from full recompute. Highest ones are recomputed.</li>
-<li>LMCache: open-source layer that stores KV caches in CPU, disk or network and shares them across vLLM/SGLang engines.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Cartridges: study once, answer many times</h3><span class="slide-no">11/14</span></div><ul>
-<li>Cartridge: a small trained KV cache that stands in for a whole corpus at question time.</li>
-<li>Self-study: the model has synthetic conversations about each chunk ("summarize", "structure", "ask a question").</li>
-<li>Context distillation: train the Cartridge so the model with it matches the model with the full chunk.</li>
-<li>Training on the raw text with next-token prediction memorized but generalized poorly.</li>
-<li>Our notebook's version is text notes; the real one is trained vectors.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What the papers showed</h3><span class="slide-no">12/14</span></div><div class="tbl"><table>
-<thead>
-<tr>
-<th>Paper</th>
-<th>What it showed</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>MemGPT (Packer et al. 2023)</td>
-<td>Multi-session recall: GPT-4 32.1% alone vs 92.5% with MemGPT</td>
-</tr>
-<tr>
-<td>CacheBlend (Yao et al. 2024)</td>
-<td>TTFT 2.2–3.3x lower than full recompute; quality within 0.02 F1/Rouge-L</td>
-</tr>
-<tr>
-<td>LMCache (Cheng et al. 2025, our pick)</td>
-<td>Up to 15x higher throughput with vLLM (authors' report)</td>
-</tr>
-<tr>
-<td>Cartridges (Eyuboglu et al. 2025)</td>
-<td>Matched in-context quality with 38.6x less memory, 26.4x higher throughput</td>
-</tr>
-</tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">13/14</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our &quot;cartridge&quot;</h3><span class="slide-no">60/64</span></div><ul>
+<li>Study the 6 contracts once; save compact notes; answer questions from the notes.</li>
+<li>Compare answers and size against putting all 6 contracts in the prompt.</li>
+<li>Ours is text notes; the real Cartridge is trained key/value vectors.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Paging on the firm&#x27;s machine</h3><span class="slide-no">61/64</span></div><ul>
 <li>A local model on a modest GPU has a small window. Paging lets it work across the whole contract archive.</li>
+<li>MemGPT's lesson: the model must be good at tool calls. Test the local model's function calling first.</li>
+<li>Keep recall storage: every message is logged, which is also an audit trail for the firm.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Caching on the firm&#x27;s machine</h3><span class="slide-no">62/64</span></div><ul>
 <li>Reusing the KV cache for the playbook and contract is often the cheapest speed-up, before buying more GPUs.</li>
+<li>Order prompts: playbook, then contract, then the question ("liability cap at most 12 months of fees?").</li>
+<li>LMCache's lesson: never trim the start of a long prompt; truncation dropped hit rates from about 85% to 45%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Trained memory on the firm&#x27;s machine</h3><span class="slide-no">63/64</span></div><ul>
 <li>One big archive queried thousands of times is where a Cartridge pays off.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">14/14</span></div><ul>
+<li>Train overnight on idle GPUs, as the Cartridges paper suggests.</li>
+<li>Use prefix-tuning style memory, not LoRA, to keep the model's general skills (MMLU 54.3 vs 45.3).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">64/64</span></div><ul>
 <li>Timestamp or request ID at the top of the prompt → the prefix never matches. Put it last.</li>
 <li>Trusting the agent to save notes → log every message and test recall.</li>
-<li>Training a compact memory on raw text → use varied self-study conversations.</li>
+<li>Reusing chunk caches with no recompute → cross-attention lost; recompute ~15% (CacheBlend).</li>
+<li>Training a compact memory on raw text → use varied self-study conversations and distillation.</li>
 <li>Timing the first call after loading the model → warm up first; load time swamps everything.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why does changing the first word of a long prompt make it slow again?</summary><p>Prefix caching only reuses an exact matching start. A change at the start breaks everything after it, so the whole prompt is prefilled again.</p></details>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>In MemGPT, what are main context and external context?</summary><p>Main context is the prompt: system instructions, working context and the FIFO queue. External context is recall storage and archival storage, reached only through function calls.</p></details>
 
 <details><summary>In MemGPT, what survives when old messages are evicted?</summary><p>The working-context notes, a recursive summary, and the full messages in recall storage, which the agent can search.</p></details>
 
-<details><summary>What does CacheBlend recompute, and why not nothing?</summary><p>A small share of tokens (15% per layer by default) with the highest KV deviation. Recomputing nothing ignores how chunks affect each other, and quality drops.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>Why does changing the first word of a long prompt make it slow again?</summary><p>Prefix caching only reuses an exact matching start. A change at the start breaks everything after it, so the whole prompt is prefilled again.</p></details>
+
+<details><summary>What does CacheBlend recompute, and why not nothing?</summary><p>A small share of tokens (15% per layer by default) with the highest KV deviation. Recomputing nothing ignores how chunks affect each other, and quality drops.</p></details>
+
+<details><summary>How does CacheBlend hide the cost of recomputing?</summary><p>It recomputes one layer while loading the next layer&#x27;s KV cache from storage. If loading is slower, recompute adds no delay.</p></details>
+
+<details><summary>Why did Cartridges trained with next-token prediction fail?</summary><p>They memorized the raw text but could not answer other kinds of questions. Self-study conversations plus context distillation fixed this.</p></details>
+
+<details><summary>Why initialize a Cartridge from the first p tokens of the corpus?</summary><p>Random vectors trained poorly (29.9% on LongHealth). Real-token KV vectors worked much better (55.3% with the first p tokens).</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run the MemGPT-style agent: check its peak prompt stays under budget and its notes add up to the right total.</li>
 <li>Time the four requests: cold, warm, changed first word, changed end.</li>
 <li>Compare answers from the "cartridge" notes vs the full 6 contracts, and the size ratio.</li>

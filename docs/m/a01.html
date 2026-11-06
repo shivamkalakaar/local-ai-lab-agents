@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,9 +259,9 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A01</span></div><section class="mod" id="a01" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A01</div><h2>Test-time compute scaling</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a01_test_time_compute.ipynb">Open in Colab</a><button class="done-btn" data-done="a01" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Let a model try many times or revise its work, then pick well. More tries only pay off if you can spot the right one.</p><article class="lesson"><p class="deck-src">Based on CS329A · Test-time compute scaling · <a href="https://arxiv.org/abs/2407.21787" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/12</span></div><ul>
-<li>Learn how to buy accuracy at answer time, why picking the right try is the hard part, and how to spend tries by difficulty.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why test-time compute?</h3><span class="slide-no">2/12</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A01</span></div><section class="mod" id="a01" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A01</div><h2>Test-time compute scaling</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a01_test_time_compute.ipynb">Open in Colab</a><button class="done-btn" data-done="a01" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>22 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Let a model try many times or revise its work, then pick well. More tries only pay off if you can spot the right one.</p><article class="lesson"><p class="deck-src">Based on CS329A · Test-time compute scaling · <a href="https://arxiv.org/abs/2407.21787" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (69 slides)</b><ol><li><a href="#sec-1">Why this lecture exists</a> <span>3 slides</span></li><li><a href="#sec-2">Large Language Monkeys (Brown et al. 2024)</a> <span>17 slides</span></li><li><a href="#sec-3">How Do Large Language Monkeys Get Their Power (Laws)? (Schaeffer et al. 2025)</a> <span>9 slides</span></li><li><a href="#sec-4">Archon (Saad-Falcon et al. 2024)</a> <span>15 slides</span></li><li><a href="#sec-5">Scaling Test-Time Compute Optimally (Snell et al. 2024)</a> <span>16 slides</span></li><li><a href="#sec-6">The notebook in code</a> <span>3 slides</span></li><li><a href="#sec-7">How this applies to us</a> <span>4 slides</span></li><li><a href="#sec-8">Wrap-up</a> <span>1 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/69</span></div><ul>
+<li>Learn how to buy accuracy at answer time: how coverage grows with tries, why it follows a power law, how to stack sampling, ranking, fusing and checking, and how to spend compute by question difficulty.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why this lecture exists</div><div class="slide"><div class="slide-top"><h3>Why test-time compute?</h3><span class="slide-no">2/69</span></div><ul>
 <li>Test-time compute: extra work spent when answering (more tries, revisions, search) instead of when training.</li>
 <li>No training needed. Same model, more tries.</li>
 <li>Two ways to spend it:<ul>
@@ -266,40 +270,247 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </ul>
 </li>
 <li>The catch: something must tell the right try from the wrong ones.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Repeated sampling and coverage</h3><span class="slide-no">3/12</span></div><ul>
-<li>Repeated sampling: ask the same question many times at temperature above 0, so the tries differ.</li>
-<li>Temperature 0: every try is the same. More tries add nothing.</li>
-<li>Coverage (pass@k): share of problems where at least one of k tries is right.</li>
-<li>Coverage is an upper bound. It assumes a perfect checker.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Large Language Monkeys (Brown et al. 2024)</h3><span class="slide-no">4/12</span></div><ul>
-<li>Sampled up to 10,000 times per problem on math and coding sets.</li>
-<li>Coverage kept rising over four orders of magnitude.</li>
-<li>SWE-bench Lite, DeepSeek-Coder-V2-Instruct: 15.9% with 1 try → 56% with 250 tries.<ul>
-<li>Single-try state of the art at the time: 43%</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two problems: coverage and precision</h3><span class="slide-no">3/69</span></div><ul>
+<li>Brown et al. split repeated sampling into two steps (Figure 1):<ul>
+<li>Step 1: generate many candidate answers at temperature above 0.</li>
+<li>Step 2: a verifier picks a final answer (unit tests, proof checker, majority vote).</li>
 </ul>
 </li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Cheap model + many tries vs expensive model</h3><span class="slide-no">5/12</span></div><div class="tbl"><table>
+<li>Coverage: can we generate a correct answer at all?</li>
+<li>Precision: can we find the correct answer among the samples?</li>
+<li>Both are needed. With unlimited samples, any model that gives every answer some chance reaches perfect coverage.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four papers, one story</h3><span class="slide-no">4/69</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>5 tries, DeepSeek-Coder-V2-Instruct</th>
-<th>1 try, GPT-4o</th>
+<th>Paper</th>
+<th>Question</th>
+<th>Short answer</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Solved 29.62% of SWE-bench Lite</td>
-<td>Solved 24.00%</td>
+<td>Large Language Monkeys (Brown et al. 2024)</td>
+<td>Does sampling more help?</td>
+<td>Coverage grows over 4 orders of magnitude; picking stalls</td>
 </tr>
 <tr>
-<td>Cost $10.8</td>
-<td>Cost $39</td>
+<td>Power Laws (Schaeffer et al. 2025)</td>
+<td>Why that curve shape?</td>
+<td>A heavy tail of very hard problems</td>
+</tr>
+<tr>
+<td>Archon (Saad-Falcon et al. 2024)</td>
+<td>How to combine tricks?</td>
+<td>Stack them in layers; search the stack</td>
+</tr>
+<tr>
+<td>Compute-optimal (Snell et al. 2024)</td>
+<td>How to spend a fixed budget?</td>
+<td>It depends on question difficulty</td>
+</tr>
+</tbody>
+</table></div></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Large Language Monkeys (Brown et al. 2024)</div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">5/69</span></div><ul>
+<li>Training compute has been scaled hard: bigger models, more data.</li>
+<li>At answer time, we usually give the model one attempt.</li>
+<li>Idea: treat inference compute as its own scaling axis.</li>
+<li>Method: the simplest one. Sample the same prompt many times, independently, same settings.</li>
+<li>Title from the "infinite monkey theorem".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Repeated sampling and coverage</h3><span class="slide-no">6/69</span></div><ul>
+<li>Repeated sampling: ask the same question many times at temperature above 0, so the tries differ.</li>
+<li>Temperature 0: every try is the same. More tries add nothing.</li>
+<li>Coverage (pass@k): share of problems where at least one of k tries is right.</li>
+<li>Coverage is an upper bound. It assumes a perfect checker.</li>
+<li>For GSM8K and MATH, coverage means an oracle verifier checks the final answer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Five tasks</h3><span class="slide-no">7/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>What it is</th>
+<th>Checker</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GSM8K</td>
+<td>Grade-school word problems (128 random test problems)</td>
+<td>None (oracle used for coverage)</td>
+</tr>
+<tr>
+<td>MATH</td>
+<td>Harder word problems (128 random test problems)</td>
+<td>None (oracle used for coverage)</td>
+</tr>
+<tr>
+<td>MiniF2F-MATH</td>
+<td>130 MATH problems written as Lean4 proofs</td>
+<td>Lean4 proof checker</td>
+</tr>
+<tr>
+<td>CodeContests</td>
+<td>Competitive programming, Python3</td>
+<td>Hidden test cases</td>
+</tr>
+<tr>
+<td>SWE-bench Lite</td>
+<td>Real GitHub issues, one file to edit</td>
+<td>Repo's unit tests</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The pass@k formula</h3><span class="slide-no">8/69</span></div><ul>
+<li>pass@k = mean over problems of [ 1 − C(N − C_i, k) / C(N, k) ] (Equation 1)<ul>
+<li>N: samples drawn per problem</li>
+<li>C_i: how many of them were right on problem i</li>
+<li>C(a, b): "a choose b", the number of ways to pick b items from a</li>
+<li>The fraction: chance that k tries picked from the N are all wrong</li>
+</ul>
+</li>
+<li>Unbiased estimator from Chen et al. (Codex paper); lower variance than drawing only k samples.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Coverage grows on every task (Figure 2)</h3><span class="slide-no">9/69</span></div><ul>
+<li>Llama-3-8B-Instruct and Llama-3-70B-Instruct: 10,000 samples per problem.</li>
+<li>SWE-bench Lite with DeepSeek-Coder-V2-Instruct + Moatless Tools (agent framework): up to 250 attempts.<ul>
+<li>One attempt = one full multi-turn trajectory.</li>
+</ul>
+</li>
+<li>SWE-bench Lite: 15.9% with 1 sample → 56% with 250.<ul>
+<li>Single-attempt state of the art then: 43% (CodeStory Aide, GPT-4o + Claude 3.5 Sonnet).</li>
+</ul>
+</li>
+<li>With one try, GPT-4o beats the Llama and DeepSeek models on every task. With more tries, all three weaker models pass it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Across sizes and families (Figure 3)</h3><span class="slide-no">10/69</span></div><ul>
+<li>Models: Llama 3 (8B, 8B-Instruct, 70B-Instruct), Gemma (2B, 7B), Pythia (70M to 12B, eight models).</li>
+<li>Small models show some of the sharpest gains:<ul>
+<li>Gemma-2B, CodeContests: 0.02% pass@1 → 7.1% pass@10k (over 300x)</li>
+<li>Pythia-160M, MATH: 0.27% pass@1 → 57% pass@10k</li>
+</ul>
+</li>
+<li>Exception: every Pythia model got 0% on CodeContests, even with 10,000 samples.<ul>
+<li>Authors' guess: Pythia saw less code in training.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Cost in FLOPs (Section 2.3)</h3><span class="slide-no">11/69</span></div><ul>
+<li>FLOPs per token ≈ 2 × (parameters + 2 × layers × token dim × context length)<ul>
+<li>First term: the matrix multiplies through the weights</li>
+<li>Second term: attention over the context so far</li>
+</ul>
+</li>
+<li>Total = FLOPs over prompt tokens + FLOPs over decoded tokens × number of completions.</li>
+<li>Figure 4, fixed FLOP budget:<ul>
+<li>MiniF2F, GSM8K, MATH: the 8B model always gets higher coverage than 70B.</li>
+<li>CodeContests: the 70B model is almost always more cost-effective.</li>
+</ul>
+</li>
+<li>Caveat: FLOPs ignore batching and other system effects.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Cost in dollars (Table 1)</h3><span class="slide-no">12/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Cost per attempt</th>
+<th>Attempts</th>
+<th>Issues solved</th>
+<th>Total cost</th>
+<th>Relative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DeepSeek-Coder-V2-Instruct</td>
+<td>$0.0072</td>
+<td>5</td>
+<td>29.62%</td>
+<td>$10.8</td>
+<td>1x</td>
+</tr>
+<tr>
+<td>GPT-4o</td>
+<td>$0.13</td>
+<td>1</td>
+<td>24.00%</td>
+<td>$39</td>
+<td>3.6x</td>
+</tr>
+<tr>
+<td>Claude 3.5 Sonnet</td>
+<td>$0.17</td>
+<td>1</td>
+<td>26.70%</td>
+<td>$51</td>
+<td>4.7x</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Many cheap tries can win, if a checker picks the right one.</li>
-<li>On SWE-bench, the checker is the test suite.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Picking is the hard part</h3><span class="slide-no">6/12</span></div><div class="tbl"><table>
+<li>Same agent framework (Moatless Tools), SWE-bench Lite.</li>
+<li>DeepSeek is over 10x cheaper per attempt; 5 tries beat one try of either frontier model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>An inference scaling law (Section 3.1)</h3><span class="slide-no">13/69</span></div><ul>
+<li>log(coverage) ≈ a · k^b, so coverage ≈ exp(a · k^b) (Equations 2–3)<ul>
+<li>k: number of samples</li>
+<li>a, b: fitted numbers, both negative here</li>
+<li>Called an "exponentiated power law"</li>
+</ul>
+</li>
+<li>Borrowed from the GPT-4 report, which fit pass rate vs training compute the same way.</li>
+<li>Not as exact as training scaling laws, "most strikingly on MiniF2F-MATH".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The fitted curves (Figure 5)</h3><span class="slide-no">14/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model, task</th>
+<th>a</th>
+<th>b</th>
+<th>Mean error</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama-3-8B-Instruct, MATH</td>
+<td>−1.33</td>
+<td>−0.43</td>
+<td>0.003</td>
+</tr>
+<tr>
+<td>Llama-3-70B-Instruct, MATH</td>
+<td>−0.75</td>
+<td>−0.46</td>
+<td>0.0056</td>
+</tr>
+<tr>
+<td>Llama-3-8B-Instruct, CodeContests</td>
+<td>−3.88</td>
+<td>−0.11</td>
+<td>0.002</td>
+</tr>
+<tr>
+<td>Pythia-70M, MATH</td>
+<td>−7.59</td>
+<td>−0.18</td>
+<td>0.0052</td>
+</tr>
+<tr>
+<td>Gemma-2B, MATH</td>
+<td>−2.45</td>
+<td>−0.38</td>
+<td>0.0218</td>
+</tr>
+<tr>
+<td>Llama-3-8B-Instruct, MiniF2F</td>
+<td>−1.33</td>
+<td>−0.08</td>
+<td>0.0297 (poor fit)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Same family, same curve shape (Figure 6)</h3><span class="slide-no">15/69</span></div><ul>
+<li>On a log-k axis, coverage curves look like S-curves.</li>
+<li>Within one family (Llama-3, Gemma, Pythia), curves have the same slope, shifted left or right.</li>
+<li>Test: shift every curve so it passes through (1, c), where c = best pass@1 in the family. The curves overlap.</li>
+<li>Meaning: going from coverage c to c′ takes about the same multiple of samples for every model in a family.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Picking is the hard part (Figure 7)</h3><span class="slide-no">16/69</span></div><ul>
+<li>Only GSM8K and MATH lack automatic checkers. Three pickers tested:<ul>
+<li>Majority vote: most common final answer</li>
+<li>Reward model + best-of-N: highest score from a reward model (ArmoRM-Llama3-8B-v0.1)</li>
+<li>Reward model + majority vote: votes weighted by reward score</li>
+</ul>
+</li>
+<li>All three rise, then plateau around 100 samples. Coverage keeps rising past 95%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Coverage vs pickers on MATH</h3><span class="slide-no">17/69</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Coverage (oracle picker)</th>
@@ -308,31 +519,561 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </thead>
 <tbody>
 <tr>
-<td>MATH, Llama-3-8B-Instruct: 82.9% at 100 tries → 98.44% at 10,000</td>
-<td>Stalled around 100 tries: best gain 40.50% → 41.41%</td>
+<td>Llama-3-8B-Instruct: 82.9% at 100 samples → 98.44% at 10,000</td>
+<td>Best gain over the same range: 40.50% → 41.41%</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Majority vote (self-consistency): keep the answer most tries agree on. Needs no checker, but stalls.</li>
 <li>Generation-verification gap: the model could produce the right answer, but the picker can't find it.</li>
+<li>The gap grows as samples grow.</li>
 <li>Module a02 is about closing this gap.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why the curve flattens (Schaeffer et al. 2025)</h3><span class="slide-no">7/12</span></div><ul>
-<li>One problem: the chance all k tries fail drops fast (exponentially) as k grows.</li>
-<li>Average over many problems: drops slowly, like a power law.</li>
-<li>Heavy tail: a few very hard problems with near-zero success per try. They cause the slow average.</li>
-<li>Their exponent estimator: about 10x lower error than curve fitting.</li>
-<li>Lesson: sample a little, look at per-problem success rates, forecast before you spend.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Archon: stack the tricks (Saad-Falcon et al. 2024)</h3><span class="slide-no">8/12</span></div><ul>
-<li>Generator: makes candidate answers.</li>
-<li>Ranker: orders candidates and keeps the best.</li>
-<li>Fuser: merges several candidates into one better answer.</li>
-<li>Verifier: keeps only answers whose reasoning checks out.</li>
-<li>Searched 9,576 stacks; the best beat o1, GPT-4o and Claude 3.5 Sonnet by 15.1% on average.<ul>
-<li>Fuser helped on every benchmark (8.9% on average); verifiers helped most on reasoning.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why majority vote stalls (Figure 8)</h3><span class="slide-no">18/69</span></div><ul>
+<li>Figure 8: one bar per problem, height = share of 10,000 samples that are right.</li>
+<li>Many problems have correct answers sampled rarely: 1% or lower.</li>
+<li>A rare right answer never becomes the most common answer.</li>
+<li>So majority vote can't use it, no matter how many samples you add.</li>
+<li>Verifiers must "find the needle in the haystack".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Are the right answers real reasoning? (Table 2)</h3><span class="slide-no">19/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Pass@1 bin</th>
+<th>Problems</th>
+<th>CoTs graded</th>
+<th>Correct CoT</th>
+<th>Incorrect CoT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–10%</td>
+<td>5</td>
+<td>15</td>
+<td>11</td>
+<td>1</td>
+</tr>
+<tr>
+<td>10–25%</td>
+<td>10</td>
+<td>30</td>
+<td>27</td>
+<td>3</td>
+</tr>
+<tr>
+<td>25–75%</td>
+<td>29</td>
+<td>30</td>
+<td>28</td>
+<td>2</td>
+</tr>
+<tr>
+<td>75–100%</td>
+<td>84</td>
+<td>30</td>
+<td>30</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>105 chains of thought (CoT, the written reasoning) from correct Llama-3-8B-Instruct GSM8K answers, graded by hand.</li>
+<li>Over 90% are faithful, even on hard problems. So there is signal a verifier could use.</li>
+<li>Found one GSM8K problem with a wrong ground-truth label (3 CoTs in the 0–10% bin).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Software checkers are imperfect too (Section 4.2)</h3><span class="slide-no">20/69</span></div><ul>
+<li>Flaky tests: 11.3% of SWE-bench Lite problems have test suites that give different results on the same solution.<ul>
+<li>Some even fail the dataset's own correct fix.</li>
+<li>Two issues use Python sets (unordered); some model fixes pass only on "lucky" runs.</li>
 </ul>
 </li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Spend by difficulty (Snell et al. 2024)</h3><span class="slide-no">9/12</span></div><div class="tbl"><table>
+<li>False negatives in CodeContests: of 122 test problems with Python3 solutions, 35 have "correct" solutions that fail the tests.<ul>
+<li>Causes: several valid outputs but one expected; mutated inputs that break the problem's rules.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations and next steps (Section 5)</h3><span class="slide-no">21/69</span></div><ul>
+<li>Only the simplest setup: independent tries, same prompt, same settings.</li>
+<li>Diversity: temperature is the only source of variety. AlphaCode adds metadata tags per sample.</li>
+<li>Multi-turn: no execution feedback, even where checkers exist.</li>
+<li>Learning from earlier attempts: tries are fully isolated.</li>
+<li>Systems: repeated sampling can use big batches and shared-prompt attention tricks, so it costs less than many chatbot API calls.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>How Do Large Language Monkeys Get Their Power (Laws)? (Schaeffer et al. 2025)</div><div class="slide"><div class="slide-top"><h3>The puzzle</h3><span class="slide-no">22/69</span></div><ul>
+<li>Brown et al.: −log(average pass@k) ≈ a · k^(−b). A power law in k (Figure 1, top).</li>
+<li>Hughes et al. (Best-of-N Jailbreaking) saw the same shape for jailbreak success rate on frontier models (Figure 1, bottom).</li>
+<li>But simple math says each single problem should improve exponentially in k, not as a power law.</li>
+<li>Question: where does the aggregate power law come from?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One problem: exponential (Equations 5–9)</h3><span class="slide-no">23/69</span></div><ul>
+<li>pass_i@k = 1 − (1 − pass_i@1)^k<ul>
+<li>pass_i@1: chance one try solves problem i</li>
+<li>(1 − pass_i@1)^k: chance all k independent tries fail</li>
+</ul>
+</li>
+<li>For large k: −log(pass_i@k) ≈ (1 − pass_i@1)^k</li>
+<li>That falls exponentially fast in k.</li>
+<li>Confirmed in Figure 3: Pythia on 128 MATH problems; frontier models on 159 HarmBench prompts.<ul>
+<li>Every single problem falls exponentially. Only the average (black line) is a power law.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Many problems: an average of exponentials (Equation 10)</h3><span class="slide-no">24/69</span></div><ul>
+<li>pass_D@k = 1 − ∫ (1 − p)^k · p_D(p) dp<ul>
+<li>p: one problem's single-try success rate</li>
+<li>p_D(p): how common problems with that rate are in the benchmark (the distribution D)</li>
+<li>The integral: average failure chance over all problems</li>
+</ul>
+</li>
+<li>Known result: a well-weighted sum of exponentials can make a power law.</li>
+<li>So the answer must lie in the shape of p_D near p = 0.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The theorem (Theorems 3.1 and 3.2)</h3><span class="slide-no">25/69</span></div><ul>
+<li>If p_D(p) ≈ C · p^(b−1) near p = 0, then −log(pass_D@k) ≈ C · Γ(b) · k^(−b) for large k.<ul>
+<li>C: how many hard problems there are</li>
+<li>b: how fast the density thins out near 0; also the power-law exponent</li>
+<li>Γ(b): the gamma function, just a constant here</li>
+</ul>
+</li>
+<li>The reverse also holds (under mild conditions). The tail near 0 is necessary and sufficient.</li>
+<li>Intuition: a few near-unsolvable problems stay unsolved for many tries and drag the average.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Which distributions give a power law</h3><span class="slide-no">26/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Distribution of single-try success</th>
+<th>−log(pass_D@k) scales like</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Uniform(0, β ≤ 1)</td>
+<td>k^(−1)</td>
+</tr>
+<tr>
+<td>Beta(α, β)</td>
+<td>k^(−α)</td>
+</tr>
+<tr>
+<td>Kumaraswamy(α, β)</td>
+<td>k^(−α)</td>
+</tr>
+<tr>
+<td>Continuous Bernoulli (λ &lt; 1/2)</td>
+<td>k^(−1)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Beta and Kumaraswamy: flexible shapes on [0, 1]; α controls the tail near 0.</li>
+<li>Smaller α → more near-zero problems → flatter line → each 10x more samples helps less.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The real data has heavy left tails (Figure 4)</h3><span class="slide-no">27/69</span></div><ul>
+<li>Histograms of pass_i@1 for Pythia (128 MATH problems) and frontier models (159 HarmBench prompts).</li>
+<li>Well fit by a scaled 3-parameter Kumaraswamy distribution.<ul>
+<li>The scale parameter matters: most success rates top out near 0.01 or 0.1, not 1.</li>
+</ul>
+</li>
+<li>Exception: Llama 3 8B IT was jailbroken on every prompt within the budget. No heavy tail.</li>
+<li>Matching result: Llama 3 8B IT showed no aggregate power law (Section 4).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A better way to forecast (Figure 5)</h3><span class="slide-no">28/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Least squares (standard)</th>
+<th>Distributional (new)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Estimate pass_i@k at several k</td>
+<td>Estimate pass_i@1 per problem</td>
+</tr>
+<tr>
+<td>Average over problems</td>
+<td>Fit a distribution to those rates</td>
+</tr>
+<tr>
+<td>Fit a line in log-log space</td>
+<td>Simulate pass_D@k at any k, then fit</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Obstacle: problems with success below 1 / (samples drawn) look like 0.</li>
+<li>Fix: discretize the distribution at that resolution; match how many problems fall in the "too rare to see" bucket.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Forecasting results (Figures 6–7)</h3><span class="slide-no">29/69</span></div><ul>
+<li>With all data, both estimators agree on the exponent (Figure 6).</li>
+<li>Backtest on synthetic data with a known true exponent, using fewer problems and fewer samples (Figure 7).</li>
+<li>Distributional estimator: about an order of magnitude lower relative error, |b̂ − b| / b.</li>
+<li>Authors equate that to roughly 2–4 orders of magnitude less inference compute.</li>
+<li>Works even when the fitted distribution is the wrong family.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why the tails exist, and a bigger idea (Section 7)</h3><span class="slide-no">30/69</span></div><ul>
+<li>Conjecture 1: benchmark design. Problems are chosen to span difficulty, not too easy, not too hard.</li>
+<li>Conjecture 2: selection bias. Power laws get noticed and published.</li>
+<li>Bigger idea: pretraining loss may also be a sum of terms decaying at different rates.<ul>
+<li>Only at large compute does the slowest term win and a clean power law appear.</li>
+<li>They call hidden terms "the dark matter of neural scaling laws".</li>
+</ul>
+</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Archon (Saad-Falcon et al. 2024)</div><div class="slide"><div class="slide-top"><h3>The problem</h3><span class="slide-no">31/69</span></div><ul>
+<li>Inference-time techniques: sampling, ranking, fusing, critiquing, verifying.</li>
+<li>No single best way to combine them. Three gaps:<ul>
+<li>Which technique helps which task?</li>
+<li>How do techniques interact (more models, or more samples per model)?</li>
+<li>The design space is huge; searching it by hand is slow.</li>
+</ul>
+</li>
+<li>Archon: a modular framework plus automatic search over stacks of techniques.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The building blocks (Section 3.1)</h3><span class="slide-no">32/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Input → output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Generator</td>
+<td>Prompt → candidate answers (one or many models, many samples)</td>
+</tr>
+<tr>
+<td>Fuser</td>
+<td>Prompt + candidates → one or more merged, better answers</td>
+</tr>
+<tr>
+<td>Ranker</td>
+<td>Prompt + candidates → ranked list, keep top-K</td>
+</tr>
+<tr>
+<td>Critic</td>
+<td>Prompt + candidates → strengths and weaknesses of each</td>
+</tr>
+<tr>
+<td>Verifier</td>
+<td>Prompt + candidate → reasoning, then [Correct] or [Incorrect]</td>
+</tr>
+<tr>
+<td>Unit Test Generator / Evaluator</td>
+<td>Prompt → 5–10 test statements; then rank candidates by tests passed</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What each block was worth</h3><span class="slide-no">33/69</span></div><ul>
+<li>Fuser: helped on every benchmark, 8.9% on average.<ul>
+<li>MixEval: 1–2 points from more fuser layers; MT Bench and AlpacaEval 2.0: 10 to 15 points with 3–4 layers.</li>
+</ul>
+</li>
+<li>Ranker: 10.8% over random selection on MT Bench and Arena-Hard-Auto, within 2.7% of oracle selection.</li>
+<li>Critic: +11.5 percentage points on average, added to a 10-model 70B+ ensemble with a Fuser.</li>
+<li>Verifier: 8.4% on MixEval, MixEval Hard and MATH.<ul>
+<li>Verifier alone after generation lagged ensemble + fuser by 1.5%. Best combined with other blocks.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Unit tests and more samples on code</h3><span class="slide-no">34/69</span></div><ul>
+<li>Unit Test Generator + Evaluator: 7.4% boost on benchmarks needing more verification steps (Table 5).</li>
+<li>With 70B+ generators + unit tests only: lagged ensemble + fuser by 3.1% on Arena-Hard-Auto and MixEval.</li>
+<li>CodeContests with more samples + unit tests: Pass@1 17.9% → 29.3%, a 56% boost.</li>
+<li>GPT-4o on CodeContests: 40 → 58 of 140 questions (44.3%) with unit tests and more samples (Section 4.3).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four trends (Section 3.2)</h3><span class="slide-no">35/69</span></div><ul>
+<li>T1: more samples and more ensemble models help: 9.3% and 18.5%.</li>
+<li>T2: more layers help, e.g. always end with a single Fuser.</li>
+<li>T3: more kinds of techniques help; critics and rankers before fusers work well.</li>
+<li>T4: on reasoning, Verifier and unit tests next to the Fuser filter out flawed answers.</li>
+<li>Figure 4: adding layers of critique and fusion gave an 18.8% boost on average.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Built like a neural network</h3><span class="slide-no">36/69</span></div><ul>
+<li>Layers of LLM components; components in one layer run in parallel.</li>
+<li>Every layer takes and returns a list of strings (prompt or candidate answers).<ul>
+<li>Generator, Fuser: turn a list into a new list.</li>
+<li>Ranker, Verifier: filter the list, like a non-linearity.</li>
+</ul>
+</li>
+<li>No weights are learned. It runs off the shelf.</li>
+<li>If the last layer returns a list, the first string is the answer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Rules for construction</h3><span class="slide-no">37/69</span></div><ul>
+<li>One component type per layer.</li>
+<li>Generators only in the first layer.</li>
+<li>A Critic must come before a Ranker or a Fuser.</li>
+<li>Ranker, Critic, Verifier, Unit Test layers: anywhere but the first, alone in their layer.</li>
+<li>Fusers: anywhere but the first; several per layer allowed.</li>
+<li>Unit Test Generator, then Unit Test Evaluator, in consecutive layers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>An example stack (Figure 3)</h3><span class="slide-no">38/69</span></div><pre><code>10 generators (GPT-4o, Claude 3.5 Sonnet, Llama 3.1 405B, ...)
+→ critic (Qwen2-72B) → ranker (Claude 3.5 Sonnet)
+→ 6 fusers → verifier (GPT-4o) → 1 fuser (Llama 3.1 405B) → answer
+</code></pre>
+<ul>
+<li>Wide at the start, narrowing at the end.</li>
+<li>Best general all-source stack found: 10 generators, then four layers of critique and fusion with 8, 6, 4 fusers ("funneling").</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The search space (Section 3.3)</h3><span class="slide-no">39/69</span></div><ul>
+<li>Six knobs:<ul>
+<li>Top-K generator models: 1 to 10</li>
+<li>Samples per generator: 1 to 5 (CodeContests: 1, 10, 100, 500, 1000)</li>
+<li>Fusion layers: 1 to 4; last layer has one Fuser</li>
+<li>Fusers per layer: 2 to 10, in steps of 2</li>
+<li>Critic and Ranker layers before each fuser layer</li>
+<li>Evaluation layer: Verifier, unit tests, or neither, before the last Fuser</li>
+</ul>
+</li>
+<li>9,576 valid configurations in total.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>How the search works</h3><span class="slide-no">40/69</span></div><ul>
+<li>Inputs: target benchmarks, inference call budget, available LLMs, available techniques.</li>
+<li>20% of each dataset guides the search; results reported on the other 80%.</li>
+<li>Three methods: random, greedy (one knob at a time), Bayesian optimization (a model of "which settings score well" picks the next stack to try).</li>
+<li>Bayesian optimization found the best stack in 96.0% of searches.<ul>
+<li>88.5% fewer evaluations than greedy, 90.4% fewer than random.</li>
+</ul>
+</li>
+<li>Under 20 calls of budget, Bayesian optimization is less effective; greedy can match it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Main results (Table 1)</h3><span class="slide-no">41/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>System</th>
+<th>Calls</th>
+<th>MT Bench</th>
+<th>Arena-Hard-Auto</th>
+<th>MATH</th>
+<th>CodeContests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-4o</td>
+<td>1</td>
+<td>44.2%</td>
+<td>80.6%</td>
+<td>83.5%</td>
+<td>18.1%</td>
+</tr>
+<tr>
+<td>Claude 3.5 Sonnet</td>
+<td>1</td>
+<td>N/A</td>
+<td>81.4%</td>
+<td>82.5%</td>
+<td>12.3%</td>
+</tr>
+<tr>
+<td>o1</td>
+<td>Unk.</td>
+<td>56.3%</td>
+<td>81.7%</td>
+<td>92.7%</td>
+<td>31.5%</td>
+</tr>
+<tr>
+<td>ADAS</td>
+<td>52</td>
+<td>66.3%</td>
+<td>85.4%</td>
+<td>86.0%</td>
+<td>23.7%</td>
+</tr>
+<tr>
+<td>Archon, all-source, task-specific</td>
+<td>39</td>
+<td>79.5%</td>
+<td>92.5%</td>
+<td>93.5%</td>
+<td>41.4%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>MATH: 200-problem sample; CodeContests: 140 test questions without images.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Headline numbers</h3><span class="slide-no">42/69</span></div><ul>
+<li>Closed-source Archon: 15.1% average improvement over closed-source LMs (o1, GPT-4o, Claude 3.5 Sonnet).</li>
+<li>Open-source Archon: 11.2% average over SOTA open-source approaches; worst case still 3.1% above (AlpacaEval 2.0).</li>
+<li>Compared with MoA, ADAS, AFlow: 20.0% fewer inference calls, 15.1% fewer input tokens, 13.5% fewer output tokens.</li>
+<li>Same token budget: 12.4% higher than baselines (Figure 8).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>General vs task-specific stacks (Table 2)</h3><span class="slide-no">43/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>System</th>
+<th>GPQA Diamond kept</th>
+<th>MMLU kept</th>
+<th>MMLU Pro kept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AFlow, general vs task-specific</td>
+<td>70.8%</td>
+<td>73.8%</td>
+<td>67.0%</td>
+</tr>
+<tr>
+<td>ADAS, general vs task-specific</td>
+<td>73.2%</td>
+<td>73.3%</td>
+<td>66.8%</td>
+</tr>
+<tr>
+<td>Archon, general vs task-specific</td>
+<td>91.7%</td>
+<td>93.9%</td>
+<td>94.2%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>All three tasks unseen during search.</li>
+<li>Archon's one general stack keeps most of the task-specific performance.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>By task (Section 4.3)</h3><span class="slide-no">44/69</span></div><ul>
+<li>Instruction following: open Archon beats open baselines by 10.5%; closed Archon beats closed by 14.6%.</li>
+<li>Reasoning: smaller gains overall, but per-subtask stacks add 3.7 (MixEval) and 8.9 (MixEval-Hard) points.</li>
+<li>Coding: ensembling, fusion and ranking help little; one or two models are far ahead of the rest.<ul>
+<li>What helps code: more samples plus unit tests.</li>
+</ul>
+</li>
+<li>Math stacks: broad generation, then quickly narrow to one answer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limits (Section 4.4)</h3><span class="slide-no">45/69</span></div><ul>
+<li>Works best with 70B+ models.<ul>
+<li>7B-only stacks: +7.5% over the best single 7B model; good at ranking, weak at critique and fusion.</li>
+</ul>
+</li>
+<li>Latency and cost: about 5x the time and money of one API call.</li>
+<li>Future: distill the stack into a smaller model for speed.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Scaling Test-Time Compute Optimally (Snell et al. 2024)</div><div class="slide"><div class="slide-top"><h3>The question</h3><span class="slide-no">46/69</span></div><ul>
+<li>With a fixed but non-trivial budget at answer time, how much can a model improve on a hard prompt?</li>
+<li>And can that replace a bigger pretrained model?</li>
+<li>Prior work was mixed: some gains, some failures on math reasoning.</li>
+<li>Setting: MATH (12k train, 500 test, the Lightman et al. split), PaLM 2-S* base model.</li>
+<li>Revision and verifier models were fine-tuned; prompting alone did not give these skills.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two knobs: proposer and verifier (Section 2)</h3><span class="slide-no">47/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Change the proposer (input side)</th>
+<th>Change the verifier (output side)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Make the model's own answers better</td>
+<td>Sample many answers, then select</td>
+</tr>
+<tr>
+<td>E.g. revise its previous attempts in context</td>
+<td>E.g. best-of-N, or tree search on a process reward model</td>
+</tr>
+<tr>
+<td>"Sequential"</td>
+<td>"Parallel" or search</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Proposal distribution: what answers the model tends to write for this prompt.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Compute-optimal strategy (Equation 1)</h3><span class="slide-no">48/69</span></div><ul>
+<li>θ<em>(q, N) = argmax over θ of E[ 1{y = y</em>(q)} ], with y drawn from Target(θ, N, q)<ul>
+<li>q: the prompt</li>
+<li>N: compute budget</li>
+<li>θ: settings (e.g. how much sequential vs parallel, which search)</li>
+<li>1{y = y*}: 1 if the answer is right</li>
+</ul>
+</li>
+<li>In words: for each prompt and budget, pick the settings with the best expected accuracy.</li>
+<li>They approximate it by choosing settings per difficulty level.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Measuring difficulty (Section 3.2)</h3><span class="slide-no">49/69</span></div><ul>
+<li>Difficulty is relative to the model, not a human label.</li>
+<li>Oracle difficulty: pass@1 from 2048 samples per question, binned into 5 quantiles.<ul>
+<li>More predictive than MATH's hand-labeled levels.</li>
+</ul>
+</li>
+<li>Model-predicted difficulty: same binning, but on the verifier's average score. No true answers needed.</li>
+<li>Cost of predicting difficulty is not counted in their results.</li>
+<li>Two-fold cross-validation: pick the strategy on one half, score it on the other.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Training a verifier for search (Section 5.1)</h3><span class="slide-no">50/69</span></div><ul>
+<li>PRM (process reward model): scores each step of a solution.</li>
+<li>PRM800K human labels didn't work for them: easy to exploit, likely GPT-4 vs PaLM 2 mismatch.</li>
+<li>Instead: Math-Shepherd-style labels from Monte Carlo rollouts (finish from each step, check answers).</li>
+<li>PRM beat an outcome reward model (ORM) throughout, so all search uses the PRM.</li>
+<li>Step aggregation: use the PRM score at the last step (beat product and minimum).</li>
+<li>Answer aggregation: "best-of-N weighted" = sum verifier scores over all samples with the same final answer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three search methods (Figure 2)</h3><span class="slide-no">51/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>How it works</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Best-of-N weighted</td>
+<td>N full answers, pick best by PRM</td>
+<td>N</td>
+</tr>
+<tr>
+<td>Beam search</td>
+<td>N partial answers per step; keep top N/M; expand each M ways; repeat (max 40 rounds)</td>
+<td>N</td>
+</tr>
+<tr>
+<td>Lookahead search</td>
+<td>Beam search, but score a step by rolling out k more steps (temperature 0)</td>
+<td>N × (k + 1)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Beam search = lookahead with k = 0.</li>
+<li>Lookahead is MCTS (Monte Carlo tree search) without the random exploration parts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Which search wins (Figure 3, left)</h3><span class="slide-no">52/69</span></div><ul>
+<li>Low budgets: beam search clearly beats best-of-N.</li>
+<li>High budgets: the gain shrinks; beam search often falls below best-of-N.</li>
+<li>Lookahead usually loses at equal budget (extra rollout cost).</li>
+<li>Cause: search exploits the PRM.<ul>
+<li>Repetitive, low-information steps at the end of solutions</li>
+<li>Overly short solutions of just 1–2 steps</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Search by difficulty (Figure 3, right)</h3><span class="slide-no">53/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Difficulty bins</th>
+<th>Beam search vs best-of-N (budgets 4, 16, 64, 256)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1–2 (easy)</td>
+<td>Beam gets worse as budget grows: over-optimizes the verifier</td>
+</tr>
+<tr>
+<td>3–4 (medium)</td>
+<td>Beam consistently better</td>
+</tr>
+<tr>
+<td>5 (hardest)</td>
+<td>No method makes much progress</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Easy: the verifier is mostly right already; more search amplifies its flaws.</li>
+<li>Harder: the model rarely samples the right answer; search guides it there.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Compute-optimal search (Figure 4)</h3><span class="slide-no">54/69</span></div><ul>
+<li>Pick the best search setting per difficulty bin.</li>
+<li>Low budgets: nearly beats PRM best-of-N with up to 4x less compute (16 vs 64 generations).</li>
+<li>High budgets: the edge shrinks with predicted difficulty; continues with oracle difficulty.</li>
+<li>Oracle and predicted difficulty curves largely overlap.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Revision models (Section 6.1)</h3><span class="slide-no">55/69</span></div><ul>
+<li>Prompting off-the-shelf models to fix their mistakes mostly fails, so they fine-tuned one.</li>
+<li>Training data: 64 parallel samples per question at higher temperature.<ul>
+<li>Pair each correct answer with 0–4 incorrect answers in context (number chosen at random).</li>
+<li>Pick incorrect answers close to the correct one by character edit distance.</li>
+</ul>
+</li>
+<li>At test time: keep the last 4 attempts in context, so chains can run longer.</li>
+<li>Problem: about 38% of correct answers got changed back to incorrect.<ul>
+<li>Fix: select the final answer across the chain by verifier or majority vote.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Do revisions work? (Figure 6)</h3><span class="slide-no">56/69</span></div><ul>
+<li>Left: pass@1 rises with each revision step, even past the 4 steps it was trained on.</li>
+<li>Right: N revisions in sequence vs N independent samples, same model.<ul>
+<li>Sequential narrowly beats parallel, with both verifier and majority selection.</li>
+</ul>
+</li>
+<li>Parallel = global search (many different approaches). Sequential = local refinement.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Sequential vs parallel ratio (Figure 7)</h3><span class="slide-no">57/69</span></div><ul>
+<li>Sweep the ratio of revisions to parallel samples at fixed budgets.</li>
+<li>At a given budget there is an ideal ratio.</li>
+<li>Budget 128, by difficulty (right panel):<ul>
+<li>Easy questions: best with fully sequential compute.</li>
+<li>Harder questions: best with a balance of sequential and parallel.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Spend by difficulty</h3><span class="slide-no">58/69</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Strategy</th>
@@ -359,9 +1100,52 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
-<li>Difficulty: the model's own success rate over many tries, not a human label.</li>
-<li>Choosing per question matched or beat best-of-N with up to 4x less compute.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Scoring majority vote in code</h3><span class="slide-no">10/12</span></div><pre><code class="language-python">def majority_acc(probs, k):
+<li>Compute-optimal revisions (Figure 8): beat best-of-N with up to 4x less compute (64 vs 256 samples).</li>
+<li>Parallel sampling plateaus at high budgets; compute-optimal keeps improving.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Test-time compute vs a bigger model (Section 7)</h3><span class="slide-no">59/69</span></div><ul>
+<li>Pretraining FLOPs X = 6 · N · D_pretrain; inference FLOPs Y = 2 · N · D_inference.<ul>
+<li>N: parameters; D: tokens trained on / tokens generated</li>
+</ul>
+</li>
+<li>Make the model M times bigger → both X and Y grow M times.</li>
+<li>R = D_inference / D_pretrain. Tested R = 0.16, 0.79 and 22.</li>
+<li>Compare: small model + compute-optimal test-time compute vs a ~14x larger model, greedy decoding.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Who wins (Figure 9, Figure 1 right)</h3><span class="slide-no">60/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Better use of FLOPs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Easy and medium questions (bins 1–3, sometimes 4)</td>
+<td>Test-time compute</td>
+</tr>
+<tr>
+<td>Low inference load (R &lt;&lt; 1, e.g. self-improvement pipelines)</td>
+<td>Test-time compute</td>
+</tr>
+<tr>
+<td>Hardest questions (bins 4–5)</td>
+<td>Pretraining a bigger model</td>
+</tr>
+<tr>
+<td>High inference load (R &gt;&gt; 1, large-scale serving)</td>
+<td>Pretraining a bigger model</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Figure 1 relative gains from test-time compute: +27.8% down to −37.2% (revisions); +19.1% down to −52.9% (PRM search).</li>
+<li>"Not 1-to-1 exchangeable."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations (Section 8)</h3><span class="slide-no">61/69</span></div><ul>
+<li>Gains on the hardest problems were small for every method.</li>
+<li>Estimating difficulty itself costs compute; cheaper predictors are future work.</li>
+<li>Did not combine PRM tree search with revisions, or try critique-and-revise.</li>
+<li>Future: distill test-time outputs back into the model.</li>
+<li>Summary claim: compute-optimal scaling improves efficiency by 2–4x (abstract: more than 4x vs best-of-N).</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>The notebook in code</div><div class="slide"><div class="slide-top"><h3>Scoring majority vote in code</h3><span class="slide-no">62/69</span></div><pre><code class="language-python">def majority_acc(probs, k):
     return sum(majority([s[&quot;answer&quot;] for s in SAMPLES[p[&quot;id&quot;]][:k]]) == p[&quot;answer&quot;] for p in probs) / len(probs)
 </code></pre>
 <ul>
@@ -369,21 +1153,81 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <li><code>majority(...)</code>: keep the most common answer.</li>
 <li>Compare it to the true answer; count the hits.</li>
 <li>Divide by the number of problems: share solved by voting at k.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">11/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>The power-law check in code</h3><span class="slide-no">63/69</span></div><pre><code class="language-python">def agg_fail(k, a=ALPHA, b=BETA):
+    &quot;&quot;&quot;Mean over problems of (1-p)^k when p ~ Beta(a, b). Exact: B(a, b+k) / B(a, b).&quot;&quot;&quot;
+    lb = lambda x, y: math.lgamma(x) + math.lgamma(y) - math.lgamma(x + y)
+    return math.exp(lb(a, b + k) - lb(a, b))
+</code></pre>
+<ul>
+<li><code>agg_fail(k)</code>: average chance that all k tries fail, when success rates follow Beta(a, b).</li>
+<li><code>lb</code>: log of the Beta function, built from log-gamma so big k doesn't overflow.</li>
+<li>Return: the exact average of (1 − p)^k.</li>
+<li>The notebook fits the slope for k ≥ 100 and checks it matches −ALPHA (Schaeffer et al.'s Beta row).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The fused-and-verified answer in code</h3><span class="slide-no">64/69</span></div><pre><code class="language-python">    fused_ans = extract_int(fused)
+    final = fused_ans if &quot;YES&quot; in v.upper() else majority([c[&quot;answer&quot;] for c in cands])
+</code></pre>
+<ul>
+<li><code>fused</code>: one call merged all 6 candidates into one solution (Archon's Fuser).</li>
+<li><code>extract_int</code>: read the number after "ANSWER:".</li>
+<li><code>v</code>: a verifier call answered YES or NO on the fused solution.</li>
+<li>If YES, keep the fused answer; if NO, fall back to majority vote.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">65/69</span></div><ul>
 <li>A small local model is cheap to run many times on the firm's own machine.</li>
 <li>Contract checks often have a code checker: does the quote exist? Is the cap at most 12 months of fees?</li>
 <li>Where nothing can check the answer, more tries mostly add cost. Build the checker first.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">12/12</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>One try vs many tries on a contract</h3><span class="slide-no">66/69</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>1 try, no checker</th>
+<th>6 tries + code checker</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Liability cap: 12 months of fees. OK." (wrong)</td>
+<td>Some tries quote msa_20 7.1: "SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE THIRTY-SIX (36) MONTHS PRECEDING THE CLAIM."</td>
+</tr>
+<tr>
+<td>Nobody can tell it is wrong</td>
+<td>Code confirms the quote is in the file; 36 &gt; 12 → flag</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The tries are cheap. The checker is what turns coverage into a right answer.</li>
+<li>One right try is enough, if code can recognize it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Plan a sampling budget before you spend</h3><span class="slide-no">67/69</span></div><ul>
+<li>Sample a small batch (say 6 tries) per contract question on a test set.</li>
+<li>Look at per-question success rates (Schaeffer et al.): many near-zero questions → brute force will be slow.</li>
+<li>Route by difficulty (Snell et al.): questions where tries agree get one try plus a revision; split answers get more parallel tries.</li>
+<li>Questions no try solves: a bigger local model, or a person.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Stack the steps as swappable parts</h3><span class="slide-no">68/69</span></div><ul>
+<li>Archon's lesson: generate, rank, fuse, verify are separate steps you can turn on and off.</li>
+<li>On the firm's machine, each step is just another local model call.</li>
+<li>Let a small labeled set of contracts choose the stack per task (cap check vs governing law vs renewal).</li>
+<li>Count tokens, not calls: a fuser reads every candidate.</li>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>Wrap-up</div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">69/69</span></div><ul>
 <li>Reporting coverage as accuracy → report what your real picker gets.</li>
 <li>Adding samples without a checker → build verification first; voting stalls near 100 tries.</li>
+<li>Sampling at temperature 0 → every try is the same; use a temperature above 0.</li>
 <li>Counting calls, not tokens → a fuser or revision call reads all candidates; count tokens.</li>
+<li>Assuming more tries always beat a bigger model → Snell et al. found pretraining wins on the hardest questions and at high traffic.</li>
 <li>Tuning the strategy on the set you report on → hold out data for the final score.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Coverage at 100 tries is 90%, majority vote at 100 tries is 45%. What is missing?</summary><p>A good verifier. The model can produce the right answer, but the picker can&#x27;t find it: the generation-verification gap.</p></details>
 
-<details><summary>Why does the average success curve flatten when each single problem is solved fast with more tries?</summary><p>A heavy tail of very hard problems with near-zero success per try pulls the average down, so it falls like a power law.</p></details>
+<details><summary>Why does majority vote stop improving when coverage keeps rising?</summary><p>New coverage comes from rare right answers (1% of samples or less). A rare answer never becomes the most common one, so the vote ignores it.</p></details>
+
+<details><summary>Why does the average success curve follow a power law when each single problem improves exponentially?</summary><p>A heavy tail of very hard problems with near-zero success per try. Each is solved exponentially fast, but there are enough of them to slow the average to a power law.</p></details>
+
+<details><summary>On SWE-bench Lite, why did 5 DeepSeek tries beat one GPT-4o try?</summary><p>Each DeepSeek attempt cost $0.0072 vs $0.13, and the unit tests pick the right attempt. 5 tries solved 29.62% for $10.8; GPT-4o solved 24.00% for $39.</p></details>
+
+<details><summary>In Archon, why must a Critic come before a Ranker or Fuser?</summary><p>The Critic writes strengths and weaknesses of each candidate. Only a later Ranker or Fuser can use that text.</p></details>
+
+<details><summary>Why did beam search hurt on easy questions in Snell et al.?</summary><p>The verifier is already mostly right on easy questions. Strong search then exploits its flaws, finding answers it scores high but that are wrong.</p></details>
 
 <details><summary>For an easy question, should you spend 4 calls on 4 parallel tries or 1 try plus 3 revisions?</summary><p>Snell et al. found revision best on easy questions. They used a fine-tuned revision model, so test it on your own task.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run sections 3–4: compare the coverage column with the majority-vote column at each k.</li>
+<li>Run section 6: check the fitted exponent matches −ALPHA, then change ALPHA to 0.1 and 0.8 (Solution 3).</li>
 <li>Run the Archon-style pipeline on the 4 hard problems: first, majority, ranked, fused, fused+verify.</li>
 <li>Run parallel vs sequential on easy and hard. With 8 problems it is noisy; look at the pattern.</li>
 </ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>

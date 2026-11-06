@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Train-time scaling and RL · Agent Engineering School</title>
-<meta name="description" content="If code can check the answer, a model can train on its own attempts. STaR, GRPO and DAPO, run on a tiny model.">
+<meta name="description" content="If code can check the answer, a model can train on its own attempts. STaR, GRPO and DAPO in full detail, then run on a tiny model.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,63 +259,408 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A05</span></div><section class="mod" id="a05" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A05</div><h2>Train-time scaling and RL</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a05_rl_training.ipynb">Open in Colab</a><button class="done-btn" data-done="a05" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">If code can check the answer, a model can train on its own attempts. STaR, GRPO and DAPO, run on a tiny model.</p><article class="lesson"><p class="deck-src">Based on CS329A · Train-time scaling and RL · <a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/14</span></div><ul>
-<li>Learn how a model trains on its own checked answers: STaR with fine-tuning, GRPO and DAPO with reinforcement learning.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why train-time scaling?</h3><span class="slide-no">2/14</span></div><ul>
-<li>a01–a04 spent more compute at answer time. Here we spend it at training time.</li>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A05</span></div><section class="mod" id="a05" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A05</div><h2>Train-time scaling and RL</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a05_rl_training.ipynb">Open in Colab</a><button class="done-btn" data-done="a05" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>24 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">If code can check the answer, a model can train on its own attempts. STaR, GRPO and DAPO in full detail, then run on a tiny model.</p><article class="lesson"><p class="deck-src">Based on CS329A · Train-time scaling and RL · <a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (58 slides)</b><ol><li><a href="#sec-1">Why train-time scaling?</a> <span>3 slides</span></li><li><a href="#sec-2">STaR: Self-Taught Reasoner (Zelikman, Wu, Mu &amp; Goodman, 2022)</a> <span>12 slides</span></li><li><a href="#sec-3">DeepSeekMath, part 1: the data and the base model (Shao et al., 2024)</a> <span>6 slides</span></li><li><a href="#sec-4">DeepSeekMath, part 2: GRPO</a> <span>13 slides</span></li><li><a href="#sec-5">GRPO by hand</a> <span>2 slides</span></li><li><a href="#sec-6">DAPO (Yu et al., ByteDance Seed and Tsinghua AIR, 2025)</a> <span>11 slides</span></li><li><a href="#sec-7">Running it on a free GPU</a> <span>5 slides</span></li><li><a href="#sec-8">How this applies to us</a> <span>4 slides</span></li><li><a href="#sec-9">Common mistakes</a> <span>1 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/58</span></div><ul>
+<li>Learn how a model trains on its own checked answers: STaR with fine-tuning, GRPO and DAPO with reinforcement learning, and which design choices in each paper actually mattered.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why train-time scaling?</div><div class="slide"><div class="slide-top"><h3>From answer time to training time</h3><span class="slide-no">2/58</span></div><ul>
+<li>a01–a04 spent more compute at answer time (sampling, verifiers, search). Here we spend it at training time.</li>
 <li>Loop: the model tries, a checker grades, we train on what worked.</li>
 <li>Verifiable reward: a reward computed by a program (exact match, unit tests), not a person or a judge model.<ul>
 <li>Cheap, and hard to fool</li>
 </ul>
 </li>
-<li>STaR: fine-tune on kept answers. GRPO and DAPO: reinforcement learning.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>STaR: the model writes its own training data</h3><span class="slide-no">3/14</span></div><ul>
-<li>Ask the model to reason and answer many problems.</li>
-<li>Keep the reasoning only when the final answer is right.</li>
-<li>Rationalization: for wrong ones, show the correct answer as a hint and ask it to explain.<ul>
-<li>Store that explanation without the hint</li>
+<li>Three readings, three steps forward:<ul>
+<li>STaR (2022): keep the right answers, fine-tune on them</li>
+<li>DeepSeekMath (2024): GRPO, RL without a critic model</li>
+<li>DAPO (2025): four fixes that make GRPO work for long reasoning</li>
 </ul>
 </li>
-<li>Fine-tune on everything kept. Repeat.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>STaR results (Zelikman et al. 2022)</h3><span class="slide-no">4/14</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>The three papers side by side</h3><span class="slide-no">3/58</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>CommonsenseQA dev</th>
-<th>Accuracy</th>
+<th></th>
+<th>STaR</th>
+<th>DeepSeekMath (GRPO)</th>
+<th>DAPO</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>GPT-J 6B, fine-tuned to answer directly</td>
-<td>60.0%</td>
+<td>Model</td>
+<td>GPT-J 6B</td>
+<td>DeepSeekMath-Instruct 7B</td>
+<td>Qwen2.5-32B base</td>
 </tr>
 <tr>
-<td>GPT-J + STaR, no rationalization</td>
-<td>68.8%</td>
+<td>Learning</td>
+<td>Supervised fine-tuning on kept rationales</td>
+<td>RL, group-relative advantage</td>
+<td>RL, GRPO + 4 fixes</td>
 </tr>
 <tr>
-<td>GPT-J + STaR, with rationalization</td>
-<td>72.5%</td>
+<td>Wrong answers</td>
+<td>Ignored (or rationalized with a hint)</td>
+<td>Pushed down (negative advantage)</td>
+<td>Pushed down; all-wrong groups dropped</td>
 </tr>
 <tr>
-<td>GPT-3 fine-tuned (30x larger)</td>
-<td>73.0%</td>
+<td>Reward</td>
+<td>Answer matches the label</td>
+<td>Trained reward model</td>
+<td>Rule: +1 right, −1 wrong</td>
+</tr>
+<tr>
+<td>Headline</td>
+<td>CQA 72.5%</td>
+<td>MATH 51.7%</td>
+<td>AIME 2024: 50</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Key terms</h3><span class="slide-no">4/58</span></div><ul>
+<li>Policy: the model being trained; it "picks" each next token.</li>
+<li>Rollout: one sampled answer from the policy.</li>
+<li>Advantage: how much better one answer did than expected. Positive → do more of this; negative → do less.</li>
+<li>Reward model: a learned model that scores answers. A rule-based reward is a program instead.</li>
+<li>Pass@K: right if any of K samples is right. Maj@K: right if the majority vote of K samples is right.</li>
+<li>Entropy: how spread out the model's next-token choices are. Low entropy = it always says the same thing.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>STaR: Self-Taught Reasoner (Zelikman, Wu, Mu &amp; Goodman, 2022)</div><div class="slide"><div class="slide-top"><h3>The problem STaR solves</h3><span class="slide-no">5/58</span></div><ul>
+<li>Rationale: step-by-step reasoning written before the final answer ("chain of thought").</li>
+<li>Rationales help on math and commonsense questions. Two ways to get them, both flawed:<ul>
+<li>Build a fine-tuning set of rationales by hand or by template: expensive, or only works when a general solution is known</li>
+<li>Few-shot prompting with a few rationale examples: cheap, but well below a model fine-tuned to answer directly</li>
+</ul>
+</li>
+<li>STaR: start from a few examples (e.g. 10) plus a big dataset of questions and answers with no rationales. Let the model write the rationales.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The STaR loop (Algorithm 1)</h3><span class="slide-no">6/58</span></div><ul>
+<li>
+<ol>
+<li>Prompt the model with a few rationale examples; generate a rationale and answer for every training question.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Filter: keep only rationales whose answer matches the label.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Rationalize: for each wrong one, give the correct answer as a hint and generate again.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Keep rationalized rationales that now reach the right answer; store them without the hint.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Fine-tune the original model M on everything kept.</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>Repeat with the newly trained model generating, until performance plateaus.</li>
+</ol>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why retrain from the original model</h3><span class="slide-no">7/58</span></div><ul>
+<li>Each outer loop fine-tunes the original pre-trained model M, not the last fine-tuned one.<ul>
+<li>The paper does this "to avoid overfitting"</li>
+</ul>
+</li>
+<li>Training steps grow each loop: 40 steps in the first outer loop, then +20% per loop.</li>
+<li>100-step learning-rate warmup, then a constant rate (GPT-J repo defaults).</li>
+<li>"Training more slowly at the beginning ultimately benefits model performance."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Rationalization: reason backwards from the answer</h3><span class="slide-no">8/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Rationale generation</th>
+<th>Rationalization</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt: question only</td>
+<td>Prompt: question + "(b) grocery cart (CORRECT)"</td>
+</tr>
+<tr>
+<td>Model may fail and get no training signal</td>
+<td>Model reasons backwards to the given answer</td>
+</tr>
+<tr>
+<td>Kept if the answer is right</td>
+<td>Kept if it reaches the answer; stored <strong>as if no hint was given</strong></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>GSM8K: 10.7% vs 5.8% for direct fine-tuning.</li>
-<li>Risk: right answer, wrong reasoning. Spot-check rationalized examples.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>GRPO: grade against the group</h3><span class="slide-no">5/14</span></div><ul>
-<li>GRPO (Group Relative Policy Optimization): the RL method from DeepSeekMath.</li>
-<li>Sample a group of answers per prompt (64 in the paper).</li>
-<li>Advantage: how much better one answer did than expected.<ul>
-<li>GRPO: (reward − group mean) / group spread</li>
+<li>Without it, the loop stalls: it "receives no direct training signal for problems it fails to solve."</li>
+<li>Benefit 1: exposes the model to hard problems it would never solve alone.</li>
+<li>Benefit 2: a larger training set.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>STaR as policy gradient (Equations 1–2)</h3><span class="slide-no">9/58</span></div><ul>
+<li>Objective: J = Σ over questions of the expected value of 1(ŷ = y).<ul>
+<li>1(ŷ = y): reward 1 if the predicted answer equals the label, else 0</li>
 </ul>
 </li>
-<li>Positive advantage → do more of this. Negative → do less.</li>
-<li>No critic model: the group mean replaces it, saving memory.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>PPO vs GRPO</h3><span class="slide-no">6/14</span></div><div class="tbl"><table>
+<li>Gradient: ∇J = Σ E[ 1(ŷ = y) · ∇ log p(ŷ, r̂ | x) ].<ul>
+<li>∇ log p: the direction that makes this rationale and answer more likely</li>
+<li>Multiplying by 1(ŷ = y) throws away every wrong sample: that is the filter</li>
+</ul>
+</li>
+<li>STaR approximates this two ways: greedy decoding (less variance, more biased exploration) and several gradient steps on the same batch.</li>
+<li>Rationalization = sampling from p(r | x, y), a better search space; an "off-policy" estimate.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Datasets used</h3><span class="slide-no">10/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Data</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Arithmetic</td>
+<td>Sum of two n-digit numbers with a scratchpad (one line per digit pair, with carry)</td>
+<td>50,000 generated; 10,000 sampled per outer loop</td>
+</tr>
+<tr>
+<td>CommonsenseQA (CQA)</td>
+<td>5-way multiple choice, built from ConceptNet</td>
+<td>9,741 train, 1,221 dev, 1,285 test</td>
+</tr>
+<tr>
+<td>GSM8K</td>
+<td>Grade-school word problems, 2–8 steps</td>
+<td>7,473 train, 1,319 test</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Model: GPT-J, 6B parameters, chosen because its checkpoint and fine-tuning code are public.</li>
+<li>CQA human accuracy is 89%. Random guessing gets ~20%; simple heuristics ~30%.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results: arithmetic (Figure 4)</h3><span class="slide-no">11/58</span></div><ul>
+<li>After 16 STaR iterations: 89.5% overall accuracy.</li>
+<li>Baseline trained on 10,000 examples without rationales for 5,000 steps: 76.3%.</li>
+<li>Few-shot, even with rationales: under 1% on 2-digit addition, near 0 on more digits.</li>
+<li>With rationalization, 2-digit addition goes from under 1% to 32% after one iteration.</li>
+<li>Without rationalization, learning is stage-wise: n-digit sums only improve once (n−1)-digit sums are good.</li>
+<li>Figure 5: digits added at iteration 20; the model then solves many 9- and 10-digit problems never seen in training.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results: CommonsenseQA (Table 1)</h3><span class="slide-no">12/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>CQA dev</th>
+<th>Accuracy (%)</th>
+<th>Train data used (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-3 direct, fine-tuned</td>
+<td>73.0</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Few-shot direct, GPT-J</td>
+<td>20.9</td>
+<td>~0</td>
+</tr>
+<tr>
+<td>Few-shot CoT, GPT-J</td>
+<td>36.6</td>
+<td>~0</td>
+</tr>
+<tr>
+<td>Few-shot CoT, LaMDA 137B</td>
+<td>55.6</td>
+<td>~0</td>
+</tr>
+<tr>
+<td>GPT-J direct, fine-tuned</td>
+<td>60.0</td>
+<td>100</td>
+</tr>
+<tr>
+<td>STaR without rationalization</td>
+<td>68.8</td>
+<td>69.7</td>
+</tr>
+<tr>
+<td>STaR with rationalization</td>
+<td>72.5</td>
+<td>86.7</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Final model: 78.2% of training questions from rationale generation, plus 8.5% from rationalization.</li>
+<li>Matches a 30x larger GPT-3 within 0.5 points.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results: GSM8K (Table 2)</h3><span class="slide-no">13/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>GSM8K test</th>
+<th>Accuracy (%)</th>
+<th>Train data used (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Few-shot direct, GPT-J</td>
+<td>3.0</td>
+<td>~0</td>
+</tr>
+<tr>
+<td>Few-shot CoT, GPT-J</td>
+<td>3.1</td>
+<td>~0</td>
+</tr>
+<tr>
+<td>GPT-J direct, fine-tuned</td>
+<td>5.8</td>
+<td>100</td>
+</tr>
+<tr>
+<td>STaR without rationalization</td>
+<td>10.1</td>
+<td>25.0</td>
+</tr>
+<tr>
+<td>STaR with rationalization</td>
+<td>10.7</td>
+<td>28.7</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Here rationalization adds little (only 0.5% of data came from it).</li>
+<li>Training capped at the 30th iteration (7,912 steps); 36 iterations without rationalization, then 10 more with it.</li>
+<li>Figure 6: the model's number of calculator steps matches the human solution 53–57% of the time; when they differ, the model usually uses fewer.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Are the rationales any good?</h3><span class="slide-no">14/58</span></div><ul>
+<li>Human study: 20 crowdworkers each ranked rationales for 10 CQA questions both models got right.</li>
+<li>STaR rationales were ranked above few-shot ones 30% more often (p = .039).</li>
+<li>STaR rationales were preferred over human-written ones 74% more often (p &lt; .001).<ul>
+<li>The authors say this shows how hard good rationales are to collect, not human-level reasoning</li>
+</ul>
+</li>
+<li>Failure cases: statements on topic but not arguments; "the question implies the answer"; talking about one specific person instead of a general rule.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>STaR ablations: what mattered</h3><span class="slide-no">15/58</span></div><ul>
+<li>Few-shot prompts kept during fine-tuning: 60.9% → 68.8% without rationalization; 69.9% → 72.5% with it.</li>
+<li>Few-shot prompts also reduce "drift": later rationales stay closer to the original style.</li>
+<li>Higher sampling temperature instead of rationalization (0.5 or 0.7): consistently worse.<ul>
+<li>More right answers with wrong reasoning; arithmetic scratchpads "diverge into meaninglessness"</li>
+<li>Also slower: 10 samples ≈ 10x the generation time</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>STaR limitations (stated)</h3><span class="slide-no">16/58</span></div><ul>
+<li>The first loop only works if few-shot accuracy is above chance. GPT-2 could not bootstrap even on arithmetic.</li>
+<li>High-chance tasks (e.g. yes/no) produce many right answers with bad rationales. Filtering those is an open problem.</li>
+<li>Writing a good hint is not always easy for a new task.</li>
+<li>CQA itself has biases, typos and ambiguous questions.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>DeepSeekMath, part 1: the data and the base model (Shao et al., 2024)</div><div class="slide"><div class="slide-top"><h3>Why this paper matters here</h3><span class="slide-no">17/58</span></div><ul>
+<li>Two contributions:<ul>
+<li>A 120B-token math corpus from Common Crawl, giving a strong 7B base model</li>
+<li>GRPO, a cheaper PPO for the RL stage</li>
+</ul>
+</li>
+<li>Pipeline: DeepSeek-Coder-Base-v1.5 7B → continued pre-training (DeepSeekMath-Base) → instruction tuning (-Instruct) → GRPO (-RL).</li>
+<li>Headline: 51.7% on MATH without tools or voting; 60.9% with self-consistency over 64 samples (abstract).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Building the math corpus (Figure 2)</h3><span class="slide-no">18/58</span></div><ul>
+<li>Seed: OpenWebMath. Train a fastText classifier on 500,000 seed pages (positive) and 500,000 Common Crawl pages (negative).<ul>
+<li>fastText: a fast, simple text classifier</li>
+</ul>
+</li>
+<li>Deduplicate Common Crawl to 40B HTML pages; keep the top-scoring math pages.</li>
+<li>Find math domains: any domain with over 10% of pages collected (e.g. mathoverflow.net). Humans mark math URL paths; add them to the seed.</li>
+<li>Four iterations → 35.5M pages, 120B tokens. In round 4, ~98% was already collected in round 3, so they stopped.</li>
+<li>Decontamination: drop any text sharing a 10-gram with GSM8K, MATH, CMATH or AGIEval.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Is the corpus good? (Table 1, 1.3B model, 150B tokens each)</h3><span class="slide-no">19/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Corpus</th>
+<th>Size</th>
+<th>GSM8K</th>
+<th>MATH</th>
+<th>CMATH</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No math training</td>
+<td>N/A</td>
+<td>2.9%</td>
+<td>3.0%</td>
+<td>12.3%</td>
+</tr>
+<tr>
+<td>MathPile</td>
+<td>8.9B</td>
+<td>2.7%</td>
+<td>3.3%</td>
+<td>1.2%</td>
+</tr>
+<tr>
+<td>OpenWebMath</td>
+<td>13.6B</td>
+<td>11.5%</td>
+<td>8.9%</td>
+<td>16.8%</td>
+</tr>
+<tr>
+<td>Proof-Pile-2</td>
+<td>51.9B</td>
+<td>14.3%</td>
+<td>11.2%</td>
+<td>19.9%</td>
+</tr>
+<tr>
+<td>DeepSeekMath Corpus</td>
+<td>120.2B</td>
+<td>23.8%</td>
+<td>13.6%</td>
+<td>41.5%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Bigger and multilingual (English and Chinese). Smaller corpora get repeated and plateau (Figure 3).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DeepSeekMath-Base 7B (Tables 2–4)</h3><span class="slide-no">20/58</span></div><ul>
+<li>Trained 500B tokens: 56% math corpus, 4% AlgebraicStack, 10% arXiv, 20% GitHub code, 10% natural language.</li>
+<li>GSM8K 64.2%, MATH 36.2% with chain-of-thought (Table 2).<ul>
+<li>Minerva 540B, 77x larger: GSM8K 58.8%, MATH 33.6%</li>
+</ul>
+</li>
+<li>With Python tools: GSM8K 66.9%, MATH 31.4% (Table 3).</li>
+<li>MMLU 54.9% and BBH 59.5%, up from 49.1% and 55.2% for the coder model it started from (Table 4).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pre-training lessons (Section 5.1)</h3><span class="slide-no">21/58</span></div><ul>
+<li>Code first, then math beats general text first, then math (Table 6, 1.3B model):<ul>
+<li>Code → math: GSM8K 21.9%, MATH 15.3%</li>
+<li>General → math: GSM8K 19.1%, MATH 14.4%</li>
+</ul>
+</li>
+<li>Mixing code and math in one stage avoids forgetting how to code (Table 7), but hurts math without tools at 1.3B.</li>
+<li>arXiv papers gave no notable gains, sometimes losses (Tables 8–9). The authors say to take this "with a grain of salt."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Instruction tuning (Section 3)</h3><span class="slide-no">22/58</span></div><ul>
+<li>776K examples: chain-of-thought, program-of-thought and tool-integrated solutions, English and Chinese.</li>
+<li>500 steps, batch size 256, constant learning rate 5e-5.</li>
+<li>DeepSeekMath-Instruct 7B: GSM8K 82.9%, MATH 46.8% without tools (Table 5).</li>
+<li>With tools it approaches 60% on MATH (57.4%).</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>DeepSeekMath, part 2: GRPO</div><div class="slide"><div class="slide-top"><h3>PPO, the starting point (Equation 1)</h3><span class="slide-no">23/58</span></div><ul>
+<li>PPO (Proximal Policy Optimization): the standard RL method for fine-tuning LLMs.</li>
+<li>Objective, per token: min( ratio · A, clip(ratio, 1−ε, 1+ε) · A ), averaged over the answer's tokens.<ul>
+<li>ratio = π_θ(token) / π_old(token): new probability over the probability when the answer was sampled</li>
+<li>A: advantage, from GAE (generalized advantage estimation) using a learned value function</li>
+<li>clip(…, 1−ε, 1+ε): stop any one update from moving a token's probability too far</li>
+</ul>
+</li>
+<li>KL penalty in the reward (Equation 2): r_t = reward − β · log(π_θ / π_ref).<ul>
+<li>π_ref: the starting SFT model; β: how hard to stay close to it</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The problem with PPO&#x27;s critic</h3><span class="slide-no">24/58</span></div><ul>
+<li>The value function (critic) is usually another model as big as the policy.<ul>
+<li>Big memory and compute cost</li>
+</ul>
+</li>
+<li>LLM rewards come only at the last token, so a per-token value is hard to learn.</li>
+<li>GRPO's idea: drop the critic. Sample several answers to the same question; use their average reward as the baseline.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>PPO vs GRPO (Figure 4)</h3><span class="slide-no">25/58</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>PPO</th>
@@ -320,19 +669,192 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </thead>
 <tbody>
 <tr>
+<td>Policy, reference, reward and <strong>value</strong> models</td>
+<td>Policy, reference and reward models; no value model</td>
+</tr>
+<tr>
 <td>A second network (critic) guesses the expected reward</td>
 <td>The group's mean reward is the expected reward</td>
 </tr>
 <tr>
-<td>More memory</td>
-<td>No critic, less memory</td>
+<td>Advantage per token from GAE</td>
+<td>Advantage from the group's rewards</td>
+</tr>
+<tr>
+<td>KL penalty added to the reward</td>
+<td>KL added straight to the loss</td>
 </tr>
 <tr>
 <td>One answer per prompt is enough</td>
 <td>Needs a group of answers per prompt</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>GRPO on a contract question</h3><span class="slide-no">7/14</span></div><div class="tbl"><table>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The GRPO objective (Equation 3)</h3><span class="slide-no">26/58</span></div><ul>
+<li>For each question q, sample G answers o_1 … o_G from the old policy.</li>
+<li>J = average over the G answers of [ average over each answer's tokens of min( ratio · Â, clip(ratio, 1−ε, 1+ε) · Â ) − β · KL(π_θ ‖ π_ref) ].<ul>
+<li>Â_i,t: advantage of token t in answer i, from the group only</li>
+<li>1/G and 1/|o_i|: average per answer first, then across answers (DAPO changes this)</li>
+<li>β · KL: keep the model close to the reference model</li>
+</ul>
+</li>
+<li>Group-relative scoring fits reward models, which are trained on comparisons between answers to the same question.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The KL estimator (Equation 4)</h3><span class="slide-no">27/58</span></div><ul>
+<li>KL = π_ref/π_θ − log(π_ref/π_θ) − 1, per token.<ul>
+<li>π_ref/π_θ: how much more the reference model likes this token than the current model</li>
+<li>Always positive; zero only when the two models agree</li>
+</ul>
+</li>
+<li>Unbiased estimator (Schulman, 2020).</li>
+<li>Put in the loss, not the reward, so it does not complicate the advantage.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Outcome vs process supervision (Sections 4.1.2–4.1.3)</h3><span class="slide-no">28/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Outcome supervision (OS)</th>
+<th>Process supervision (PS)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One reward at the end of each answer</td>
+<td>One reward at the end of each reasoning step</td>
+</tr>
+<tr>
+<td>Â = (r_i − mean(r)) / std(r), same for every token</td>
+<td>Normalize all step rewards by their mean and std</td>
+</tr>
+<tr>
+<td></td>
+<td>Token advantage = sum of normalized rewards of the steps after it</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Process rewards come from a process reward model (scores each step).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Iterative GRPO (Algorithm 1, Section 4.1.4)</h3><span class="slide-no">29/58</span></div><ul>
+<li>Problem: as the policy improves, the old reward model can no longer judge it well.</li>
+<li>Each iteration:<ul>
+<li>Set the reference model to the current policy</li>
+<li>Train the policy for M steps with GRPO</li>
+<li>Train the reward model on new samples from the policy, replaying 10% old data</li>
+</ul>
+</li>
+<li>Figure 6: two rounds of iteration; the first gives the biggest gain.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GRPO training setup (Section 4.2)</h3><span class="slide-no">30/58</span></div><ul>
+<li>Start: DeepSeekMath-Instruct 7B.</li>
+<li>Data: ~144K chain-of-thought questions about GSM8K and MATH from the SFT set. Other SFT questions held out to test transfer.</li>
+<li>Reward: a reward model trained from DeepSeekMath-Base 7B (learning rate 2e-5).</li>
+<li>Policy learning rate 1e-6. KL coefficient 0.04.</li>
+<li>64 samples per question. Max length 1024. Batch size 1024.</li>
+<li>One policy update per exploration stage.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>GRPO results (Table 5)</h3><span class="slide-no">31/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Chain-of-thought</th>
+<th>GSM8K</th>
+<th>MATH</th>
+<th>MGSM-zh</th>
+<th>CMATH</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DeepSeekMath-Instruct 7B</td>
+<td>82.9%</td>
+<td>46.8%</td>
+<td>73.2%</td>
+<td>84.6%</td>
+</tr>
+<tr>
+<td>DeepSeekMath-RL 7B</td>
+<td>88.2%</td>
+<td>51.7%</td>
+<td>79.6%</td>
+<td>88.8%</td>
+</tr>
+<tr>
+<td>GPT-4</td>
+<td>92.0%</td>
+<td>52.9%</td>
+<td>–</td>
+<td>86.0%</td>
+</tr>
+<tr>
+<td>Gemini Ultra</td>
+<td>94.4%</td>
+<td>53.2%</td>
+<td>–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Tool-integrated: Instruct 83.7% / 57.4% → RL 86.7% / 58.8% on GSM8K / MATH.</li>
+<li>Trained only on GSM8K and MATH questions, yet better on every benchmark, including Chinese ones (out of domain).</li>
+<li>Beats all open models from 7B to 70B.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One view of SFT, RFT, DPO, PPO, GRPO (Equation 5, Table 10)</h3><span class="slide-no">32/58</span></div><ul>
+<li>Every method's gradient = data source × gradient coefficient × ∇ log π(token).<ul>
+<li>Data source: where the training answers come from</li>
+<li>Reward function: rule (answer correct?) or model (reward model)</li>
+<li>Gradient coefficient: how hard to push each answer up or down</li>
+</ul>
+</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Data source</th>
+<th>Reward</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SFT</td>
+<td>Human-chosen answers</td>
+<td>–</td>
+</tr>
+<tr>
+<td>RFT</td>
+<td>Samples from the SFT model (offline)</td>
+<td>Rule</td>
+</tr>
+<tr>
+<td>DPO</td>
+<td>Pairs sampled from the SFT model</td>
+<td>Rule</td>
+</tr>
+<tr>
+<td>Online RFT</td>
+<td>Samples from the current policy</td>
+<td>Rule</td>
+</tr>
+<tr>
+<td>PPO / GRPO</td>
+<td>Samples from the current policy</td>
+<td>Model</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>What the comparisons show (Figure 5, 1.3B model)</h3><span class="slide-no">33/58</span></div><ul>
+<li>Online beats offline: Online RFT ≈ RFT early, then pulls clearly ahead.<ul>
+<li>Later on, the policy differs from the SFT model, so fresh samples matter more</li>
+</ul>
+</li>
+<li>GRPO beats Online RFT: GRPO pushes wrong answers down and scales by reward; RFT only pushes right answers up, all equally.</li>
+<li>GRPO+PS beats GRPO+OS: step-level signals help.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why RL works: Maj@K vs Pass@K (Figure 7)</h3><span class="slide-no">34/58</span></div><ul>
+<li>Instruct vs RL model, GSM8K and MATH, K from 1 to 64, temperature 0.7.</li>
+<li>Maj@K goes up after RL. Pass@K does not.</li>
+<li>Meaning: RL makes the right answer that was already in the top K come out more often.<ul>
+<li>"Rather than the enhancement of fundamental capabilities"</li>
+</ul>
+</li>
+<li>The authors blame partly their data: only SFT questions and plain nucleus sampling.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Future directions and limitations (Sections 5.2.3, 6)</h3><span class="slide-no">35/58</span></div><ul>
+<li>Data: out-of-distribution questions, tree-search sampling, faster inference.</li>
+<li>Algorithms: all methods fully trust the reward. Even PRM800K has ~20% wrong labels. Need RL robust to noisy rewards.</li>
+<li>Reward models: generalize better, show uncertainty, cheaper process reward models.</li>
+<li>Limits: weaker on geometry and theorem proving (fails on triangles and ellipses); few-shot examples don't help it as they help GPT-4.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>GRPO by hand</div><div class="slide"><div class="slide-top"><h3>GRPO on a contract question</h3><span class="slide-no">36/58</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Rewards for 4 answers</th>
@@ -357,9 +879,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
-<li>Question: "Is the liability cap at most 12 months of fees? End with Answer: yes or no."</li>
+<li>msa_20, 7.1: "...SHALL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE THIRTY-SIX (36) MONTHS PRECEDING THE CLAIM."</li>
+<li>Question: "Is the liability cap at most 12 months of fees? End with Answer: yes or no." (Right answer: no.)</li>
 <li>A program reads the last line and gives 1 if right.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>GRPO advantages in code</h3><span class="slide-no">8/14</span></div><pre><code class="language-python">def grpo_advantages(r, eps=1e-4):
+</ul></div><div class="slide"><div class="slide-top"><h3>GRPO advantages in code</h3><span class="slide-no">37/58</span></div><pre><code class="language-python">def grpo_advantages(r, eps=1e-4):
     r = np.asarray(r, dtype=float)
     return (r - r.mean()) / (r.std() + eps)
 </code></pre>
@@ -367,43 +890,112 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <li><code>r</code>: the rewards for one group; <code>eps</code>: a tiny number so we never divide by zero.</li>
 <li>Line 2: turn the list into an array of decimals.</li>
 <li>Line 3: subtract the group mean, divide by the spread. Grading on a curve.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>DeepSeekMath results (Shao et al. 2024)</h3><span class="slide-no">9/14</span></div><ul>
-<li>7B model, continued pre-training on 120B math tokens, then GRPO.</li>
-<li>MATH: 51.7% without tools or voting; 60.9% with voting over 64 samples.</li>
-<li>GRPO alone: GSM8K 82.9% → 88.2%; MATH 46.8% → 51.7%.</li>
-<li>RL raised Maj@K but not Pass@K.<ul>
-<li>Makes good answers more reliable more than it teaches new skills</li>
+<li>Advantages in a group always add up to about 0: the notebook checks this.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>DAPO (Yu et al., ByteDance Seed and Tsinghua AIR, 2025)</div><div class="slide"><div class="slide-top"><h3>The problem DAPO solves</h3><span class="slide-no">38/58</span></div><ul>
+<li>o1 and DeepSeek-R1 showed RL can teach long reasoning, but hid key training details.</li>
+<li>The team's first naive GRPO run on Qwen2.5-32B: 30 points on AIME 2024. DeepSeek's RL got 47.</li>
+<li>Causes found: entropy collapse, reward noise, unstable training.</li>
+<li>DAPO: Decoupled Clip and Dynamic sAmpling Policy Optimization. Fully open: algorithm, code (built on verl) and data.</li>
+<li>Result: 50 on AIME 2024 with 50% of DeepSeek-R1-Zero-Qwen-32B's training steps (Figure 1).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two simplifications before the fixes</h3><span class="slide-no">39/58</span></div><ul>
+<li>Remove the KL penalty (Section 2.3).<ul>
+<li>In chat tuning (RLHF), staying close to the start model is the goal</li>
+<li>For long reasoning, the model should move far from where it started</li>
 </ul>
 </li>
-</ul></div><div class="slide"><div class="slide-top"><h3>DAPO: four fixes to GRPO (Yu et al. 2025)</h3><span class="slide-no">10/14</span></div><div class="tbl"><table>
+<li>Rule-based reward (Equation 7): R = 1 if the answer is equivalent to the label, else −1.<ul>
+<li>Learned reward models tend to get hacked; a rule does not</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fix 1: Clip-Higher (Section 3.1)</h3><span class="slide-no">40/58</span></div><ul>
+<li>Entropy collapse: entropy drops fast; answers in a group become nearly identical (Figure 2b).</li>
+<li>Why: the upper clip limits rare tokens far more than common ones. With ε = 0.2:</li>
+</ul>
+<div class="tbl"><table>
 <thead>
 <tr>
-<th>Fix</th>
-<th>Problem it solves</th>
+<th>Old probability</th>
+<th>Max new probability (×1.2)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Clip-higher: upper clip 0.28, lower 0.2</td>
-<td>Rare good tokens can't grow; model stops exploring</td>
+<td>0.01 (an "exploration" token)</td>
+<td>0.012</td>
 </tr>
 <tr>
-<td>Dynamic sampling: drop all-equal groups</td>
-<td>Those groups give zero gradient</td>
-</tr>
-<tr>
-<td>Token-level loss: average over all tokens</td>
-<td>A long bad answer counts the same as a short one</td>
-</tr>
-<tr>
-<td>Overlong reward shaping: soft length penalty</td>
-<td>Cut-off answers get 0 for the wrong reason</td>
+<td>0.9 (an "exploitation" token)</td>
+<td>1.08 (no real limit)</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>DAPO also drops the KL penalty.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>DAPO ablation (AIME 2024, Qwen2.5-32B)</h3><span class="slide-no">11/14</span></div><div class="tbl"><table>
+<li>Tokens hitting the upper clip have mean probability below 0.2 (Figure 3a).</li>
+<li>Fix: decouple the bounds. ε_low = 0.2, ε_high = 0.28.<ul>
+<li>ε_low not raised: that would push rare tokens to 0 and collapse sampling</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fix 2: Dynamic Sampling (Section 3.2)</h3><span class="slide-no">41/58</span></div><ul>
+<li>If all G answers are right (or all wrong), every advantage is 0 → zero gradient.</li>
+<li>The share of all-correct prompts keeps growing during training (Figure 3b), so each batch gets weaker and noisier.</li>
+<li>Fix: over-sample, drop groups with accuracy 0 or 1, keep sampling until the batch is full.<ul>
+<li>Constraint in Equation 11: 0 &lt; number of correct answers &lt; G</li>
+</ul>
+</li>
+<li>Costs more sampling, but reaches the same score in fewer steps (Figure 6).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fix 3: Token-level loss (Section 3.3)</h3><span class="slide-no">42/58</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Sample-level (GRPO)</th>
+<th>Token-level (DAPO)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Average the loss inside each answer, then across answers</td>
+<td>Sum the loss over all tokens in the group, divide by the total token count</td>
+</tr>
+<tr>
+<td>Every answer weighs the same</td>
+<td>Every token weighs the same</td>
+</tr>
+<tr>
+<td>Tokens in long answers count less</td>
+<td>Long answers count in proportion to length</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Long answers often hold gibberish and repetition. Sample-level loss under-punishes them: entropy and length grow unhealthily (Figure 4).</li>
+<li>Also: a good long answer's reasoning is learned properly.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Fix 4: Overlong Reward Shaping (Section 3.4)</h3><span class="slide-no">43/58</span></div><ul>
+<li>Answers past the max length get cut off and punished, even if the reasoning was sound. That is reward noise.</li>
+<li>Step 1, Overlong Filtering: mask the loss of truncated answers. Training gets more stable (Figure 5).</li>
+<li>Step 2, Soft Overlong Punishment (Equation 13), added to the correctness reward:<ul>
+<li>length ≤ L_max − L_cache: 0</li>
+<li>between: (L_max − L_cache − length) / L_cache, sliding from 0 to −1</li>
+<li>length &gt; L_max: −1</li>
+</ul>
+</li>
+<li>Paper setting: L_max = 16,384, L_cache = 4,096, so up to 20,480 generated tokens.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The full DAPO objective (Equations 8–12)</h3><span class="slide-no">44/58</span></div><ul>
+<li>J = (1 / Σ|o_i|) · Σ over answers Σ over tokens of min( ratio · Â, clip(ratio, 1 − ε_low, 1 + ε_high) · Â )<ul>
+<li>1 / Σ|o_i|: divide by all tokens in the group (token-level loss)</li>
+<li>ε_low, ε_high: separate clip bounds (Clip-Higher)</li>
+<li>Â = (R_i − mean(R)) / std(R): same group advantage as GRPO</li>
+</ul>
+</li>
+<li>Subject to: 0 &lt; number of correct answers &lt; G (Dynamic Sampling).</li>
+<li>No KL term.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Data and training setup (Sections 3.5, 4.1)</h3><span class="slide-no">45/58</span></div><ul>
+<li>DAPO-Math-17K: 17K prompts, each with an integer answer.<ul>
+<li>Answers like a + b√c are rewritten so the answer becomes a + b + c: easy to check by rule</li>
+</ul>
+</li>
+<li>AdamW, constant learning rate 1e-6, 20 warm-up rollout steps.</li>
+<li>512 prompts per rollout, 16 answers each. Mini-batch 512 → 16 gradient updates per rollout step.</li>
+<li>Evaluation: AIME 2024 repeated 32 times, report avg@32. Temperature 1.0, top-p 0.7.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DAPO ablation (Table 1, AIME 2024 avg@32, Qwen2.5-32B)</h3><span class="slide-no">46/58</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Recipe</th>
@@ -412,58 +1004,139 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </thead>
 <tbody>
 <tr>
+<td>DeepSeek-R1-Zero-Qwen-32B</td>
+<td>47</td>
+</tr>
+<tr>
 <td>Naive GRPO</td>
 <td>30</td>
 </tr>
 <tr>
-<td>+ overlong filtering</td>
+<td>+ Overlong Filtering</td>
 <td>36</td>
 </tr>
 <tr>
-<td>+ clip-higher</td>
+<td>+ Clip-Higher</td>
 <td>38</td>
 </tr>
 <tr>
-<td>+ soft overlong punishment</td>
+<td>+ Soft Overlong Punishment</td>
 <td>41</td>
 </tr>
 <tr>
-<td>+ token-level loss</td>
+<td>+ Token-level Loss</td>
 <td>42</td>
 </tr>
 <tr>
-<td>+ dynamic sampling</td>
+<td>+ Dynamic Sampling (DAPO)</td>
 <td>50</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Beat DeepSeek-R1-Zero-Qwen-32B (47) with 50% of the training steps.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>A real run on a free GPU</h3><span class="slide-no">12/14</span></div><ul>
+<li>Token-level loss adds the least score but makes training more stable and length growth healthier.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What to watch during RL (Section 4.3, Figure 7)</h3><span class="slide-no">47/58</span></div><ul>
+<li>Response length: more room to explore; can stall or drop for a while. Read it with validation accuracy.</li>
+<li>Training reward: rises steadily, but has little link to validation accuracy. That means overfitting to the training set.</li>
+<li>Entropy: too low = no exploration; too high = gibberish. A slow upward trend helped.</li>
+<li>Small changes in data or settings can grow into large differences. Monitor everything.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>New reasoning appears (Section 4.4, Table 2)</h3><span class="slide-no">48/58</span></div><ul>
+<li>Early in training: almost no checking or reflecting on earlier steps.</li>
+<li>Later: the model writes things like "However, wait a moment, let's rethink about the dihedral angle..."</li>
+<li>RL did not only reinforce old patterns; it produced reflection and backtracking that were absent at the start.</li>
+<li>Compare DeepSeekMath's Maj@K finding: there, RL mostly sharpened what was already there.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>Running it on a free GPU</div><div class="slide"><div class="slide-top"><h3>A real run on a free GPU</h3><span class="slide-no">49/58</span></div><ul>
 <li>Model: SmolLM2-360M-Instruct. Train only a LoRA adapter.<ul>
 <li>LoRA: small add-on matrices instead of all weights; fits a free GPU</li>
 </ul>
 </li>
-<li>Rewards: +1.0 exact answer, +0.2 for the <code>Answer:</code> line, soft overlong penalty.</li>
-<li>Group size 8, 120 steps, DAPO settings in TRL (<code>loss_type="dapo"</code>, <code>epsilon_high=0.28</code>).</li>
+<li>Task: seeded arithmetic problems; answer read from the <code>Answer:</code> line.</li>
+<li>Rewards: +1.0 exact answer, +0.2 for the <code>Answer:</code> line, DAPO's soft overlong penalty × 0.5.</li>
+<li>Group size 8, 120 steps of 2 prompts, completions of at most 96 tokens.</li>
 <li>T4 has no bfloat16: set <code>bf16=False</code>, use fp16.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">13/14</span></div><ul>
-<li>Many contract checks have a code checker: right clause, cap within 12 months, verdict present. That is a verifiable reward.</li>
-<li>GRPO with LoRA trains a small open model on the firm's own GPU.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Our STaR step</h3><span class="slide-no">50/58</span></div><ul>
+<li>16 hard problems (e.g. "What is a * b - c + d?") sent to llama3.2:3b.</li>
+<li>Right on the first try → kept as "self".</li>
+<li>Wrong → retried with "(Hint: the correct answer is …)". If the new answer is right and never mentions the hint → kept as "rationalized", stored without the hint.</li>
+<li>Output: <code>star_sft.jsonl</code>. Fine-tuning on it is the last STaR step (Solution 3, with <code>SFTTrainer</code>).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DAPO pieces in code</h3><span class="slide-no">51/58</span></div><pre><code class="language-python">def dynamic_sampling(groups):
+    &quot;&quot;&quot;Keep only groups whose rewards are not all equal (DAPO).&quot;&quot;&quot;
+    return [g for g in groups if np.ptp(g) &gt; 0]
+def overlong_penalty(n_tokens, l_max=96, l_cache=32):
+    if n_tokens &lt;= l_max - l_cache:
+        return 0.0
+    if n_tokens &lt;= l_max:
+        return (l_max - l_cache - n_tokens) / l_cache
+</code></pre>
+<ul>
+<li>Lines 1–3: <code>np.ptp</code> is max minus min. A group with spread 0 is dropped.</li>
+<li>Line 4: our sizes are tiny: 96-token limit, last 32 tokens are the penalty zone.</li>
+<li>Lines 5–6: up to 64 tokens, no penalty.</li>
+<li>Lines 7–8: from 64 to 96 tokens, the penalty slides from 0 to −1 (the notebook then returns −1.0 past 96).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The GRPOConfig, line by line</h3><span class="slide-no">52/58</span></div><pre><code class="language-python">    num_generations=8,                  # ... = 2 prompts x 8 samples. The batch must divide by num_generations.
+    beta=0.0,                           # no KL penalty, as in DAPO; also means no reference model in memory
+    epsilon=0.2, epsilon_high=0.28,     # DAPO clip-higher
+    loss_type=&quot;dapo&quot;,                   # DAPO token-level loss
+    scale_rewards=&quot;group&quot;,              # divide by the group std, as in the GRPO paper
+    bf16=BF16_OK,                       # must be False on a T4
+</code></pre>
+<ul>
+<li>Line 1: GRPO's group size G.</li>
+<li>Line 2: DAPO drops the KL term; DeepSeekMath used 0.04.</li>
+<li>Line 3: ε_low = 0.2, ε_high = 0.28, the DAPO values.</li>
+<li>Line 4: token-level loss.</li>
+<li>Line 5: GRPO's (r − mean) / std.</li>
+<li>Line 6: <code>BF16_OK</code> is False on a T4 (compute capability 7.5).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What to expect from the run</h3><span class="slide-no">53/58</span></div><ul>
+<li>The format reward is learned first: the <code>Answer:</code> line rate jumps.</li>
+<li>Accuracy moves a few points; 120 steps of 2 prompts is a very small run.</li>
+<li>Section 6 counts groups where all 8 answers scored the same (TRL logs this as <code>frac_reward_zero_std</code>).<ul>
+<li>Those groups gave zero gradient; dynamic sampling would replace them</li>
+</ul>
+</li>
+</ul></div><div class="deck-sec" id="sec-8"><span>Part 8</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Contract checks are verifiable rewards</h3><span class="slide-no">54/58</span></div><ul>
+<li>Many contract checks have a code checker: right clause found, cap within 12 months, verdict line present.</li>
+<li>msa_20, 7.1 says 36 months. A checker compares the model's "Answer: no" to the label.</li>
+<li>That is a rule-based reward, as in DAPO. No reward model to get hacked.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Train on the firm&#x27;s own GPU</h3><span class="slide-no">55/58</span></div><ul>
+<li>GRPO needs no critic model; LoRA trains only small add-on weights.</li>
+<li>A small open model can be trained this way on one machine; no contract text leaves the firm.</li>
+<li>Use DAPO settings by default: no KL, clip-higher, token-level loss, length penalty.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Pick the right questions</h3><span class="slide-no">56/58</span></div><ul>
 <li>Keep training questions at the edge of what the model can solve, so groups aren't all-equal.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">14/14</span></div><ul>
-<li>Questions too easy or too hard → every group all-equal, zero advantages, nothing learned.</li>
-<li>A reward that can be gamed → check the answer format strictly.</li>
+<li>Yes/no questions are risky: STaR's authors warn that high-chance tasks give many right answers with bad reasoning.<ul>
+<li>Ask for the clause number and the quoted text too, and check both by code</li>
+</ul>
+</li>
+<li>Hold out contracts the model never trained on, and compare accuracy before and after.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Start with STaR, then RL</h3><span class="slide-no">57/58</span></div><ul>
+<li>STaR is just filtering plus normal fine-tuning: the cheapest first step.</li>
+<li>Rationalization: give the reviewer's correct flag as a hint, store the explanation without it.</li>
+<li>Then GRPO/DAPO: it also pushes wrong answers down, which STaR never does.</li>
+<li>Expect RL to make good answers more reliable (Maj@K), not to teach brand-new skills.</li>
+</ul></div><div class="deck-sec" id="sec-9"><span>Part 9</span>Common mistakes</div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">58/58</span></div><ul>
+<li>Questions too easy or too hard → every group all-equal, zero advantages, nothing learned. Filter them out (dynamic sampling).</li>
+<li>A reward that can be gamed → check the answer format strictly, or reward it separately.</li>
+<li>Right answer, wrong reasoning → spot-check kept rationales, especially rationalized ones; avoid yes/no-only rewards.</li>
+<li>Raising temperature to get more training data → STaR found it worse than rationalization.</li>
 <li>bf16 on a T4 → set <code>bf16=False</code>; use fp16 or fp32.</li>
-<li>Reading training reward as the result → compare held-out accuracy before and after.</li>
+<li>Reading training reward as the result → DAPO found it barely tracks validation accuracy. Compare held-out accuracy before and after.</li>
 </ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>A group of 4 answers gets rewards [1, 1, 1, 1]. What are the GRPO advantages, and what does DAPO do?</summary><p>All zero, so the group gives no gradient. DAPO&#x27;s dynamic sampling drops it and samples another prompt.</p></details>
 
 <details><summary>In STaR, why is the hint removed before fine-tuning on a rationalized example?</summary><p>So the model learns to produce the reasoning from the question alone, as it must at test time.</p></details>
 
-<details><summary>What does GRPO use instead of PPO&#x27;s critic model?</summary><p>The mean and spread of the rewards of the other answers sampled for the same prompt.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>What does GRPO use instead of PPO&#x27;s critic model?</summary><p>The mean and spread of the rewards of the other answers sampled for the same prompt.</p></details>
+
+<details><summary>Why does DAPO raise only the upper clip bound to 0.28?</summary><p>With ε = 0.2, a token at 0.01 can only reach 0.012, so rare tokens can&#x27;t grow and entropy collapses. Raising the lower bound would push rare tokens to 0 instead.</p></details>
+
+<details><summary>DeepSeekMath found RL raised Maj@K but not Pass@K. What does that mean?</summary><p>RL made right answers the model could already produce come out more often. It did not make new problems solvable.</p></details>
+
+<details><summary>Why does DAPO use a token-level loss instead of averaging per answer?</summary><p>Per-answer averaging makes tokens in long answers count less, so long gibberish isn&#x27;t punished enough and length and entropy grow unhealthily.</p></details>
+
+<details><summary>Why does STaR fine-tune the original model each loop instead of the last one?</summary><p>To avoid overfitting. Each loop starts from the base model and trains on the newly collected data.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run the STaR section: count self-made vs rationalized examples in <code>star_sft.jsonl</code>.</li>
-<li>Run GRPO by hand: find any group whose advantages are all zero.</li>
-<li>Run the GRPO training and compare held-out accuracy and <code>Answer:</code> line rate before and after.</li>
+<li>Run GRPO by hand: find any group whose advantages are all zero; print <code>overlong_penalty</code> at 40, 70, 90, 96 tokens.</li>
+<li>Run the GRPO training and compare held-out accuracy and <code>Answer:</code> line rate before and after; check how many groups had zero variance.</li>
 </ul></article><div class="deeper"><h2 class="deeper-title">Go deeper</h2><p class="deeper-sub">Key terms, papers, evidence, the full notebook code and worked solutions.</p>
   
   <p class="src">CS329A Lecture 6 (Oct 10)</p>

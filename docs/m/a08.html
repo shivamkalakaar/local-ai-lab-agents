@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Agentic frameworks for software engineering · Agent Engineering School</title>
-<meta name="description" content="Code is the easiest place for agents to improve, because tests grade the work. Pick the best of many bug fixes (CodeMonkeys) and grade faster code (KernelBench).">
+<meta name="description" content="Code is the easiest place for agents to improve, because tests grade the work. Pick the best of many bug fixes (CodeMonkeys), grade faster code (KernelBench), and design what the agent…">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,21 +259,748 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A08</span></div><section class="mod" id="a08" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A08</div><h2>Agentic frameworks for software engineering</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a08_agentic_swe.ipynb">Open in Colab</a><button class="done-btn" data-done="a08" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Code is the easiest place for agents to improve, because tests grade the work. Pick the best of many bug fixes (CodeMonkeys) and grade faster code (KernelBench).</p><article class="lesson"><p class="deck-src">Based on CS329A · Lecture 13 · Agentic frameworks for software engineering · <a href="https://arxiv.org/abs/2501.14723" target="_blank" rel="noopener">main paper</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
-<li>Build a sample-then-select loop for bug fixes, and grade "make it faster" with fast_p and useful feedback.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why code is easiest</h3><span class="slide-no">2/13</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Part 2 · A08</span></div><section class="mod" id="a08" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Part 2 · A08</div><h2>Agentic frameworks for software engineering</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/cs329a/a08_agentic_swe.ipynb">Open in Colab</a><button class="done-btn" data-done="a08" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>20 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Code is the easiest place for agents to improve, because tests grade the work. Pick the best of many bug fixes (CodeMonkeys), grade faster code (KernelBench), and design what the agent…</p><article class="lesson"><p class="deck-src">Based on CS329A · Lecture 13 · Agentic frameworks for software engineering · <a href="https://arxiv.org/abs/2501.14723" target="_blank" rel="noopener">main paper</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (54 slides)</b><ol><li><a href="#sec-1">Why this lecture: code grades itself</a> <span>3 slides</span></li><li><a href="#sec-2">CodeMonkeys (Ehrlich et al. 2025)</a> <span>15 slides</span></li><li><a href="#sec-3">KernelBench (Ouyang et al. 2025)</a> <span>15 slides</span></li><li><a href="#sec-4">Agent-System Interfaces (Wei et al. 2025)</a> <span>11 slides</span></li><li><a href="#sec-5">Our notebook, Part A: CodeMonkeys at small scale</a> <span>3 slides</span></li><li><a href="#sec-6">Our notebook, Part B: KernelBench on a CPU</a> <span>2 slides</span></li><li><a href="#sec-7">How this applies to us</a> <span>4 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/54</span></div><ul>
+<li>Build a sample-then-select loop for bug fixes, grade "make it faster" with fast_p, and design an agent-system interface that gives useful feedback.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Why this lecture: code grades itself</div><div class="slide"><div class="slide-top"><h3>Why code is easiest</h3><span class="slide-no">2/54</span></div><ul>
 <li>The computer grades the work: tests pass or fail, code runs faster or slower.</li>
 <li>So: sample many attempts, let tests pick the winner.</li>
-<li>Give the agent clear feedback from the system (a profiler), not a bare number.</li>
+<li>Give the agent clear feedback from the system (errors, a profiler), not a bare number.</li>
 <li>Profiler: reports which functions used the most time; Python's built-in one is cProfile.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>CodeMonkeys: three steps</h3><span class="slide-no">3/13</span></div><ul>
-<li>Context: find the relevant files (a cheap model scans every file).</li>
-<li>Generation: 10 parallel attempts. Each writes a code edit and a test script, and iterates on execution feedback.</li>
-<li>Selection: run all model-written tests on all edits; keep the top 3 by votes; a model picks one.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The three papers</h3><span class="slide-no">3/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>Task</th>
+<th>Main idea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CodeMonkeys (Ehrlich, Brown, Juravsky et al., Stanford/Oxford, 2025)</td>
+<td>Fix real GitHub issues (SWE-bench Verified)</td>
+<td>Scale serial + parallel compute, then select with tests and a model</td>
+</tr>
+<tr>
+<td>KernelBench (Ouyang, Guo et al., Stanford/Princeton, 2025)</td>
+<td>Rewrite PyTorch code as fast GPU kernels</td>
+<td>A benchmark and metric (fast_p) for correct-and-fast code</td>
+</tr>
+<tr>
+<td>Agent-System Interfaces (Wei, Nie et al., Stanford, ICML 2025)</td>
+<td>Write mappers for parallel programs</td>
+<td>A small language + AutoGuide feedback beat an RL autotuner</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Two ways to spend test-time compute</h3><span class="slide-no">4/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Serial</th>
+<th>Parallel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>More turns on one attempt</td>
+<td>More independent attempts</td>
+</tr>
+<tr>
+<td>Iterate on execution feedback</td>
+<td>Sample with temperature &gt; 0</td>
+</tr>
+<tr>
+<td>No selection problem</td>
+<td>Must pick one at the end</td>
+</tr>
+<tr>
+<td>Can get "stuck" after wrongly approving its work</td>
+<td>Each new attempt is a fresh start</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Test-time compute: compute spent while answering, not while training.</li>
+<li>All three papers use feedback loops; CodeMonkeys also samples in parallel.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>CodeMonkeys (Ehrlich et al. 2025)</div><div class="slide"><div class="slide-top"><h3>The problem: SWE-bench Verified</h3><span class="slide-no">5/54</span></div><ul>
+<li>SWE-bench instance: a GitHub issue + the code repository. Goal: edit files so the issue is fixed.</li>
+<li>Graded automatically by the repo's own test suite.</li>
+<li>Verified split: issues humans judged solvable (clear description, tests that don't reject correct fixes).</li>
+<li>Earlier work (Large Language Monkeys, same group): coverage rises log-linearly with samples, but no recipe for picking one.</li>
+<li>Question: how would you design a system if scaling test-time compute were the main goal?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three sub-tasks, three metrics</h3><span class="slide-no">6/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Sub-task</th>
+<th>Question</th>
+<th>Metric</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Context</td>
+<td>Are the files that need editing in the prompt?</td>
+<td>Recall: share of problems with all needed files</td>
+</tr>
+<tr>
+<td>Generation</td>
+<td>Is any sampled edit correct?</td>
+<td>Coverage: share of problems with ≥1 correct edit</td>
+</tr>
+<tr>
+<td>Selection</td>
+<td>Did we submit a correct edit?</td>
+<td>Score: share of problems resolved</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Changing one step affects the others: more edits can raise coverage but make selection harder (Figure 2).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>System overview (Figure 1)</h3><span class="slide-no">7/54</span></div><pre><code>codebase → cheap model scans every file → rank → ~128k tokens of context
+  → 10 parallel (testing state machine → editing state machine) → 10 (edit, test) pairs
+  → run all tests on all edits → top-3 by votes → selection state machine → final edit
+</code></pre>
+<ul>
+<li>Main model: Claude 3.5 Sonnet (claude-3-5-sonnet-20241022).</li>
+<li>File scanner: Qwen2.5-Coder-32B-Instruct, run locally.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 1: context by reading every file</h3><span class="slide-no">8/54</span></div><ul>
+<li>SWE-bench repos hold millions of tokens: too big and too costly for a frontier model.</li>
+<li>Trick: context is shared by all 10 downstream edits, so its cost is paid once.</li>
+<li>Qwen2.5-Coder-32B reads every Python file (not test folders) and says relevant or not.<ul>
+<li>On average 2.94M tokens scanned per problem</li>
+<li>Under 15% of total system cost</li>
 </ul>
-<pre><code>issue → 10 attempts (edit + test each) → all tests on all edits
-      → top 3 by votes → model judge picks 1
-</code></pre></div><div class="slide"><div class="slide-top"><h3>Coverage vs score</h3><span class="slide-no">4/13</span></div><div class="tbl"><table>
+</li>
+<li>Rerunning it for each of 10 edits would make it the most expensive step.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 1b: ranking files</h3><span class="slide-no">9/54</span></div><ul>
+<li>During the scan, write a short summary of how each relevant file relates to the issue.</li>
+<li>Ranking prompt: each file's name, summary and token count; target about 60,000 tokens.</li>
+<li>Claude can be non-deterministic even at temperature 0: run the ranking 3 times, average the ranks.</li>
+<li>Include full files in rank order up to 128,000 tokens.</li>
+<li>Result: on average 74,570 tokens, a 50.5x reduction vs all relevant files.</li>
+<li>Recall at 128k limit: 92.6% of instances have all needed files (Figure 3).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 2: edits with their own tests</h3><span class="slide-no">10/54</span></div><ul>
+<li>State machine: a fixed multi-turn loop where the model acts on execution feedback.</li>
+<li>Each attempt writes an edit and a standalone Python test script that reproduces the issue (result via exit code).</li>
+<li>Why tests: richer feedback for iterating, and imperfect verifiers for selection later.</li>
+<li>Two back-to-back state machines:<ul>
+<li>Testing state machine: iterate until the test script works and flags the bug on unedited code</li>
+<li>Editing state machine: write an aider-style edit diff; may still revise the test</li>
+</ul>
+</li>
+<li>Testing step skips the codebase files: shorter prompts, lower cache cost. Chat history cleared between the two.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Two-sided debugging</h3><span class="slide-no">11/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Test on code before the edit</th>
+<th>Test on code after the edit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Should fail (bug reproduced)</td>
+<td>Should pass (bug fixed)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Testing machine alone can produce tests that always fail, even on a correct fix.</li>
+<li>Letting the editing machine revise the test checks both sides.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Serial vs parallel scaling (Figure 5)</h3><span class="slide-no">12/54</span></div><ul>
+<li>Setup: 10 state-machine pairs per issue, each capped at 8 iterations.</li>
+<li>Best: all 10 machines × 8 iterations → coverage 69.8%.</li>
+<li>First few serial iterations help a lot.</li>
+<li>After that: configurations with similar cost give similar coverage, however split.</li>
+<li>But equal coverage ≠ equal final score: more parallel candidates make selection harder.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Cost breakdown (Table 1, USD)</h3><span class="slide-no">13/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Total cost</th>
+<th>Share</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Relevance (local Qwen)</td>
+<td>334.02</td>
+<td>14.6%</td>
+</tr>
+<tr>
+<td>Ranking</td>
+<td>19.92</td>
+<td>0.9%</td>
+</tr>
+<tr>
+<td>Generate tests</td>
+<td>439.99</td>
+<td>19.2%</td>
+</tr>
+<tr>
+<td>Generate edits</td>
+<td>1366.02</td>
+<td>59.6%</td>
+</tr>
+<tr>
+<td>Selection</td>
+<td>131.95</td>
+<td>5.8%</td>
+</tr>
+<tr>
+<td>Total</td>
+<td>2291.90</td>
+<td>100%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Prices used: $3/M input, $0.3/M cache read, $3.75/M cache write, $15/M output tokens.</li>
+<li>Biggest single item: cache reads in edit generation (the codebase files in the prompt).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Step 3: selection, four methods</h3><span class="slide-no">14/54</span></div><ul>
+<li>Majority voting with tests: run all 10 tests on all 10 edits; pick the edit passing most (ties → expected score of a random pick).</li>
+<li>Model selection: model sees issue, context and all candidate diffs; picks one.</li>
+<li>Model selection after top-3 filtering: same, but only the 3 edits passing most tests (ties → shorter diff).</li>
+<li>Selection state machine after top-3: the model may write new tests to tell candidates apart; sees each test's output on every candidate and on unedited code; then picks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Selection results (Figure 6)</h3><span class="slide-no">15/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Random selection</td>
+<td>45.8%</td>
+</tr>
+<tr>
+<td>Model selection (all 10)</td>
+<td>52.0%</td>
+</tr>
+<tr>
+<td>Majority voting with tests</td>
+<td>53.0%</td>
+</tr>
+<tr>
+<td>Model selection after top-3</td>
+<td>55.6%</td>
+</tr>
+<tr>
+<td>Selection state machine after top-3</td>
+<td>57.4%</td>
+</tr>
+<tr>
+<td>Oracle selection (= coverage)</td>
+<td>69.8%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Judge on the whole pool loses to voting; after the top-3 filter it wins.</li>
+<li>Best method closes about half the gap from random to oracle; costs under 10% of the system.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Final scores (Table 2, SWE-bench Verified)</h3><span class="slide-no">16/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Barrel of Monkeys (oracle selection)</td>
+<td>80.8</td>
+</tr>
+<tr>
+<td>o3 (reported)</td>
+<td>71.7</td>
+</tr>
+<tr>
+<td>CodeMonkeys (oracle selection)</td>
+<td>69.8</td>
+</tr>
+<tr>
+<td>Barrel of Monkeys</td>
+<td>66.2</td>
+</tr>
+<tr>
+<td>Blackbox AI Agent</td>
+<td>62.8</td>
+</tr>
+<tr>
+<td>CodeStory</td>
+<td>62.2</td>
+</tr>
+<tr>
+<td>CodeMonkeys</td>
+<td>57.4</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Barrel of Monkeys: selecting across systems</h3><span class="slide-no">17/54</span></div><ul>
+<li>Pool: CodeMonkeys' final edit + the top-4 leaderboard submissions (Blackbox AI Agent, CodeStory, Learn-by-interact, devlo) as of January 15, 2025.</li>
+<li>5 candidates per problem; combined coverage 80.8%.</li>
+<li>Skip the voting filter; send all 5 to the selection state machine.</li>
+<li>Score 66.2%, above the best single member (62.8%).</li>
+<li>But random selection here already gives 60.9%, so a smaller share of the gap is closed.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Cheaper model check (Appendix A)</h3><span class="slide-no">18/54</span></div><ul>
+<li>DeepSeek-V3 on a random 100-issue subset, same context files.</li>
+<li>Claude 3.5 Sonnet: 45.74% (voting), 6.02% higher than DeepSeek-V3's best.</li>
+<li>DeepSeek-V3 reaches 86.8% of Claude's score at a fraction of the cost (API over 10x cheaper).</li>
+<li>Coverage for DeepSeek-V3 keeps rising with more compute.</li>
+<li>Lesson: many cheap samples can work, if selection is good.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations (Section 3)</h3><span class="slide-no">19/54</span></div><ul>
+<li>Context: the file filter still misses needed files for 7.4% of instances.<ul>
+<li>Assumes the model already knows the repo; private or new repos may need a different retrieval step</li>
+</ul>
+</li>
+<li>Generation: feedback comes only from the model's own reproduction test, not regression tests.<ul>
+<li>Diversity only from temperature; parallel attempts don't know about each other</li>
+</ul>
+</li>
+<li>Selection: recovers only about half of the random-to-oracle gap; ignores the repo's existing tests.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>KernelBench (Ouyang et al. 2025)</div><div class="slide"><div class="slide-top"><h3>The problem: fast GPU kernels are hard to write</h3><span class="slide-no">20/54</span></div><ul>
+<li>Kernel: a function that runs on the GPU; speed depends on hardware and tensor sizes.</li>
+<li>FlashAttention: released in 2022, 5 years after the Transformer; 2 more years to move it to Hopper GPUs.</li>
+<li>Experts use compiler feedback, profilers, hardware specs, tricks like tiling and fusion.</li>
+<li>CUDA is low-resource: only 0.073% of The Stack v1.2 code corpus.</li>
+<li>Question: can language models write correct and fast kernels?</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Task format (Figure 1)</h3><span class="slide-no">21/54</span></div><ul>
+<li>Input: PyTorch reference <code>Model</code> (an nn.Module) plus <code>get_inputs()</code> and <code>get_init_inputs()</code> for exact tensor shapes and types.</li>
+<li>Output: <code>ModelNew</code> with custom kernels (e.g. inline CUDA via the PyTorch CUDA-C extension).</li>
+<li>The model chooses which operations to optimize and how.</li>
+<li>Any tool allowed: CUDA, PTX, CUTLASS, Triton, ThunderKittens.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Three levels, 250 tasks</h3><span class="slide-no">22/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Tasks</th>
+<th>What</th>
+<th>Hard because</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>100</td>
+<td>Single operations: conv, matmul, losses, activations, norms</td>
+<td>PyTorch already calls expert, often closed-source kernels</td>
+</tr>
+<tr>
+<td>2</td>
+<td>100</td>
+<td>Sequences of 3–6 operations (e.g. conv + ReLU + bias)</td>
+<td>Compilers are already good at fusion</td>
+</tr>
+<tr>
+<td>3</td>
+<td>50</td>
+<td>Full architectures (e.g. AlexNet, MiniGPT) from GitHub</td>
+<td>Needs algorithm changes beyond a compiler</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>How it grades</h3><span class="slide-no">23/54</span></div><ul>
+<li>Evaluation only: no reference kernels provided (users test on their own hardware).</li>
+<li>Correctness: compare <code>Model</code> and <code>ModelNew</code> outputs on 5 random inputs.</li>
+<li>Performance: wall-clock time of both, repeated trials.</li>
+<li>Speedup = PyTorch time ÷ generated kernel time.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The metric: fast_p</h3><span class="slide-no">24/54</span></div><ul>
+<li>Formula: fast_p = (1/N) · Σ 1(correct_i AND speedup_i &gt; p)<ul>
+<li>N: number of tasks</li>
+<li>1(...): 1 if the task's kernel is correct and more than p times faster, else 0</li>
+</ul>
+</li>
+<li>fast_0 = plain correctness rate.</li>
+<li>fast_1 = correct and faster than PyTorch. The paper's main setting.</li>
+<li>Raise p as methods improve; p &lt; 1 is useful for training (matching part of PyTorch's speed still counts).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One-shot baseline (Table 1, fast_1 vs PyTorch Eager, L40S)</h3><span class="slide-no">25/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Level 1</th>
+<th>Level 2</th>
+<th>Level 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-4o</td>
+<td>4%</td>
+<td>5%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>OpenAI o1</td>
+<td>10%</td>
+<td>24%</td>
+<td>12%</td>
+</tr>
+<tr>
+<td>DeepSeek V3</td>
+<td>6%</td>
+<td>4%</td>
+<td>8%</td>
+</tr>
+<tr>
+<td>DeepSeek R1</td>
+<td>12%</td>
+<td>36%</td>
+<td>2%</td>
+</tr>
+<tr>
+<td>Claude 3.5 Sonnet</td>
+<td>10%</td>
+<td>7%</td>
+<td>2%</td>
+</tr>
+<tr>
+<td>Llama 3.1-70B Inst.</td>
+<td>3%</td>
+<td>0%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>Llama 3.1-405B Inst.</td>
+<td>3%</td>
+<td>0%</td>
+<td>2%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>One example in the prompt (a simple add), greedy decoding.</li>
+<li>Speedup over PyTorch Eager in fewer than 20% of tasks on average.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Why kernels fail (Figure 2)</h3><span class="slide-no">26/54</span></div><ul>
+<li>Execution failures: compile errors, CUDA memory violations, runtime errors.</li>
+<li>Correctness errors: wrong output shape or values.</li>
+<li>Reasoning models (o1, R1): under 55% incorrect; others: over 70%.</li>
+<li>The gap is mostly fewer execution failures. All models struggle similarly with correctness.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Speed and hardware (Figure 3, Section 4.4)</h3><span class="slide-no">27/54</span></div><ul>
+<li>fast_p falls as p rises; at p = 1, under 15% of kernels beat PyTorch at every level.</li>
+<li>Reasoning models give more speedups.</li>
+<li>Level 1 winners transfer across GPUs; Level 2 varies more.<ul>
+<li>DeepSeek R1 Level 2 fast_1: 36% on L40S, 47% on A10G</li>
+</ul>
+</li>
+<li>So one-shot kernels may not generalize across hardware.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Repeated sampling (Figure 4)</h3><span class="slide-no">28/54</span></div><ul>
+<li>fast_p@k: share of tasks with at least one correct kernel p times faster, among k samples.</li>
+<li>High temperature helps explore: DeepSeek-V3 Level 2 fast_1 goes from 4% (one-shot) to 37% at k = 100.</li>
+<li>Limit: if the model almost never solves a task, more samples don't help.<ul>
+<li>DeepSeek-V3 never solved a group of 34 Level 1 convolution variants, even with 100 samples</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Iterative refinement with feedback (Figure 5)</h3><span class="slide-no">29/54</span></div><ul>
+<li>Each turn, the model gets:<ul>
+<li>G: its previous generation</li>
+<li>E: compiler/execution feedback (errors, correctness, wall-clock time)</li>
+<li>P: PyTorch profiler output (time per operator)</li>
+</ul>
+</li>
+<li>Run N = 10 turns; fast_p@N = best kernel so far.</li>
+<li>Headline: DeepSeek-R1 Level 2 fast_1 from 36% to 72% with E + P (Figure 6).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Sampling vs refinement, 10 calls each (Table 2, fast_1)</h3><span class="slide-no">30/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>L1 V3</th>
+<th>L1 R1</th>
+<th>L2 V3</th>
+<th>L2 R1</th>
+<th>L3 V3</th>
+<th>L3 R1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single attempt</td>
+<td>6%</td>
+<td>12%</td>
+<td>4%</td>
+<td>36%</td>
+<td>8%</td>
+<td>2%</td>
+</tr>
+<tr>
+<td>Repeated sampling @10</td>
+<td>11%</td>
+<td>N/A</td>
+<td>14%</td>
+<td>N/A</td>
+<td>14%</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Refine with G</td>
+<td>9%</td>
+<td>18%</td>
+<td>7%</td>
+<td>44%</td>
+<td>14%</td>
+<td>4%</td>
+</tr>
+<tr>
+<td>Refine with G+E</td>
+<td>13%</td>
+<td>41%</td>
+<td>5%</td>
+<td>62%</td>
+<td>22%</td>
+<td>12%</td>
+</tr>
+<tr>
+<td>Refine with G+E+P</td>
+<td>19%</td>
+<td>43%</td>
+<td>6%</td>
+<td>72%</td>
+<td>14%</td>
+<td>18%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Refinement beats sampling in 5 of 6 cases (R1 not sampled: its API had no temperature).</li>
+<li>Depends on the base model: R1 keeps gaining from E and P; V3 and Llama-3.1 70B don't always.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What feedback fixes (Table 9)</h3><span class="slide-no">31/54</span></div><ul>
+<li>Execution feedback mostly fixes execution errors.</li>
+<li>DeepSeek-R1 gets a correct kernel on over 90% of Level 1 and 2 tasks within 10 turns (fast_0: 95% and 92% with G+E+P).</li>
+<li>Remaining failures: almost all functional incorrectness.</li>
+<li>Likely reason: "wrong output" is less specific feedback than a compiler error message.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Hardware knowledge in the prompt (Section 5.2)</h3><span class="slide-no">32/54</span></div><ul>
+<li>Few-shot examples of fusion (GeLU), tiling (matmul), and a minimal FlashAttention:<ul>
+<li>Overall fast_1 drops: models try bolder tricks and fail more; o1's outputs 25% longer</li>
+<li>But o1 applies tiling on 77% of Level 1 GEMM variants; on Level 2 beats PyTorch on 11 problems with shared-memory tricks</li>
+</ul>
+</li>
+<li>Hardware specs (GPU type, bandwidth, TFLOPS, warps):<ul>
+<li>Little effect on Llama 3.1 70B and DeepSeek-V3</li>
+<li>R1 tries tensor-core wmma instructions on about 50% of Level 1 matmuls; most fail to compile</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Interesting kernels found (Section 6.1)</h3><span class="slide-no">33/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Trick</th>
+<th>Example</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Operator fusion</td>
+<td>GELU</td>
+<td>2.9x</td>
+</tr>
+<tr>
+<td>Operator fusion</td>
+<td>Softsign</td>
+<td>1.3x</td>
+</tr>
+<tr>
+<td>Fused matmul + divide + sum + scale</td>
+<td>Level 2 task</td>
+<td>2.6x</td>
+</tr>
+<tr>
+<td>Shared memory</td>
+<td>Cosine similarity</td>
+<td>2.8x</td>
+</tr>
+<tr>
+<td>Shared memory</td>
+<td>Triplet margin loss</td>
+<td>2.0x</td>
+</tr>
+<tr>
+<td>Algorithm change</td>
+<td>Dense × diagonal matrix: scale rows, skip zeros</td>
+<td>13x</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>No successful tensor-core use found. Many fusion chances missed.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limitations and future work</h3><span class="slide-no">34/54</span></div><ul>
+<li>Refinement experiments sample at temperature 0 (stated limitation, Appendix C.3).</li>
+<li>Models write raw CUDA; higher-level tools (ThunderKittens, CUTLASS, Triton) might make tensor cores easier.</li>
+<li>GPUs only so far; other accelerators next.</li>
+<li>CUDA data is scarce: more open, high-quality kernel data would help.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Agent-System Interfaces (Wei et al. 2025)</div><div class="slide"><div class="slide-top"><h3>The problem: writing mappers</h3><span class="slide-no">35/54</span></div><ul>
+<li>Task-based programs (Legion framework): computation split into tasks; a separate mapper decides placement.</li>
+<li>Mapper: code that assigns tasks to processors and data to memories.</li>
+<li>Good mappers can give order-of-magnitude speedups.</li>
+<li>Writing one: hundreds of lines of low-level C++, days of expert tuning per application, input and machine.</li>
+<li>Search space grows exponentially with tasks and data arguments.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The mapper search space</h3><span class="slide-no">36/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Options</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Processor selection</td>
+<td>GPU, CPU, or OpenMP, per task</td>
+</tr>
+<tr>
+<td>Memory placement</td>
+<td>GPU FrameBuffer, ZeroCopy, or CPU system memory, per task and argument</td>
+</tr>
+<tr>
+<td>Memory layout</td>
+<td>SOA vs AOS, C vs Fortran order, alignment (e.g. 128-byte)</td>
+</tr>
+<tr>
+<td>Index mapping</td>
+<td>How partitioned tasks and data spread across processors</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Agent-system interface (Figure 1)</h3><span class="slide-no">37/54</span></div><ul>
+<li>Agent-system interface (ASI): the layer between the agent and the system; what the agent writes and what feedback it gets.</li>
+<li>Two parts:<ul>
+<li>DSL (domain-specific language): high-level, declarative; a compiler turns it into C++</li>
+<li>AutoGuide: turns raw execution output into explanations and suggestions</li>
+</ul>
+</li>
+<li>The DSL also defines the search space.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSL vs C++ (Figure 2)</h3><span class="slide-no">38/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>DSL mapper</th>
+<th>C++ mapper</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Task task0 GPU;</code></td>
+<td><code>slice_task(...)</code> with targets, domains, iterators</td>
+</tr>
+<tr>
+<td><code>Region * ghost_region GPU ZCMEM</code></td>
+<td>126 more lines of C++ omitted in the figure</td>
+</tr>
+<tr>
+<td><code>Layout * * * C_order SOA Align==64</code></td>
+<td>Imperative API calls for each constraint</td>
+</tr>
+<tr>
+<td>Says what, not how</td>
+<td>Says how, step by step</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Average 14x fewer lines of code with the DSL.</li>
+<li>Every agent mapper that beat the experts was expressible in the DSL.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AutoGuide (Table 1)</h3><span class="slide-no">39/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Raw output</th>
+<th>Explain</th>
+<th>Suggest</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Assertion failed: stride does not match expected value."</td>
+<td>Memory layout is unexpected.</td>
+<td>Adjust the layout constraints or move tasks to different processor types.</td>
+</tr>
+<tr>
+<td>"Execution time is 0.03s."</td>
+<td>N/A</td>
+<td>Move more tasks to GPU to reduce execution time.</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Implemented by keyword matching over the raw output.</li>
+<li>Why: language feedback beats scalars; raw output is opaque; expert heuristics are easy to say in words.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Generative optimization</h3><span class="slide-no">40/54</span></div><ul>
+<li>Problem: triplet (Θ, ω, T).<ul>
+<li>Θ: all possible mappers (program text)</li>
+<li>ω: the objective, written as text</li>
+<li>T: runs a mapper, returns feedback f (measured performance) and g (a trace of how it was made)</li>
+</ul>
+</li>
+<li>Bandits, RL or Bayesian optimization struggle when Θ is huge and discrete (text).</li>
+<li>Generative optimization: an LLM proposes the next program from text feedback.</li>
+<li>Agent built in Trace; mapper split into independent code segments (like least-to-most prompting).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Setup</h3><span class="slide-no">41/54</span></div><ul>
+<li>9 benchmarks: Circuit, Stencil, Pennant (scientific), and 6 parallel matrix multiplication algorithms (Cannon's, SUMMA, PUMMA, Johnson's, Solomonik's, COSMA).</li>
+<li>Baselines: expert-written mappers; random mappers (10 seeds); Trace and OPRO (10 iterations, 5 runs); OpenTuner (RL autotuner, scalar time feedback, big penalty for failures).</li>
+<li>Hardware: one node, two 10-core Intel E5-2640 v4 CPUs, 256G memory, four NVIDIA Tesla P100 GPUs.</li>
+<li>LLM: gpt-4o-2024-08-06. Crashing mappers score throughput 0.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results (Figures 4, 5)</h3><span class="slide-no">42/54</span></div><ul>
+<li>Best Trace mappers match or beat the expert mappers on all 9 benchmarks.</li>
+<li>Up to 1.34x faster than experts (Circuit): two data collections moved from ZeroCopy to FrameBuffer memory.</li>
+<li>COSMA: 1.31x, from better index mapping (less inter-GPU communication).</li>
+<li>Random mappers: 74 of 90 (82.2%) crash with invalid mappings.</li>
+<li>Trace ≈ OPRO, both far ahead of OpenTuner.</li>
+<li>Trace vs OpenTuner: 11x at 10 iterations each; still 3.8x when OpenTuner runs 1000 iterations.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSL ablation (Table 2)</h3><span class="slide-no">43/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Target</th>
+<th>Success over 10 strategies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C++, single trial</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>DSL, single trial</td>
+<td>80%</td>
+</tr>
+<tr>
+<td>C++, iterative refine (≤10 rounds)</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>DSL, iterative refine (≤10 rounds)</td>
+<td>100%</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Same docs, examples and starting code for both; built with DSPy.</li>
+<li>Refinement fixed four C++ compile errors and two DSL ones, but no C++ mapper passed.</li>
+<li>The DSL has no training data at all; C++ has plenty. Still the DSL wins.</li>
+<li>Why: smaller gap from English to code ("align to 64 bytes, Fortran order" = one DSL line), and 14x less code.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>AutoGuide ablation (Figure 6)</h3><span class="slide-no">44/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Feedback</th>
+<th>Result on Circuit, COSMA, SUMMA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-shot, 5-shot (no feedback)</td>
+<td>Worst</td>
+</tr>
+<tr>
+<td>Execution output only</td>
+<td>Better</td>
+</tr>
+<tr>
+<td>+ Explain</td>
+<td>Better still</td>
+</tr>
+<tr>
+<td>+ Explain + Suggest (full AutoGuide)</td>
+<td>Best, consistently</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Gains come from the feedback loop, not just from prompting.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Limits</h3><span class="slide-no">45/54</span></div><ul>
+<li>One framework (Legion), one node, 9 benchmarks.</li>
+<li>Results report the best mapper across runs (normal for offline tuning, but optimistic).</li>
+<li>The DSL might not express every optimization; the authors say they have not hit one.</li>
+<li>AutoGuide's rules are hand-written keyword matches: someone must know the domain.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Our notebook, Part A: CodeMonkeys at small scale</div><div class="slide"><div class="slide-top"><h3>Coverage vs score</h3><span class="slide-no">46/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Coverage</th>
@@ -293,13 +1024,8 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>The gap between them is the selection problem.</li>
-<li>Serial compute: more turns fixing one attempt. Parallel: more attempts. Often gave similar coverage.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Selection: votes, then a judge</h3><span class="slide-no">5/13</span></div><ul>
-<li>Test-based voting: each edit scores one point per model-written test it passes.</li>
-<li>Judge on the whole pool: did worse than plain voting.</li>
-<li>Judge on the top-3 short list: did better than voting.</li>
-<li>Selecting over edits from top leaderboard systems: 66.2%, above the best single member (62.8%).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Filtering model-written tests</h3><span class="slide-no">6/13</span></div><div class="tbl"><table>
+<li>Our notebook: 4 tiny buggy repos, 4 edits each, sampled in parallel.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Filtering model-written tests</h3><span class="slide-no">47/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Test fails on the buggy code</th>
@@ -323,7 +1049,7 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </table></div>
 <ul>
 <li>Model tests can be wrong. Never trust a single one.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Selection in code</h3><span class="slide-no">7/13</span></div><pre><code class="language-python">v = votes(ri)
+</ul></div><div class="slide"><div class="slide-top"><h3>Selection in code</h3><span class="slide-no">48/54</span></div><pre><code class="language-python">v = votes(ri)
 order = sorted(range(len(v)), key=lambda i: -v[i])
 top3 = order[:3]
 distinct = len({EDITS[ri][i] for i in top3}) &gt; 1
@@ -335,15 +1061,12 @@ SEL[ri] = {&quot;votes&quot;: order[0], &quot;votes + judge&quot;: judge(ri, top
 <li>Line 3: keep the 3 best.</li>
 <li>Line 4: are the top 3 actually different files?</li>
 <li>Line 5: vote pick vs judge pick (judge only if there is a real choice).</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>KernelBench: grade speed and correctness</h3><span class="slide-no">8/13</span></div><ul>
-<li>250 PyTorch workloads in three levels. Rewrite each as faster GPU code.</li>
-<li>Check output against the reference on 5 random inputs; time both.</li>
-<li>fast_p: share of tasks that are correct AND more than p times faster.<ul>
-<li>fast_0 = plain correctness; fast_1 = correct and faster.</li>
-</ul>
-</li>
-<li>One-shot, frontier reasoning models matched PyTorch in fewer than 20% of cases.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Scalar vs profiler feedback</h3><span class="slide-no">9/13</span></div><div class="tbl"><table>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Our notebook, Part B: KernelBench on a CPU</div><div class="slide"><div class="slide-top"><h3>Our version of KernelBench</h3><span class="slide-no">49/54</span></div><ul>
+<li>4 slow Python/NumPy functions instead of 250 GPU workloads.</li>
+<li>Correctness: 5 random inputs, <code>np.allclose</code> (relative 1e-5, absolute 1e-6), same shape.</li>
+<li>Speed: best of 3 runs on one large input, in a subprocess with a timeout.</li>
+<li>Report fast_p for p = 0, 1, 2, 10, one-shot and after feedback.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Scalar vs profiler feedback</h3><span class="slide-no">50/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Scalar feedback</th>
@@ -356,7 +1079,7 @@ SEL[ri] = {&quot;votes&quot;: order[0], &quot;votes + judge&quot;: judge(ri, top
 <td>Profile table of the code, plus a hint</td>
 </tr>
 <tr>
-<td>Like a classic autotuner</td>
+<td>Like a classic autotuner (OpenTuner)</td>
 <td>"Hot spot: <code>per_user_totals</code> takes ...% of the time"</td>
 </tr>
 <tr>
@@ -366,52 +1089,38 @@ SEL[ri] = {&quot;votes&quot;: order[0], &quot;votes + judge&quot;: judge(ri, top
 </tbody>
 </table></div>
 <ul>
-<li>KernelBench with execution and profiler feedback, 10 turns: DeepSeek-R1 on Level 2, fast_1 from 36% to 72%.</li>
-<li>Feedback mostly fixed execution errors; correctness stayed hard.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The agent-system interface</h3><span class="slide-no">10/13</span></div><ul>
-<li>Agent-system interface: what the agent can write, and what feedback it gets back.</li>
-<li>Wei et al. 2024, two parts:<ul>
-<li>A small language (DSL) that hides low-level C++ and defines the search space.</li>
-<li>AutoGuide: turns raw output (errors, timings) into explanations and suggested changes.</li>
-</ul>
-</li>
-<li>Beat OpenTuner by 3.8x: 10 iterations vs OpenTuner's 1000.</li>
-<li>Mappers up to 1.34x faster than expert-written ones.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>What the papers showed</h3><span class="slide-no">11/13</span></div><div class="tbl"><table>
-<thead>
-<tr>
-<th>Paper</th>
-<th>What it showed</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CodeMonkeys (Ehrlich et al. 2025)</td>
-<td>57.4% of SWE-bench Verified for about 2,300 USD; 69.8% coverage</td>
-</tr>
-<tr>
-<td>KernelBench (Ouyang et al. 2025)</td>
-<td>Feedback over 10 turns doubled fast_1 for DeepSeek-R1 on Level 2 (36% → 72%)</td>
-</tr>
-<tr>
-<td>Agent-system interfaces (Wei et al. 2024)</td>
-<td>Narrow language + AutoGuide beat a 1000-iteration autotuner in 10 iterations</td>
-</tr>
-</tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
+<li>Our <code>guide()</code> is a tiny AutoGuide: crash → "fix this error first"; wrong → "compare on edge cases"; correct → profile + hot spot.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Sample and select on the firm&#x27;s machine</h3><span class="slide-no">51/54</span></div><ul>
 <li>The firm's own scripts have bugs. A local agent can try several fixes and let tests choose.</li>
 <li>Small local models make more mistakes per try. Fine, if a cheap exact check sorts good from bad.</li>
+<li>CodeMonkeys' DeepSeek-V3 check: a cheaper model got 86.8% of the score. Selection matters more than the model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Context once, reuse many times</h3><span class="slide-no">52/54</span></div><ul>
+<li>CodeMonkeys scanned every file once with a local 32B model, then shared it across 10 attempts.</li>
+<li>Same for the firm: index the contract set once, reuse it for every question.</li>
+<li>Prompt caching makes the shared part cheap on repeated calls.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Design the interface, not just the prompt</h3><span class="slide-no">53/54</span></div><ul>
 <li>Clear feedback can matter more than a bigger model: good news for small models on the firm's machine.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>A narrow language helps: e.g. let the agent output <code>{"clause": "liability_cap", "months": 12}</code> instead of free text, then check it with code.</li>
+<li>Write an AutoGuide for the firm: turn "check failed" into "the cap quote is not in the contract text; copy it exactly."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">54/54</span></div><ul>
 <li>Coverage = score → more samples raise coverage but can make selection harder. Measure both.</li>
 <li>Model judge on the whole pool → cut to a top-3 short list with votes first.</li>
 <li>Checking speed on one input → the agent can game it. Check correctness on several random inputs.</li>
+<li>Bare scalar feedback → explain the error and suggest a change (AutoGuide).</li>
 <li>Running model code in your own process → subprocess, timeout, fresh folder.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What are CodeMonkeys&#x27; three steps?</summary><p>Context (find the relevant files), generation (sample edits and tests), and selection (choose one edit).</p></details>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What are CodeMonkeys&#x27; three steps and their metrics?</summary><p>Context (recall), generation (coverage), and selection (final score).</p></details>
+
+<details><summary>Why could CodeMonkeys afford to have a model read every file?</summary><p>The context is shared by all 10 attempts, so the scan is paid once. It was under 15% of total cost.</p></details>
+
+<details><summary>Why cut to a top-3 short list before asking a model judge?</summary><p>A judge on the whole pool (52.0%) did worse than plain test voting (53.0%). With the vote-filtered short list it did better (55.6%, or 57.4% with the selection state machine).</p></details>
 
 <details><summary>What does fast_1 measure?</summary><p>The share of tasks where the new code is correct and faster than the reference.</p></details>
 
-<details><summary>Why cut to a top-3 short list before asking a model judge?</summary><p>A judge on the whole pool did worse than plain test voting. With the vote-filtered short list, it did better.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>In KernelBench, what did execution feedback mostly fix, and what stayed hard?</summary><p>It mostly fixed execution errors like compile and runtime failures. Functional correctness stayed hard.</p></details>
+
+<details><summary>What are the two parts of the agent-system interface in Wei et al.?</summary><p>A small DSL that hides low-level C++ and defines the search space, and AutoGuide, which turns raw output into explanations and suggestions.</p></details>
+
+<details><summary>Why did the DSL beat C++ for code generation even with no training data?</summary><p>It is much closer to the plain-English strategy and needs about 14x less code.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Part A: fix four tiny buggy repos (<code>textstats</code>, <code>late_fee</code>, <code>dates_util</code>, <code>lru</code>); compare coverage with the vote and judge picks.</li>
 <li>Part B: speed up four slow functions; read the fast_p table for scalar vs profiler feedback.</li>
 <li>Solution 3: a <code>moving_average</code> that only works for <code>w == 25</code>. See the random inputs catch it.</li>

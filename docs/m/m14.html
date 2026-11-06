@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Long-running and coding agents · Agent Engineering School</title>
-<meta name="description" content="Run an agent on a job too big for one sitting, like a whole data room. A checklist, one item per session, and evidence before &quot;done&quot;.">
+<meta name="description" content="How Terminal-Bench and Harbor run agents on long tasks, and how to run an agent on a job too big for one sitting, like a whole data room.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -169,6 +169,10 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 .lesson table{min-width:0;font-size:15px}
 .lesson .tbl{max-width:72ch}
 .deck{display:flex;flex-direction:column;gap:18px;margin:10px 0 30px}
+.deck-sec{font:800 22px/1.25 var(--f-display);margin:26px 0 0;padding:14px 0 6px;border-top:3px solid var(--ink);scroll-margin-top:16px}
+.deck-sec span{display:block;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.deck-toc{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--paper);margin:0 0 6px}
+.deck-toc ol{margin:8px 0 0;padding-left:22px}.deck-toc li{margin:3px 0}.deck-toc li span{color:var(--muted);font-size:13px}
 .deck-src{color:var(--muted);font-size:14px;margin:0 0 12px}
 .slide{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:20px 26px 18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .slide-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:12px}
@@ -255,27 +259,251 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 14</span></div><section class="mod" id="m14" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 14</div><h2>Long-running and coding agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/14_long_running_agents.ipynb">Open in Colab</a><button class="done-btn" data-done="m14" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>8 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">Run an agent on a job too big for one sitting, like a whole data room. A checklist, one item per session, and evidence before &quot;done&quot;.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 10 · Evaluating Agents: Terminal-Bench and Harbor · <a href="https://web.stanford.edu/class/cs329z/slides/lecture10.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/11</span></div><ul>
-<li>Build a long-running review loop that survives crashes, does one checked step at a time, and can't finish early.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Why long jobs are hard</h3><span class="slide-no">2/11</span></div><ul>
-<li>Context window: how much text the model can hold at once.</li>
-<li>Long-horizon: context grows and drifts (Lecture 1, key challenges).</li>
-<li>200 contracts in a data room won't fit in one sitting.</li>
-<li>Each new session starts blank. Progress must live in files, not in the model.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Terms (from the lecture)</h3><span class="slide-no">3/11</span></div><ul>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 14</span></div><section class="mod" id="m14" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 14</div><h2>Long-running and coding agents</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/14_long_running_agents.ipynb">Open in Colab</a><button class="done-btn" data-done="m14" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>15 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">How Terminal-Bench and Harbor run agents on long tasks, and how to run an agent on a job too big for one sitting, like a whole data room.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 10 · Evaluating Agents: Terminal-Bench and Harbor · <a href="https://web.stanford.edu/class/cs329z/slides/lecture10.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (27 slides)</b><ol><li><a href="#sec-1">Terminal-Bench: data for agents</a> <span>5 slides</span></li><li><a href="#sec-2">Terms</a> <span>3 slides</span></li><li><a href="#sec-3">The task format</a> <span>2 slides</span></li><li><a href="#sec-4">Harness and infrastructure</a> <span>2 slides</span></li><li><a href="#sec-5">Keeping it reproducible</a> <span>3 slides</span></li><li><a href="#sec-6">Long-running jobs</a> <span>8 slides</span></li><li><a href="#sec-7">How this applies to us</a> <span>3 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/27</span></div><ul>
+<li>Use the Terminal-Bench terms (task, trial, verifier, trajectory, harness) to build a long-running review loop that survives crashes, does one checked step at a time, and can be rerun.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>Terminal-Bench: data for agents</div><div class="slide"><div class="slide-top"><h3>What does agent test data look like?</h3><span class="slide-no">2/27</span></div><ul>
+<li>For models, test data is inputs + labels.</li>
+<li>For agents, it is tasks: a goal, an environment to act in, and a check on the result.</li>
+<li>Lecture 10's example: Terminal-Bench, by Alex Shaw and Ryan Marten.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>One insight: bash is the one tool</h3><span class="slide-no">3/27</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>A purpose-built tool</th>
+<th>Bash</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One custom tool per job</td>
+<td><code>aws ec2 run-instances --image-id ... --instance-type t2.micro ...</code></td>
+</tr>
+<tr>
+<td>You must build and maintain each one</td>
+<td>Any command-line program is already a tool</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>An agent with a terminal can do almost any computer job.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Terminal-Bench in numbers</h3><span class="slide-no">4/27</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model cards</td>
+<td>64</td>
+</tr>
+<tr>
+<td>Contributors</td>
+<td>171</td>
+</tr>
+<tr>
+<td>GitHub participants</td>
+<td>1k+</td>
+</tr>
+<tr>
+<td>Discord members</td>
+<td>5k+</td>
+</tr>
+<tr>
+<td>Benchmark runs</td>
+<td>7M+</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>First commit: Jan 17, 2025. Claude Code released a month later (Feb 2025).</li>
+<li>Built with Stanford and the Laude Institute.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>An example task</h3><span class="slide-no">5/27</span></div><ul>
+<li>Instruction: "output a STEP file in /app/out.step which contains the object described by the 2d schematic in /app/schematic.png."</li>
+<li>Environment: <code>FROM python:3.12-slim</code>, then <code>COPY schematic.png /app/schematic.png</code>.</li>
+<li>Tests: <code>valid_step_file()</code>, <code>watertight()</code>, <code>correct_volume()</code>, <code>correct_surface_area()</code>, <code>correct_topology()</code> and more.</li>
+<li>The schematic is a 2D engineering drawing of a bracket; the agent must build the 3D part.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>From TBench to Harbor</h3><span class="slide-no">6/27</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>TBench</th>
+<th>Harbor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>About one benchmark</td>
+<td>Enables millions of benchmarks</td>
+</tr>
+<tr>
+<td>We make the eval</td>
+<td>You make the eval</td>
+</tr>
+<tr>
+<td>Lessons</td>
+<td>Tools</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Harbor (harborframework.com): run any agent with any model on any task, in any sandbox, in parallel.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Terms</div><div class="slide"><div class="slide-top"><h3>Definitions</h3><span class="slide-no">7/27</span></div><ul>
 <li>Task: a single test with defined inputs and success criteria.</li>
 <li>Trial: one attempt at a task.</li>
-<li>Verifier: logic that scores the agent's work.</li>
-<li>Trajectory: the complete record of a trial.</li>
-<li>Ours: one checklist item = one task; code is the verifier; git log is the trajectory.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>The pattern</h3><span class="slide-no">4/11</span></div><pre><code>setup:  checklist (all &quot;not done&quot;) + progress file
+<li>Benchmark (evaluation suite): a set of tasks measuring specific abilities.</li>
+<li>Verifier (grader): logic that scores the agent's work.</li>
+<li>Trajectory (trace, transcript): the complete record of a trial.</li>
+<li>Evaluation harness: infrastructure that runs evals end to end.</li>
+<li>Agent harness: the system that lets a model act as an agent.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agent harness vs evaluation harness</h3><span class="slide-no">8/27</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Agent harness</th>
+<th>Evaluation harness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Loop, tools, prompts, limits around the model</td>
+<td>Starts sandboxes, runs trials, runs verifiers, stores results</td>
+</tr>
+<tr>
+<td>Examples: Claude Code, Codex, mini-swe-agent</td>
+<td>Example: Harbor</td>
+</tr>
+<tr>
+<td>Swap it, and you test a different agent</td>
+<td>Keep it fixed, so trials are comparable</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Our terms</h3><span class="slide-no">9/27</span></div><ul>
+<li>Task: one checklist item, e.g. <code>msa_13:termination_notice</code>.</li>
+<li>Trial: one work session on that item.</li>
+<li>Verifier: code that checks the quote is really in the contract.</li>
+<li>Trajectory: the git log plus <code>progress.md</code>.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>The task format</div><div class="slide"><div class="slide-top"><h3>What a task should be</h3><span class="slide-no">10/27</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agent agnostic</td>
+<td>Any agent harness can attempt it</td>
+</tr>
+<tr>
+<td>Easy to define</td>
+<td>A few plain files</td>
+</tr>
+<tr>
+<td>Portable</td>
+<td>Runs locally or in the cloud</td>
+</tr>
+<tr>
+<td>Expressive</td>
+<td>Any job a terminal can do</td>
+</tr>
+<tr>
+<td>Independent</td>
+<td>Each task stands alone</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The task folder</h3><span class="slide-no">11/27</span></div><pre><code>my-task/
+  instruction.md      what the agent is asked to do
+  task.toml           task settings
+  environment/
+    Dockerfile        the starting machine
+  solution/
+    solve.sh          reference solution (oracle)
+  tests/
+    test.sh           the verifier
+</code></pre>
+<ul>
+<li>The agent sees only the instruction and the environment.</li>
+<li>Solution and tests stay out of its reach. (Project 2 builds one of these.)</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Harness and infrastructure</div><div class="slide"><div class="slide-top"><h3>Eval infra</h3><span class="slide-no">12/27</span></div><ul>
+<li>Reliable (fault tolerant): one broken trial doesn't kill the run.</li>
+<li>Reproducible: the same task, agent and model give comparable results.</li>
+<li>Fast: run independent trials in parallel.</li>
+<li>Portable: local and cloud sandboxes.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Rollout infra: test, train, prod</h3><span class="slide-no">13/27</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Inputs</th>
+<th>Harbor rollout engine</th>
+<th>Outputs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tasks, models, agents, sandboxes, skills</td>
+<td>Runs every combination in parallel</td>
+<td>Trajectory analysis, evaluation, optimization, task QA, artifacts</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The same engine serves test (evals), train (rollouts for training) and prod.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Keeping it reproducible</div><div class="slide"><div class="slide-top"><h3>CI/CD: continuous benchmarks</h3><span class="slide-no">14/27</span></div><ul>
+<li>Tasks are software. Software has bugs.</li>
+<li>Loop: new tasks → GitHub → Harbor (v1.1.0) → benchmark runs → tbench.ai → issues → back to GitHub.</li>
+<li>Usage turns into bug reports:<ul>
+<li>Flakiness; infra noise and compatibility.</li>
+<li>New models = new behavior.</li>
+<li>False negatives (good work marked failed); reward hacking.</li>
+</ul>
+</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Versioning: what a change costs</h3><span class="slide-no">15/27</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Version bump</th>
+<th>Action</th>
+<th>What changed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(x+1, y, z)</td>
+<td>Rerun</td>
+<td>Agent environment: new task, fix under- or over-specified prompt, change data, tools or resources</td>
+</tr>
+<tr>
+<td>(x, y+1, z)</td>
+<td>Regrade</td>
+<td>Verifier: fix an overly strict check, close a reward hack, re-tune a judge, change the reward</td>
+</tr>
+<tr>
+<td>(x, y, z+1)</td>
+<td>Reuse</td>
+<td>Metadata: docs, oracle flakiness, pin dependencies, fix a typo</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Old trajectories can be regraded without rerunning the agent, if only the verifier changed.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Results: full receipts</h3><span class="slide-no">16/27</span></div><ul>
+<li>Every leaderboard row links to its trials.</li>
+<li>Per trial: trajectory, logs, artifacts, reward.</li>
+<li>Example trial: Terminal-Bench 4.0, task <code>live-database-cutover</code>.<ul>
+<li>112 steps, about 12.3 million tokens, over an hour of agent time.</li>
+<li>Reward 0.00. The receipt shows exactly where it went wrong.</li>
+</ul>
+</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>Long-running jobs</div><div class="slide"><div class="slide-top"><h3>Why long jobs are hard</h3><span class="slide-no">17/27</span></div><ul>
+<li>Context window: how much text the model can hold at once.</li>
+<li>Long-horizon: context grows and drifts over many steps (Lecture 1, key challenges).</li>
+<li>200 contracts in a data room won't fit in one sitting.</li>
+<li>Each new session starts blank. Progress must live in files, not in the model.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>The pattern</h3><span class="slide-no">18/27</span></div><pre><code>setup:  checklist (all &quot;not done&quot;) + progress file
 loop:   read checklist → do ONE item → verify quote → mark done → commit
 finish: only when every item has evidence
 </code></pre>
 <ul>
 <li>Setup session: code writes the checklist. One item per contract per rule.</li>
-<li>Work session: one item, then save.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Who may change what</h3><span class="slide-no">5/11</span></div><div class="tbl"><table>
+<li>Work session: read the progress file, do one item, then save.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Who may change what</h3><span class="slide-no">19/27</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>The code</th>
@@ -300,12 +528,12 @@ finish: only when every item has evidence
 <td>Can't call the job finished</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>Our matter: 16 items</h3><span class="slide-no">6/11</span></div><ul>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Our matter: 16 items</h3><span class="slide-no">20/27</span></div><ul>
 <li>4 contracts × 4 playbook rules = 16 items, e.g. <code>msa_13:termination_notice</code>.</li>
-<li>msa_13, 4.1: "...at least 15 days' prior written notice..." → rule needs at least 30 → breaks.</li>
+<li>msa_13, 4.1: "...at least 15 days' prior written notice of non-renewal." Rule needs at least 30 → breaks.</li>
 <li>The model must quote the exact words that decide it.</li>
 <li>Retries get temperature 0.5 for variety. After 3 failed tries, the item is left for a person.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Verifying evidence in code</h3><span class="slide-no">7/11</span></div><pre><code class="language-python">if not quote_is_in_doc(f.quote, contract(todo[&quot;contract&quot;])):
+</ul></div><div class="slide"><div class="slide-top"><h3>Verifying evidence in code</h3><span class="slide-no">21/27</span></div><pre><code class="language-python">if not quote_is_in_doc(f.quote, contract(todo[&quot;contract&quot;])):
     todo[&quot;tries&quot;] = todo.get(&quot;tries&quot;, 0) + 1
     (WORK / &quot;checklist.json&quot;).write_text(json.dumps(state, indent=1))
     return &quot;RETRY&quot;
@@ -317,12 +545,12 @@ todo.update(done=True, evidence={&quot;breaks_rule&quot;: f.breaks_rule, &quot;q
 <li>Line 3: save the checklist, so the count survives a crash.</li>
 <li>Line 4: return "RETRY"; the item stays not done.</li>
 <li>Line 5: quote is real: mark done, attach verdict and quote.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Reliable runs</h3><span class="slide-no">8/11</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Reliable runs</h3><span class="slide-no">22/27</span></div><ul>
 <li>Reliable (fault tolerant): a crash loses one item, not the job.</li>
 <li>Reproducible: each item is a git commit you can review and replay.</li>
 <li>Stop rule: the loop runs at most 16 + 4 times. Never forever.</li>
 <li>Stop hook: the final report refuses to run while any item lacks evidence.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Crash vs restart</h3><span class="slide-no">9/11</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>Crash vs restart</h3><span class="slide-no">23/27</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Without a checklist file</th>
@@ -339,17 +567,30 @@ todo.update(done=True, evidence={&quot;breaks_rule&quot;: f.breaks_rule, &quot;q
 <td>Restart reads the file, runs only unfinished items</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">10/11</span></div><ul>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Tools built for agents (SWE-agent)</h3><span class="slide-no">24/27</span></div><ul>
+<li>Agent-computer interface: tools shaped for a model, not a person.</li>
+<li>A file viewer that shows 100 lines at a time, with line numbers.</li>
+<li>Search that returns a capped summary, not every match.</li>
+<li>An edit tool that rejects edits that break syntax and says why.</li>
+</ul></div><div class="deck-sec" id="sec-7"><span>Part 7</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>A data room is a long task</h3><span class="slide-no">25/27</span></div><ul>
 <li>Due diligence is a long job. On a local machine it may run for hours.</li>
 <li>Saved progress means a crash or reboot costs one item.</li>
 <li>Every step is a commit a lawyer can review: "full receipts for every row."</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">11/11</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Use the benchmark habits</h3><span class="slide-no">26/27</span></div><ul>
+<li>Version the checklist and the checker like Terminal-Bench versions tasks.</li>
+<li>Changed only the checker? Regrade the saved evidence; don't rerun the model.</li>
+<li>Keep the agent harness fixed when comparing two local models.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">27/27</span></div><ul>
 <li>Letting the agent edit the checklist → it can make the job look finished.</li>
 <li>Many items per session → one item, verify, commit.</li>
 <li>Progress kept in the model's head → if it isn't in a file, it didn't happen.</li>
 <li>"Done" without evidence → require a quote; check it in code.</li>
 <li>No loop limit → cap loops and retries.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>Why one item per session?</summary><p>Small steps with a commit each mean a failure loses one item, and every step can be reviewed.</p></details>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>What is the difference between a task, a trial and a trajectory?</summary><p>A task is one test with inputs and success criteria. A trial is one attempt at it. The trajectory is the full record of that attempt.</p></details>
+
+<details><summary>You fix an overly strict verifier. Must you rerun every agent?</summary><p>No. That is a verifier change (x, y+1, z): regrade the saved trajectories and artifacts. Only agent-environment changes need a rerun.</p></details>
+
+<details><summary>Why one item per session?</summary><p>Small steps with a commit each mean a failure loses one item, and every step can be reviewed.</p></details>
 
 <details><summary>The run crashes halfway. What happens on restart?</summary><p>It reads the checklist and continues with unfinished items. Finished items are not redone.</p></details>
 
