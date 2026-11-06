@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Frameworks and harnesses · Agent Engineering School</title>
-<meta name="description" content="The harness is all the code around the model. Learn DSPy and LangGraph on a local model, and make long jobs survive a crash.">
+<meta name="description" content="The harness is all the code around the model. Learn DSPy and LangGraph on a local model, compare open harnesses, and make long jobs survive a crash.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -259,9 +259,9 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
     <li><a href="ap5.html" data-mod-link="ap5"><span class="n">AP5</span>ARCHON Augmented</a></li>
     <li><a href="glossary.html" data-mod-link="glossary"><span class="n">··</span>Glossary</a></li>
   </ol>
-</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 07</span></div><section class="mod" id="m7" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 07</div><h2>Frameworks and harnesses</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/07_frameworks.ipynb">Open in Colab</a><button class="done-btn" data-done="m7" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>9 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">The harness is all the code around the model. Learn DSPy and LangGraph on a local model, and make long jobs survive a crash.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 5 · Frameworks &amp; Orchestration · <a href="https://web.stanford.edu/class/cs329z/slides/lecture05.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/13</span></div><ul>
-<li>Relate framework abstractions (DSPy, LangGraph, durable steps) back to the system designs from earlier modules.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Abstractions in frameworks</h3><span class="slide-no">2/13</span></div><div class="tbl"><table>
+</nav><main><div class="topbar"><a href="../index.html">← All modules</a><span class="crumbs">Module 07</span></div><section class="mod" id="m7" style="border-bottom:0;padding-top:0"><div class="mod-head" style="margin-bottom:6px"><div><div class="mod-num">Module 07</div><h2>Frameworks and harnesses</h2></div><span class="actions"><a class="colab-btn" href="https://colab.research.google.com/github/shivamkalakaar/local-ai-lab-agents/blob/main/notebooks/07_frameworks.ipynb">Open in Colab</a><button class="done-btn" data-done="m7" aria-pressed="false">Mark done</button></span></div><div class="lesson-meta"><span>22 min read</span><span>Slides first, then the deeper material</span></div><p class="lesson-summary">The harness is all the code around the model. Learn DSPy and LangGraph on a local model, compare open harnesses, and make long jobs survive a crash.</p><article class="lesson"><p class="deck-src">Based on CS329Z Lecture 5 · Frameworks &amp; Orchestration · <a href="https://web.stanford.edu/class/cs329z/slides/lecture05.pdf" target="_blank" rel="noopener">original slides (PDF)</a></p><div class="deck"><nav class="deck-toc"><b>In this lesson (54 slides)</b><ol><li><a href="#sec-1">What does it mean to &quot;engineer&quot; agents?</a> <span>5 slides</span></li><li><a href="#sec-2">Frameworks for Workflows and Programs</a> <span>21 slides</span></li><li><a href="#sec-3">Open Source Agent Harnesses</a> <span>7 slides</span></li><li><a href="#sec-4">Orchestration and Telemetry</a> <span>8 slides</span></li><li><a href="#sec-5">Best Practices and Challenges</a> <span>6 slides</span></li><li><a href="#sec-6">How this applies to us</a> <span>4 slides</span></li></ol></nav><div class="slide objective"><div class="slide-top"><h3>Learning objective</h3><span class="slide-no">1/54</span></div><ul>
+<li>Name the common agent frameworks, relate their abstractions (DSPy, LangGraph, Temporal) back to the system designs from earlier modules, and judge which tools help orchestration and reliability.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Abstractions in frameworks</h3><span class="slide-no">2/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>By hand</th>
@@ -280,9 +280,42 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 </tbody>
 </table></div>
 <ul>
-<li>Frameworks hide system details.</li>
-<li>You still need to know what happens underneath.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Three pillars of AI systems</h3><span class="slide-no">3/13</span></div><div class="tbl"><table>
+<li>Frameworks hide some of the system details.</li>
+<li>In the rest of the course you still build and understand those details.</li>
+<li>Today's goal: learn the abstractions.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Lecture overview</h3><span class="slide-no">3/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Section</th>
+<th>What it covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What does it mean to "engineer" agents?</td>
+<td>Data, system, evals; the agency spectrum</td>
+</tr>
+<tr>
+<td>Frameworks for workflows and programs</td>
+<td>DSPy and LangGraph</td>
+</tr>
+<tr>
+<td>Open-source agent harnesses</td>
+<td>Mini SWE-agent, OpenHands, Pi, OpenClaw, Meta-Harness</td>
+</tr>
+<tr>
+<td>Orchestration and telemetry</td>
+<td>Temporal; MLflow, LangSmith, Langfuse</td>
+</tr>
+<tr>
+<td>Best practices and challenges</td>
+<td>Keep it simple, trace failures, run evals</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Companion code: the course repo <code>github.com/cs329z/lecture5-frameworks</code>. The lecture notebook used about $1 or less of OpenRouter credits.</li>
+</ul></div><div class="deck-sec" id="sec-1"><span>Part 1</span>What does it mean to &quot;engineer&quot; agents?</div><div class="slide"><div class="slide-top"><h3>Three pillars of AI systems</h3><span class="slide-no">4/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Data</th>
@@ -293,18 +326,150 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <tbody>
 <tr>
 <td>Training data, rollouts, demonstrations, human feedback</td>
-<td>Language model, compound AI workflow, agentic system</td>
+<td>Language model, compound AI system / workflow, agentic system</td>
 <td>Pass rate, exact match, LLM judge, cost/latency</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Agency spectrum: model → workflow → agent. There are frameworks at each level.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>DSPy: declare what, not the prompt</h3><span class="slide-no">4/13</span></div><ul>
-<li>Signature (what): strict inputs and outputs, with types.</li>
-<li>Module (how): composes signatures with program logic. <code>dspy.Predict</code>, <code>dspy.ChainOfThought</code>, <code>dspy.ReAct</code>.</li>
-<li>Optimizer: improves the prompts or weights to raise a metric.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>A DSPy signature</h3><span class="slide-no">5/13</span></div><pre><code class="language-python">class ExtractCap(dspy.Signature):
+<li>The middle column alone is an AI system.</li>
+<li>All three together is AI system engineering.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Where this lecture sits in the course</h3><span class="slide-no">5/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>System or model</th>
+<th>Data</th>
+<th>Evaluation + metric</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Intro, LLMs for builders, RAG, tool use, <strong>frameworks</strong>, design patterns, memory, multi-agent</td>
+<td>Optimization, what data agents need, data selection and quality</td>
+<td>Eval fundamentals, LLM-as-judge, safety and guardrails</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Emerging topics: coding agents, proactive agents, frontiers.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Framework landscape: the agency spectrum</h3><span class="slide-no">6/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Workflow / compound AI system</th>
+<th>Agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A small part of a larger system</td>
+<td>Logic and orchestration live in the program</td>
+<td>Control flow is the AI model's job</td>
+</tr>
+<tr>
+<td>OpenAI API, Anthropic API, LiteLLM</td>
+<td>DSPy, LangGraph</td>
+<td>SWE-agent, OpenHands</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>On top of every level: reliability tools (Temporal) and observability tools (Langfuse, MLflow).</li>
+<li>Part 1 of the lecture: workflows. Part 2: agents. Part 3: reliability and observability.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Are these frameworks actually used?</h3><span class="slide-no">7/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Repo</th>
+<th>GitHub stars (on the slide)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dspy</td>
+<td>38.5k</td>
+</tr>
+<tr>
+<td>langgraph</td>
+<td>42.8k</td>
+</tr>
+<tr>
+<td>temporal</td>
+<td>23.5k</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Job search screenshots on the slide: about 1,135 DSPy listings in San Francisco; Indeed showed 2,610 LangGraph jobs.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Recap: engineering agents</h3><span class="slide-no">8/54</span></div><ul>
+<li>Engineering AI systems needs three parts: data, system, evals.</li>
+<li>The agency spectrum runs model → workflow → agent.</li>
+<li>There are frameworks for each level.</li>
+<li>Some frameworks focus on reliability and observability.</li>
+</ul></div><div class="deck-sec" id="sec-2"><span>Part 2</span>Frameworks for Workflows and Programs</div><div class="slide"><div class="slide-top"><h3>DSPy: three abstractions</h3><span class="slide-no">9/54</span></div><ul>
+<li>Signature (what): strictly defines the inputs and outputs of an LM call.</li>
+<li>Module (how): composes signatures and program logic into callable functions.</li>
+<li>Optimizer: improves the prompts or weights of the program to raise a metric.</li>
+<li>DSPy: Khattab et al., ICLR 2024, Stanford NLP.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>String signatures</h3><span class="slide-no">10/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Signature</th>
+<th>What came back (lecture demo)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>"message -&gt; response"</code></td>
+<td>"Hello! I'm doing well, thanks for asking. How are you today?"</td>
+</tr>
+<tr>
+<td><code>"message -&gt; sentiment"</code> on happy / angry / confused</td>
+<td><code>positive</code>, <code>Negative</code>, <code>negative</code></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The simplest signatures are strings: <code>inputs -&gt; outputs</code>.</li>
+<li><code>dspy.Predict(signature)</code> turns it into a callable.</li>
+<li>Problem on the slide: the three answers don't follow the same format.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Typed signatures fix the format</h3><span class="slide-no">11/54</span></div><ul>
+<li>Add types: <code>"message: str -&gt; sentiment: Literal['positive','negative','neutral'], confidence: float"</code>.</li>
+<li>Same three messages now return:</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Message</th>
+<th>sentiment</th>
+<th>confidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"I am very happy today!"</td>
+<td>positive</td>
+<td>0.98</td>
+</tr>
+<tr>
+<td>"I am very angry today!"</td>
+<td>negative</td>
+<td>0.9</td>
+</tr>
+<tr>
+<td>"I am very confused today!"</td>
+<td>negative</td>
+<td>0.86</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Signature classes</h3><span class="slide-no">12/54</span></div><ul>
+<li>For bigger signatures, use a class (lecture example <code>ExtractEvent</code>):<ul>
+<li>Docstring: "Extract event details from an email."</li>
+<li>Input: <code>email: str</code>. Outputs: <code>event_name</code>, <code>date</code>, <code>start</code> ("24-hour clock"), <code>duration_minutes</code>, each allowed to be None.</li>
+</ul>
+</li>
+<li>Input: "We have a meeting scheduled for this Friday, October 9th at 10 AM PST."</li>
+<li>Output: <code>event_name='meeting'</code>, <code>date=2026-10-09</code>, <code>start=10:00</code>, <code>duration_minutes=None</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>A DSPy signature (our notebook)</h3><span class="slide-no">13/54</span></div><pre><code class="language-python">class ExtractCap(dspy.Signature):
     &quot;&quot;&quot;Read a limitation-of-liability clause and extract the cap.&quot;&quot;&quot;
     clause: str = dspy.InputField()
     cap_months: int | None = dspy.OutputField(desc=&quot;months of fees the cap equals; None if liability is unlimited&quot;)
@@ -317,22 +482,152 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <li>Line 4: output, a whole number or None (no cap).</li>
 <li>Line 5: output, yes/no.</li>
 <li>No prompt written by hand. <code>lm.inspect_history(n=1)</code> shows the one DSPy sent.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>DSPy module: model call + rule in code</h3><span class="slide-no">6/13</span></div><ul>
+</ul></div><div class="slide"><div class="slide-top"><h3>Modules: pick the inference strategy</h3><span class="slide-no">14/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th><code>dspy.Predict(ExtractEvent)</code></th>
+<th><code>dspy.ChainOfThought(ExtractEvent)</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fills the outputs directly</td>
+<td>Adds a <code>reasoning</code> field first</td>
+</tr>
+<tr>
+<td><code>event_name='meeting'</code></td>
+<td>reasoning: "The email states there is a meeting 'this Friday, October 9th at 10 AM PST'..." then the same fields</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Same signature, different strategy. Others: <code>dspy.BestOfN</code>.</li>
+<li>A second tiny call: <code>PickEmoji</code> (event_name → one emoji). "Dentist" → a tooth emoji, with reasoning "a healthcare-related calendar event."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Modules compose with Python logic</h3><span class="slide-no">15/54</span></div><ul>
+<li><code>UpdateCalendarFromEmail(dspy.Module)</code>:<ul>
+<li>LLM call 1: <code>ChainOfThought(ExtractEvent)</code>.</li>
+<li>Plain Python: if name, date or start is None → "no event found in email".</li>
+<li>LLM call 2: <code>ChainOfThought(PickEmoji)</code>, then <code>tinycal.add_event(...)</code>.</li>
+</ul>
+</li>
+<li>Meeting email → "added to calendar" (Friday Oct 9, 10–11am; tinycal assumes 1 hour when duration is None).</li>
+<li>"Thanks for sending the slides, they look great!" → "no event found in email".</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSPy module: model call + rule in code (our notebook)</h3><span class="slide-no">16/54</span></div><ul>
 <li><code>CapReview</code> runs <code>dspy.ChainOfThought(ExtractCap)</code> on the liability section.</li>
 <li>Then code decides: <code>issue = p.cap_months is None or p.cap_months &gt; 12</code>.</li>
 <li>Notebook runs it on msa_02 (12 months) and msa_20 (36 months).</li>
-<li>DSPy talks to the same local server: <code>api_base="http://localhost:11434/v1"</code>.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>LangGraph: state, nodes, edges</h3><span class="slide-no">7/13</span></div><ul>
-<li>State: shared workspace the graph reads and writes (<code>cid</code>, <code>clause</code>, <code>law</code>, <code>status</code>).</li>
-<li>Node: a function that reads and writes the state.</li>
-<li>Edge: says which node runs next. Conditional edge: code picks the branch.</li>
+<li>DSPy talks to the local server: <code>api_base="http://localhost:11434/v1"</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Optimizers: the data</h3><span class="slide-no">17/54</span></div><ul>
+<li>Optimizers use all three pillars: data, the program, and a metric.</li>
+<li>Data: 50 realistic emails with gold labels (<code>data/emails.json</code>).<ul>
+<li>e.g. "haircut with Jesse on Wednesday, October 28, 2026 at 2:45pm. It will run for one hour." → gold <code>{date: 2026-10-28, start: 14:45, duration_minutes: 60}</code>.</li>
+</ul>
+</li>
+<li><code>dspy.Example(**row).with_inputs("email")</code>: input is the email; everything else is the label.</li>
+<li>Shuffled with seed 0, split 30 train / 20 test.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Optimizers: the metric</h3><span class="slide-no">18/54</span></div><ul>
+<li><code>event_metric</code>: 1 if date, start time and duration all exactly match the gold label, else 0.<ul>
+<li><code>event_name</code> is free text, so it is not graded.</li>
+</ul>
+</li>
+<li>It also returns feedback text, e.g. "Wrong -&gt; start: expected '14:45', got '14:00'". GEPA shows this to its reflection model.</li>
+<li><code>dspy.Evaluate(devset=testset, metric=event_metric, num_threads=8)</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Optimizers: GEPA results</h3><span class="slide-no">19/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Test score (20 emails)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Big model (gpt-5.4-nano), <code>Predict</code></td>
+<td>20/20 (100%)</td>
+</tr>
+<tr>
+<td>Small model (Gemma 3 12B), before</td>
+<td>11/20 (55%)</td>
+</tr>
+<tr>
+<td>Small model after GEPA</td>
+<td>20/20 (100%)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>GEPA budget: 100 metric calls, about 3 minutes; the big model reflects on the small model's mistakes.</li>
+<li>The only thing GEPA changed was the instruction text: a long prompt listing input formats, output formats and pitfalls.</li>
+<li>Module 11 covers GEPA in depth.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agents in DSPy: ReAct</h3><span class="slide-no">20/54</span></div><ul>
+<li>An agent in one line: <code>dspy.ReAct("request -&gt; summary", tools=tinycal.TOOLS)</code>.</li>
+<li>Request: "Schedule a 30-minute coffee with John on Oct 7, 2026 in the afternoon after my lectures, and put a book emoji on every one of my lectures for that same week."</li>
+<li>Result (8.3 s): book emoji added to the CS329Z lectures on Oct 5 and Oct 7 (13:30–14:50); coffee with John Oct 7, 15:00–15:30.</li>
+<li>ReAct (Yao et al.): Thought → Act (Search) → Observation, repeated until Finish.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Agents in DSPy: RLM</h3><span class="slide-no">21/54</span></div><ul>
+<li>RLM (recursive language model): the long prompt is loaded as a variable in a Python environment; the LM writes code to read it and calls sub-LMs on pieces (depth 1).</li>
+<li>Lecture demo: all 50 emails joined into one inbox. <code>dspy.RLM("inbox, question -&gt; event_names: list[str], dates: list[str]", max_iters=8)</code>.</li>
+<li>Question: "Which events are held in the Gates building, and on what dates?"</li>
+<li>Answer (9.1 s): "The thesis defense for Wei Zhang", "Monday, December 7, 2026".</li>
+<li>RLMs handle long-context prompts.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSPy summary</h3><span class="slide-no">22/54</span></div><ul>
+<li>Signatures define input/output contracts.</li>
+<li>Modules compose and say how the contract is fulfilled: <code>dspy.Predict</code>, <code>dspy.ChainOfThought</code>, <code>dspy.BestOfN</code>, ...</li>
+<li>Optimizers improve prompts or weights given data and a metric.</li>
+<li>Built-in agent modules fulfill a signature: <code>dspy.ReAct</code>, <code>dspy.RLM</code>.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LangGraph: state, nodes, edges</h3><span class="slide-no">23/54</span></div><ul>
+<li>State: a shared workspace for the graph; an object the graph modifies.</li>
+<li>Every graph needs a Start node and an End node.</li>
+<li>Node: a function that reads from and writes to the state.</li>
+<li>Edge: defines control flow. Some edges are conditional.</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>LangGraph workflow</th>
+<th>LangGraph agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start → fixed nodes → End; dotted conditional edges can skip ahead</td>
+<td>Start → LLM ⇄ Tools; LLM → End</td>
+</tr>
+<tr>
+<td>State: your fields</td>
+<td>State: can be the message history</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>LangGraph demo: one-node graph</h3><span class="slide-no">24/54</span></div><ul>
+<li>Structured output: a Pydantic <code>ExtractEvent</code> with field descriptions, then <code>langchain_llm.with_structured_output(ExtractEvent)</code>.</li>
+<li>State: <code>TypedDict</code> with <code>email: str</code> and <code>details: ExtractEvent | None</code>.</li>
+<li>Node: <code>extract(state)</code> returns only the part it changed: <code>{"details": ...}</code>.</li>
+<li>Graph: <code>StateGraph(State)</code> → <code>add_node("extract")</code> → <code>add_edge(START, "extract")</code> → <code>add_edge("extract", END)</code> → <code>compile()</code>.</li>
+<li><code>graph.invoke({"email": ...})</code> → <code>event_name='Meeting'</code>, date 2026-10-09, start 10:00.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LangGraph demo: conditional edges</h3><span class="slide-no">25/54</span></div><ul>
+<li><code>CalendarState</code> adds <code>emoji</code> and <code>status</code>.</li>
+<li>Nodes: <code>pick_emoji</code> (LLM) and <code>add_to_calendar</code> (calls tinycal).</li>
+<li><code>route(state)</code>: plain Python. Name, date and start all present → "pick_emoji"; else → END.</li>
+</ul>
+<pre><code>start → extract ─(route)→ pick_emoji → add_to_calendar → end
+                   └──────────────────────────────────→ end
+</code></pre>
+<ul>
+<li>"Dentist Appointment Confirmed, Wednesday October 7th at 11am." → tooth emoji, "added to calendar".</li>
+<li>"CS329Z Open Router Credits have arrived!" → all fields None, goes straight to end.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LangGraph agents: `create_agent`</h3><span class="slide-no">26/54</span></div><ul>
+<li>Like DSPy, an agent in two lines: <code>create_agent(langchain_llm, tools=tinycal.TOOLS)</code>.</li>
+<li>Graph: start → model ⇄ tools; model → end.</li>
+<li>"Please move my coffee with John on Oct 7th to be 30 minutes later" → coffee moved to 3:30–4:00pm.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>LangGraph in our notebook</h3><span class="slide-no">27/54</span></div><ul>
+<li>State: <code>cid</code>, <code>clause</code>, <code>law</code>, <code>status</code>.</li>
 </ul>
 <pre><code>get clause → read law (model) → decide (code) → check law → END
                                        └──────→ needs human → END
 </code></pre>
 <ul>
+<li><code>decide</code>: answer looks like a state name (under 20 characters) → check; else → needs human.</li>
 <li><code>check_law</code>: California or Delaware → OK; anything else → ISSUE. msa_10 (Florida) should be ISSUE.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>DSPy vs LangGraph</h3><span class="slide-no">8/13</span></div><div class="tbl"><table>
+</ul></div><div class="slide"><div class="slide-top"><h3>DSPy vs LangGraph</h3><span class="slide-no">28/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>DSPy</th>
@@ -345,66 +640,206 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>State, nodes and edges</td>
 </tr>
 <tr>
-<td>Best for pipelines you want to tune with an optimizer</td>
-<td>Best for mixing fixed steps, decisions and agent steps</td>
+<td>Optimizers built in (data + metric)</td>
+<td>Branching via conditional edges</td>
 </tr>
 <tr>
 <td><code>ExtractCap</code> → <code>CapReview</code></td>
 <td><code>get</code> → <code>read</code> → <code>check</code> or <code>human</code></td>
 </tr>
+<tr>
+<td>Agent: <code>dspy.ReAct</code>, <code>dspy.RLM</code></td>
+<td>Agent: <code>create_agent</code></td>
+</tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>What is an agent harness?</h3><span class="slide-no">9/13</span></div><ul>
-<li>Harness: all the code around the model: tools, memory, context, execution.</li>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Recap: workflow frameworks</h3><span class="slide-no">29/54</span></div><ul>
+<li>Workflows compose model calls, tools and program logic into a larger AI system.</li>
+<li>DSPy uses signatures and modules; LangGraph uses state, nodes and edges.</li>
+<li>We design the control flow and choose where the model decides.</li>
+<li>Improvement needs data and evaluation. DSPy makes this explicit with optimizers.</li>
+</ul></div><div class="deck-sec" id="sec-3"><span>Part 3</span>Open Source Agent Harnesses</div><div class="slide"><div class="slide-top"><h3>What is an agent harness?</h3><span class="slide-no">30/54</span></div><ul>
+<li>Harness: everything around the LLM core.<ul>
+<li>Planning and reasoning, memory, tools (retrieval, calculator, code, search, read/write memory), agent actions (tool call, interaction, reply).</li>
 </ul>
-<div class="tbl"><table>
+</li>
+<li>It observes the environment (OS, browser, apps, databases) and acts on it.</li>
+<li>Picture from Lecture 1, now boxed as "the harness."</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>What differentiates harnesses?</h3><span class="slide-no">31/54</span></div><ul>
+<li>Building an agent means design choices: tools, memory, context management, execution.</li>
+<li>Different harnesses make different trade-offs for their tasks and environments.</li>
+<li>A good harness balances task success, cost, latency and user control. The right balance depends on the use case.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Four harnesses, side by side</h3><span class="slide-no">32/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
 <th>Harness</th>
-<th>Design choice</th>
+<th>Design choices</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Mini SWE-agent</td>
-<td>Only bash; linear history</td>
+<td>Only bash. Fully linear history (each step appends). Each action runs in <code>subprocess.run</code>, independent; no persistent shell</td>
 </tr>
 <tr>
 <td>OpenHands</td>
-<td>One JSON event per step; stops after 4 repeats of the same action</td>
+<td>One JSON file per event on disk; messages rebuilt each step. Persistent tmux terminal (cd, env vars, virtualenvs carry over). Stops after 4 repeats of the same action and result</td>
 </tr>
 <tr>
 <td>Pi</td>
-<td>Four tools (read, write, edit, bash); system prompt under 1,000 tokens</td>
+<td>Four tools (read, write, edit, bash); system prompt under 1,000 tokens. No permission system. History is a tree you can branch. No plan mode, no sub-agent tool</td>
+</tr>
+<tr>
+<td>OpenClaw</td>
+<td>Heartbeat turn every 30 minutes (replies NO_REPLY to stay silent). One long-lived Gateway process owns all chat channels. Identity from AGENTS.md, SOUL.md, IDENTITY.md, USER.md, MEMORY.md. At 3 AM a job moves the day's notes worth keeping into MEMORY.md</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>The harness can make a big difference</h3><span class="slide-no">10/13</span></div><div class="tbl"><table>
+</table></div></div><div class="slide"><div class="slide-top"><h3>The harness can make a big difference</h3><span class="slide-no">33/54</span></div><div class="tbl"><table>
 <thead>
 <tr>
-<th>Haiku 4.5, same model (Terminal-Bench 2)</th>
+<th>Model (Terminal-Bench 2)</th>
+<th>Pi</th>
+<th>Codex</th>
+<th>Claude Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Fable 5</td>
+<td>71.1% · $1.08</td>
+<td>72.2% · $0.98</td>
+<td>75.6% · $1.55</td>
+</tr>
+<tr>
+<td>Claude Opus 4.8</td>
+<td>72.2% · $0.76</td>
+<td>72.2% · $0.85</td>
+<td>68.9% · $0.90</td>
+</tr>
+<tr>
+<td>Claude Sonnet 4.6</td>
+<td>65.6% · $0.61</td>
+<td>63.3% · $0.55</td>
+<td>62.2% · $0.67</td>
+</tr>
+<tr>
+<td>Claude Haiku 4.5</td>
+<td>47.8% · $0.25</td>
+<td>31.1% · $0.21</td>
+<td>41.1% · $0.25</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Success rate and cost per rollout, same model in each row (Arena, "coding-agents-harness-tax").</li>
+<li>Big models move about 3–5 points across harnesses. Haiku moves almost 17.</li>
+<li>No harness wins every row.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Meta-Harness: let a model write the harness</h3><span class="slide-no">34/54</span></div><ul>
+<li>Meta-Harness (arXiv 2603.28052): a search loop over harness code.</li>
+<li>An agent reads a filesystem with every past candidate's code, traces and scores, and proposes new harness code.</li>
+<li>The harness + LLM is evaluated on tasks.</li>
+<li>All logs (code, reasoning traces, scores) are stored in a new folder; repeat.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Meta-Harness results</h3><span class="slide-no">35/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Text classification (best performance)</th>
 <th>Score</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Codex harness</td>
-<td>31.1%</td>
+<td>Meta-Harness</td>
+<td>about 56–57% after ~26 evaluations</td>
 </tr>
 <tr>
-<td>Claude Code harness</td>
-<td>41.1%</td>
+<td>TTT-Discover / OpenEvolve</td>
+<td>about 45–46% / about 43–44%</td>
 </tr>
 <tr>
-<td>Pi harness</td>
-<td>47.8%</td>
+<td>ACE (hand-designed)</td>
+<td>about 41%</td>
+</tr>
+</tbody>
+</table></div>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>TerminalBench-2, Claude Haiku 4.5 harness</th>
+<th>Pass rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Meta-Harness (model-optimized)</td>
+<td>37.6</td>
+</tr>
+<tr>
+<td>Goose / Terminus-KIRA</td>
+<td>35.5 / 33.7</td>
+</tr>
+<tr>
+<td>Mini-SWE-Agent / Terminus-2 / Claude Code</td>
+<td>29.8 / 28.3 / 27.5</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Top models moved only 3–4 points across the same harnesses.</li>
-<li>Local open models are the smaller-model case.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Durable steps: survive a crash</h3><span class="slide-no">11/13</span></div><ul>
-<li>Temporal: activities are units that can fail; workflows link them; finished results are recorded.</li>
-<li>Our version: SQLite, about 20 lines. Each step's result is stored under a hash of its name and arguments.</li>
+<li>On classification it matched the next-best method's final accuracy after just 4 evaluations.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Bringing it together</h3><span class="slide-no">36/54</span></div><ul>
+<li>There is no one way to build an agent.</li>
+<li>The course has you experiment with all of these design choices.</li>
+<li>Maybe you build the next popular harness.</li>
+</ul></div><div class="deck-sec" id="sec-4"><span>Part 4</span>Orchestration and Telemetry</div><div class="slide"><div class="slide-top"><h3>Why is orchestration needed?</h3><span class="slide-no">37/54</span></div><ul>
+<li>METR chart: length of software tasks (in human time) that LLMs complete 50% of the time, by release date, log scale.<ul>
+<li>GPT-2 about 4 seconds; GPT-3.5 about 36 seconds; GPT-4 about 6 minutes; o1 about 30–40 minutes; o3 about 1.5 hours; Claude Opus 4.6 near 16 hours.</li>
+<li>Above 16 hours, measurements are unreliable.</li>
+</ul>
+</li>
+<li>Agents run for long periods, so the infrastructure must be reliable.</li>
+<li>Logs and observability tools help debugging. These are hard-won software engineering lessons.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Temporal execution model</h3><span class="slide-no">38/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Your code (client)</th>
+<th>Temporal server</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Activities: functional units that can fail</td>
+<td>Task queue: an activity queue and a workflow queue</td>
+</tr>
+<tr>
+<td>Workflows: link activities together</td>
+<td>Execution history and state, kept in storage</td>
+</tr>
+<tr>
+<td>Workers: activity workers and workflow workers run them</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Temporal: open-source durable execution engine.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Making a durable workflow</h3><span class="slide-no">39/54</span></div><ul>
+<li>Activities (<code>@activity.defn</code>): <code>extract_event</code> (reuses the DSPy ChainOfThought module), <code>select_emoji</code>, <code>add_to_calendar</code>.</li>
+<li>Workflow (<code>@workflow.defn</code>): calls each activity with <code>execute_activity</code>, <code>start_to_close_timeout=1 minute</code>, retry policy (1 s initial interval, at most 5 attempts).<ul>
+<li>It must be deterministic: no LLM calls, no I/O of its own. Temporal re-runs it from the record.</li>
+</ul>
+</li>
+<li>Worker: task queue "calendar", the workflow, the three activities, a 4-thread executor.</li>
+<li>Run: "Office hours are Thursday October 8th at 3pm" → added; "Thanks for sending the slides" → no event found. Timeline UI at <code>localhost:8233</code> shows each step.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Retrying flaky activities</h3><span class="slide-no">40/54</span></div><ul>
+<li>A fake <code>select_emoji</code> raises "503 Service Unavailable" on attempts 1 and 2.</li>
+<li>The server retries it under the retry policy; attempt 3 succeeds.</li>
+<li>Output: "select_emoji attempt 1, 2, 3" → "added to calendar" (Go for a walk, Tue Oct 6, 9:00–9:30).</li>
+<li>The workflow code never handled the error itself.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Server-based timing</h3><span class="slide-no">41/54</span></div><ul>
+<li><code>ReminderWorkflow</code>: run <code>CalendarWorkflow</code> as a child, then <code>workflow.sleep(seconds)</code>. A workflow can sleep months or years in one line.</li>
+<li>Demo: start it with a 20 s sleep, wait 10 s, kill the worker. Status is still RUNNING with no worker alive.</li>
+<li>Bring a worker back: the timer fires, "Reminder! (Lab meeting ...)" prints.</li>
+<li>LLM steps were not re-run: one "Lab meeting" on the calendar, not two.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Durable steps in our notebook</h3><span class="slide-no">42/54</span></div><ul>
+<li>Same idea in about 20 lines of SQLite. Each step's result is stored under a hash of its name and arguments.</li>
 </ul>
 <div class="tbl"><table>
 <thead>
@@ -423,20 +858,112 @@ details.solutions>summary{font:600 15px var(--f-body);color:var(--accent);paddin
 <td>Same results; the check expects it faster</td>
 </tr>
 </tbody>
-</table></div></div><div class="slide"><div class="slide-top"><h3>How this applies to us</h3><span class="slide-no">12/13</span></div><ul>
-<li>For a small local model, the harness is a big part of the product. Pick it by measuring.</li>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Observability frameworks</h3><span class="slide-no">43/54</span></div><div class="tbl"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What the slide shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MLflow</td>
+<td>Trace of one DSPy <code>LM.__call__</code>: prompt in, output out, 0.01 s</td>
+</tr>
+<tr>
+<td>LangSmith</td>
+<td>Production traces: 578 runs, 23,010 tokens, P50/P99 latency, feedback scores (coherence, relevance)</td>
+</tr>
+<tr>
+<td>Langfuse</td>
+<td>Dashboard: latency percentiles per model, cost by model ($57.44 total in the example), 4.78K traces, 12.32K scores</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Langfuse and MLflow are open source and can run on your own machine.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Recap: orchestration</h3><span class="slide-no">44/54</span></div><ul>
+<li>Orchestration keeps agents reliable.</li>
+<li>Observability enables debugging and monitoring.</li>
+<li>Software engineering practices carry over to agents.</li>
+<li>Evals, monitoring and durable execution are what separate building agents from engineering them.</li>
+</ul></div><div class="deck-sec" id="sec-5"><span>Part 5</span>Best Practices and Challenges</div><div class="slide"><div class="slide-top"><h3>Keep it simple</h3><span class="slide-no">45/54</span></div><ul>
+<li>You may not need an agent. Sometimes a workflow is right for the task.</li>
+<li>If you build an agent, think hard about which tools to include.</li>
+<li>With a lot of data, you might optimize a model end to end.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Make failures observable and recoverable</h3><span class="slide-no">46/54</span></div><ul>
+<li>Trace model calls, tool calls, state changes and errors.</li>
+<li>Set timeouts, retry limits and execution budgets.</li>
+<li>Log outputs and diagnose failures. Monitor system state.</li>
+<li>You can raise the error back to the agent so it tries again (slide shows a blocked command returning a message that tells the agent what to do instead).</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Example: Shepherd</h3><span class="slide-no">47/54</span></div><ul>
+<li>Shepherd (arXiv 2605.10913): a meta-agent (Opus) watches an agent (Haiku) and can observe, revert and fork its run: "If tests break, revert the agent and retry."</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Use</th>
+<th>Result on the slide</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Runtime intervention, CooperBench pair coding</td>
+<td>28.8 without meta-agent → 45.3 (Sonnet 4.6) / 54.7 (Opus 4.7) with</td>
+</tr>
+<tr>
+<td>Counterfactual optimization, LiveCodeBench</td>
+<td>Unoptimized 30.7%, MetaHarness 40.0%, GEPA 48.7%, CRO 51.0%</td>
+</tr>
+<tr>
+<td>Meta-agent-guided Tree-GRPO, TerminalBench-2</td>
+<td>Qwen3.5 35B-A3B: 26.1 → 34.2 → 39.4; Nemotron-3-Super 120B-A12B: 30.3 → 33.8 → 37.2 (base → FlatGRPO → Tree-GRPO)</td>
+</tr>
+</tbody>
+</table></div></div><div class="slide"><div class="slide-top"><h3>Run evaluations</h3><span class="slide-no">48/54</span></div><ul>
+<li>Ground design decisions in evals. Evals enable optimization.</li>
+<li>Building a proper eval is one of the most important steps.</li>
+<li>Choose metrics wisely: accuracy, cost, latency.</li>
+<li>Test representative tasks, edge cases and failure scenarios.</li>
+<li>Unless you build a general coding harness, don't climb Terminal-Bench, SWE-bench or DeepSWE. Build your custom domain eval.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Challenges and limitations</h3><span class="slide-no">49/54</span></div><ul>
+<li>Abstractions lift you away from system details. Know what is under the hood ("show me the prompt").</li>
+<li>In a complex system it is hard to find where failures come from. Look at the traces.</li>
+<li>Frameworks add dependencies on outside libraries that must be maintained.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Recap: best practices</h3><span class="slide-no">50/54</span></div><ul>
+<li>Engineering is a cycle: build → run → evaluate → improve.</li>
+<li>Start simple; justify added complexity.</li>
+<li>Design for failure and recovery.</li>
+<li>Use evidence to judge quality, cost and latency.</li>
+<li>Fully understand how your system works.</li>
+</ul></div><div class="deck-sec" id="sec-6"><span>Part 6</span>How this applies to us</div><div class="slide"><div class="slide-top"><h3>Pick the harness by measuring</h3><span class="slide-no">51/54</span></div><ul>
+<li>Local open models are the small-model row (Haiku): harness choice swung it almost 17 points.</li>
+<li>So for a firm's local model, the harness is a big part of the product.</li>
+<li>Measure success and cost on the firm's own contracts, not on coding benchmarks.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Rules in code, not in the framework prompt</h3><span class="slide-no">52/54</span></div><ul>
+<li>Rules like "cap over 12 months is an issue" stay in code (<code>CapReview</code>, <code>check_law</code>).</li>
+<li>The framework only asks the model narrow questions.</li>
+<li>Read the prompt the framework sends (<code>inspect_history</code>) before trusting it.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Long jobs on one GPU</h3><span class="slide-no">53/54</span></div><ul>
 <li>A firm reviewing many contracts should not restart from zero when the GPU runs out of memory.</li>
-<li>Rules like "cap over 12 months is an issue" stay in code, outside the framework's prompt.</li>
-</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">13/13</span></div><ul>
+<li>Durable steps (SQLite here, Temporal at scale) skip finished contracts on restart.</li>
+<li>Self-hosted Langfuse or MLflow keeps every trace on the firm's machine for audit.</li>
+</ul></div><div class="slide"><div class="slide-top"><h3>Common mistakes</h3><span class="slide-no">54/54</span></div><ul>
 <li>Trusting a framework's hidden prompt → read it with <code>inspect_history</code>.</li>
 <li>Picking a harness by reputation → measure success and cost on your task.</li>
 <li>Metrics that return only a number → return "expected 12, got 24"; optimizers learn from it.</li>
 <li>Model calls inside Temporal workflow code → replay breaks. Put them in recorded activities.</li>
-</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>In the LangGraph example, who decides whether a contract goes to a person?</summary><p>Code. `decide` checks that the model&#x27;s answer looks like a state name; if not, it routes to &quot;needs human.&quot;</p></details>
+</ul></div></div><h2>Check your understanding</h2><div class="check"><details><summary>In DSPy, what is the difference between a signature and a module?</summary><p>A signature says what goes in and out, with types. A module says how to fill it (Predict, ChainOfThought, ReAct) and can add Python logic.</p></details>
 
-<details><summary>How do durable steps save time after a crash?</summary><p>Each finished step&#x27;s result is saved. On restart, the code reuses it instead of calling the model again.</p></details>
+<details><summary>What did GEPA change to take Gemma 3 12B from 55% to 100%?</summary><p>Only the instruction text of the prompt. The small model&#x27;s weights stayed the same.</p></details>
 
-<details><summary>Why must a Temporal workflow function avoid LLM calls?</summary><p>Temporal replays workflow code to recover. LLM calls give different answers each time, so they go in activities whose results are recorded.</p></details></div><h2>Try it in Colab</h2><ul>
+<details><summary>In the LangGraph example, who decides whether a contract goes to a person?</summary><p>Code. `decide` checks that the model&#x27;s answer looks like a state name; if not, it routes to &quot;needs human.&quot;</p></details>
+
+<details><summary>Why does the harness matter more for Haiku than for Opus on Terminal-Bench 2?</summary><p>Haiku ranged from 31.1% to 47.8% across harnesses; the big models moved only a few points. Weaker models lean more on the harness.</p></details>
+
+<details><summary>Why must a Temporal workflow function avoid LLM calls?</summary><p>Temporal replays workflow code to recover. LLM calls give different answers each time, so they go in activities whose results are recorded.</p></details>
+
+<details><summary>How do durable steps save time after a crash?</summary><p>Each finished step&#x27;s result is saved. On restart, the code reuses it instead of calling the model again.</p></details></div><h2>Try it in Colab</h2><ul>
 <li>Run the DSPy extraction on msa_08 and read the prompt DSPy sent.</li>
 <li>Run the graph on msa_04 and msa_10 and compare their status.</li>
 <li>Check the timing line: the rerun should be faster with <code>same results: True</code>.</li>
