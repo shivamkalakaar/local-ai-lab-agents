@@ -267,7 +267,13 @@ def build():
     hero_home = re.sub(r'<p class="lede">.*?</p>', '<p class="lede">Slide-style lessons on building AI agents that run on your own computers, drawn from Stanford CS329Z (Engineering AI Agents) and CS329A (Self-Improving AI Agents). Each lesson links to the original lecture slides and a runnable Colab notebook.</p>', hero_home, flags=re.S)
     hero_home = re.sub(r'<div class="meta">.*?</div>', '', hero_home, flags=re.S)
     hero_home = fix_links(hero_home, False).replace("</header>", howto + "</header>")
-    home_body = (f'<div class="wrap">{rail_for(None, False)}<main>{hero_home}{"".join(cards)}'
+    products = ('<h2 class="part-title">Local AI Lab products</h2><div class="cards-group"><div class="cards">'
+                '<a class="card" href="products/agent-studio.html" style="border-color:var(--accent)">'
+                '<span class="num">Product 1 · live demo + bake-off</span><span class="t">Agent Studio</span>'
+                '<span class="s">An agent on open-weight models with a harness written from scratch. Watch every search, '
+                'read and command live; Gemma 4 31B and Nemotron 3 solve 29 of 30 known-answer tasks.</span>'
+                '<span class="go">See the product →</span></a></div></div>')
+    home_body = (f'<div class="wrap">{rail_for(None, False)}<main>{hero_home}{products}{"".join(cards)}'
                  f'<footer>{strip_tags(footer)}</footer></main></div>')
     (ROOT / "docs").mkdir(exist_ok=True)
     (ROOT / "docs/index.html").write_text(page("Agent Engineering School", home_body, False,
@@ -305,6 +311,8 @@ def build():
                                                       needs_mermaid="mermaid" in body, desc=i["summary"]))
     have = sum(1 for m in ORDER if INFO[m]["lesson"])
     print(f"home + {len(ORDER)} module pages; {have} with slide lessons")
+    import product_agent_studio  # noqa: E402  Local AI Lab product pages
+    product_agent_studio.build()
 
 
 if __name__ == "__main__":

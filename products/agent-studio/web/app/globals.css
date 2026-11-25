@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+/* Editor-style palette. Dark is the default; light follows the toggle. */
+:root {
+  --bg: #0a0d12;
+  --panel: #0e131a;
+  --panel-2: #121924;
+  --line: #1c2531;
+  --line-2: #263242;
+  --text: #d3dbe5;
+  --muted: #7b8796;
+  --faint: #4b5665;
+  --accent: #2dd4bf;
+  --accent-2: #0d6e6a;
+  --mark: #f6dc6b;
+  --kw: #c792ea;
+  --fn: #82aaff;
+  --str: #a5e075;
+  --num: #f78c6c;
+  --ok: #3fb950;
+  --warn: #e3b341;
+  --bad: #ff7b72;
+  --info: #79c0ff;
+  --glow: rgba(45, 212, 191, 0.18);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #f7f8fa;
+  --panel: #ffffff;
+  --panel-2: #f2f4f7;
+  --line: #e3e7ed;
+  --line-2: #d3d9e2;
+  --text: #1d2733;
+  --muted: #5f6b7a;
+  --faint: #9aa5b3;
+  --accent: #0d6e6a;
+  --accent-2: #0d6e6a;
+  --mark: #fbe38a;
+  --kw: #8a3fd1;
+  --fn: #2457c5;
+  --str: #2f7d32;
+  --num: #c2410c;
+  --ok: #1a7f37;
+  --warn: #9a6700;
+  --bad: #cf222e;
+  --info: #0969da;
+  --glow: rgba(13, 110, 106, 0.12);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-mark: var(--mark);
+  --color-kw: var(--kw);
+  --color-fn: var(--fn);
+  --color-str: var(--str);
+  --color-num: var(--num);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-info: var(--info);
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle grid behind the app, like an editor canvas. */
+.canvas {
+  background-image:
+    radial-gradient(circle at 20% -10%, var(--glow), transparent 40%),
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: auto, 32px 32px, 32px 32px;
+  background-position: 0 0, -1px -1px, -1px -1px;
+}
+
+.scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+
+/* Blinking caret for the typewriter answer. */
+.caret::after {
+  content: "▍";
+  margin-left: 1px;
+  color: var(--accent);
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Highlighter sweep for cited passages. */
+.sweep {
+  background-image: linear-gradient(90deg, color-mix(in srgb, var(--mark) 88%, transparent), color-mix(in srgb, var(--mark) 88%, transparent));
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  animation: sweep 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  border-radius: 2px;
+  color: inherit;
+  animation-name: sweep, ink;
+  animation-duration: 700ms, 700ms;
+}
+@keyframes ink { to { color: #14181d; } }
+@keyframes sweep {
+  to { background-size: 100% 100%; }
+}
+
+/* Scanning bar under a running step. */
+.scan {
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: scan 1.2s linear infinite;
+}
+@keyframes scan {
+  from { background-position: -40% 0; }
+  to { background-position: 140% 0; }
+}
+
+.pulse-dot { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret::after, .scan, .pulse-dot { animation: none; }
+  .sweep { animation: none; background-size: 100% 100%; color: #14181d; }
+}
