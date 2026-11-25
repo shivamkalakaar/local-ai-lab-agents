@@ -33,6 +33,9 @@ GROUPS = [
 ORDER = [i for _, gs in GROUPS for _, ids in gs for i in ids]
 
 PAGE_CSS = """
+.lecture-fig{margin:14px 0 4px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.lecture-fig img{display:block;width:100%;height:auto}
+.lecture-fig figcaption{font:12.5px var(--f-mono);color:var(--muted);padding:7px 12px;border-top:1px solid var(--line);background:var(--paper)}
 .wrap.single{grid-template-columns:250px minmax(0,1fr)}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;font-size:14px}
 .topbar a{text-decoration:none}
@@ -227,7 +230,8 @@ def build():
     def rail_for(here, sub):
         r = fix_links(rail, sub)
         r = r.replace('<p class="brand">Agent Engineering School</p>',
-                      f'<p class="brand"><a href="{"../" if sub else ""}index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>')
+                      f'<p class="brand"><a href="{"../school/" if sub else ""}index.html" style="color:inherit;text-decoration:none">Agent Engineering School</a></p>'
+                      f'<p style="margin:-4px 0 10px;font-size:13px"><a href="../index.html" style="text-decoration:none">← The Local AI Lab</a></p>')
         r = re.sub(r'<a href="([\w-]+)\.html">', lambda mm: f'<a href="{mm.group(1)}.html" data-mod-link="{mm.group(1)}"'
                    + (' aria-current="page" style="background:var(--accent-soft);font-weight:600"' if mm.group(1) == here else "") + ">", r)
         r = re.sub(r'<a href="m/([\w-]+)\.html">', lambda mm: f'<a href="m/{mm.group(1)}.html" data-mod-link="{mm.group(1)}">', r)
@@ -267,16 +271,12 @@ def build():
     hero_home = re.sub(r'<p class="lede">.*?</p>', '<p class="lede">Slide-style lessons on building AI agents that run on your own computers, drawn from Stanford CS329Z (Engineering AI Agents) and CS329A (Self-Improving AI Agents). Each lesson links to the original lecture slides and a runnable Colab notebook.</p>', hero_home, flags=re.S)
     hero_home = re.sub(r'<div class="meta">.*?</div>', '', hero_home, flags=re.S)
     hero_home = fix_links(hero_home, False).replace("</header>", howto + "</header>")
-    products = ('<h2 class="part-title">Local AI Lab products</h2><div class="cards-group"><div class="cards">'
-                '<a class="card" href="products/agent-studio.html" style="border-color:var(--accent)">'
-                '<span class="num">Product 1 · live demo + bake-off</span><span class="t">Agent Studio</span>'
-                '<span class="s">An agent on open-weight models with a harness written from scratch. Watch every search, '
-                'read and command live; Gemma 4 31B and Nemotron 3 solve 29 of 30 known-answer tasks.</span>'
-                '<span class="go">See the product →</span></a></div></div>')
-    home_body = (f'<div class="wrap">{rail_for(None, False)}<main>{hero_home}{products}{"".join(cards)}'
+    home_body = (f'<div class="wrap">{rail_for(None, False)}<main>{hero_home}{"".join(cards)}'
                  f'<footer>{strip_tags(footer)}</footer></main></div>')
-    (ROOT / "docs").mkdir(exist_ok=True)
-    (ROOT / "docs/index.html").write_text(page("Agent Engineering School", home_body, False,
+    # The course home lives at /school/; lesson pages stay at /m/<id>.html so old links keep working.
+    home_body = home_body.replace('href="m/', 'href="../m/')
+    (ROOT / "docs/school").mkdir(parents=True, exist_ok=True)
+    (ROOT / "docs/school/index.html").write_text(page("Agent Engineering School · The Local AI Lab", home_body, False,
                                                 desc="Local AI Lab: a hands-on course on building AI agents that run on a local model, with Colab notebooks."))
 
     # ---------- one page per module
@@ -302,7 +302,7 @@ def build():
             body = head_html + inner
         prev_l = f'<a class="prev" href="{ORDER[k-1]}.html"><small>← Previous</small>{html.escape(INFO[ORDER[k-1]]["title"])}</a>' if k > 0 else ""
         next_l = f'<a class="next" href="{ORDER[k+1]}.html"><small>Next →</small>{html.escape(INFO[ORDER[k+1]]["title"])}</a>' if k + 1 < len(ORDER) else ""
-        top = (f'<div class="topbar"><a href="../index.html">← All modules</a>'
+        top = (f'<div class="topbar"><a href="../school/index.html">← All modules</a>'
                f'<span class="crumbs">{html.escape(i["num"])}</span></div>')
         main = f'<main>{top}<section class="mod" id="{mid}" style="border-bottom:0;padding-top:0">{body}</section><nav class="pager">{prev_l}{next_l}</nav></main>'
         full = f'<div class="wrap">{rail_for(mid, True)}{main}</div>'
@@ -312,7 +312,11 @@ def build():
     have = sum(1 for m in ORDER if INFO[m]["lesson"])
     print(f"home + {len(ORDER)} module pages; {have} with slide lessons")
     import product_agent_studio  # noqa: E402  Local AI Lab product pages
+    import research_pages  # noqa: E402
+    import lab_home  # noqa: E402
     product_agent_studio.build()
+    research_pages.build()
+    lab_home.build()                                    # docs/index.html: the Local AI Lab home
 
 
 if __name__ == "__main__":

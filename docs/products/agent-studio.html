@@ -42,10 +42,10 @@ pre{background:var(--code-bg);color:var(--code-fg);border-radius:12px;padding:16
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><a href="../index.html">← Agent Engineering School</a><a href="https://github.com/shivamkalakaar/local-ai-lab-agents/tree/main/products/agent-studio">Source on GitHub ↗</a></div>
+  <div class="top"><a href="../index.html">← The Local AI Lab</a><a href="https://github.com/shivamkalakaar/local-ai-lab-agents/tree/main/products/agent-studio">Source on GitHub ↗</a></div>
   <p class="eyebrow">Local AI Lab · Product 1</p>
   <h1>Agent Studio</h1>
-  <p class="lede">An AI agent on <b>open-weight models</b> with a harness we wrote from scratch: no agent framework, no tool-calling API, just a plain chat call and code we control. Watch every search, read, command and check as it happens, on your own machine.</p>
+  <p class="lede">An AI agent on <b>open-weight models</b>. We wrote the code around the model ourselves (people call it the harness): no agent framework and no tool-calling API, only a plain chat call. You can watch each step as it happens, on your own machine.</p>
   <div class="btns"><a class="btn primary" href="#quick-start">Run it locally →</a><a class="btn" href="https://github.com/shivamkalakaar/local-ai-lab-agents/tree/main/products/agent-studio">View the code</a><a class="btn" href="#bake-off">See the bake-off</a></div>
   <div class="facts">
     <div class="fact"><b>29/30</b><span>known-answer tasks solved by the best open model (Gemma 4 31B)</span></div>
@@ -76,7 +76,7 @@ pre{background:var(--code-bg);color:var(--code-fg);border-radius:12px;padding:16
   <div class="fix">
     <div class="card"><h3>A model that drops its own call tag</h3><p>Nemotron's provider treats <code>&lt;tool_call&gt;</code> as a special token and cuts the reply to <code>&lt;to</code>. The parser now also accepts <code>&lt;call&gt;</code>, set per model. Nemotron went from 0 to working.</p></div>
     <div class="card"><h3>Thinking out loud instead of acting</h3><p>gpt-oss sometimes answers "We need to search the docs." and stops. A reply that names a tool but makes no call now gets one short reminder with an example call.</p></div>
-    <div class="card"><h3>The same call written three times</h3><p>Models often repeat one call with junk in between. A reply with different calls is still an error; the same call repeated is run once instead of failing the turn.</p></div>
+    <div class="card"><h3>The same call written three times</h3><p>Models often repeat one call with junk in between. A reply with different calls is still an error. The same call written twice now runs once, instead of failing the turn.</p></div>
     <div class="card"><h3>Answers that sound right</h3><p>Before an answer goes out, every number and id in it is checked against what the tools returned. Only unclear cases go to a second model. Unsupported details go back to the agent once.</p></div>
     <div class="card"><h3>Planted instructions</h3><p>Some documents tell AI agents to run commands. Results are marked as data, the user's request is repeated after each result, and a command copied from a document is blocked in auto mode: 0 of 7 planted commands ran.</p></div>
     <div class="card"><h3>Long conversations</h3><p>Every call fits a fixed budget. Old tool results become one-line stubs first; a summary is written only if that is not enough. The user's own messages are never cut.</p></div>

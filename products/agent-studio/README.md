@@ -1,12 +1,12 @@
 # Agent Studio · Local AI Lab Product 1
 
-An AI agent that runs on **open-weight models**, with a harness written from scratch.
-No agent framework, no tool-calling API: just a plain chat call and code we control.
+An AI agent that runs on open-weight models. We wrote the code around the model (the harness) ourselves.
+There's no agent framework and no tool-calling API, only a plain chat call.
 The web UI shows every step as it happens: each search, document read, terminal command, check and repair.
 
 ![Agent Studio: chat on the left, live trace on the right](../../docs/products/img/agent-studio.png)
 
-**Product page with the bake-off:** https://shivamkalakaar.github.io/local-ai-lab-agents/products/agent-studio.html
+Product page, with the bake-off: https://shivamkalakaar.github.io/local-ai-lab-agents/products/agent-studio.html
 
 ## Run it locally
 
@@ -20,7 +20,7 @@ export OPENROUTER_API_KEY=sk-or-...
 ```
 
 - The first run unpacks the data and builds the UI (about a minute).
-- The launcher sets a **$2 spending cap** (`harness/.env`, `CS329Z_BUDGET_USD`). A typical question costs well under one cent.
+- The launcher sets a $2 spending cap (`harness/.env`, `CS329Z_BUDGET_USD`). A typical question costs well under one cent.
 - Pick a model: `STUDIO_MODEL=nvidia/nemotron-3-super-120b-a12b ./start.sh`, or use the dropdown in the UI.
 - The terminal tool runs commands in an OS sandbox: `sandbox-exec` on macOS, `bubblewrap` on Linux (`sudo apt install bubblewrap`).
 
@@ -35,9 +35,7 @@ export OPENROUTER_API_KEY=sk-or-...
 | Memory | I'm on the firmware team. When I say "the spec" I mean the firmware spec. |
 | Should be refused | Delete every file in the workspace. |
 
-**Modes:**
-- **confirm** (default): terminal commands wait for your approval.
-- **auto:** commands run on their own. Deny rules and the copied-command check still apply.
+In confirm mode (the default), terminal commands wait for your approval. In auto mode they run on their own, but the deny rules and the copied-command check still apply.
 
 ## Bake-off: same harness, four open models
 
@@ -66,14 +64,14 @@ start.sh   one-command launcher
 
 What the harness does:
 
-- **Call protocol:** one JSON call per reply between tags. The parser tolerates cut-off replies and calls nested inside arguments. The tag can be set per model (Nemotron drops `<tool_call>`, so it uses `<call>`).
-- **Self-correction:**
+- Call protocol: one JSON call per reply between tags. The parser tolerates cut-off replies and calls nested inside arguments. The tag can be set per model (Nemotron drops `<tool_call>`, so it uses `<call>`).
+- Self-correction:
   - A short reminder when the model says "I'll check…" but makes no call.
   - A call that was repeated in one reply is run once.
   - Format errors are explained back to the model.
-- **Answer checker:** numbers and ids in an answer are checked against what the tools returned. A second model is used only when unsure.
-- **Context:** every call fits a fixed budget. Old tool results become stubs first; a summary is written only if needed. User messages are never cut.
-- **Guardrails:**
+- Answer checker: numbers and ids in an answer are checked against what the tools returned. A second model is used only when unsure.
+- Context: every call fits a fixed budget. Old tool results become stubs first; a summary is written only if needed. User messages are never cut.
+- Guardrails:
   - Tool results are marked as data, and the user's request is repeated after each one.
   - Deny rules apply in both modes.
   - In auto mode, a command copied from a document is blocked.
